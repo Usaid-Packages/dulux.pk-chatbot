@@ -1,5 +1,7 @@
 # Project Boilerplate
 
+> **Note:** For instructions on setting up a Generative AI project using this boilerplate, see [config/GENAI_SETUP.md](config/GENAI_SETUP.md).
+
 ## Required Changes
 
 - `project/`: change `project` with actual project name.
