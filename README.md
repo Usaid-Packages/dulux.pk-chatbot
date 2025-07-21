@@ -6,9 +6,12 @@
 
 - `project/`: change `project` with actual project name.
 - `project/celery.py`: change `project` with actual project name.
+- `project/core/api/v1/urls.py`: change `project` with actual project name.
+- `project/core/api/v1/views.py`: change `project` with actual project name.
 - `project/core/middleware/logging.py`: change `project` with actual project name.
 - `project/core/apps.py`: change `project` with actual project name.
 - `project/users/apps.py`: change `project` with actual project name.
+- `project/users/migrations/0001_initial.py`: change `project` with actual project name.
 - `config/settings/base.py`: change `project` with actual project name.
 - `config/settings/sentry.py`: change `project` with actual project name.
 - `config/env/.env.example`: change `project` with actual project name.
@@ -20,6 +23,8 @@
   - `<project-dir>`: specify project directory/path to clone into
   - `<make-target>`: specify target name for `make` command
   - `<env-name>`: specify environment name
+- `docker-compose.dev.yml`: change `project` with actual project name in volumes section.
+- `docker-compose.stage.yml`: change `project` with actual project name in volumes section.
 - `README.md`: remove section "Required Changes"
 
 ### Environment Setup

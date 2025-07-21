@@ -5,5 +5,5 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
 WORKDIR /code
 
-RUN pip install --upgrade pip
-RUN pip install pip-tools
+RUN pip install --upgrade pip==23.2.1
+RUN pip install --upgrade pip-tools
