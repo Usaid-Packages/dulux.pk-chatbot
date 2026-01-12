@@ -19,6 +19,6 @@ class DefaultAccountAdapter(AllAuthDefaultAccountAdapter):
             email_template = "account/email/email_confirmation_otp"
         self.send_mail(email_template, emailconfirmation.email_address.email, ctx)
 
-    def generate_emailconfirmation_key(self, email):
+    def generate_emailconfirmation_key(self, _email):
         key = get_random_string(4).lower()
         return key

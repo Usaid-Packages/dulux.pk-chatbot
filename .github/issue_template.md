@@ -6,13 +6,11 @@
 
 ### Links
 
-
 ## Enhancement
 
 ### Current Behavior
 
 ### Desired Behavior
-
 
 ## New Feature
 
