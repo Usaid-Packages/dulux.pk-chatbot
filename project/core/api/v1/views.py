@@ -19,6 +19,6 @@ class HealthAPIView(MainView, APIView):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR if self.errors else status.HTTP_200_OK
         response = self.render_to_response_json(self.plugins, status_code)
         if status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
-            logger.info("Django health check response: %s", response.content)
+            logger.info(f"Django health check response: {response.content}")
 
         return Response(status=response.status_code)
