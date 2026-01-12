@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib.auth.models import AbstractUser
 
 from .fields import EmailField
@@ -9,7 +11,7 @@ class User(AbstractUser):
 
     username = None
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: ClassVar[list[str]] = []
 
     objects = UserManager()
 

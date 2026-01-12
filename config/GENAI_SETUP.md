@@ -17,7 +17,7 @@ langchain-google-genai~=2.0
 langchain-anthropic==0.3.*
 langgraph==0.4.*
 langchain-chroma==0.2.*
-langchain-pinecone==0.2.* 
+langchain-pinecone==0.2.*
 ```
 
 Then run:

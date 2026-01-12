@@ -15,7 +15,7 @@ schema_view = get_schema_view(
         title="Project API",
         default_version="v1",
     ),
-    url=f'{config("BASE_URL")}',
+    url=f"{config('BASE_URL')}",
     permission_classes=[IsAuthenticated],
     authentication_classes=(BasicAuthentication,),
     public=True,

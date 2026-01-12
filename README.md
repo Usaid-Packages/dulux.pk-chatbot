@@ -72,8 +72,10 @@ replace \* with appropriate ENV. name
 ## Enable SSL with Certbot
 
 ### (stage|prod)
+
 1. update domain in `config/nginx/(stage|prod).conf`
 2. specify domain, mode, and compose file for `init-letsencrypt.sh`
+
 ```
 sudo ./init-letsencrypt.sh <domain> <mode> <docker-compose-file>
 sudo ./init-letsencrypt.sh example.org 1 docker-compose.stage.yml # will fetch dummy certificates for specified domain
