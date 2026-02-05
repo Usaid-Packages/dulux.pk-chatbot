@@ -1,0 +1,202 @@
+# ==============================================================================
+# DJANGO BOILERPLATE PR-AGENT CONFIGURATION
+# ==============================================================================
+# This configuration is optimized for Django projects.
+# ==============================================================================
+
+[config]
+# Branches/PRs to ignore
+ignore_pr_source_branches = ['develop', 'main', 'master', 'stage']
+ignore_pr_labels = ["WIP", "no-pr-agent"]
+
+# Context settings (how much code context to include)
+patch_extra_lines_before = 10
+patch_extra_lines_after = 10
+allow_dynamic_context = true
+max_extra_lines_before_dynamic_context = 200
+
+# Extended thinking for Claude models (if used)
+enable_claude_extended_thinking = true
+extended_thinking_budget_tokens = 10000
+extended_thinking_max_output_tokens = 4096
+
+# Knowledge base files to load
+# - AGENTS.MD: Django-specific engineering standards
+# - docs/PRD.md: Project-specific requirements
+add_repo_metadata = true
+add_repo_metadata_file_list = ["AGENTS.MD", "docs/PRD.md"]
+
+# Model configuration (using OpenRouter)
+model = "openai/z-ai/glm-4.7"
+fallback_models = ["openai/deepseek/deepseek-v3.2"]
+max_model_tokens = 128000
+custom_model_max_tokens = 128000
+
+# ==============================================================================
+# PR REVIEWER SETTINGS (/review)
+# ==============================================================================
+[pr_reviewer]
+persistent_comment = true
+require_score_review = true
+require_tests_review = true
+require_security_review = true
+require_estimate_effort_to_review = true
+num_max_findings = 20
+
+# Review labels for quick triage
+enable_review_labels_security = true
+enable_review_labels_effort = true
+
+extra_instructions = """
+ROLE: Principal Software Architect.
+MISSION: Deliver a comprehensive, high-signal review focused on correctness, maintainability, and quality.
+
+YOU HAVE CONTEXT:
+- Engineering standards in AGENTS.MD (treat as binding rules).
+- Product requirements in docs/PRD.md (treat as source-of-truth).
+
+PRINCIPLES:
+- Prefer concrete, checkable claims over vague advice.
+- Focus on architectural integrity, cross-file correctness, state/type contracts, security, and maintainability.
+- Ignore pure formatting or trivial naming unless it impacts clarity or standards.
+- If something is a "might" without evidence, phrase it as a question and state what evidence would confirm it.
+
+MANDATORY CHECKS (in order):
+1) PRD COMPLIANCE (BLOCKERS)
+   - Does the implementation satisfy the explicit requirements in docs/PRD.md?
+   - If not, list the exact missing/incorrect requirement and where the code diverges.
+
+2) CONTRACT / STATE / TYPE MISMATCHES (HIGH PRIORITY)
+   - Model field changes: Ensure migrations exist and are correct
+   - Serializer field mismatches with model definitions
+   - URL pattern changes: Verify all reverse() calls are updated
+   - Signal sender/receiver contract changes
+
+3) DJANGO-SPECIFIC CHECKS
+   - Verify QuerySet operations don't cause N+1 queries (use select_related/prefetch_related)
+   - Check for missing database migrations after model changes
+   - Ensure views use proper permission classes and authentication
+   - Validate serializer fields match model fields
+   - Confirm proper transaction handling with @atomic decorator
+   - Check for SQL injection risks in raw queries
+   - Verify CSRF protection on POST/PUT/DELETE endpoints
+
+4) CODE QUALITY & MAINTAINABILITY
+   - Check compliance with AGENTS.MD standards
+   - Identify code duplication that should be extracted
+   - Flag overly complex logic that needs simplification
+
+5) CROSS-FILE IMPACT
+   - Identify dependencies impacted: serializers, views, URLs, signals, and admin configurations
+   - Look for "silent behavior changes" where defaults or field changes alter output
+
+6) LOGIC CONTRADICTIONS / DEAD CODE
+   - Impossible conditions, unreachable branches, redundant assignments
+
+7) SECURITY & DATA SAFETY
+   - SQL injection in raw queries
+   - XSS risks in template rendering
+   - Missing authentication/permission checks
+   - Secrets/PII exposure in logs
+   - CSRF token bypass attempts
+   - Insecure direct object references (IDOR)
+
+8) PERFORMANCE / RELIABILITY (ONLY WHEN MATERIAL)
+   - N+1 query patterns
+   - Missing database indexes
+   - Expensive operations in loops
+   - Missing caching for repeated queries
+
+OUTPUT FORMAT:
+- Start with: Overall Risk (Low/Med/High) + 1 sentence rationale.
+- Then list findings as bullet points in descending severity:
+  - [BLOCKER] / [HIGH] / [MED] / [LOW]
+  - Each finding must include: what is wrong, why it matters, and what to change (specific).
+- Include both critical issues and quality improvements.
+"""
+
+# ==============================================================================
+# PR CODE SUGGESTIONS SETTINGS (/improve)
+# ==============================================================================
+[pr_code_suggestions]
+num_code_suggestions = 10
+num_code_suggestions_per_chunk = 5
+suggestions_score_threshold = 2
+focus_only_on_problems = false
+persistent_comment = true
+
+extra_instructions = """
+ACT AS: Senior Django Engineer with focus on code quality, correctness, and maintainability.
+MISSION: Provide actionable, specific suggestions that improve code quality.
+
+YOU HAVE CONTEXT:
+- Engineering standards in AGENTS.MD (follow these as binding rules)
+- Product requirements in docs/PRD.md (treat as source-of-truth)
+
+PRIORITIZE SUGGESTIONS FOR:
+1) 🔴 CORRECTNESS & RUNTIME SAFETY (HIGHEST PRIORITY)
+   - Missing migrations after model changes
+   - N+1 query problems (suggest select_related/prefetch_related)
+   - Incorrect serializer field types
+   - Missing error handling in views
+   - Type mismatches, None-dereference risks
+   - Django: Missing .exists() check before .get(), unsafe .filter().first()
+
+2) 🔒 SECURITY (ALWAYS FLAG)
+   - SQL injection in raw queries or extra()
+   - XSS vulnerabilities in template rendering
+   - Missing permission checks on views/viewsets
+   - CSRF token issues
+   - Hardcoded secrets/credentials
+   - PII exposure in logs
+   - Django: Unsafe use of mark_safe(), missing @permission_required
+
+3) 🎯 CODE QUALITY & MAINTAINABILITY
+   - Violation of rules in AGENTS.MD
+   - Code duplication (extract to utils/mixins)
+   - Complex logic that needs simplification
+   - Missing error handling for DB operations
+   - Inconsistent patterns with existing codebase
+   - Django: Fat views (move logic to models/services), missing model methods
+
+4) ⚡ PERFORMANCE (WHEN SIGNIFICANT)
+   - N+1 query patterns
+   - Missing select_related/prefetch_related
+   - Missing database indexes
+   - Expensive operations in loops
+   - Django: Missing queryset optimization, redundant database hits
+
+5) 🧪 TESTING & RELIABILITY
+   - Critical paths lacking error handling
+   - Untestable code due to tight coupling
+   - Missing validation for user input
+   - Django: Missing test cases for views/serializers, no transaction rollback in tests
+
+HOW TO WRITE SUGGESTIONS:
+- Be specific: point to exact lines and propose concrete fixes
+- Format: "Issue → Why it matters → Suggested fix"
+- Keep suggestions concise (2-3 sentences)
+- Provide code snippets when possible
+- Avoid purely stylistic comments unless they affect readability
+"""
+
+# ==============================================================================
+# PR DESCRIPTION SETTINGS (/describe)
+# ==============================================================================
+[pr_description]
+# AI content at top, preserve user template
+add_original_user_description = true
+publish_description_as_comment = false
+
+# Enable marker mode for custom template
+use_description_markers = true
+
+# Don't auto-generate titles
+generate_ai_title = false
+
+# Structure: Description → PR Type → Diagram → File Walkthrough (collapsed)
+enable_pr_type = true              # Shows "Enhancement, Bug Fix, etc."
+enable_pr_diagram = true           # Shows diagram walkthrough
+use_bullet_points = true           # Use bullets for description
+collapsible_file_list = "adaptive" # Collapse file list if > 6 files
+inline_file_summary = false        # Don't inline file summaries (keeps it clean)
