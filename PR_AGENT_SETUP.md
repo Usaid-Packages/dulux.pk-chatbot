@@ -26,8 +26,6 @@ mkdir -p docs
 touch docs/PRD.md
 ```
 
-Add project requirements (see [PRD Template](#prd-template)).
-
 ### 3. (Optional) Customize
 
 Only if needed - see [Configuration](#-configuration) for:
