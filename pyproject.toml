@@ -53,8 +53,8 @@ ignore = [
     "PLR0915",  # too many statements
 ]
 
-# Allow autofix for all enabled rules
-fixable = ["ALL"]
+# Only allow import-sorting fixes; keep all other lint fixes disabled.
+fixable = ["I"]
 unfixable = []
 
 [tool.ruff.lint.isort]
