@@ -45,8 +45,13 @@ class LoggingHandler(RotatingFileHandler):
         except AttributeError:
             pass
 
-        data = json.dumps(data)
+        record.msg = json.dumps(data)
+        record.args = ()
 
-        self.stream.write(data)
-        self.stream.write(self.terminator)
-        self.flush()
+        try:
+            if self.shouldRollover(record):
+                self.doRollover()
+
+            super().emit(record)
+        except Exception:
+            self.handleError(record)

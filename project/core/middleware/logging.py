@@ -1,8 +1,10 @@
+import json
 import logging
 
 from copy import deepcopy
 from uuid import uuid4
 
+from constance import config
 from ipware import get_client_ip
 
 
@@ -30,7 +32,7 @@ class LoggingMiddleware:
 
         response_body = "-"
         if "application/json" in response.get("content-type", "") and hasattr(response, "data"):
-            response_body = deepcopy(response.data)
+            response_body = self._truncate_large_response_body(deepcopy(response.data))
 
         status_code = response.status_code
 
@@ -39,3 +41,13 @@ class LoggingMiddleware:
         logger.info(f"RESP {uuid} {response_body}", extra=logging_attributes)
 
         return response
+
+    def _truncate_large_response_body(self, value):
+        """
+        We are truncating the response body after a certain number of characters to
+        keep the logs cleanable, understandable and easy to navigate.
+        """
+
+        response_body = json.dumps(value, default=str)
+        response_body = f"{response_body[:config.MAX_LOG_BODY_CHARS_LIMIT]}..."
+        return response_body
