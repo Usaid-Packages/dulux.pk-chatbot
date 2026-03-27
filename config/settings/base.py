@@ -52,7 +52,7 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.redis",
 ]
 
-CUSTOM_APPS = ["project.core", "project.users"]
+CUSTOM_APPS = ["dulux_chatbot.core", "dulux_chatbot.users"]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
@@ -65,7 +65,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "project.core.middleware.logging.LoggingMiddleware",
+    "dulux_chatbot.core.middleware.logging.LoggingMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -75,7 +75,7 @@ AUTH_USER_MODEL = "users.User"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "project/templates"],
+        "DIRS": [BASE_DIR / "dulux_chatbot/templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -115,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "project.users.password_validation.PasswordValidator",
+        "NAME": "dulux_chatbot.users.password_validation.PasswordValidator",
     },
 ]
 
@@ -158,7 +158,7 @@ LOGGING = {
     "handlers": {
         "file": {
             "level": "INFO",
-            "class": "project.core.logging.handler.LoggingHandler",
+            "class": "dulux_chatbot.core.logging.handler.LoggingHandler",
             "filename": BASE_DIR / "debug.log",
             "formatter": "simple",
             "backupCount": 10,
@@ -178,7 +178,7 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
-        "project": {
+        "dulux_chatbot": {
             "handlers": [
                 "file",
                 "console",
@@ -212,7 +212,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CONSTANCE_BACKEND = "constance.backends.redisd.RedisBackend"
 CONSTANCE_REDIS_CONNECTION = f"{REDIS_URL}/0"
-CONSTANCE_REDIS_PREFIX = "constance:project:"
+CONSTANCE_REDIS_PREFIX = "constance:dulux_chatbot:"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {"api_key": {"type": "apiKey", "in": "header", "name": "Authorization"}},
@@ -230,7 +230,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "project.core.paginations.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "dulux_chatbot.core.paginations.PageNumberPagination",
 }
 
 SIMPLE_JWT = {
@@ -241,8 +241,8 @@ SIMPLE_JWT = {
 SITE_ID = 1
 
 REST_AUTH = {
-    "REGISTER_SERIALIZER": "project.users.api.v1.serializers.RegisterSerializer",
-    "USER_DETAILS_SERIALIZER": "project.users.api.v1.serializers.UserDetailsSerializer",
+    "REGISTER_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.RegisterSerializer",
+    "USER_DETAILS_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.UserDetailsSerializer",
     "TOKEN_MODEL": None,
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
@@ -253,10 +253,10 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Project] "
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Dulux Assurance] "
 
 if config("ENABLE_OTP", cast=bool):
-    ACCOUNT_ADAPTER = "project.users.adapter.DefaultAccountAdapter"
+    ACCOUNT_ADAPTER = "dulux_chatbot.users.adapter.DefaultAccountAdapter"
     ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
 
 from .constance import *  # noqa

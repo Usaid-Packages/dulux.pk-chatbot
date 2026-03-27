@@ -123,7 +123,7 @@ services:
     <<: *common
 
 volumes:
-  project_postgres_data:
-  project_redis_data:
-  project_static_volume:
-  project_media_volume:
+  dulux_chatbot_postgres_data:
+  dulux_chatbot_redis_data:
+  dulux_chatbot_static_volume:
+  dulux_chatbot_media_volume:
