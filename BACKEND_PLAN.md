@@ -16,17 +16,68 @@ class Image(TimeStampedModel):
 ```
 All app models inherit `TimeStampedModel` directly → provides `created` + `modified` fields.
 
+### `dulux_chatbot/users/choices.py` *(new)*
+```python
+from django.db import models
+
+class UserRole(models.TextChoices):
+    CS_AGENT         = "CS_AGENT", "CS Agent"
+    QUALITY_REVIEWER = "QUALITY_REVIEWER", "Quality Reviewer"
+    ADMIN = "ADMIN", "Admin"
+```
+
+### `dulux_chatbot/users/models.py` *(modify)*
+```python
+from dulux_chatbot.users.choices import UserRole
+
+class User(AbstractUser):
+    role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices
+    )
+
+    
+```
+Add migration for the new `role` field and expose it in Django admin / user serializers where needed.
+
 ### `dulux_chatbot/core/permissions.py` *(new)*
 ```python
 from rest_framework.permissions import BasePermission
+from dulux_chatbot.users.choices import UserRole
+
+class IsCSAgent(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role == UserRole.CS_AGENT
+        
+
+class IsQualityReviewer(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role == UserRole.QUALITY_REVIEWER
+        
+
+class IsAdminUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role == UserRole.ADMIN
+        
 
 class IsCSAgentOrAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
+        return request.user.role in [UserRole.CS_AGENT, UserRole.ADMIN]
+        
 
-class IsAdminOnly(BasePermission):
+class IsQualityReviewerOrAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+        return request.user.role in [UserRole.QUALITY_REVIEWER, UserRole.ADMIN]
+        
+
+class IsInternalUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role in [
+                UserRole.CS_AGENT,
+                UserRole.QUALITY_REVIEWER,
+                UserRole.ADMIN,
+            ]
+        
 ```
 
 ### `dulux_chatbot/core/exceptions.py` *(new)*
@@ -114,7 +165,7 @@ class ImageSerializer(ModelSerializer):
 # views.py
 class ImageUploadView(CreateAPIView):
     serializer_class   = ImageSerializer
-    permission_classes = [IsCSAgentOrAdmin]
+    permission_classes = [IsInternalUser]
     parser_classes     = [MultiPartParser]
 
 # urls.py
@@ -232,8 +283,8 @@ class ProductViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
-            return [IsAdminOnly()]
-        return super().get_permissions()
+            return [IsAdminUser()]
+        return [IsInternalUser()]
 ```
 
 ### `products/api/v1/urls.py`
@@ -269,7 +320,7 @@ class ProductImageViewSet(ModelViewSet):
     # DELETE /api/v1/products/{product_pk}/images/{id}/  → remove image
     queryset           = ProductImage.objects.select_related("image")
     serializer_class   = ProductImageSerializer
-    permission_classes = [IsAdminOnly]
+    permission_classes = [IsAdminUser]
 ```
 
 **`SurfaceTypeViewSet`**
@@ -279,11 +330,11 @@ class SurfaceTypeViewSet(ModelViewSet):
     queryset           = SurfaceType.objects.all()
     filterset_fields   = ["environment"]
     search_fields      = ["name"]
-    permission_classes = [IsAdminOnly]   # read: IsAuthenticated, write: IsAdminOnly
+    permission_classes = [IsAdminUser]   # read: IsInternalUser, write: IsAdminUser
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
             return [IsAuthenticated()]
-        return [IsAdminOnly()]
+        return [IsAdminUser()]
 ```
 
 **`ProductSurfaceMappingViewSet`**
@@ -292,11 +343,11 @@ class ProductSurfaceMappingViewSet(ModelViewSet):
     # Full CRUD: GET/POST/DELETE /api/v1/products/surface-mappings/
     queryset           = ProductSurfaceMapping.objects.select_related("product", "surface_type")
     filterset_fields   = ["product", "surface_type"]
-    permission_classes = [IsAdminOnly]
+    permission_classes = [IsAdminUser]
     def get_permissions(self):
         if self.action in ("list", "retrieve"):
             return [IsAuthenticated()]
-        return [IsAdminOnly()]
+        return [IsAdminUser()]
 ```
 
 Register all in `products/api/v1/urls.py`:
@@ -512,11 +563,10 @@ class RejectionField(TimeStampedModel):
     # CS agent flags specific fields/images when requesting resubmission.
     # Chatbot reads this to re-prompt only rejected fields.
     registration = FK(WarrantyRegistration, CASCADE, related_name="rejection_fields")
-    field_name   = CharField(max_length=100)   # e.g. "topcoat_invoice", "purchase_date"
     note         = CharField(max_length=500, blank=True)
 
     class Meta:
-        unique_together = [("registration", "field_name")]
+        unique_together = [("registration")]
 ```
 
 ### Tests
@@ -720,12 +770,11 @@ ordering           = ["-created"]
 queryset = WarrantyClaim.objects.select_related(
     "registration", "paint_pair__topcoat", "paint_pair__basecoat", "approved_by"
 ).prefetch_related("images__image")
-permission_classes = [IsCSAgentOrAdmin]
+permission_classes = [IsInternalUser]
 filterset_fields   = ["state", "issue_type"]
 search_fields      = ["registration__registration_code", "registration__phone_number"]
 ordering           = ["-created"]
 
-# @action transition: same pattern, if approve → send_whatsapp_status_notification.delay(phone, msg)
 ```
 
 ### `warranty/api/v1/urls.py`
@@ -739,7 +788,7 @@ urlpatterns = router.urls
 ### Tests (`warranty/tests/test_api.py`)
 ```
 Registration:
-✓ List requires is_staff → 403 for regular user
+✓ List requires internal role → 403 for regular user
 ✓ CS agent lists registrations (paginated)
 ✓ Filter by state / channel
 ✓ Search by registration_code / phone_number
@@ -798,7 +847,7 @@ class MessageSender(TextChoices):
 ```python
 class Complaint(TimeStampedModel):
     registration  = FK(WarrantyRegistration, PROTECT, null=True, blank=True, related_name="complaints")
-    phone_number  = CharField(max_length=20, db_index=True)
+    phone_number  = CharField(max_length=20)
     customer_name = CharField(max_length=255)
     subject       = CharField(max_length=255)
     status        = FSMField(default="OPEN", choices=ComplaintStatus, protected=True, db_index=True)
@@ -833,7 +882,7 @@ class ComplaintImage(TimeStampedModel):
 class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
     # URL: ws/complaints/{complaint_id}/chat/
     # Auth: JWT token in query string → validated in connect()
-    # CS agents only (is_staff)
+    # Internal users only (CS_AGENT / QUALITY_REVIEWER / ADMIN)
     # Group: f"complaint_{complaint_id}"
     # connect(): authenticate, join group, accept()
     # receive_json(): validate text, create ChatMessage(sender=CS_AGENT), broadcast to group
@@ -854,7 +903,7 @@ application = ProtocolTypeRouter({
 ### ViewSet
 ```python
 class ComplaintViewSet(ModelViewSet):
-    permission_classes = [IsCSAgentOrAdmin]
+    permission_classes = [IsInternalUser]
     filterset_fields   = ["status"]
     search_fields      = ["phone_number", "customer_name", "subject"]
 
@@ -1182,6 +1231,7 @@ urlpatterns = [
     # + swagger, email confirmation, password reset (existing)
 ]
 ```
+
 
 ### `config/settings/base.py` — final `CUSTOM_APPS`
 ```python
