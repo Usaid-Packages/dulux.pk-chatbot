@@ -8,7 +8,7 @@ from constance import config
 from ipware import get_client_ip
 
 
-logger = logging.getLogger("project")
+logger = logging.getLogger("dulux_chatbot")
 
 
 class LoggingMiddleware:

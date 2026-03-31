@@ -2,8 +2,8 @@
 
 from django.db import migrations, models
 import django.utils.timezone
-import project.users.fields
-import project.users.managers
+import dulux_chatbot.users.fields
+import dulux_chatbot.users.managers
 
 
 class Migration(migrations.Migration):
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("date_joined", models.DateTimeField(default=django.utils.timezone.now, verbose_name="date joined")),
-                ("email", project.users.fields.EmailField(max_length=254, unique=True)),
+                ("email", dulux_chatbot.users.fields.EmailField(max_length=254, unique=True)),
                 (
                     "groups",
                     models.ManyToManyField(
@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
             managers=[
-                ("objects", project.users.managers.UserManager()),
+                ("objects", dulux_chatbot.users.managers.UserManager()),
             ],
         ),
     ]

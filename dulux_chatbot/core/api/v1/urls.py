@@ -1,6 +1,6 @@
 from django.urls import path
 
-from project.core.api.v1.views import HealthAPIView
+from dulux_chatbot.core.api.v1.views import HealthAPIView
 
 
 urlpatterns = [

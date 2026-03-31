@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Project API",
+        title="Dulux Chatbot API",
         default_version="v1",
     ),
     url=f"{config('BASE_URL')}",
@@ -26,8 +26,8 @@ urlpatterns = [
         "admin/",
         admin.site.urls,
     ),
-    path("api/v1/core/", include("project.core.api.v1.urls")),
-    path("api/v1/users/", include("project.users.api.v1.urls")),
+    path("api/v1/core/", include("dulux_chatbot.core.api.v1.urls")),
+    path("api/v1/users/", include("dulux_chatbot.users.api.v1.urls")),
     re_path(
         r"^app/confirm-email/(?P<key>[-:\w]+)/$",
         TemplateView.as_view(),

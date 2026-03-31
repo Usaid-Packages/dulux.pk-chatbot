@@ -58,7 +58,7 @@ fixable = ["I"]
 unfixable = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["project"]
+known-first-party = ["dulux_chatbot"]
 lines-after-imports = 2
 lines-between-types = 1
 
