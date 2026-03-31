@@ -14,8 +14,16 @@ ipython==8.16.*
 flower==2.0.*
 django-ipware==5.0.*
 python-decouple==3.8.*
-dj-rest-auth[with_social]==5.0.*
+dj-rest-auth[with_social]==6.0.*
+django-allauth==0.61.*
 djangorestframework-simplejwt==5.3.*
 factory-boy==3.3.*
 django-health-check==3.17.*
 django-fsm==2.8.*
+requests==2.31.*
+reportlab==4.2.*
+Pillow==10.3.*
+openpyxl==3.1.*
+channels==4.0.*
+channels-redis==4.1.*
+daphne==4.0.*
