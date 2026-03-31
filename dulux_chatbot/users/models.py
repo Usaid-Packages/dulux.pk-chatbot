@@ -1,13 +1,19 @@
 from typing import ClassVar
 
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 
-from .fields import EmailField
-from .managers import UserManager
+from dulux_chatbot.users.choices import UserRole
+from dulux_chatbot.users.fields import EmailField
+from dulux_chatbot.users.managers import UserManager
 
 
 class User(AbstractUser):
     email = EmailField(unique=True)
+    role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices,
+    )
 
     username = None
     USERNAME_FIELD = "email"
@@ -15,5 +21,5 @@ class User(AbstractUser):
 
     objects = UserManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.email
