@@ -36,7 +36,7 @@ class User(AbstractUser):
         choices=UserRole.choices
     )
 
-    
+
 ```
 Add migration for the new `role` field and expose it in Django admin / user serializers where needed.
 
@@ -48,36 +48,26 @@ from dulux_chatbot.users.choices import UserRole
 class IsCSAgent(BasePermission):
     def has_permission(self, request, view):
         return request.user.role == UserRole.CS_AGENT
-        
+
 
 class IsQualityReviewer(BasePermission):
     def has_permission(self, request, view):
         return request.user.role == UserRole.QUALITY_REVIEWER
-        
+
 
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
         return request.user.role == UserRole.ADMIN
-        
+
 
 class IsCSAgentOrAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user.role in [UserRole.CS_AGENT, UserRole.ADMIN]
-        
+
 
 class IsQualityReviewerOrAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user.role in [UserRole.QUALITY_REVIEWER, UserRole.ADMIN]
-        
-
-class IsInternalUser(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.role in [
-                UserRole.CS_AGENT,
-                UserRole.QUALITY_REVIEWER,
-                UserRole.ADMIN,
-            ]
-        
 ```
 
 ### `dulux_chatbot/core/exceptions.py` *(new)*
@@ -165,7 +155,7 @@ class ImageSerializer(ModelSerializer):
 # views.py
 class ImageUploadView(CreateAPIView):
     serializer_class   = ImageSerializer
-    permission_classes = [IsInternalUser]
+    permission_classes = [IsAuthenticated]
     parser_classes     = [MultiPartParser]
 
 # urls.py
@@ -274,24 +264,33 @@ class ProductSerializer(ModelSerializer):
 
 ### `products/api/v1/views.py`
 ```python
-class ProductViewSet(ModelViewSet):
+class ProductListCreateAPIView(ListCreateAPIView):
     queryset         = Product.objects.prefetch_related("images__image").all()
-    serializer_class = ProductSerializer
     filterset_fields = ["product_type", "is_active"]
     search_fields    = ["name"]
     ordering_fields  = ["name", "created"]
 
     def get_permissions(self):
-        if self.action in ("create", "update", "partial_update", "destroy"):
+        if self.request.method == "POST":
             return [IsAdminUser()]
-        return [IsInternalUser()]
+        return [IsAuthenticated()]
+
+class ProductRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset         = Product.objects.prefetch_related("images__image").all()
+    serializer_class = ProductSerializer
+
+    def get_permissions(self):
+        if self.request.method in ("PUT", "PATCH", "DELETE"):
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 ```
 
 ### `products/api/v1/urls.py`
 ```python
-router = DefaultRouter()
-router.register("", ProductViewSet, basename="product")
-urlpatterns = router.urls
+urlpatterns = [
+    path("", ProductListCreateAPIView.as_view(), name="product-list-create"),
+    path("<int:pk>/", ProductRetrieveUpdateDestroyAPIView.as_view(), name="product-detail"),
+]
 ```
 
 ### Data migration `migrations/0002_seed_products.py`
@@ -311,52 +310,82 @@ Seeds 26 products: 17 topcoats (with warranty_years) + 9 basecoats (warranty_yea
 ✓ Admin PATCH / DELETE
 ```
 
-### `products/api/v1/views.py` — additional actions
+### `products/api/v1/views.py` — additional endpoints
 
-**`ProductImageViewSet`**
+**`ProductImageListCreateAPIView`**
 ```python
-class ProductImageViewSet(ModelViewSet):
-    # POST   /api/v1/products/{product_pk}/images/       → attach image to product
-    # DELETE /api/v1/products/{product_pk}/images/{id}/  → remove image
+class ProductImageListCreateAPIView(ListCreateAPIView):
+    # POST /api/v1/products/{product_pk}/images/ → attach image to product
     queryset           = ProductImage.objects.select_related("image")
     serializer_class   = ProductImageSerializer
     permission_classes = [IsAdminUser]
 ```
 
-**`SurfaceTypeViewSet`**
+**`ProductImageDestroyAPIView`**
 ```python
-class SurfaceTypeViewSet(ModelViewSet):
-    # Full CRUD: GET/POST/PATCH/DELETE /api/v1/products/surface-types/
-    queryset           = SurfaceType.objects.all()
-    filterset_fields   = ["environment"]
-    search_fields      = ["name"]
-    permission_classes = [IsAdminUser]   # read: IsInternalUser, write: IsAdminUser
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            return [IsAuthenticated()]
-        return [IsAdminUser()]
+class ProductImageDestroyAPIView(DestroyAPIView):
+    # DELETE /api/v1/products/{product_pk}/images/{id}/ → remove image
+    queryset           = ProductImage.objects.select_related("image")
+    permission_classes = [IsAdminUser]
 ```
 
-**`ProductSurfaceMappingViewSet`**
+**`SurfaceTypeListCreateAPIView`**
 ```python
-class ProductSurfaceMappingViewSet(ModelViewSet):
-    # Full CRUD: GET/POST/DELETE /api/v1/products/surface-mappings/
-    queryset           = ProductSurfaceMapping.objects.select_related("product", "surface_type")
-    filterset_fields   = ["product", "surface_type"]
-    permission_classes = [IsAdminUser]
+class SurfaceTypeListCreateAPIView(ListCreateAPIView):
+    # GET/POST /api/v1/products/surface-types/
+    queryset           = SurfaceType.objects.all()
+    serializer_class   = SurfaceTypeSerializer
+    filterset_fields   = ["environment"]
+    search_fields      = ["name"]
     def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            return [IsAuthenticated()]
-        return [IsAdminUser()]
+        if self.request.method == "POST":
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+```
+
+**`SurfaceTypeRetrieveUpdateDestroyAPIView`**
+```python
+class SurfaceTypeRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    # GET/PATCH/DELETE /api/v1/products/surface-types/{id}/
+    queryset           = SurfaceType.objects.all()
+    serializer_class   = SurfaceTypeSerializer
+    def get_permissions(self):
+        if self.request.method in ("PUT", "PATCH", "DELETE"):
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+```
+
+**`ProductSurfaceMappingListCreateAPIView`**
+```python
+class ProductSurfaceMappingListCreateAPIView(ListCreateAPIView):
+    # GET/POST /api/v1/products/surface-mappings/
+    queryset           = ProductSurfaceMapping.objects.select_related("product", "surface_type")
+    serializer_class   = ProductSurfaceMappingSerializer
+    filterset_fields   = ["product", "surface_type"]
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+```
+
+**`ProductSurfaceMappingDestroyAPIView`**
+```python
+class ProductSurfaceMappingDestroyAPIView(DestroyAPIView):
+    # DELETE /api/v1/products/surface-mappings/{id}/
+    queryset           = ProductSurfaceMapping.objects.select_related("product", "surface_type")
+    permission_classes = [IsAdminUser]
 ```
 
 Register all in `products/api/v1/urls.py`:
 ```python
-router.register("surface-types", SurfaceTypeViewSet, basename="surface-type")
-router.register("surface-mappings", ProductSurfaceMappingViewSet, basename="surface-mapping")
-
-# Nested router for product images:
-# POST/DELETE /api/v1/products/{product_pk}/images/
+urlpatterns += [
+    path("surface-types/", SurfaceTypeListCreateAPIView.as_view(), name="surface-type-list-create"),
+    path("surface-types/<int:pk>/", SurfaceTypeRetrieveUpdateDestroyAPIView.as_view(), name="surface-type-detail"),
+    path("surface-mappings/", ProductSurfaceMappingListCreateAPIView.as_view(), name="surface-mapping-list-create"),
+    path("surface-mappings/<int:pk>/", ProductSurfaceMappingDestroyAPIView.as_view(), name="surface-mapping-destroy"),
+    path("<int:product_pk>/images/", ProductImageListCreateAPIView.as_view(), name="product-image-list-create"),
+    path("<int:product_pk>/images/<int:pk>/", ProductImageDestroyAPIView.as_view(), name="product-image-destroy"),
+]
 ```
 
 ### Amendment (PRD review)
@@ -434,20 +463,11 @@ class InvoiceType(TextChoices):
     TOPCOAT  = "TOPCOAT",  "Topcoat Invoice"
     BASECOAT = "BASECOAT", "Basecoat Invoice"
 
-class AuditAction(TextChoices):
-    SUBMITTED          = "SUBMITTED"
-    APPROVED           = "APPROVED"
-    REJECTED           = "REJECTED"
-    RESUBMIT_REQUESTED = "RESUBMIT_REQUESTED"
-    IN_PROGRESS        = "IN_PROGRESS"
-    QA_REVIEW          = "QA_REVIEW"
-```
-
 ### `warranty/utils.py`
 ```python
 def generate_registration_code() -> str:
     while True:
-        code = "".join(random.choices(string.digits, k=10))
+        code = "".join(random.choices(string.digits, k=6))
         if not WarrantyRegistration.objects.filter(registration_code=code).exists():
             return code
 ```
@@ -457,7 +477,7 @@ def generate_registration_code() -> str:
 **WarrantyRegistration**
 ```python
 class WarrantyRegistration(TimeStampedModel):
-    registration_code       = CharField(max_length=10, unique=True, db_index=True, editable=False)
+    registration_code       = CharField(max_length=6, unique=True, db_index=True, editable=False)
     channel                 = CharField(max_length=10, choices=RegistrationChannel, default="WHATSAPP")
     state                   = FSMField(default="SUBMITTED", choices=RegistrationState, protected=True, db_index=True)
     customer_name           = CharField(max_length=255)
@@ -504,18 +524,6 @@ class PaintPairInvoice(TimeStampedModel):
     paint_pair   = FK(RegistrationPaintPair, CASCADE, related_name="invoices")
     image        = FK("core.Image", PROTECT, related_name="paint_pair_invoices")
     invoice_type = CharField(max_length=10, choices=InvoiceType)
-```
-
-**RegistrationAuditLog**
-```python
-class RegistrationAuditLog(TimeStampedModel):
-    registration = FK(WarrantyRegistration, CASCADE, related_name="audit_logs")
-    action       = CharField(max_length=25, choices=AuditAction)
-    performed_by = FK(AUTH_USER_MODEL, SET_NULL, null=True, blank=True)
-    note         = CharField(max_length=500, blank=True)
-
-    class Meta:
-        ordering = ["-created"]
 ```
 
 **WarrantyClaim**
@@ -571,7 +579,7 @@ class RejectionField(TimeStampedModel):
 
 ### Tests
 ```
-✓ generate_registration_code returns unique 10-digit string
+✓ generate_registration_code returns unique 6-digit string
 ✓ save() auto-generates registration_code
 ✓ FSM transitions work correctly
 ✓ FSM protected — direct state assignment raises TransitionNotAllowed
@@ -608,12 +616,6 @@ class PaintPairInvoiceAdmin(ModelAdmin):
     list_filter   = ("invoice_type",)
     raw_id_fields = ("paint_pair", "image")
 
-@admin.register(RegistrationAuditLog)
-class RegistrationAuditLogAdmin(ModelAdmin):
-    list_display    = ("registration", "action", "performed_by", "created")
-    list_filter     = ("action",)
-    readonly_fields = ("registration", "action", "performed_by", "note", "created")
-
 @admin.register(WarrantyClaim)
 class WarrantyClaimAdmin(ModelAdmin):
     list_display    = ("id", "registration", "paint_pair", "issue_type",
@@ -640,11 +642,6 @@ class ClaimImageAdmin(ModelAdmin):
 
 ### Registration Serializers (`warranty/api/v1/serializers.py`)
 
-**`RegistrationAuditLogSerializer`** (read-only)
-```python
-fields: id, action, performed_by_email (source="performed_by.email"), note, created
-```
-
 **`PaintPairInvoiceSerializer`** (read-only)
 ```python
 fields: id, invoice_type, image_url (source="image.image.url")
@@ -667,7 +664,6 @@ fields: registration_code, customer_name, phone_number, channel, state, purchase
 **`WarrantyRegistrationDetailSerializer`**
 ```python
 paint_pairs       = RegistrationPaintPairSerializer(many=True, read_only=True)
-audit_logs        = RegistrationAuditLogSerializer(many=True, read_only=True)
 approved_by_email = SerializerMethodField
 fields: all WarrantyRegistration fields
 ```
@@ -732,14 +728,13 @@ notes  = CharField(max_length=1000, required=False, allow_blank=True)
 
 ### `warranty/api/v1/views.py`
 
-**`WarrantyRegistrationViewSet(ModelViewSet)`**
+**`WarrantyRegistrationListCreateAPIView(ListCreateAPIView)`**
 ```python
 queryset = WarrantyRegistration.objects.select_related("approved_by")
                                .prefetch_related(
                                    "paint_pairs__topcoat",
                                    "paint_pairs__basecoat",
                                    "paint_pairs__invoices__image",
-                                   "audit_logs__performed_by",
                                )
 permission_classes = [IsCSAgentOrAdmin]
 filterset_fields   = ["state", "channel"]
@@ -748,47 +743,77 @@ ordering_fields    = ["created", "purchase_date"]
 ordering           = ["-created"]
 
 # get_serializer_class():
-#   list     → WarrantyRegistrationListSerializer
-#   retrieve → WarrantyRegistrationDetailSerializer
-#   create   → WarrantyRegistrationCreateSerializer
+#   list   → WarrantyRegistrationListSerializer
+#   create → WarrantyRegistrationCreateSerializer
+```
 
-# @action(detail=True, methods=["post"], url_path="transition") @atomic:
+**`WarrantyRegistrationRetrieveAPIView(RetrieveAPIView)`**
+```python
+queryset = WarrantyRegistration.objects.select_related("approved_by").prefetch_related(
+    "paint_pairs__topcoat",
+    "paint_pairs__basecoat",
+    "paint_pairs__invoices__image",
+)
+permission_classes = [IsCSAgentOrAdmin]
+serializer_class = WarrantyRegistrationDetailSerializer
+```
+
+**`WarrantyRegistrationTransitionAPIView(GenericAPIView)`**
+```python
+# POST /api/v1/warranty/registrations/{id}/transition/
 #   1. get_object()
 #   2. validate RegistrationTransitionSerializer
 #   3. call FSM method
 #   4. update registration.notes
 #   5. if approve → set approved_by + approved_at
 #   6. registration.save()
-#   7. create RegistrationAuditLog entry
-#   8. if approve → generate_and_send_certificate.delay(registration.id)
-#   9. if reject/resubmit → send_whatsapp_status_notification.delay(phone, notes)
-#   10. return WarrantyRegistrationDetailSerializer response
+#   7. if approve → generate_and_send_certificate.delay(registration.id)
+#   8. if reject/resubmit → send_whatsapp_status_notification.delay(phone, notes)
+#   9. return WarrantyRegistrationDetailSerializer response
 ```
 
-**`WarrantyClaimViewSet(ModelViewSet)`**
+**`WarrantyClaimListCreateAPIView(ListCreateAPIView)`**
 ```python
 queryset = WarrantyClaim.objects.select_related(
     "registration", "paint_pair__topcoat", "paint_pair__basecoat", "approved_by"
 ).prefetch_related("images__image")
-permission_classes = [IsInternalUser]
+permission_classes = [IsAuthenticated]
 filterset_fields   = ["state", "issue_type"]
 search_fields      = ["registration__registration_code", "registration__phone_number"]
 ordering           = ["-created"]
+```
 
+**`WarrantyClaimRetrieveAPIView(RetrieveAPIView)`**
+```python
+queryset = WarrantyClaim.objects.select_related(
+    "registration", "paint_pair__topcoat", "paint_pair__basecoat", "approved_by"
+).prefetch_related("images__image")
+permission_classes = [IsAuthenticated]
+serializer_class = WarrantyClaimDetailSerializer
+```
+
+**`WarrantyClaimTransitionAPIView(GenericAPIView)`**
+```python
+# POST /api/v1/warranty/claims/{id}/transition/
+# same transition pattern, if approve → send_whatsapp_status_notification.delay(phone, msg)
 ```
 
 ### `warranty/api/v1/urls.py`
 ```python
-router = DefaultRouter()
-router.register("registrations", WarrantyRegistrationViewSet, basename="registration")
-router.register("claims", WarrantyClaimViewSet, basename="claim")
-urlpatterns = router.urls
+urlpatterns = [
+    path("registrations/", WarrantyRegistrationListCreateAPIView.as_view(), name="registration-list-create"),
+    path("registrations/<int:pk>/", WarrantyRegistrationRetrieveAPIView.as_view(), name="registration-detail"),
+    path("registrations/<int:pk>/transition/", WarrantyRegistrationTransitionAPIView.as_view(), name="registration-transition"),
+    path("claims/", WarrantyClaimListCreateAPIView.as_view(), name="claim-list-create"),
+    path("claims/<int:pk>/", WarrantyClaimRetrieveAPIView.as_view(), name="claim-detail"),
+    path("claims/<int:pk>/transition/", WarrantyClaimTransitionAPIView.as_view(), name="claim-transition"),
+]
 ```
 
 ### Tests (`warranty/tests/test_api.py`)
 ```
 Registration:
-✓ List requires internal role → 403 for regular user
+✓ List requires authentication → 401 for unauthenticated user
 ✓ CS agent lists registrations (paginated)
 ✓ Filter by state / channel
 ✓ Search by registration_code / phone_number
@@ -798,7 +823,7 @@ Registration:
 ✓ Create with future purchase_date → 400
 ✓ Create with no paint_pairs → 400
 ✓ Create with basecoat product as topcoat → 400
-✓ Transition: approve → APPROVED, audit log created, Celery task called
+✓ Transition: approve → APPROVED, Celery task called
 ✓ Transition: reject without notes → 400
 ✓ Transition: reject with notes → REJECTED
 ✓ Transition: invalid FSM (approve already-approved) → 400
@@ -882,7 +907,7 @@ class ComplaintImage(TimeStampedModel):
 class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
     # URL: ws/complaints/{complaint_id}/chat/
     # Auth: JWT token in query string → validated in connect()
-    # Internal users only (CS_AGENT / QUALITY_REVIEWER / ADMIN)
+    # Authenticated dashboard users only
     # Group: f"complaint_{complaint_id}"
     # connect(): authenticate, join group, accept()
     # receive_json(): validate text, create ChatMessage(sender=CS_AGENT), broadcast to group
@@ -900,20 +925,23 @@ application = ProtocolTypeRouter({
 })
 ```
 
-### ViewSet
+### Generic API views
 ```python
-class ComplaintViewSet(ModelViewSet):
-    permission_classes = [IsInternalUser]
+class ComplaintListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     filterset_fields   = ["status"]
     search_fields      = ["phone_number", "customer_name", "subject"]
 
-    @action(detail=True, methods=["post"], url_path="transition")
-    def transition(): # assign/resolve/close/reopen
+class ComplaintRetrieveAPIView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
 
-    @action(detail=True, methods=["get", "post"], url_path="messages")
-    def messages():
-        # GET  → list ChatMessages ordered by created
-        # POST → create ChatMessage(sender=CS_AGENT) + broadcast via channel_layer.group_send()
+class ComplaintTransitionAPIView(GenericAPIView):
+    # POST /api/v1/complaints/{id}/transition/
+    # assign/resolve/close/reopen
+
+class ComplaintMessageListCreateAPIView(ListCreateAPIView):
+    # GET  → list ChatMessages ordered by created
+    # POST → create ChatMessage(sender=CS_AGENT) + broadcast via channel_layer.group_send()
 ```
 
 ### Tests
@@ -1162,9 +1190,8 @@ def send_whatsapp_status_notification(self, phone: str, message: str) -> None:
 
 ### Download endpoint (addition to Chunk 5 views)
 ```python
-# WarrantyRegistrationViewSet only
-@action(detail=True, methods=["get"], url_path="download-certificate")
-def download_certificate(self, request, pk=None):
+class WarrantyRegistrationCertificateDownloadAPIView(GenericAPIView):
+    # GET /api/v1/warranty/registrations/{id}/download-certificate/
     # FileResponse(registration.warranty_certificate) or 404
 ```
 
@@ -1260,7 +1287,7 @@ application = ProtocolTypeRouter({
 Update `docker-compose.dev.yml` + `docker-compose.stage.yml` — rename `project_*` volumes → `dulux_chatbot_*`
 
 ### Swagger tags
-Add `tags` on each ViewSet: Products, Warranty Registrations, Warranty Claims, Complaints, WhatsApp Chatbot
+Add `tags` on each API view: Products, Warranty Registrations, Warranty Claims, Complaints, WhatsApp Chatbot
 
 ### Final checks
 ```bash

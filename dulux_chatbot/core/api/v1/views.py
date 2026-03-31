@@ -3,9 +3,11 @@ import logging
 from typing import ClassVar
 
 from health_check.views import MainView
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 
 
 logger = logging.getLogger("dulux_chatbot")
@@ -19,6 +21,6 @@ class HealthAPIView(MainView, APIView):
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR if self.errors else status.HTTP_200_OK
         response = self.render_to_response_json(self.plugins, status_code)
         if status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
-            logger.info(f"Django health check response: {response.content}")
+            logger.info("Django health check response: %s", response.content)
 
         return Response(status=response.status_code)
