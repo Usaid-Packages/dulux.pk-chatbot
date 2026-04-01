@@ -1,0 +1,32 @@
+name: Qodo PR-Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  pr_agent_job:
+    if: ${{ github.event.sender.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    steps:
+      # Run PR-Agent
+      - name: PR Agent Action
+        uses: qodo-ai/pr-agent@main
+        env:
+          OPENAI_KEY: ${{ secrets.OPENROUTER_KEY }}
+          OPENAI__API_BASE: "https://openrouter.ai/api/v1"
+          CONFIG__MODEL: "openai/z-ai/glm-4.7"
+          CONFIG__CUSTOM_MODEL_MAX_TOKENS: "128000"
+          CONFIG__MAX_MODEL_TOKENS: "128000"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_improve: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AGENT_CONFIG_FILE: .pr_agent.toml
