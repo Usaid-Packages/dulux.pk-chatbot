@@ -1,3 +1,1 @@
-export const apiEndpoints = {
-  POSTS: '/posts',
-};
+export const apiEndpoints = {};

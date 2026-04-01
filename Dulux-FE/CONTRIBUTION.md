@@ -1,6 +1,7 @@
 # Contributing Guidelines
 
-This document outlines our team's code acceptance criteria and best practices for our React application. Following these guidelines ensures consistency and maintainability across our codebase.
+This document outlines our team's code acceptance criteria and best practices for our React application. Following these
+guidelines ensures consistency and maintainability across our codebase.
 
 ## Code Style and Formatting
 
@@ -8,7 +9,8 @@ This document outlines our team's code acceptance criteria and best practices fo
 
 - Avoid using percentage values for positioning attributes (e.g., `top`, `left`, `right`, `bottom`)
 
-  **Reason**: Percentage-based positioning can cause unpredictable behavior depending on the parent element's dimensions. Using pixel values ensures more precise and consistent placement.
+  **Reason**: Percentage-based positioning can cause unpredictable behavior depending on the parent element's
+  dimensions. Using pixel values ensures more precise and consistent placement.
 
   ```css
   /* ❌ Don't do this */
@@ -31,16 +33,17 @@ This document outlines our team's code acceptance criteria and best practices fo
 - Use descriptive names for event handlers that indicate the action being performed
 - Avoid generic names like `handle` or `handleClick`
 
-  **Reason**: Descriptive names improve readability and make the code easier to understand, especially in larger codebases.
+  **Reason**: Descriptive names improve readability and make the code easier to understand, especially in larger
+  codebases.
 
 ```jsx
 /* ❌ Don't do this */
-const handle = (e) => {
+const handle = e => {
   // ...
 };
 
 /* ✅ Do this instead */
-const handleUserProfile = (e) => {
+const handleUserProfile = e => {
   // ...
 };
 ```
@@ -59,7 +62,7 @@ const handleUserProfile = (e) => {
  * @param {string} dateString - ISO date string
  * @returns {string} Formatted date
  */
-const formatDate = (dateString) => {
+const formatDate = dateString => {
   // ...
 };
 
@@ -98,16 +101,16 @@ const [count, setCount] = useState(0);
 
 ```jsx
 /* ❌ Don't do this */
-const handleUserAvatarItemClick = (itemId) => {
+const handleUserAvatarItemClick = itemId => {
   //. ...
 };
-list.map((item) => <UserAvatarItem onClick={() => handleUserAvatarItemClick(item?.id)} />);
+list.map(item => <UserAvatarItem onClick={() => handleUserAvatarItemClick(item?.id)} />);
 
 /* ✅ Do this instead */
-const handleUserAvatarItemClick = (itemId) => () => {
+const handleUserAvatarItemClick = itemId => () => {
   //. ...
 };
-list.map((item) => <UserAvatarItem onClick={handleUserAvatarItemClick(item?.id)} />);
+list.map(item => <UserAvatarItem onClick={handleUserAvatarItemClick(item?.id)} />);
 ```
 
 #### Component Structure
@@ -143,3 +146,63 @@ const Header = () => (
   </div>
 );
 ```
+
+## Project-Specific Additions (Keep Existing Rules)
+
+The sections above remain valid. Add the following project-specific rules and workflow requirements as well.
+
+### Stack and Scripts
+
+- Stack: `Vite + React + TypeScript`
+- Main scripts:
+  - `yarn dev`
+  - `yarn build`
+  - `yarn preview`
+  - `yarn lint`
+
+### Pre-Commit and Formatting
+
+- Husky pre-commit uses Yarn:
+  - `yarn lint-staged`
+- `lint-staged` runs on staged `*.{js,jsx,ts,tsx}` files:
+  - `prettier --write --config ./.prettierrc`
+  - `eslint --fix --config ./eslint.config.ts`
+- Always stage files before committing so only intended files are processed.
+
+### Folder Responsibilities (Mandatory)
+
+- `src/components/ui` -> atomic UI only (no business logic)
+- `src/components/forms` -> form UI typed by schemas from `src/schemas`
+- `src/pages` -> page composition only (no business logic)
+- `src/hooks` -> logic only (no JSX), names start with `use`
+- `src/services` -> API clients only; use `axiosInstance.ts`
+- `src/schemas` -> Zod schemas for form and API validation
+- `src/types` -> API/shared types
+- `src/utils` -> pure helpers (no React/DOM)
+- `/src/data`:\*\* Data-access layer for React Query (query keys, query/mutation functions, and schema-based validation)
+
+### React and TypeScript Rules (Mandatory)
+
+- Use function components only.
+- Keep one component per file and extract when component grows too large.
+- Destructure props at the top of component.
+- Add concise JSDoc for component purpose and props.
+- Do not use `any`; use strict types and narrowing.
+- Use `interface` for object contracts and `type` for unions/utilities.
+- Avoid arrow functions directly in JSX; prefer named handlers.
+- Use stable unique IDs for list keys.
+
+### Services and Security Rules
+
+- Do not call `axios` directly from components/pages.
+- Route requests through service layer (`apiClient.ts` and `axiosInstance.ts`).
+- Never commit secrets or credentials.
+- Treat external input as untrusted and validate before use.
+- Do not store sensitive data in browser storage.
+
+### PR Checklist
+
+- `yarn lint` passes
+- `yarn build` passes
+- No unrelated file changes in PR
+- PR description includes: what changed, why, and how to test

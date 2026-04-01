@@ -1,3 +1,1 @@
-export const queryKeys = {
-  POSTS: 'POSTS',
-};
+export const queryKeys = {};
