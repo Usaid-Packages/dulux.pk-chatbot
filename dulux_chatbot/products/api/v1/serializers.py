@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
@@ -35,6 +36,12 @@ class SurfaceTypeSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    Requires `prefetch_related("images__image", "surface_mappings__surface_type")`
+    on the product queryset. If those relations are not prefetched before
+    serialization, this serializer will trigger N+1 queries.
+    """
+
     images = ProductImageSerializer(many=True, read_only=True)
     surface_types = serializers.PrimaryKeyRelatedField(
         queryset=SurfaceType.objects.all(),
@@ -62,12 +69,14 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created", "modified")
 
+    @transaction.atomic
     def create(self, validated_data: dict) -> Product:
         surface_types = validated_data.pop("surface_types", [])
         product = super().create(validated_data)
         self._sync_surface_types(product=product, surface_types=surface_types)
         return product
 
+    @transaction.atomic
     def update(self, instance: Product, validated_data: dict) -> Product:
         surface_types = validated_data.pop("surface_types", None)
         product = super().update(instance, validated_data)
