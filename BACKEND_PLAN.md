@@ -571,6 +571,7 @@ class RejectionField(TimeStampedModel):
     # CS agent flags specific fields/images when requesting resubmission.
     # Chatbot reads this to re-prompt only rejected fields.
     registration = FK(WarrantyRegistration, CASCADE, related_name="rejection_fields")
+    field_name = CharField(max_length=10, blank=True)
     note         = CharField(max_length=500, blank=True)
 
     class Meta:
