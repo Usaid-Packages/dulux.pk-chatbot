@@ -24,3 +24,7 @@ class HealthAPIView(MainView, APIView):
             logger.info("Django health check response: %s", response.content)
 
         return Response(status=response.status_code)
+
+
+class ImageUploadAPIView(generics.CreateAPIView):
+    serializer_class = ImageSerializer

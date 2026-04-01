@@ -53,7 +53,7 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.redis",
 ]
 
-CUSTOM_APPS = ["dulux_chatbot.core", "dulux_chatbot.users"]
+CUSTOM_APPS = ["dulux_chatbot.core", "dulux_chatbot.users", "dulux_chatbot.products"]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 

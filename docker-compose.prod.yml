@@ -12,25 +12,38 @@ x-django-build: &django-build
       REQUIREMENT_FILE: $REQUIREMENT_FILE
 
 services:
-  celery:
-    <<: [*django-build, *common]
-    command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program celery -A $PROJECT worker -l info"
-    depends_on:
-      - django
+  infisical-agent:
+    image: infisical/infisical:latest
+    user: "root"
+    entrypoint: ["/bin/sh", "/scripts/infisical-agent-entrypoint.sh"]
     env_file:
       - .env
     volumes:
+      - ./scripts:/scripts:ro
+      - infisical-secrets:/secrets
+    restart: unless-stopped
+
+  celery:
+    <<: [*django-build, *common]
+    command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program celery -A $PROJECT worker -l info"
+    entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
+    depends_on:
+      - django
+      - infisical-agent
+    volumes:
       - ./:/code
+      - infisical-secrets:/secrets:ro
 
   celery_beat:
     <<: [*django-build, *common]
     command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program celery -A $PROJECT beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
     depends_on:
       - django
-    env_file:
-      - .env
+      - infisical-agent
     volumes:
       - ./:/code
+      - infisical-secrets:/secrets:ro
 
   certbot:
     image: certbot/certbot
@@ -43,24 +56,27 @@ services:
   django:
     <<: [*django-build, *common]
     command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers $GUNICORN_WORKERS --worker-class gthread --threads $GUNICORN_THREADS"
+    entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
     ports:
       - "8000"
-    env_file:
-      - .env
     volumes:
       - ./:/code
+      - infisical-secrets:/secrets:ro
+    depends_on:
+      - infisical-agent
 
   flower:
     <<: [*django-build, *common]
     command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program celery -A $PROJECT flower --conf=/code/config/settings/flowerconfig.py"
+    entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
     ports:
       - "5555"
     depends_on:
       - celery
-    env_file:
-      - .env
+      - infisical-agent
     volumes:
       - .:/code/
+      - infisical-secrets:/secrets:ro
 
   newrelic:
     image: newrelic/infrastructure:latest
@@ -87,7 +103,8 @@ services:
     depends_on:
       - django
       - flower
-    env_file:
-      - .env
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
     <<: *common
+
+volumes:
+  infisical-secrets:
