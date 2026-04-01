@@ -950,7 +950,7 @@ Zustand stays minimal:
 - authenticated user/session snapshot
 - sidebar collapsed state
 - currently selected chat id
-- optional wizard shared draft state
+- optional wizard shared draft state (in-memory only)
 - notification counters
 
 Local component state:
@@ -994,7 +994,7 @@ Implementation note:
 | Products                   | React Query + mutations                   |
 | Import                     | React Query mutation + result state       |
 | Complaints Chat            | React Query + WebSocket + local merge     |
-| Manual Registration Wizard | Zustand (shared draft) + local form state |
+| Manual Registration Wizard | Zustand (in-memory shared draft) + local form state |
 
 ### 4.6 Clean Architecture View
 
@@ -1059,7 +1059,9 @@ type AppStore = {
   clearWizardDraft: () => void;
 };
 ```
-- Persist wizard draft in localStorage and hydrate on mount.
+- Do not persist manual registration draft data in `localStorage`/`sessionStorage`.
+- Keep wizard draft state in-memory only (Zustand + form state); clear on tab close/refresh/logout/submit.
+- If draft recovery is required, use a backend draft endpoint with proper auth and server-side controls instead of browser storage.
 
 ---
 
@@ -1566,6 +1568,7 @@ State strategy:
 - use `useForm` + `FormProvider` at wizard root
 - use `useFormContext` inside each step
 - enforce per-step validation before navigation
+- do not store sensitive wizard draft fields in browser storage (`localStorage`/`sessionStorage`)
 
 Example:
 ```tsx
