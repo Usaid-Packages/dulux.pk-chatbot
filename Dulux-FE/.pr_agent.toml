@@ -1,0 +1,144 @@
+# ==============================================================================
+# REACT DULUX PR-AGENT CONFIGURATION
+# ==============================================================================
+# Optimized for React + TypeScript + Vite projects
+# ==============================================================================
+
+[config]
+# Branches/PRs to ignore
+ignore_pr_source_branches = ['develop', 'main', 'master', 'stage']
+ignore_pr_labels = ["WIP", "no-pr-agent"]
+
+# Context settings
+patch_extra_lines_before = 10
+patch_extra_lines_after = 10
+allow_dynamic_context = true
+max_extra_lines_before_dynamic_context = 200
+
+# Extended thinking for Claude models
+enable_claude_extended_thinking = true
+extended_thinking_budget_tokens = 10000
+extended_thinking_max_output_tokens = 4096
+
+# Knowledge base files
+add_repo_metadata = true
+add_repo_metadata_file_list = ["AGENTS.MD", "docs/PRD.md"]
+
+# Model configuration (using OpenRouter)
+model = "openai/z-ai/glm-4.7"
+fallback_models = ["openai/deepseek/deepseek-v3.2"]
+max_model_tokens = 128000
+custom_model_max_tokens = 128000
+
+# ==============================================================================
+# PR REVIEWER SETTINGS (/review)
+# ==============================================================================
+
+[pr_reviewer]
+persistent_comment = true
+require_score_review = true
+require_tests_review = true
+require_security_review = true
+require_estimate_effort_to_review = true
+num_max_findings = 20
+
+enable_review_labels_security = true
+enable_review_labels_effort = true
+
+extra_instructions = """
+
+# ==============================================================================
+# PR REVIEWER INSTRUCTIONS TO REVIEW
+# ==============================================================================
+
+ROLE: Senior Frontend Architect specializing in React.
+MISSION: Enforce AGENTS.MD as the single source of truth and produce actionable, evidence-based review findings.
+
+YOU HAVE CONTEXT:
+- Engineering standards in AGENTS.MD (treat as binding rules)
+- Product requirements in docs/PRD.md (treat as source-of-truth)
+
+PRINCIPLES:
+- Prefer concrete, checkable claims over vague advice
+- Do not restate AGENTS.MD rules in output; reference the relevant section and apply it
+- Ignore pure formatting unless it impacts clarity
+- If uncertain, phrase as question with evidence that would confirm it
+
+MANDATORY CHECKS (in order):
+1) PRD COMPLIANCE (BLOCKERS)
+   - Does implementation satisfy requirements in docs/PRD.md?
+   - List exact missing/incorrect requirements and where code diverges
+
+2) REPOSITORY BASELINE COMPLIANCE (BLOCKERS)
+   - Enforce AGENTS.MD "Required Project Files", "Environment & Tooling", and "Testing & CI/CD" sections.
+   - Required root files: README.md, CONTRIBUTION.md/CONTRIBUTING.md, .github/pull_request_template.md
+
+3) ARCHITECTURE & FILE PLACEMENT (HIGHEST PRIORITY)
+   - Enforce AGENTS.MD "Architecture & Folder Placement" section strictly.
+
+4) STANDARDS ENFORCEMENT (HIGHEST PRIORITY)
+   - Enforce all remaining AGENTS.MD sections without duplication:
+     JavaScript, React, Hooks, TypeScript, TanStack Query, Accessibility, Security,
+     Performance, Code Quality, PR standards, and testing requirements.
+   - Each finding must cite the violated AGENTS.MD section title.
+
+OUTPUT FORMAT:
+- Start with: Overall Risk (Low/Med/High) + 1 sentence rationale
+- List findings in descending severity:
+  - [BLOCKER] / [HIGH] / [MED] / [LOW]
+  - Include: AGENTS section violated, what is wrong, why it matters, specific fix
+"""
+
+# ==============================================================================
+# PR CODE SUGGESTIONS SETTINGS (/improve)
+# ==============================================================================
+[pr_code_suggestions]
+num_code_suggestions = 10
+num_code_suggestions_per_chunk = 5
+suggestions_score_threshold = 2
+focus_only_on_problems = false
+persistent_comment = true
+
+extra_instructions = """
+ACT AS: Senior React Engineer focused on code quality, performance, and user experience.
+MISSION: Generate concrete /improve suggestions by applying AGENTS.MD (single source of truth).
+
+YOU HAVE CONTEXT:
+- Engineering standards in AGENTS.MD (binding rules)
+- Product requirements in docs/PRD.md (source-of-truth)
+
+PRIORITIZE SUGGESTIONS FOR: 1) 🔴 CORE CORRECTNESS & ARCHITECTURE (HIGHEST)
+   - Apply AGENTS sections for Architecture, TypeScript, JavaScript, React, Hooks, and TanStack Query.
+   - Include /src/data responsibilities:
+     query key definitions, query/mutation functions, and schema-based data validation.
+
+2) 🛡️ NON-FUNCTIONAL QUALITY (SECURITY + PERFORMANCE + ACCESSIBILITY)
+   - Apply AGENTS sections for Security, Performance, and Accessibility.
+   - Convert each applicable violation into a concrete code suggestion.
+
+3) 🎯 CODE QUALITY & MAINTAINABILITY
+   - Apply AGENTS sections for clean code, testing, and PR quality.
+   - Prioritize high-impact fixes over stylistic rewrites.
+
+HOW TO WRITE SUGGESTIONS:
+- Be specific: point to exact lines with concrete fixes
+- Start each suggestion with: "AGENTS section violated: <section title>"
+- Format: "Issue → Why it matters → Suggested fix"
+- Provide code snippets when possible
+- Keep concise (2-3 sentences)
+"""
+
+# ==============================================================================
+# PR DESCRIPTION SETTINGS (/describe)
+# ==============================================================================
+[pr_description]
+add_original_user_description = true
+publish_description_as_comment = false
+use_description_markers = true
+generate_ai_title = false
+
+enable_pr_type = true
+enable_pr_diagram = true
+use_bullet_points = true
+collapsible_file_list = "adaptive"
+inline_file_summary = false
