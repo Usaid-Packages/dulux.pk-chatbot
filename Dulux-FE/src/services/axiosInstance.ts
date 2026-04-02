@@ -1,9 +1,11 @@
 import axios from 'axios';
+import type { AxiosError } from 'axios';
 import * as caseConverter from 'change-object-case';
 
-import { ACCESS_TOKEN } from '#/constants';
+import { ACCESS_TOKEN, HTTP_STATUS_UNAUTHORIZED } from '#/constants';
 import { getLocalStorageItem } from '#/utils';
 import env from '#env';
+import { handleUnauthorized } from './refreshTokenService';
 
 const options = { recursive: true, arrayRecursive: true };
 
@@ -37,12 +39,19 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
-  error => {
-    if (error.response) {
-      if (error?.response?.data && typeof error.response.data === 'object') {
-        error.response.data = caseConverter.camelKeys(error.response.data, options);
-      }
+  async (error: AxiosError) => {
+    const { response } = error;
+    const status = response?.status ?? 0;
+    const data = response?.data ?? {};
+
+    if (status === HTTP_STATUS_UNAUTHORIZED) {
+      return handleUnauthorized(error, axiosInstance);
     }
+
+    if (data && typeof data === 'object' && error.response) {
+      error.response.data = caseConverter.camelKeys(data, options);
+    }
+
     return Promise.reject(error);
   }
 );
