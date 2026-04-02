@@ -5,7 +5,7 @@ import { Navigate } from 'react-router-dom';
 import { AuthCard, LoginForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
 import { useAuth } from '#/context';
-import { useAuthActions } from '#/hooks';
+import { useLoginAction } from '#/hooks';
 
 /**
  * LoginPage composes login-specific UI and hooks for authentication.
@@ -14,7 +14,7 @@ import { useAuthActions } from '#/hooks';
  */
 export const LoginPage = (): JSX.Element => {
   const { token } = useAuth();
-  const { handleLogin, isLoginPending } = useAuthActions();
+  const { handleLogin, isLoginPending } = useLoginAction();
 
   if (token) {
     return <Navigate to={ROUTES.HOME} replace />;

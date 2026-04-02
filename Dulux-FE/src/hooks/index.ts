@@ -1,2 +1,2 @@
 export { default as useSentry } from './useSentry';
-export { useAuthActions } from './auth';
+export { useForgotPasswordAction, useLoginAction, useLogoutAction } from './auth';

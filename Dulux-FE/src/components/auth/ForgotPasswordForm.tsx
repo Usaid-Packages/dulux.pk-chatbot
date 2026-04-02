@@ -13,7 +13,7 @@ import { AuthInputField } from './AuthInputField';
 interface ForgotPasswordFormProps {
   isSubmitting: boolean;
   errorMessage?: string | null;
-  onSubmit: (values: ForgotPasswordFormValues) => Promise<void>;
+  onSubmit: (values: ForgotPasswordFormValues) => void | Promise<void>;
 }
 
 /**

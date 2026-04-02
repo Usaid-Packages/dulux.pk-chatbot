@@ -5,7 +5,7 @@ import { Navigate } from 'react-router-dom';
 import { AuthCard, ForgotPasswordForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
 import { useAuth } from '#/context';
-import { useAuthActions } from '#/hooks';
+import { useForgotPasswordAction } from '#/hooks';
 
 /**
  * ForgotPasswordPage composes forgot-password UI and behavior.
@@ -14,7 +14,7 @@ import { useAuthActions } from '#/hooks';
  */
 export const ForgotPasswordPage = (): JSX.Element => {
   const { token } = useAuth();
-  const { handleForgotPassword, isForgotPasswordPending, forgotPasswordErrorMessage } = useAuthActions();
+  const { handleForgotPassword, isForgotPasswordPending, forgotPasswordErrorMessage } = useForgotPasswordAction();
 
   if (token) {
     return <Navigate to={ROUTES.HOME} replace />;

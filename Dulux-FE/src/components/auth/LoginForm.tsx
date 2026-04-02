@@ -12,7 +12,7 @@ import { AuthInputField } from './AuthInputField';
 
 interface LoginFormProps {
   isSubmitting: boolean;
-  onSubmit: (values: LoginFormValues) => Promise<void>;
+  onSubmit: (values: LoginFormValues) => void | Promise<void>;
 }
 
 /**
