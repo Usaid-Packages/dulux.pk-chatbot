@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
 export interface PrivateRouteProps {
-  children: ReactNode;
+  /** When omitted, renders nested `<Outlet />` for layout routes. */
+  children?: ReactNode;
 }
