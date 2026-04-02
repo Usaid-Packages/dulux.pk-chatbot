@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 
 import { ACCESS_TOKEN, AUTH_USER, REFRESH_TOKEN } from '#/constants';
+import { useAuthSession } from '#/hooks/auth/useAuthSession';
 import type { AuthUser } from '#/types/auth.types';
-import { getLocalStorageItem, setLocalStorageItem, removeLocalStorageItem } from '#/utils/localStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '#/utils';
 
 interface AuthContextType {
   token: string | null;
@@ -20,6 +21,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const { clearAuthSession } = useAuthSession();
   const [token, setToken] = useState<string | null>(() => getLocalStorageItem<string>(ACCESS_TOKEN));
   const [refreshToken, setRefreshToken] = useState<string | null>(() => getLocalStorageItem<string>(REFRESH_TOKEN));
   const [user, setUser] = useState<AuthUser | null>(() => getLocalStorageItem<AuthUser>(AUTH_USER));
@@ -38,9 +40,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setToken(null);
     setRefreshToken(null);
     setUser(null);
-    removeLocalStorageItem(ACCESS_TOKEN);
-    removeLocalStorageItem(REFRESH_TOKEN);
-    removeLocalStorageItem(AUTH_USER);
+    clearAuthSession();
   };
 
   return <AuthContext.Provider value={{ token, refreshToken, user, logout, login }}>{children}</AuthContext.Provider>;

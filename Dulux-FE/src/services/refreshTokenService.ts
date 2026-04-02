@@ -1,9 +1,10 @@
-import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import axios from 'axios';
 
-import { ACCESS_TOKEN, apiEndpoints, AUTH_USER, REFRESH_TOKEN } from '#/constants';
-import { getLocalStorageItem, removeLocalStorageItem, setLocalStorageItem } from '#/utils';
+import { ACCESS_TOKEN, apiEndpoints, REFRESH_TOKEN } from '#/constants';
+import { clearAuthSession, getLocalStorageItem, setLocalStorageItem } from '#/utils';
 import env from '#env';
+import axiosInstance from './axiosInstance';
 
 interface RefreshTokenResponse {
   access: string;
@@ -11,13 +12,11 @@ interface RefreshTokenResponse {
 }
 
 const handleLogout = (error: unknown) => {
-  removeLocalStorageItem(ACCESS_TOKEN);
-  removeLocalStorageItem(REFRESH_TOKEN);
-  removeLocalStorageItem(AUTH_USER);
+  clearAuthSession();
   return Promise.reject(error);
 };
 
-export const handleUnauthorized = async (error: unknown, axiosInstance: AxiosInstance) => {
+export const handleUnauthorized = async (error: unknown) => {
   const err = error as { config?: InternalAxiosRequestConfig & { _isRetry?: boolean } };
   const originalRequest = err.config;
 

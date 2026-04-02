@@ -17,10 +17,9 @@
  * - Complexity: O(1)
  */
 
+import { DEFAULT_API_ERROR_MESSAGE } from '#/constants';
 import type { ApiErrorShape } from '#/types/common/error.types';
 import type { Paginated } from '#/types/services.types';
-
-export const DEFAULT_API_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 export const getApiErrorMessage = (error: unknown): string => {
   if (!error || typeof error !== 'object') {

@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
     const data = response?.data ?? {};
 
     if (status === HTTP_STATUS_UNAUTHORIZED) {
-      return handleUnauthorized(error, axiosInstance);
+      return handleUnauthorized(error);
     }
 
     if (data && typeof data === 'object' && error.response) {
