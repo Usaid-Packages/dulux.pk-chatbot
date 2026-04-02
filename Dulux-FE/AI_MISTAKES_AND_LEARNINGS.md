@@ -37,6 +37,26 @@
 - Fix: Added a persistent quick rule and this log entry.
 - Rule: Every generic PR review comment must be appended here.
 
+### 2026-04-02 15:34 - Hook naming and scope
+- Issue: Hook names were too verbose (`*Action`) and one hook mixed multiple concerns.
+- Fix: Renamed to `useLogin`, `useForgotPassword`, `useLogout`; kept each hook focused.
+- Rule: Use short hook names and keep each hook single-purpose.
+
+### 2026-04-02 15:35 - Duplicate error surfaces
+- Issue: Forgot-password error shown in both toast and inline component.
+- Fix: Kept inline form error for this flow; removed duplicate toast error.
+- Rule: Show one primary error surface per flow unless explicitly required.
+
+### 2026-04-02 15:36 - Unnecessary wrapper handlers
+- Issue: Added extra click wrapper functions where direct handler binding was enough.
+- Fix: Bound handlers directly in JSX when signatures already match.
+- Rule: Avoid wrapper functions unless argument shaping or extra logic is needed.
+
+### 2026-04-02 15:37 - Context hook naming clarity
+- Issue: Context hook name was ambiguous.
+- Fix: Renamed to `useAuthContext` and updated all imports/usages.
+- Rule: Context hooks should include `Context` in the name for clarity.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

@@ -8,7 +8,7 @@ import { useForgotPasswordMutation } from '#/data-layer/auth';
 import type { ForgotPasswordFormValues } from '#/schemas/authSchemas';
 import { getApiErrorMessage } from '#/utils';
 
-export const useForgotPasswordAction = () => {
+export const useForgotPassword = () => {
   const [forgotPasswordErrorMessage, setForgotPasswordErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const forgotPasswordMutation = useForgotPasswordMutation();
@@ -22,9 +22,7 @@ export const useForgotPasswordAction = () => {
         navigate(ROUTES.LOGIN, { replace: true });
       },
       onError: error => {
-        const message = getApiErrorMessage(error);
-        setForgotPasswordErrorMessage(message);
-        toast.error(message);
+        setForgotPasswordErrorMessage(getApiErrorMessage(error));
       },
     });
   };

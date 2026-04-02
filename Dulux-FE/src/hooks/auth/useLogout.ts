@@ -1,12 +1,12 @@
 import { toast } from 'react-toastify';
 
-import { useAuth } from '#/context';
+import { useAuthContext } from '#/context';
 import { useLogoutMutation } from '#/data-layer/auth';
 import type { LogoutPayload } from '#/types/auth.types';
 import { getApiErrorMessage } from '#/utils';
 
-export const useLogoutAction = () => {
-  const { logout, refreshToken } = useAuth();
+export const useLogout = () => {
+  const { logout, refreshToken } = useAuthContext();
   const logoutMutation = useLogoutMutation();
 
   const handleLogout = (): void => {

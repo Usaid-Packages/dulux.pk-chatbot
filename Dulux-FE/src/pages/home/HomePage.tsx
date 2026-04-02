@@ -1,8 +1,8 @@
 import type { JSX } from 'react';
 
 import { Button } from '#/components/ui/Button';
-import { useAuth } from '#/context';
-import { useLogoutAction } from '#/hooks';
+import { useAuthContext } from '#/context';
+import { useLogout } from '#/hooks';
 
 /**
  * HomePage renders the authenticated landing experience.
@@ -10,12 +10,8 @@ import { useLogoutAction } from '#/hooks';
  * @returns Dashboard home page.
  */
 export const HomePage = (): JSX.Element => {
-  const { user } = useAuth();
-  const { handleLogout, isLogoutPending } = useLogoutAction();
-
-  const handleLogoutClick = (): void => {
-    void handleLogout();
-  };
+  const { user } = useAuthContext();
+  const { handleLogout, isLogoutPending } = useLogout();
 
   return (
     <main className='min-h-screen bg-background px-4 py-10'>
@@ -27,7 +23,7 @@ export const HomePage = (): JSX.Element => {
             Signed in as <span className='font-medium text-foreground'>{user?.email ?? 'authenticated user'}</span>
           </p>
         </div>
-        <Button variant='outline' onClick={handleLogoutClick} disabled={isLogoutPending}>
+        <Button variant='outline' onClick={handleLogout} disabled={isLogoutPending}>
           {isLogoutPending ? 'Logging out...' : 'Logout'}
         </Button>
       </div>

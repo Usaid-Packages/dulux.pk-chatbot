@@ -44,14 +44,14 @@ export const ForgotPasswordForm = ({ isSubmitting, errorMessage, onSubmit }: For
         registration={register(emailField.name)}
         error={errors[emailField.name]}
       />
-      {errorMessage ? (
+      {errorMessage && (
         <p
           role='alert'
           className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'
         >
           {errorMessage}
         </p>
-      ) : null}
+      )}
       <Button className='w-full' type='submit' disabled={isSubmitting}>
         {isSubmitting ? 'Sending...' : 'Send reset instructions'}
       </Button>

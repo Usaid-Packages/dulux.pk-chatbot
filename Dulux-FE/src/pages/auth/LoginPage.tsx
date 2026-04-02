@@ -4,8 +4,8 @@ import { Navigate } from 'react-router-dom';
 
 import { AuthCard, LoginForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
-import { useAuth } from '#/context';
-import { useLoginAction } from '#/hooks';
+import { useAuthContext } from '#/context';
+import { useLogin } from '#/hooks';
 
 /**
  * LoginPage composes login-specific UI and hooks for authentication.
@@ -13,15 +13,15 @@ import { useLoginAction } from '#/hooks';
  * @returns Login page component.
  */
 export const LoginPage = (): JSX.Element => {
-  const { token } = useAuth();
-  const { handleLogin, isLoginPending } = useLoginAction();
+  const { token } = useAuthContext();
+  const { handleLogin, isLoginPending } = useLogin();
 
   if (token) {
     return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40 px-4 py-12'>
+    <main className='flex min-h-screen items-center justify-center bg-linear-to-b from-background to-muted/40 px-4 py-12'>
       <AuthCard
         title='Welcome to Dulux Customer Service'
         subtitle='Sign in to continue managing the Dulux Customer Service workflows.'
