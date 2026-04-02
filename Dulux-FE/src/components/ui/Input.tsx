@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { cn } from '#/utils/utils';
+import { cn } from '#/utils';
 
 const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, ...props }, ref): React.JSX.Element => {
     return (
       <input
         type={type}
