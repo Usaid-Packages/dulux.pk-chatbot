@@ -4,9 +4,9 @@ import React, { Suspense } from 'react';
 import { Route, createBrowserRouter, createRoutesFromElements, Navigate } from 'react-router-dom';
 
 import { ROUTES } from '#/constants';
-import { useAuth } from '#/context';
+import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage } from '#/pages/auth';
-import { HomePage } from '#/pages/home';
+import { HomePage } from '#/pages/home/HomePage';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 // replace this with your own loading component
@@ -16,7 +16,7 @@ const LoadingFallback = (): JSX.Element => (
   </div>
 );
 const RedirectHandler = () => {
-  const { token } = useAuth();
+  const { token } = useAuthContext();
   return token ? <Navigate to={ROUTES.HOME} replace /> : <Navigate to={ROUTES.AUTH} replace />;
 };
 

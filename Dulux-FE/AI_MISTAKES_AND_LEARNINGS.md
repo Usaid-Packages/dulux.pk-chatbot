@@ -1,102 +1,82 @@
 # AI Mistakes and Learnings
 
-This file tracks mistakes made during development/review, why they happened, and the prevention rule to avoid repeating them.
+## Quick Rules
 
-## Operating Baseline (Read and Follow Every Task)
+- Use `shadcn` UI primitives when available.
+- Keep shared interfaces in `src/types/**`.
+- Follow import order/grouping strictly.
+- Use `yarn` for workspace checks.
+- Add `ImportMetaEnv` typing before using `import.meta.env`.
+- Prefer mutation `onSuccess/onError` callbacks in action hooks over `mutateAsync` + `try/catch`.
+- Add every generic PR review comment to this file.
 
-- Source of truth:
-  - `docs/PRD.md`
-  - `Dulux-FE/AGENTS.MD`
-  - `Dulux-FE/AGENTS_ENGINEERING_STANDARDS.md`
-- Frontend stack: Vite + React + TypeScript.
-- Architecture constraints:
-  - `src/components/ui`: atomic UI only, no business logic.
-  - `src/components/forms`: form UIs typed by Zod schemas in `src/schemas`.
-  - `src/pages`: composition only, no business logic.
-  - `src/hooks`: logic only, no JSX, names start with `use`.
-  - `src/services`: API clients only via `axiosInstance.ts`.
-  - `src/schemas`: Zod schemas.
-  - `src/types`: shared and API types.
-  - `src/utils`: pure helpers only.
+## Mistake Log (Short)
 
-- Code quality constraints:
-  - No `any`.
-  - Explicit return types for exported functions/components.
-  - Destructure props and values where appropriate.
-  - No inline arrow functions in JSX; define named handlers.
-  - No inline styles; use Tailwind/CSS.
-  - No magic numbers/strings; extract constants/enums.
-  - Function components only; one component per file; keep file size focused.
-  - Add concise JSDoc for components and brief comments for non-trivial logic.
-- Testing and validation:
-  - Add/update tests for reusable components/hooks.
-  - Run lint/tests/build checks for touched scope before finalizing.
+### 2026-04-02 12:40 - Import order + ImportMeta typing
 
-## Mistake Log
+- Issue: `import/order` violations and missing `ImportMetaEnv`.
+- Fix: Reordered imports and added env typings in `src/types/env.d.ts`.
+- Rule: Run import-order pass + env typing check before final output.
 
-Use this format for every new mistake:
+### 2026-04-02 12:58 - Raw input used
 
-### YYYY-MM-DD - <Short title>
+- Issue: Used native `<input>` in auth field.
+- Fix: Replaced with `#/components/ui/Input`.
+- Rule: Use `shadcn` controls by default.
 
-- Context:
-- Mistake:
-- Root cause:
-- Impact:
-- Prevention rule:
-- Checklist update:
-- Verification performed:
+### 2026-04-02 13:08 - Interface in helper file
 
----
+- Issue: `ApiErrorShape` declared in `src/utils/helperFunctions.ts`.
+- Fix: Moved to `src/types/common/error.types.ts`.
+- Rule: Keep reusable interfaces in `src/types/**`.
 
-### 2026-04-02 - Import order and import.meta typing gaps
+### 2026-04-02 13:36 - Async mutation pattern in action hooks
 
-- Context: Auth flow implementation (`components/auth/*`, `services/authService.ts`).
-- Mistake: Broke `import/order` rules (internal import order and grouping) and used `import.meta.env` without global `ImportMeta` typings.
-- Root cause: I validated build output but did not perform a strict pass for import-order conventions and missing TS ambient declarations for Vite env access.
-- Impact: ESLint violations and TypeScript error `Property 'env' does not exist on type 'ImportMeta'`.
-- Prevention rule: Before finalizing, enforce import grouping/order in every touched file (external -> internal -> relative, no empty lines inside a group) and ensure new `import.meta.env` usage is backed by `ImportMetaEnv` declaration.
-- Checklist update: Added explicit pre-final checks for import ordering and `ImportMeta` typings when using Vite env variables.
-- Verification performed: Reordered imports in auth forms and added `ImportMetaEnv`/`ImportMeta` declarations in `src/types/env.d.ts`.
-- not the npm run build instead yarn run build
+- Issue: Used `mutateAsync` in auth action hooks where callback style was preferred.
+- Fix: Switched to `mutate(values, { onSuccess, onError })`.
+- Rule: For generic action hooks, default to mutation callbacks and avoid `mutateAsync` unless explicitly needed.
 
----
+### 2026-04-02 13:37 - Missed logging PR generic comments
 
-### 2026-04-02 - Raw input used instead of shadcn Input
+- Issue: Not all generic PR comments were recorded in this file.
+- Fix: Added a persistent quick rule and this log entry.
+- Rule: Every generic PR review comment must be appended here.
 
-- Context: Auth UI field abstraction in `src/components/auth/AuthInputField.tsx`.
-- Mistake: Implemented form input with native `<input>` instead of using the `shadcn` `Input` component.
-- Root cause: I did not first check existing UI primitives in `src/components/ui`.
-- Impact: Inconsistent design system usage and styling drift risk.
-- Prevention rule: Always use `shadcn` UI components from `src/components/ui` when an equivalent component exists; use raw HTML controls only when there is no shared UI primitive.
-- Checklist update: Added a mandatory design-system check before finalizing UI/form work.
-- Verification performed: Replaced native `<input>` with `#/components/ui/Input` in auth form field component.
+### 2026-04-02 15:34 - Hook naming and scope
 
----
+- Issue: Hook names were too verbose (`*Action`) and one hook mixed multiple concerns.
+- Fix: Renamed to `useLogin`, `useForgotPassword`, `useLogout`; kept each hook focused.
+- Rule: Use short hook names and keep each hook single-purpose.
 
-### 2026-04-02 13:25 - Use one-line function when suitable
+### 2026-04-02 15:35 - Duplicate error surfaces
 
-- Context: Small handlers and helper wrappers.
-- Mistake: Wrote multi-line functions where one-line arrow functions were sufficient.
-- Root cause: Inconsistent function-style decisions during quick edits.
-- Impact: Unnecessary verbosity and less readable compact handlers.
-- Prevention rule: Use one-line arrow functions for simple single-action handlers/helpers; use block body only when needed.
-- Checklist update: Added function-style check before final output.
-- Verification performed: Applied this style preference in follow-up edits.
+- Issue: Forgot-password error shown in both toast and inline component.
+- Fix: Kept inline form error for this flow; removed duplicate toast error.
+- Rule: Show one primary error surface per flow unless explicitly required.
 
----
+### 2026-04-02 15:36 - Unnecessary wrapper handlers
 
-## Preventive Checklist (Run Before Final Output)
+- Issue: Added extra click wrapper functions where direct handler binding was enough.
+- Fix: Bound handlers directly in JSX when signatures already match.
+- Rule: Avoid wrapper functions unless argument shaping or extra logic is needed.
 
-- Confirm solution aligns with `docs/PRD.md` business flow.
-- Confirm folder placement and architecture rules.
-- Confirm no `any`, no unsafe null usage, and explicit exported return types.
-- Confirm no inline JSX arrow handlers and no inline styles.
-- Confirm constants are extracted for magic values.
-- Confirm accessibility basics (labels, semantics, keyboard, alt/aria where relevant).
-- Confirm API calls are only in service layer via `axiosInstance.ts`.
-- Confirm tests are added/updated for reusable logic and pass for touched scope.
-- Confirm lint passes for touched files.
-- Confirm import order/grouping follows ESLint rules in all touched files.
-- Confirm `ImportMetaEnv` typing exists for any new `import.meta.env` usage.
-- Confirm `shadcn` UI primitives are used for controls (Input, Button, etc.) when available.
-- Confirm one-line functions are used where suitable.
+### 2026-04-02 15:37 - Context hook naming clarity
+
+- Issue: Context hook name was ambiguous.
+- Fix: Renamed to `useAuthContext` and updated all imports/usages.
+- Rule: Context hooks should include `Context` in the name for clarity.
+
+### 2026-04-02 15:44 - Refresh token flow missing
+
+- Issue: Access token was not auto-refreshed on `401`.
+- Fix: Added `refresh` endpoint and axios interceptor refresh+retry flow.
+- Rule: Auth clients must include safe refresh-token retry and cleanup on refresh failure.
+
+## Final Check (Before Submit)
+
+- PRD + standards aligned.
+- Correct folder placement.
+- No `any`, explicit exported return types.
+- No inline JSX handlers/styles.
+- Lint/build/tests run with `yarn`.
+- Generic PR comments logged in this file.
