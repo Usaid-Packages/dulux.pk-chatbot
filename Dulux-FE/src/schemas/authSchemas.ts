@@ -1,11 +1,10 @@
 import { z } from 'zod';
 
-import { authFormFields } from '#/constants/authFormFields';
+import { authFormFields } from '#/constants/forms/authFormFields';
 
-const PASSWORD_FIELD = authFormFields.login[1];
 const RESET_PASSWORD_FIELDS = authFormFields.resetPassword;
 
-const PASSWORD_MIN_LENGTH = PASSWORD_FIELD.minLength ?? 8;
+const PASSWORD_MIN_LENGTH = authFormFields.login[1].minLength ?? 8;
 const RESET_PASSWORD_MIN_LENGTH = RESET_PASSWORD_FIELDS[0].minLength ?? 8;
 const PASSWORD_MUST_MATCH_FIELD = RESET_PASSWORD_FIELDS[1].mustMatchField ?? 'password';
 

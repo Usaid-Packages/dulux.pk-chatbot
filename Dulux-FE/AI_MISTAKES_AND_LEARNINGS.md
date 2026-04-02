@@ -73,6 +73,18 @@ Use this format for every new mistake:
 
 ---
 
+### 2026-04-02 13:25 - Use one-line function when suitable
+
+- Context: Small handlers and helper wrappers.
+- Mistake: Wrote multi-line functions where one-line arrow functions were sufficient.
+- Root cause: Inconsistent function-style decisions during quick edits.
+- Impact: Unnecessary verbosity and less readable compact handlers.
+- Prevention rule: Use one-line arrow functions for simple single-action handlers/helpers; use block body only when needed.
+- Checklist update: Added function-style check before final output.
+- Verification performed: Applied this style preference in follow-up edits.
+
+---
+
 ## Preventive Checklist (Run Before Final Output)
 
 - Confirm solution aligns with `docs/PRD.md` business flow.
@@ -87,3 +99,4 @@ Use this format for every new mistake:
 - Confirm import order/grouping follows ESLint rules in all touched files.
 - Confirm `ImportMetaEnv` typing exists for any new `import.meta.env` usage.
 - Confirm `shadcn` UI primitives are used for controls (Input, Button, etc.) when available.
+- Confirm one-line functions are used where suitable.
