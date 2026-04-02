@@ -10,6 +10,8 @@ import type {
   LoginResponse,
   LogoutPayload,
   LogoutResponse,
+  ResetPasswordPayload,
+  ResetPasswordResponse,
 } from '#/types/auth.types';
 import value from '#env';
 import { performRequest } from './apiClient';
@@ -73,6 +75,21 @@ export const forgotPassword = async (payload: ForgotPasswordPayload): Promise<Fo
   } catch (error) {
     if (shouldUseMockAuth() && isNetworkError(error)) {
       return { message: 'Password reset instructions sent successfully.' };
+    }
+    throw error;
+  }
+};
+
+export const resetPassword = async (payload: ResetPasswordPayload): Promise<ResetPasswordResponse> => {
+  try {
+    return await performRequest<ResetPasswordResponse, ResetPasswordPayload>({
+      method: POST,
+      url: apiEndpoints.auth.resetPassword,
+      payload,
+    });
+  } catch (error) {
+    if (shouldUseMockAuth() && isNetworkError(error)) {
+      return { message: 'Password reset successfully.' };
     }
     throw error;
   }

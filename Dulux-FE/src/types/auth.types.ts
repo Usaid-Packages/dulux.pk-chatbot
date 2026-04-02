@@ -15,6 +15,12 @@ export interface ForgotPasswordPayload extends Record<string, unknown> {
   email: string;
 }
 
+export interface ResetPasswordPayload extends Record<string, unknown> {
+  password: string;
+  confirmPassword: string;
+  token?: string;
+}
+
 export interface LogoutPayload extends Record<string, unknown> {
   refreshToken: string;
 }
@@ -26,6 +32,10 @@ export interface LoginResponse {
 }
 
 export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordResponse {
   message: string;
 }
 

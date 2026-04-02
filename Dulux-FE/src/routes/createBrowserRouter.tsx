@@ -5,7 +5,7 @@ import { Route, createBrowserRouter, createRoutesFromElements, Navigate } from '
 
 import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
-import { ForgotPasswordPage, LoginPage } from '#/pages/auth';
+import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { HomePage } from '#/pages/home/HomePage';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
@@ -36,6 +36,7 @@ export const router = createBrowserRouter(
       <Route path={ROUTES.HOME} element={createPrivateRoute(HomePage)} />
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+      <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
       <Route path={ROUTES.UN_AUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
       <Route path='*' element={<RedirectHandler />} />
     </>
