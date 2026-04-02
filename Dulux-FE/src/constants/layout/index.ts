@@ -1,2 +1,1 @@
-export * from './headerTitleMap';
-export * from './sidebarNavItems';
+export * from './navigation';

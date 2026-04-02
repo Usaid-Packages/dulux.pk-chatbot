@@ -1,5 +1,6 @@
 export * from './apiEndpoints';
-export * from './layout';
+export * from './detailRouteConfigs';
+export * from './layout/navigation';
 export * from './queryKeys';
 export * from './routes';
 export * from './generic';

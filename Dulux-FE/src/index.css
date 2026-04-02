@@ -117,6 +117,30 @@
   --color-text-primary: var(--text-primary);
 
   --color-text-muted: var(--text-muted);
+
+  --color-status-pending-bg: var(--status-pending-bg);
+
+  --color-status-pending-text: var(--status-pending-text);
+
+  --color-status-approved-bg: var(--status-approved-bg);
+
+  --color-status-approved-text: var(--status-approved-text);
+
+  --color-status-rejected-bg: var(--status-rejected-bg);
+
+  --color-status-rejected-text: var(--status-rejected-text);
+
+  --color-status-forwarded-bg: var(--status-forwarded-bg);
+
+  --color-status-forwarded-text: var(--status-forwarded-text);
+
+  --color-status-infoReq-bg: var(--status-infoReq-bg);
+
+  --color-status-infoReq-text: var(--status-infoReq-text);
+
+  --color-status-resolved-bg: var(--status-resolved-bg);
+
+  --color-status-resolved-text: var(--status-resolved-text);
 }
 
 /* ---break---
@@ -209,6 +233,30 @@
   --text-primary: #222222;
 
   --text-muted: #888888;
+
+  --status-pending-bg: #fef3c7;
+
+  --status-pending-text: #b45309;
+
+  --status-approved-bg: #e6f9e6;
+
+  --status-approved-text: #2e7d32;
+
+  --status-rejected-bg: #fef2f2;
+
+  --status-rejected-text: #dc2626;
+
+  --status-forwarded-bg: #f3e8ff;
+
+  --status-forwarded-text: #7c3aed;
+
+  --status-infoReq-bg: #eff6ff;
+
+  --status-infoReq-text: #2563eb;
+
+  --status-resolved-bg: #f0f0f0;
+
+  --status-resolved-text: #888888;
 }
 
 /* ---break---
@@ -299,6 +347,30 @@
   --text-primary: #f4f4fa;
 
   --text-muted: #b7b7c8;
+
+  --status-pending-bg: #4b3a14;
+
+  --status-pending-text: #f7c86b;
+
+  --status-approved-bg: #173222;
+
+  --status-approved-text: #76d39b;
+
+  --status-rejected-bg: #442124;
+
+  --status-rejected-text: #ff8b95;
+
+  --status-forwarded-bg: #34204a;
+
+  --status-forwarded-text: #c8a1ff;
+
+  --status-infoReq-bg: #122d47;
+
+  --status-infoReq-text: #7eb9ff;
+
+  --status-resolved-bg: #2b2b3a;
+
+  --status-resolved-text: #b7b7c8;
 }
 
 /* ---break---

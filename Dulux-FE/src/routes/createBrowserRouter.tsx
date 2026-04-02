@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 
 import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
-import { ROUTES } from '#/constants';
+import { DETAIL_ROUTE_CONFIGS, ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
@@ -18,7 +18,7 @@ const LoadingFallback = (): JSX.Element => (
 
 const RedirectHandler = (): JSX.Element => {
   const { token } = useAuthContext();
-  return token ? <Navigate to={ROUTES.APP.DASHBOARD} replace /> : <Navigate to={ROUTES.LOGIN} replace />;
+  return token ? <Navigate to={ROUTES.DASHBOARD} replace /> : <Navigate to={ROUTES.LOGIN} replace />;
 };
 
 const protectedRouteGroup = (
@@ -39,36 +39,24 @@ export const router = createBrowserRouter(
       <Route path={ROUTES.UNAUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
       <Route element={protectedRouteGroup}>
-        <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-        <Route path={ROUTES.APP.DASHBOARD} element={<PlaceholderPage title='Dashboard' />} />
-        <Route path={ROUTES.APP.REGISTRATIONS}>
-          <Route index element={<PlaceholderPage title='Registrations' />} />
-          <Route path=':id' element={<PlaceholderPage title='Registration detail' />} />
-        </Route>
-        <Route path={ROUTES.APP.CLAIMS}>
-          <Route index element={<PlaceholderPage title='Claims' />} />
-          <Route path=':id' element={<PlaceholderPage title='Claim detail' />} />
-        </Route>
-        <Route path={ROUTES.APP.COMPLAINTS}>
-          <Route index element={<PlaceholderPage title='Live Chat' />} />
-          <Route path=':id' element={<PlaceholderPage title='Chat thread' />} />
-        </Route>
-        <Route path={ROUTES.APP.MANUAL_REGISTRATION.ROOT} element={<ManualRegistrationLayout />}>
+        <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+        <Route path={ROUTES.DASHBOARD} element={<PlaceholderPage title='Dashboard' />} />
+        {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
+          <Route key={routeConfig.path} path={routeConfig.path}>
+            <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />
+            <Route path=':id' element={<PlaceholderPage title={routeConfig.detailTitle} />} />
+          </Route>
+        ))}
+        <Route path={ROUTES.MANUAL_REGISTRATION_ROOT} element={<ManualRegistrationLayout />}>
           <Route index element={<Navigate to='step/1' replace />} />
           <Route path='step/:stepId' element={<PlaceholderPage title='Manual registration' />} />
           <Route path='success' element={<PlaceholderPage title='Manual registration — Success' />} />
         </Route>
-        <Route path={ROUTES.APP.QUALITY}>
-          <Route index element={<PlaceholderPage title='Quality review' />} />
-          <Route path=':id' element={<PlaceholderPage title='Quality detail' />} />
-        </Route>
-        <Route path={ROUTES.APP.PRODUCTS}>
+        <Route path={ROUTES.PRODUCTS}>
           <Route index element={<PlaceholderPage title='Product catalog' />} />
           <Route path='new' element={<PlaceholderPage title='New product' />} />
           <Route path=':id/edit' element={<PlaceholderPage title='Edit product' />} />
         </Route>
-        <Route path={ROUTES.APP.IMPORT} element={<PlaceholderPage title='Data import' />} />
-        <Route path={ROUTES.APP.SETTINGS} element={<PlaceholderPage title='Settings' />} />
       </Route>
 
       <Route path='*' element={<RedirectHandler />} />
