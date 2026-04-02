@@ -1,6 +1,0 @@
-from decouple import config
-
-
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
-SENDGRID_API_KEY = config("SENDGRID_API_KEY")
-SENDGRID_SANDBOX_MODE_IN_DEBUG = False
