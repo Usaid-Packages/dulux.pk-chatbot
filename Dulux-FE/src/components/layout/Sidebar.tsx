@@ -5,10 +5,6 @@ import { NavLink } from 'react-router-dom';
 import { SIDEBAR_NAV_ITEMS } from '#/constants';
 import { cn } from '#/utils';
 
-const getNavLinkClassName = ({ isActive }: { isActive: boolean }): string => {
-  return cn('app-sidebar-link-base', isActive ? 'app-sidebar-link-active' : 'app-sidebar-link-inactive');
-};
-
 /**
  * Sidebar renders primary app navigation links.
  *
@@ -26,7 +22,13 @@ export const Sidebar = (): JSX.Element => {
       <nav aria-label='Primary navigation'>
         <p className='nav-group-label'>Overview</p>
         {SIDEBAR_NAV_ITEMS.map(item => (
-          <NavLink key={item.path} to={item.path} className={getNavLinkClassName}>
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              cn('app-sidebar-link-base', isActive ? 'app-sidebar-link-active' : 'app-sidebar-link-inactive')
+            }
+          >
             {item.label}
           </NavLink>
         ))}
