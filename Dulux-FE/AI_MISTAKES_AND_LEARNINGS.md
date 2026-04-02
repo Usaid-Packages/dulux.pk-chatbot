@@ -5,6 +5,7 @@
 - Use `shadcn` UI primitives when available.
 - Keep shared interfaces in `src/types/**`.
 - Follow import order/grouping strictly.
+- In forms, `react-hook-form` import should come before `react-router-dom`.
 - Use `yarn` for workspace checks.
 - Add `ImportMetaEnv` typing before using `import.meta.env`.
 - Prefer mutation `onSuccess/onError` callbacks in action hooks over `mutateAsync` + `try/catch`.
