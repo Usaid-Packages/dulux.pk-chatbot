@@ -60,7 +60,9 @@ const config: FlatESLintConfig[] = [
       'jsx-a11y/alt-text': 'error',
       'react/jsx-no-target-blank': 'error',
       'react/jsx-no-script-url': 'error',
-      'react/no-unused-prop-types': 'error',
+      // Disabled due to current eslint@10 + eslint-plugin-react incompatibility.
+      // TypeScript already covers most prop contract safety in this project.
+      'react/no-unused-prop-types': 'off',
       'react/no-danger': 'error',
       'import/no-unresolved': ['error', { caseSensitive: true }],
       'react/prop-types': 'off',

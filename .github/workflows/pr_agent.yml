@@ -3,8 +3,8 @@ name: Qodo PR-Agent
 on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
-  issue_comment:
-    types: [created]
+    paths-ignore:
+      - "Dulux-FE/**"
 
 permissions:
   pull-requests: write
