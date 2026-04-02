@@ -5,6 +5,8 @@ import { Route, createBrowserRouter, createRoutesFromElements, Navigate } from '
 
 import { ROUTES } from '#/constants';
 import { useAuth } from '#/context';
+import { ForgotPasswordPage, LoginPage } from '#/pages/auth';
+import { HomePage } from '#/pages/home';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 // replace this with your own loading component
@@ -31,6 +33,10 @@ export const createPrivateRoute = (Component: React.ComponentType): JSX.Element 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
+      <Route path={ROUTES.HOME} element={createPrivateRoute(HomePage)} />
+      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+      <Route path={ROUTES.UN_AUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
       <Route path='*' element={<RedirectHandler />} />
     </>
   ),

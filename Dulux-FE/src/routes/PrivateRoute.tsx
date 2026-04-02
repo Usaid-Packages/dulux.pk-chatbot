@@ -9,5 +9,5 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
 
   if (token) return children;
 
-  return <Navigate to={ROUTES.UN_AUTHORIZED} replace />;
+  return <Navigate to={ROUTES.LOGIN} replace />;
 }
