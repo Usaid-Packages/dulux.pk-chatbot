@@ -5,7 +5,7 @@ import type { FieldError, UseFormRegisterReturn } from 'react-hook-form';
 import { Input } from '#/components/ui/Input';
 import { EMAIL, PASSWORD } from '#/constants';
 
-interface AuthInputFieldProps {
+interface FormInputFieldProps {
   id: string;
   label: string;
   type: 'email' | 'password' | 'text';
@@ -15,19 +15,19 @@ interface AuthInputFieldProps {
 }
 
 /**
- * AuthInputField renders a labeled input with RHF binding and validation feedback.
+ * FormInputField renders a reusable labeled input with error text.
  *
- * @param props - Field metadata, registration object, and optional error.
- * @returns A reusable auth form input control.
+ * @param props - Input metadata, registration binding, and error state.
+ * @returns Shared input field component for forms.
  */
-export const AuthInputField = ({
+export const FormInputField = ({
   id,
   label,
   type,
   placeholder,
   registration,
   error,
-}: AuthInputFieldProps): JSX.Element => {
+}: FormInputFieldProps): JSX.Element => {
   const hasError = Boolean(error);
   const describedBy = hasError ? `${id}-error` : undefined;
 

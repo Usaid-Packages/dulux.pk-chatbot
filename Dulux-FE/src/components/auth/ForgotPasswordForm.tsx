@@ -4,11 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
+import { FormInputField } from '#/components/shared';
 import { Button } from '#/components/ui/Button';
-import { authFormFields, ROUTES } from '#/constants';
+import { ROUTES } from '#/constants';
+import { authFormFields } from '#/constants/forms/authFormFields';
 import type { ForgotPasswordFormValues } from '#/schemas/authSchemas';
 import { forgotPasswordSchema } from '#/schemas/authSchemas';
-import { AuthInputField } from './AuthInputField';
 
 interface ForgotPasswordFormProps {
   isSubmitting: boolean;
@@ -35,7 +36,7 @@ export const ForgotPasswordForm = ({ isSubmitting, onSubmit }: ForgotPasswordFor
 
   return (
     <form className='space-y-5' noValidate onSubmit={handleSubmit(onSubmit)}>
-      <AuthInputField
+      <FormInputField
         id={emailField.name}
         label={emailField.label}
         type={emailField.type}

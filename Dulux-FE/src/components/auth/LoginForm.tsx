@@ -4,11 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
+import { FormInputField } from '#/components/shared';
 import { Button } from '#/components/ui/Button';
-import { authFormFields, ROUTES } from '#/constants';
+import { ROUTES } from '#/constants';
+import { authFormFields } from '#/constants/forms/authFormFields';
 import type { LoginFormValues } from '#/schemas/authSchemas';
 import { loginSchema } from '#/schemas/authSchemas';
-import { AuthInputField } from './AuthInputField';
 
 interface LoginFormProps {
   isSubmitting: boolean;
@@ -33,7 +34,7 @@ export const LoginForm = ({ isSubmitting, onSubmit }: LoginFormProps): JSX.Eleme
 
   const renderLoginField = (field: (typeof authFormFields.login)[number]): JSX.Element => {
     return (
-      <AuthInputField
+      <FormInputField
         key={field.name}
         id={field.name}
         label={field.label}
