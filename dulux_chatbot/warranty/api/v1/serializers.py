@@ -181,10 +181,6 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("At least one paint pair is required.")
         return value
 
-    def validate(self, attrs: dict) -> dict:
-        attrs = super().validate(attrs)
-        return attrs
-
     @transaction.atomic
     def create(self, validated_data: dict) -> WarrantyRegistration:
         paint_pairs = validated_data.pop("paint_pairs")
@@ -283,7 +279,8 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         paint_pairs = validated_data.pop("paint_pairs", None)
         paint_pair_invoices = validated_data.pop("paint_pair_invoices", None)
         notes = validated_data.get("notes", "").strip()
-        validated_data["notes"] = notes
+        if "notes" in validated_data:
+            validated_data["notes"] = notes
 
         for field, value in validated_data.items():
             setattr(instance, field, value)
@@ -325,6 +322,8 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         instance: WarrantyRegistration,
         paint_pairs: list[dict],
     ) -> None:
+        if instance.paint_pairs.filter(claims_pair__isnull=False).exists():
+            raise serializers.ValidationError({"paint_pairs": "Cannot replace paint pairs that have existing claims."})
         instance.paint_pairs.all().delete()
         for paint_pair_data in paint_pairs:
             RegistrationPaintPair.objects.create(registration=instance, **paint_pair_data)
@@ -502,7 +501,8 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: WarrantyClaim, validated_data: dict) -> WarrantyClaim:
         action = validated_data.pop("action", None)
         notes = validated_data.get("notes", "").strip()
-        validated_data["notes"] = notes
+        if "notes" in validated_data:
+            validated_data["notes"] = notes
 
         for field, value in validated_data.items():
             setattr(instance, field, value)
