@@ -3,3 +3,13 @@ export interface ApiError {
   statusCode?: number;
   details?: unknown;
 }
+
+export interface ApiErrorShape {
+  response?: {
+    data?: {
+      message?: string;
+      detail?: string;
+    };
+  };
+  message?: string;
+}

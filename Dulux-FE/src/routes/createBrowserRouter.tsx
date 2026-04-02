@@ -4,7 +4,9 @@ import React, { Suspense } from 'react';
 import { Route, createBrowserRouter, createRoutesFromElements, Navigate } from 'react-router-dom';
 
 import { ROUTES } from '#/constants';
-import { useAuth } from '#/context';
+import { useAuthContext } from '#/context';
+import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
+import { HomePage } from '#/pages/home/HomePage';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 // replace this with your own loading component
@@ -14,7 +16,7 @@ const LoadingFallback = (): JSX.Element => (
   </div>
 );
 const RedirectHandler = () => {
-  const { token } = useAuth();
+  const { token } = useAuthContext();
   return token ? <Navigate to={ROUTES.HOME} replace /> : <Navigate to={ROUTES.AUTH} replace />;
 };
 
@@ -31,6 +33,11 @@ export const createPrivateRoute = (Component: React.ComponentType): JSX.Element 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
+      <Route path={ROUTES.HOME} element={createPrivateRoute(HomePage)} />
+      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+      <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+      <Route path={ROUTES.UN_AUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
       <Route path='*' element={<RedirectHandler />} />
     </>
   ),

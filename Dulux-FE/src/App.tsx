@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ErrorBoundary } from 'react-error-boundary';
 import { RouterProvider } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider } from '#/context';
 import { router } from '#/routes';
@@ -30,8 +31,10 @@ function AppContent(): JSX.Element {
 }
 
 function App(): JSX.Element {
+  const handleReset = (): void => window.location.reload();
+
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={handleReset}>
       <AuthProvider>
         <AppContent />
       </AuthProvider>
