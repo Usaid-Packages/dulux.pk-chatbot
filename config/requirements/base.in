@@ -27,3 +27,4 @@ openpyxl==3.1.*
 channels==4.0.*
 channels-redis==4.1.*
 daphne==4.0.*
+django-anymail[brevo]==11.1.*

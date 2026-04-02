@@ -379,6 +379,7 @@ django==4.2.6 \
     #   channels
     #   dj-rest-auth
     #   django-allauth
+    #   django-anymail
     #   django-celery-beat
     #   django-celery-results
     #   django-cors-headers
@@ -392,6 +393,10 @@ django==4.2.6 \
     #   drf-yasg
 django-allauth==0.61.1 \
     --hash=sha256:5b4ae515ea74f54f0041210692eee10c309ad15ddbbd03d3620693c75e3f7945
+    # via -r /code/config/requirements/base.in
+django-anymail[brevo]==11.1 \
+    --hash=sha256:ec373c0a2d79f5e6a3ecda819c8087af0b0e114e4ec1d8576dea4c786f9b2a59 \
+    --hash=sha256:f1a5b2de713f46fbdf311f875a9546511e4aa9bfa1c3f8350d21b43e75579acc
     # via -r /code/config/requirements/base.in
 django-celery-beat==2.5.0 \
     --hash=sha256:ae460faa5ea142fba0875409095d22f6bd7bcc7377889b85e8cab5c0dfb781fe \
@@ -832,6 +837,7 @@ requests==2.31.0 \
     # via
     #   -r /code/config/requirements/base.in
     #   django-allauth
+    #   django-anymail
     #   requests-oauthlib
 requests-oauthlib==2.0.0 \
     --hash=sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36 \
@@ -949,7 +955,9 @@ uritemplate==4.1.1 \
 urllib3==2.1.0 \
     --hash=sha256:55901e917a5896a349ff771be919f8bd99aff50b79fe58fec595eb37bbc56bb3 \
     --hash=sha256:df7aa8afb0148fa78488e7899b2c59b5f4ffcfa82e6c54ccb9dd37c1d7b52d54
-    # via requests
+    # via
+    #   django-anymail
+    #   requests
 vine==5.0.0 \
     --hash=sha256:4c9dceab6f76ed92105027c49c823800dd33cacce13bdedc5b914e3514b7fb30 \
     --hash=sha256:7d3b1624a953da82ef63462013bbd271d3eb75751489f9807598e8f340bd637e

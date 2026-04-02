@@ -1,5 +1,5 @@
 from .base import *  # noqa
-from .sendgrid import *  # noqa
+from .brevo import *  # noqa
 from .sentry import *  # noqa
 
 
