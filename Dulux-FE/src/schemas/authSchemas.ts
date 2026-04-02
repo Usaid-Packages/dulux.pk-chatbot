@@ -7,14 +7,19 @@ const RESET_PASSWORD_FIELDS = authFormFields.resetPassword;
 const PASSWORD_MIN_LENGTH = authFormFields.login[1].minLength ?? 8;
 const RESET_PASSWORD_MIN_LENGTH = RESET_PASSWORD_FIELDS[0].minLength ?? 8;
 const PASSWORD_MUST_MATCH_FIELD = RESET_PASSWORD_FIELDS[1].mustMatchField ?? 'password';
+const EMAIL_SCHEMA = z
+  .string()
+  .trim()
+  .min(1, 'Email is required.')
+  .pipe(z.email('Please enter a valid email address.'));
 
 export const loginSchema = z.object({
-  email: z.email('Please enter a valid email address.').trim().min(1, 'Email is required.'),
+  email: EMAIL_SCHEMA,
   password: z.string().trim().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`),
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.email('Please enter a valid email address.').trim().min(1, 'Email is required.'),
+  email: EMAIL_SCHEMA,
 });
 
 export const resetPasswordSchema = z
