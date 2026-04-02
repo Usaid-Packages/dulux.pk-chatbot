@@ -12,6 +12,7 @@ import { AuthInputField } from './AuthInputField';
 
 interface ForgotPasswordFormProps {
   isSubmitting: boolean;
+  errorMessage?: string | null;
   onSubmit: (values: ForgotPasswordFormValues) => Promise<void>;
 }
 
@@ -21,7 +22,7 @@ interface ForgotPasswordFormProps {
  * @param props - Submit handler and pending state.
  * @returns Forgot password form component.
  */
-export const ForgotPasswordForm = ({ isSubmitting, onSubmit }: ForgotPasswordFormProps): JSX.Element => {
+export const ForgotPasswordForm = ({ isSubmitting, errorMessage, onSubmit }: ForgotPasswordFormProps): JSX.Element => {
   const {
     register,
     handleSubmit,
@@ -43,6 +44,14 @@ export const ForgotPasswordForm = ({ isSubmitting, onSubmit }: ForgotPasswordFor
         registration={register(emailField.name)}
         error={errors[emailField.name]}
       />
+      {errorMessage ? (
+        <p
+          role='alert'
+          className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+        >
+          {errorMessage}
+        </p>
+      ) : null}
       <Button className='w-full' type='submit' disabled={isSubmitting}>
         {isSubmitting ? 'Sending...' : 'Send reset instructions'}
       </Button>

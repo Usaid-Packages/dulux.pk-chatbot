@@ -14,7 +14,7 @@ import { useAuthActions } from '#/hooks';
  */
 export const ForgotPasswordPage = (): JSX.Element => {
   const { token } = useAuth();
-  const { handleForgotPassword, isForgotPasswordPending } = useAuthActions();
+  const { handleForgotPassword, isForgotPasswordPending, forgotPasswordErrorMessage } = useAuthActions();
 
   if (token) {
     return <Navigate to={ROUTES.HOME} replace />;
@@ -23,7 +23,11 @@ export const ForgotPasswordPage = (): JSX.Element => {
   return (
     <main className='flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40 px-4 py-12'>
       <AuthCard title='Forgot your password?' subtitle='Enter your email and we will send reset instructions.'>
-        <ForgotPasswordForm isSubmitting={isForgotPasswordPending} onSubmit={handleForgotPassword} />
+        <ForgotPasswordForm
+          isSubmitting={isForgotPasswordPending}
+          errorMessage={forgotPasswordErrorMessage}
+          onSubmit={handleForgotPassword}
+        />
       </AuthCard>
     </main>
   );

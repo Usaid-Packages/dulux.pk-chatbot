@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { PASSWORD } from '#/constants';
 import { authFormFields } from '#/constants/authFormFields';
 
 const PASSWORD_FIELD = authFormFields.login[1];
@@ -7,7 +8,7 @@ const RESET_PASSWORD_FIELDS = authFormFields.resetPassword;
 
 const PASSWORD_MIN_LENGTH = PASSWORD_FIELD.minLength ?? 8;
 const RESET_PASSWORD_MIN_LENGTH = RESET_PASSWORD_FIELDS[0].minLength ?? 8;
-const PASSWORD_MUST_MATCH_FIELD = RESET_PASSWORD_FIELDS[1].mustMatchField ?? 'password';
+const PASSWORD_MUST_MATCH_FIELD = RESET_PASSWORD_FIELDS[1].mustMatchField ?? PASSWORD;
 
 export const loginSchema = z.object({
   email: z.email('Please enter a valid email address.').trim().min(1, 'Email is required.'),
@@ -27,7 +28,7 @@ export const resetPasswordSchema = z
     confirmPassword: z.string().trim().min(1, 'Please confirm your password.'),
   })
   .superRefine((value, ctx) => {
-    if (value.confirmPassword !== value[PASSWORD_MUST_MATCH_FIELD as 'password']) {
+    if (PASSWORD_MUST_MATCH_FIELD !== PASSWORD || value.confirmPassword !== value.password) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['confirmPassword'],

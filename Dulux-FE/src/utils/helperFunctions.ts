@@ -17,7 +17,25 @@
  * - Complexity: O(1)
  */
 
+import type { ApiErrorShape } from '#/types/common/error.types';
 import type { Paginated } from '#/types/services.types';
+
+export const DEFAULT_API_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+export const getApiErrorMessage = (error: unknown): string => {
+  if (!error || typeof error !== 'object') {
+    return DEFAULT_API_ERROR_MESSAGE;
+  }
+
+  const typedError = error as ApiErrorShape;
+  return (
+    typedError.response?.data?.message ??
+    typedError.response?.data?.detail ??
+    typedError.message ??
+    DEFAULT_API_ERROR_MESSAGE
+  );
+};
+
 export function getNextPageParamHelper<TData>(lastPage: TData, allPages: TData[], limit: number): number | undefined {
   if (Array.isArray(lastPage)) {
     return lastPage.length === limit ? allPages.length + 1 : undefined;

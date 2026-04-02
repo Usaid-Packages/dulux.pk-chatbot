@@ -22,7 +22,10 @@ export const LoginPage = (): JSX.Element => {
 
   return (
     <main className='flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted/40 px-4 py-12'>
-      <AuthCard title='Welcome back' subtitle='Sign in to continue managing the Dulux Assurance workflows.'>
+      <AuthCard
+        title='Welcome to Dulux Customer Service'
+        subtitle='Sign in to continue managing the Dulux Customer Service workflows.'
+      >
         <LoginForm isSubmitting={isLoginPending} onSubmit={handleLogin} />
       </AuthCard>
     </main>
