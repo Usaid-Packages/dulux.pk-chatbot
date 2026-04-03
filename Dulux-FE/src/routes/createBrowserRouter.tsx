@@ -32,8 +32,6 @@ const protectedRouteGroup = (
   </PrivateRoute>
 );
 
-const placeholderDetailRouteConfigs = DETAIL_ROUTE_CONFIGS.filter(routeConfig => routeConfig.path !== ROUTES.CLAIMS);
-
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -50,7 +48,6 @@ export const router = createBrowserRouter(
           <Route index element={<ClaimsListPage />} />
           <Route path=':id' element={<ClaimDetailPage />} />
         </Route>
-        {placeholderDetailRouteConfigs.map(routeConfig => (
         <Route path={ROUTES.REGISTRATIONS}>
           <Route index element={<RegistrationsListPage />} />
           <Route path=':id' element={<RegistrationDetailPage />} />
