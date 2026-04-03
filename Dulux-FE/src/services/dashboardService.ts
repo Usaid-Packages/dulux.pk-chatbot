@@ -1,10 +1,8 @@
-/* eslint import/order: off */
 import { apiEndpoints, GET } from '#/constants';
 import { DASHBOARD_SUMMARY_FALLBACK } from '#/constants/dashboardFlowConfigs';
 import { dashboardSummarySchema } from '#/schemas/dashboardSchemas';
 import type { DashboardSummaryResponse } from '#/types/dashboard.types';
 import value from '#env';
-
 import { performRequest } from './apiClient';
 
 const NETWORK_ERROR_CODE = 'ERR_NETWORK';

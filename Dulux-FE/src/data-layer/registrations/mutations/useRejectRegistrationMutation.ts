@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';

@@ -1,9 +1,7 @@
-/* eslint import/order: off */
 import { DASHBOARD_SUMMARY_FALLBACK } from '#/constants';
 import { useDashboardSummaryQuery } from '#/data-layer/dashboard';
 import type { DashboardFlowCardModel } from '#/types/dashboard.types';
 import { getApiErrorMessage } from '#/utils';
-
 import { mapDashboardCards } from './dashboardHelpers';
 
 interface UseDashboardResult {

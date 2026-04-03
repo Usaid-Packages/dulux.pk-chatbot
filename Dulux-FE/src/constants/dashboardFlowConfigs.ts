@@ -1,6 +1,4 @@
-/* eslint import/order: off */
 import type { DashboardFlowConfig, DashboardSummaryResponse } from '#/types/dashboard.types';
-
 import { ROUTES } from './routes';
 
 export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
