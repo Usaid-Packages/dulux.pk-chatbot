@@ -11,6 +11,7 @@ import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
 import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
+import { QualityDetailPage, QualityListPage } from '#/pages/quality';
 import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
@@ -52,6 +53,10 @@ export const router = createBrowserRouter(
         <Route path={ROUTES.REGISTRATIONS}>
           <Route index element={<RegistrationsListPage />} />
           <Route path=':id' element={<RegistrationDetailPage />} />
+        </Route>
+        <Route path={ROUTES.QUALITY}>
+          <Route index element={<QualityListPage />} />
+          <Route path=':id' element={<QualityDetailPage />} />
         </Route>
         {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>

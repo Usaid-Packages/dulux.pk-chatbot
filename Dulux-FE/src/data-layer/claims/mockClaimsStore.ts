@@ -10,6 +10,15 @@ import type {
   RequestMoreInfoPayload,
   SendToQualityPayload,
 } from '#/types/claims.types';
+import type {
+  QualityApprovePayload,
+  QualityDetail,
+  QualityQueueItem,
+  QualityQueueRequestParams,
+  QualityQueueResponse,
+  QualityRejectPayload,
+  QualityRequestInfoPayload,
+} from '#/types/quality.types';
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -20,6 +29,10 @@ const cloneClaim = (claim: ClaimDetail): ClaimDetail => {
     timeline: claim.timeline.map(item => ({ ...item })),
     linkedRegistration: { ...claim.linkedRegistration },
   };
+};
+
+const isResolvedStatus = (status: ClaimStatus): boolean => {
+  return status === 'resolved' || status === 'approved' || status === 'rejected';
 };
 
 const initialClaims: ClaimDetail[] = [
@@ -83,6 +96,8 @@ const initialClaims: ClaimDetail[] = [
     description: 'Top section became darker than lower section after one month.',
     csNotes: 'Forwarded for technical moisture assessment.',
     verificationPackSummary: 'Invoice + 3 images + contractor details attached.',
+    forwardedBy: 'Amina (CS)',
+    forwardedAt: '2026-03-31T08:22:00.000Z',
     evidencePhotos: [
       { id: 'p1', label: 'Long Shot', url: 'https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=1280' },
       { id: 'p2', label: 'Close Shot', url: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1280' },
@@ -127,6 +142,8 @@ const initialClaims: ClaimDetail[] = [
     batchNumber: 'WM-91-44',
     description: 'Hairline cracks visible after curing period.',
     qualityNotes: 'Approved claim with replacement product recommendation.',
+    forwardedBy: 'Kamran (CS)',
+    forwardedAt: '2026-03-29T08:00:00.000Z',
     evidencePhotos: [
       { id: 'p1', label: 'Long Shot', url: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1280' },
       { id: 'p2', label: 'Close Shot', url: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1280' },
@@ -172,6 +189,8 @@ const initialClaims: ClaimDetail[] = [
     batchNumber: 'IN-14-20',
     description: 'Bubbles appeared near kitchen steam zone.',
     csNotes: 'Requested more photos and ventilation details from customer.',
+    forwardedBy: 'Amina (CS)',
+    forwardedAt: '2026-04-01T11:00:00.000Z',
     evidencePhotos: [
       { id: 'p1', label: 'Long Shot', url: 'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=1280' },
       {
@@ -222,6 +241,16 @@ const sortBySubmittedDateDesc = (left: ClaimDetail, right: ClaimDetail): number 
 const matchesStatus = (claimStatus: ClaimStatus, filterStatus: ClaimListStatusFilter): boolean => {
   if (filterStatus === 'all') {
     return true;
+  }
+  return claimStatus === filterStatus;
+};
+
+const matchesQualityStatus = (claimStatus: ClaimStatus, filterStatus: QualityQueueRequestParams['status']): boolean => {
+  if (filterStatus === 'all') {
+    return claimStatus === 'forwarded' || claimStatus === 'infoRequested' || isResolvedStatus(claimStatus);
+  }
+  if (filterStatus === 'resolved') {
+    return isResolvedStatus(claimStatus);
   }
   return claimStatus === filterStatus;
 };
@@ -289,6 +318,59 @@ export const getMockClaimById = (id: string): ClaimDetail => {
   return cloneClaim(claim);
 };
 
+const toQualityQueueItem = (claim: ClaimDetail): QualityQueueItem => {
+  return {
+    id: claim.id,
+    claimNumber: claim.claimNumber,
+    customerName: claim.customerName,
+    issueType: claim.issueType,
+    city: claim.city,
+    priority: claim.priority,
+    status: claim.status,
+    forwardedBy: claim.forwardedBy ?? 'CS Agent',
+    forwardedAt: claim.forwardedAt ?? claim.submittedAt,
+    submittedAt: claim.submittedAt,
+  };
+};
+
+export const getMockQualityQueue = (params: QualityQueueRequestParams): QualityQueueResponse => {
+  const filteredClaims = claimStore
+    .filter(claim => matchesQualityStatus(claim.status, params.status))
+    .sort(sortBySubmittedDateDesc);
+
+  const offset = (params.page - 1) * params.pageSize;
+  const paginatedItems = filteredClaims.slice(offset, offset + params.pageSize).map(toQualityQueueItem);
+  const todayPrefix = new Date().toISOString().slice(0, 10);
+
+  return {
+    items: paginatedItems,
+    total: filteredClaims.length,
+    page: params.page,
+    pageSize: params.pageSize,
+    stats: {
+      totalInQueue: claimStore.filter(claim => matchesQualityStatus(claim.status, 'all')).length,
+      awaitingReview: claimStore.filter(claim => claim.status === 'forwarded').length,
+      infoRequested: claimStore.filter(claim => claim.status === 'infoRequested').length,
+      resolvedToday: claimStore.filter(
+        claim => isResolvedStatus(claim.status) && claim.timeline.some(item => item.createdAt.startsWith(todayPrefix))
+      ).length,
+    },
+  };
+};
+
+export const getMockQualityClaimById = (id: string): QualityDetail => {
+  const claim = claimStore.find(entry => entry.id === id);
+  if (!claim) {
+    throw new Error('Claim not found.');
+  }
+
+  return {
+    ...cloneClaim(claim),
+    forwardedBy: claim.forwardedBy ?? 'CS Agent',
+    forwardedAt: claim.forwardedAt ?? claim.submittedAt,
+  };
+};
+
 export const approveMockClaim = ({ id, notes }: ApproveClaimPayload): ClaimDetail => {
   return updateClaimInStore(id, claim => ({
     ...claim,
@@ -319,6 +401,8 @@ export const sendMockClaimToQuality = ({
     priority,
     csNotes: notes,
     verificationPackSummary,
+    forwardedBy: 'CS Agent',
+    forwardedAt: nowIso(),
     timeline: [
       {
         id: `timeline-${Date.now()}`,
@@ -365,6 +449,73 @@ export const requestMockClaimInfo = ({ id, items, note, priority }: RequestMoreI
         id: `timeline-${Date.now()}`,
         event: 'More info requested',
         actor: 'CS Agent',
+        createdAt: nowIso(),
+        note: requestSummary,
+      },
+      ...claim.timeline,
+    ],
+  }));
+};
+
+export const approveMockQualityClaim = ({ id, assessment, notes }: QualityApprovePayload): ClaimDetail => {
+  const detailNote = notes ? `${assessment} | ${notes}` : assessment;
+
+  return updateClaimInStore(id, claim => ({
+    ...claim,
+    status: 'approved',
+    forwardedBy: claim.forwardedBy ?? 'CS Agent',
+    forwardedAt: claim.forwardedAt ?? claim.submittedAt,
+    qualityNotes: detailNote,
+    timeline: [
+      {
+        id: `timeline-${Date.now()}`,
+        event: 'Quality approved claim',
+        actor: 'Quality Team',
+        createdAt: nowIso(),
+        note: detailNote,
+      },
+      ...claim.timeline,
+    ],
+  }));
+};
+
+export const rejectMockQualityClaim = ({ id, reason, technicalNotes }: QualityRejectPayload): ClaimDetail => {
+  const detailNote = `${reason} | ${technicalNotes}`;
+
+  return updateClaimInStore(id, claim => ({
+    ...claim,
+    status: 'rejected',
+    forwardedBy: claim.forwardedBy ?? 'CS Agent',
+    forwardedAt: claim.forwardedAt ?? claim.submittedAt,
+    qualityNotes: detailNote,
+    timeline: [
+      {
+        id: `timeline-${Date.now()}`,
+        event: 'Quality rejected claim',
+        actor: 'Quality Team',
+        createdAt: nowIso(),
+        note: detailNote,
+      },
+      ...claim.timeline,
+    ],
+  }));
+};
+
+export const requestMockQualityInfo = ({ id, items, notes, requestFrom }: QualityRequestInfoPayload): ClaimDetail => {
+  const requestTarget = requestFrom === 'customer' ? 'Customer' : 'CS Agent';
+  const requestSummary = notes ? `${items.join(', ')} | ${notes}` : items.join(', ');
+
+  return updateClaimInStore(id, claim => ({
+    ...claim,
+    status: 'infoRequested',
+    forwardedBy: claim.forwardedBy ?? 'CS Agent',
+    forwardedAt: claim.forwardedAt ?? claim.submittedAt,
+    qualityNotes: `Request from ${requestTarget}: ${requestSummary}`,
+    timeline: [
+      {
+        id: `timeline-${Date.now()}`,
+        event: `Quality requested more info from ${requestTarget}`,
+        actor: 'Quality Team',
         createdAt: nowIso(),
         note: requestSummary,
       },

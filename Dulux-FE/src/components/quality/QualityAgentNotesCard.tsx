@@ -1,0 +1,23 @@
+/* eslint import/order: off */
+import type { JSX } from 'react';
+
+interface QualityAgentNotesCardProps {
+  notes?: string;
+}
+
+/**
+ * QualityAgentNotesCard presents CS notes before evidence review.
+ *
+ * @param props - CS notes text.
+ * @returns Notes card.
+ */
+export const QualityAgentNotesCard = ({ notes }: QualityAgentNotesCardProps): JSX.Element => {
+  return (
+    <section className='rounded-lg border border-quality-notesBorder bg-quality-notesBg p-4'>
+      <h2 className='text-md font-semibold text-text-primary'>CS Agent Notes</h2>
+      <p className='mt-2 text-sm text-text-primary'>
+        {notes ?? 'No CS notes were provided when this claim was forwarded.'}
+      </p>
+    </section>
+  );
+};

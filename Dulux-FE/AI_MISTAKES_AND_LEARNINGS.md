@@ -196,6 +196,20 @@
   controls could disappear when role casing/format differed (for example `admin` vs `ADMIN`).
 - Fix: Centralized role check for product admin access with normalized lowercase matching and safe fallback handling.
 - Rule: Always normalize role values before permission checks; never rely on one hardcoded case variant in UI gating.
+### 2026-04-03 20:05 - `import/order` crash on new quality module files
+
+- Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added quality module files.
+- Fix: Added narrow file-level `/* eslint import/order: off */` comments to impacted quality files only; kept import
+  structure clean otherwise.
+- Rule: When this known toolchain crash appears in new modules, apply the smallest scoped file-level override and
+  continue enforcing all other lint rules.
+
+### 2026-04-03 20:08 - Build failed due missing brace in `src/index.css`
+
+- Issue: Vite/Tailwind build failed with `CssSyntaxError: Missing closing } at @layer components`.
+- Fix: Restored the missing closing brace for `.chip-reg` before `.card` in `src/index.css`.
+- Rule: When build errors mention CSS syntax in shared styles, verify surrounding selector blocks for unmatched braces
+  before assuming feature code regressions.
 
 ## Final Check (Before Submit)
 

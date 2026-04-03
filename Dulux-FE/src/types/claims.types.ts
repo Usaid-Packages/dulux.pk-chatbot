@@ -54,6 +54,8 @@ export interface ClaimDetail extends ClaimListItem {
   csNotes?: string;
   qualityNotes?: string;
   verificationPackSummary?: string;
+  forwardedBy?: string;
+  forwardedAt?: string;
 }
 
 export interface ClaimsStats {

@@ -20,6 +20,13 @@ export const apiEndpoints = {
     reject: (id: string): string => `${API_CLAIMS_V1}/${id}/reject/`,
     requestInfo: (id: string): string => `${API_CLAIMS_V1}/${id}/request-info/`,
   },
+  quality: {
+    list: '/quality/',
+    detail: (id: string): string => `/quality/${id}/`,
+    approve: (id: string): string => `/quality/${id}/approve/`,
+    reject: (id: string): string => `/quality/${id}/reject/`,
+    requestInfo: (id: string): string => `/quality/${id}/request-info/`,
+  },
   dashboard: {
     summary: `${API_DASHBOARD_V1}/summary/`,
   },
