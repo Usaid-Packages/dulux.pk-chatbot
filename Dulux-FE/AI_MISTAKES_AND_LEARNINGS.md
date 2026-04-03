@@ -12,6 +12,11 @@
 - Add every generic PR review comment to this file.
 - Keep endpoint and query-key ownership in `src/constants/apiEndpoints.ts` and `src/constants/queryKeys.ts` (never in
   data-layer).
+- Type Radix / shadcn-style wrappers with `React.forwardRef<React.ElementRef<typeof Primitive.*>,
+  React.ComponentPropsWithoutRef<typeof Primitive.*>>` (or intrinsic HTML element equivalents for tables).
+- Import `cn` from `#/utils`, not `#/utils/utils`.
+- Add new files with `git add` before running pre-commit hooks so lint-staged stash restore cannot fail on “untracked
+  file would be overwritten”.
 
 ## Mistake Log (Short)
 
@@ -107,6 +112,15 @@
 - Rule: If a lint rule crashes (not fails) due toolchain issues, isolate with a narrow file-level override and log it
   for follow-up.
 
+### 2026-04-03 12:05 - ESLint import-order crash on new dashboard files
+
+- Issue: `eslint-plugin-import` crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added
+  dashboard files.
+- Fix: Added narrow file-level overrides `/* eslint import/order: off */` only on impacted files (e.g.
+  `dashboardFlowConfigs.ts`, `dashboardService.ts`, `DashboardFlowGrid.tsx`, `DashboardPage.tsx`) to unblock lint.
+- Rule: When this toolchain crash appears, apply the smallest possible file-level override and keep import structure
+  otherwise clean; track upgrading `@eslint-community/eslint-plugin-import` or ESLint alignment separately.
+
 ### 2026-04-03 14:10 - Endpoint/query-key ownership drifted into data-layer
 
 - Issue: Added registration endpoint/query-key resolver files under `src/data-layer/registrations/` instead of keeping
@@ -114,6 +128,48 @@
 - Fix: Moved all registration endpoint and query-key definitions/aliases into `src/constants/apiEndpoints.ts` and
   `src/constants/queryKeys.ts`; removed data-layer resolver files.
 - Rule: Data-layer can consume constants only; endpoint and query-key definitions must stay in constants files.
+
+### 2026-04-03 18:00 - Detail route config embedded in `createBrowserRouter.tsx`
+
+- Issue: `DETAIL_ROUTE_CONFIGS` and `DetailRouteConfig` lived next to router setup, bloating the router module and
+  mixing concerns.
+- Fix: Moved configs to `src/constants/detailRouteConfigs.ts` and `DetailRouteConfig` to `src/types/routes.types.ts`;
+  re-exported via the constants barrel; router imports `DETAIL_ROUTE_CONFIGS` only.
+- Rule: Shared route metadata and arrays belong in `src/constants/**` with shapes in `src/types/**`, not in the router
+  file.
+
+### 2026-04-03 18:05 - Untyped `forwardRef` on Radix UI wrappers
+
+- Issue: `Dialog`, `Select`, and similar components used `React.forwardRef` without generics, producing
+  `ForwardedRef<unknown>`, missing `className`/`children`/`position` on props, and ref mismatches vs Radix.
+- Fix: Applied `React.ElementRef<typeof DialogPrimitive.*>` and `React.ComponentPropsWithoutRef<typeof DialogPrimitive.*>`
+  (same pattern for `@radix-ui/react-select` primitives).
+- Rule: Every Radix primitive wrapper must use the ElementRef + ComponentPropsWithoutRef pattern so refs and DOM props
+  match the underlying component.
+
+### 2026-04-03 18:10 - Table and pagination components implicitly typed as `{}`
+
+- Issue: `Table` section components and `Pagination` used untyped `forwardRef`/props, so `className` was invalid and
+  `PaginationLink` treated `isActive` as required for children like `PaginationPrevious`.
+- Fix: Table: `forwardRef` with `HTMLTableElement`, `HTMLTableSectionElement`, `ThHTMLAttributes`/`TdHTMLAttributes`, etc.
+  Pagination: exported `PaginationLinkProps` with `isActive?: boolean` defaulting to `false`; nav links omit fixed
+  `size`/`children` via `Omit<…>`.
+- Rule: Intrinsic table/pagination elements need explicit HTML prop types; optional props with defaults must be marked
+  optional in the interface when callers do not pass them.
+
+### 2026-04-03 18:12 - `cn` imported from deep util path
+
+- Issue: Several UI files used `import { cn } from '#/utils/utils'` instead of the project barrel.
+- Fix: Switched imports to `#/utils`.
+- Rule: Use `#/utils` for `cn` and shared helpers so paths stay consistent with the rest of the codebase.
+
+### 2026-04-03 18:15 - lint-staged stash restore blocked by untracked duplicate path
+
+- Issue: `lint-staged` stashed work, then Git refused to restore because an untracked `src/components/ui/index.ts` would
+  be overwritten by the stash pop; working tree looked “empty” for new components until stash was applied manually.
+- Fix: Removed or moved the conflicting untracked file, then `git stash apply` on `lint-staged automatic backup`.
+- Rule: `git add` new files (or avoid duplicate untracked paths) before hooks run; if restore fails, recover from
+  `git stash list` and apply the lint-staged backup stash after resolving the path conflict.
 
 ## Final Check (Before Submit)
 
