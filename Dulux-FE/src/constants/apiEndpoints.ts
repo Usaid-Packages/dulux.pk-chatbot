@@ -1,4 +1,4 @@
-const API_USERS_V1 = '/users/api/v1/auth';
+const API_USERS_V1 = '/api/v1/users';
 const API_CLAIMS_V1 = '/claims';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
@@ -8,10 +8,10 @@ const API_COMPLAINTS_V1 = '/complaints';
 export const apiEndpoints = {
   auth: {
     login: `${API_USERS_V1}/login/`,
-    refresh: `${API_USERS_V1}/refresh/`,
-    forgotPassword: `${API_USERS_V1}/forgot-password/`,
-    resetPassword: `${API_USERS_V1}/reset-password/`,
-    logout: `${API_USERS_V1}/logout/`,
+    refresh: `${API_USERS_V1}/token/refresh/`,
+    verify: `${API_USERS_V1}/token/verify/`,
+    forgotPassword: `${API_USERS_V1}/password/reset/`,
+    resetPassword: `${API_USERS_V1}/password/reset/confirm/`,
   },
   claims: {
     list: `${API_CLAIMS_V1}/`,

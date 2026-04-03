@@ -3,7 +3,6 @@ export const queryKeys = {
     login: 'login',
     forgotPassword: 'forgot-password',
     resetPassword: 'reset-password',
-    logout: 'logout',
   },
   claims: {
     all: ['claims'] as const,

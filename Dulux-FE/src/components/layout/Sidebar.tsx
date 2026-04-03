@@ -2,7 +2,9 @@ import type { JSX } from 'react';
 
 import { NavLink } from 'react-router-dom';
 
+import { Button } from '#/components/ui/Button';
 import { SIDEBAR_NAV_ITEMS } from '#/constants';
+import { useLogout } from '#/hooks';
 import { cn } from '#/utils';
 
 /**
@@ -11,6 +13,8 @@ import { cn } from '#/utils';
  * @returns Sidebar component.
  */
 export const Sidebar = (): JSX.Element => {
+  const { handleLogout, isLogoutPending } = useLogout();
+
   return (
     <aside className='flex w-[240px] shrink-0 flex-col overflow-y-auto border-r border-sidebar-borderColor bg-sidebar-bg'>
       <div className='flex items-center gap-[10px] border-b border-sidebar-borderColor px-5 pb-4 pt-5'>
@@ -33,6 +37,17 @@ export const Sidebar = (): JSX.Element => {
           </NavLink>
         ))}
       </nav>
+      <div className='mt-auto border-t border-sidebar-borderColor p-4'>
+        <Button
+          type='button'
+          variant='ghost'
+          className='w-full justify-start text-sidebar-navText hover:bg-sidebar-activeBg hover:text-white'
+          onClick={handleLogout}
+          disabled={isLogoutPending}
+        >
+          {isLogoutPending ? 'Logging out...' : 'Logout'}
+        </Button>
+      </div>
     </aside>
   );
 };

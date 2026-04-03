@@ -47,6 +47,7 @@ export const router = createBrowserRouter(
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
       <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+      <Route path={`${ROUTES.RESET_PASSWORD}/:uid/:token`} element={<ResetPasswordPage />} />
       <Route path={ROUTES.UNAUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
       <Route element={protectedRouteGroup}>
