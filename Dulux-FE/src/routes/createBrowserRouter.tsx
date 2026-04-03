@@ -16,6 +16,9 @@ import {
   RegistrationDetailPage,
   RegistrationsListPage,
 } from '#/pages/registrations';
+import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
+import { QualityDetailPage, QualityListPage } from '#/pages/quality';
+import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 const LoadingFallback = (): JSX.Element => (
@@ -57,6 +60,10 @@ export const router = createBrowserRouter(
           <Route index element={<RegistrationsListPage />} />
           <Route path=':id' element={<RegistrationDetailPage />} />
         </Route>
+        <Route path={ROUTES.QUALITY}>
+          <Route index element={<QualityListPage />} />
+          <Route path=':id' element={<QualityDetailPage />} />
+        </Route>
         {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>
             <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />
@@ -69,9 +76,9 @@ export const router = createBrowserRouter(
           <Route path='success' element={<ManualRegistrationSuccessPage />} />
         </Route>
         <Route path={ROUTES.PRODUCTS}>
-          <Route index element={<PlaceholderPage title='Product catalog' />} />
-          <Route path='new' element={<PlaceholderPage title='New product' />} />
-          <Route path=':id/edit' element={<PlaceholderPage title='Edit product' />} />
+          <Route index element={<ProductsListPage />} />
+          <Route path='new' element={<ProductCreatePage />} />
+          <Route path=':id/edit' element={<ProductEditPage />} />
         </Route>
       </Route>
 

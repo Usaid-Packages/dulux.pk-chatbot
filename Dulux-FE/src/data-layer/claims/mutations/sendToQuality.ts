@@ -33,6 +33,7 @@ export const useSendToQualityMutation = (): UseMutationResult<ClaimDetail, Error
     onSuccess: updatedClaim => {
       queryClient.setQueryData(queryKeys.claims.detail(updatedClaim.id), updatedClaim);
       void queryClient.invalidateQueries({ queryKey: queryKeys.claims.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.quality.all });
     },
   });
 };
