@@ -53,6 +53,8 @@ export const claimDetailSchema = claimListItemSchema.extend({
   csNotes: z.string().optional(),
   qualityNotes: z.string().optional(),
   verificationPackSummary: z.string().optional(),
+  forwardedBy: z.string().optional(),
+  forwardedAt: z.string().optional(),
 });
 
 export const claimsStatsSchema = z.object({
