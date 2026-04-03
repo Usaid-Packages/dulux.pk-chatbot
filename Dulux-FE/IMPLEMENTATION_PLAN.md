@@ -2061,14 +2061,12 @@ src/components/ui/
   Input.tsx
   Select.tsx
   Badge.tsx
-  Modal.tsx
+  Dialogs.tsx
   Table.tsx
   Skeleton.tsx
   EmptyState.tsx
   Toast.tsx
   Pagination.tsx
-  FileUpload.tsx
-  Lightbox.tsx
 ```
 
 Rule:
@@ -2990,7 +2988,7 @@ The updated wireframes introduce **31 screens across 6 flows** that are signific
 
 | Area | Previous Plan | Wireframe Reality |
 |---|---|---|
-| Modals | Not specified | 13 distinct modal types across all flows |
+| Dialogs | Not specified | 13 distinct Dialogs types across all flows |
 | Registration list | Simple table | + Source column (WhatsApp / Manual) + Priority dot |
 | Registration statuses | 4 statuses | 5 statuses: Pending, Approved, Rejected, Resubmission (badge = `status-resubmission` = blue), also shown as tab |
 | Resubmission modal | Inline panel | Dedicated modal with 6 checkbox fields + note field |

@@ -1,5 +1,6 @@
 const API_USERS_V1 = '/users/api/v1/auth';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
+const API_WARRANTY_V1 = '/api/v1/warranty';
 
 export const apiEndpoints = {
   auth: {
@@ -11,5 +12,9 @@ export const apiEndpoints = {
   },
   dashboard: {
     summary: `${API_DASHBOARD_V1}/summary/`,
+  },
+  registrations: {
+    list: `${API_WARRANTY_V1}/registrations/`,
+    detail: (id: string | number): string => `${API_WARRANTY_V1}/registrations/${id}/`,
   },
 } as const;

@@ -9,6 +9,7 @@ import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
+import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 const LoadingFallback = (): JSX.Element => (
@@ -42,6 +43,11 @@ export const router = createBrowserRouter(
       <Route element={protectedRouteGroup}>
         <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
         <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        <Route path={ROUTES.DASHBOARD} element={<PlaceholderPage title='Dashboard' />} />
+        <Route path={ROUTES.REGISTRATIONS}>
+          <Route index element={<RegistrationsListPage />} />
+          <Route path=':id' element={<RegistrationDetailPage />} />
+        </Route>
         {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>
             <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />

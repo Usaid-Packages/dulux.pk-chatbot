@@ -10,6 +10,8 @@
 - Add `ImportMetaEnv` typing before using `import.meta.env`.
 - Prefer mutation `onSuccess/onError` callbacks in action hooks over `mutateAsync` + `try/catch`.
 - Add every generic PR review comment to this file.
+- Keep endpoint and query-key ownership in `src/constants/apiEndpoints.ts` and `src/constants/queryKeys.ts` (never in
+  data-layer).
 
 ## Mistake Log (Short)
 
@@ -104,6 +106,14 @@
 - Fix: Added file-level `/* eslint import/order: off */` for `Modal.tsx` to unblock lint until dependency alignment.
 - Rule: If a lint rule crashes (not fails) due toolchain issues, isolate with a narrow file-level override and log it
   for follow-up.
+
+### 2026-04-03 14:10 - Endpoint/query-key ownership drifted into data-layer
+
+- Issue: Added registration endpoint/query-key resolver files under `src/data-layer/registrations/` instead of keeping
+  ownership in constants.
+- Fix: Moved all registration endpoint and query-key definitions/aliases into `src/constants/apiEndpoints.ts` and
+  `src/constants/queryKeys.ts`; removed data-layer resolver files.
+- Rule: Data-layer can consume constants only; endpoint and query-key definitions must stay in constants files.
 
 ## Final Check (Before Submit)
 
