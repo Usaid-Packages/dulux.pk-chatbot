@@ -5,4 +5,7 @@ export const queryKeys = {
     resetPassword: 'reset-password',
     logout: 'logout',
   },
+  dashboard: {
+    summary: 'dashboard-summary',
+  },
 } as const;
