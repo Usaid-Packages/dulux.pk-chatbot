@@ -1,8 +1,7 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
-import { Button } from '#/components/ui/Button';
 import { DashboardGrid } from '#/components/dashboard';
+import { Button } from '#/components/ui/Button';
 import { useDashboard } from '#/hooks';
 
 /**

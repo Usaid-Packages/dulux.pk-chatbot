@@ -12,6 +12,12 @@ import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
 import { LiveChatPage } from '#/pages/complaints';
+import {
+  ManualRegistrationSuccessPage,
+  ManualStepPage,
+  RegistrationDetailPage,
+  RegistrationsListPage,
+} from '#/pages/registrations';
 import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
 import { QualityDetailPage, QualityListPage } from '#/pages/quality';
 import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
@@ -72,8 +78,8 @@ export const router = createBrowserRouter(
         ))}
         <Route path={ROUTES.MANUAL_REGISTRATION_ROOT} element={<ManualRegistrationLayout />}>
           <Route index element={<Navigate to='step/1' replace />} />
-          <Route path='step/:stepId' element={<PlaceholderPage title='Manual registration' />} />
-          <Route path='success' element={<PlaceholderPage title='Manual registration — Success' />} />
+          <Route path='step/:stepId' element={<ManualStepPage />} />
+          <Route path='success' element={<ManualRegistrationSuccessPage />} />
         </Route>
         <Route path={ROUTES.PRODUCTS}>
           <Route index element={<ProductsListPage />} />
