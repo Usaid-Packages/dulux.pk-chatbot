@@ -171,6 +171,31 @@
 - Rule: `git add` new files (or avoid duplicate untracked paths) before hooks run; if restore fails, recover from
   `git stash list` and apply the lint-staged backup stash after resolving the path conflict.
 
+### 2026-04-03 15:30 - ESLint import-order crash on product catalog module files
+
+- Issue: `eslint-plugin-import` crashed with `sourceCode.getTokenOrCommentBefore is not a function` on newly added
+  product catalog files (for example `ProductCreatePage.tsx`), causing lint to exit before reporting normal findings.
+- Fix: Added narrow file-level overrides `/* eslint import/order: off */` on the new product module files only, then
+  ran Prettier and lint again to keep formatting and rules clean.
+- Rule: When this toolchain crash appears on new feature files, isolate the workaround at file scope only for the
+  impacted files and keep all other lint rules active.
+
+### 2026-04-03 15:40 - Maximum update depth loop from unstable fallback arrays
+
+- Issue: In `ProductsListPage`, `products` used `query.data?.results ?? []`, creating a new array each render when
+  data was empty/loading. A `useEffect([products])` then called `setSelectedProductIds`, causing repeated updates and
+  React's "Maximum update depth exceeded".
+- Fix: Replaced inline fallback arrays with stable module-level constants and added an equality guard in the setter to
+  return previous state when filtered ids are unchanged.
+- Rule: Never use inline `?? []`/`?? {}` fallbacks as effect dependencies when those effects call state setters;
+  always use stable constants or memoized values and skip no-op state updates.
+
+### 2026-04-03 16:20 - Product admin actions hidden due role-value mismatch
+
+- Issue: Product catalog management buttons used strict role equality against a single format, so Add/Edit/Delete
+  controls could disappear when role casing/format differed (for example `admin` vs `ADMIN`).
+- Fix: Centralized role check for product admin access with normalized lowercase matching and safe fallback handling.
+- Rule: Always normalize role values before permission checks; never rely on one hardcoded case variant in UI gating.
 ### 2026-04-03 20:05 - `import/order` crash on new quality module files
 
 - Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added quality module files.
