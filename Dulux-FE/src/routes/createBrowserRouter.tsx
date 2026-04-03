@@ -7,6 +7,7 @@ import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
 import { DETAIL_ROUTE_CONFIGS, ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
+import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
@@ -40,7 +41,7 @@ export const router = createBrowserRouter(
 
       <Route element={protectedRouteGroup}>
         <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-        <Route path={ROUTES.DASHBOARD} element={<PlaceholderPage title='Dashboard' />} />
+        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
         {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>
             <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />
