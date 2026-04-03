@@ -22,6 +22,16 @@ export const queryKeys = {
     reject: ['quality', 'reject'] as const,
     requestInfo: ['quality', 'request-info'] as const,
   },
+  complaints: {
+    all: ['complaints'] as const,
+    list: (filters: Record<string, unknown>) => ['complaints', 'list', filters] as const,
+    detail: (id: string) => ['complaints', 'detail', id] as const,
+    sendMessage: ['complaints', 'send-message'] as const,
+    markRead: ['complaints', 'mark-read'] as const,
+    resolve: ['complaints', 'resolve'] as const,
+    transfer: ['complaints', 'transfer'] as const,
+    escalate: ['complaints', 'escalate'] as const,
+  },
   dashboard: {
     summary: 'dashboard-summary',
   },

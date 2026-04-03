@@ -3,6 +3,7 @@ const API_CLAIMS_V1 = '/claims';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
 const API_PRODUCTS_V1 = '/api/v1/products';
+const API_COMPLAINTS_V1 = '/complaints';
 
 export const apiEndpoints = {
   auth: {
@@ -40,5 +41,14 @@ export const apiEndpoints = {
     detail: (id: string | number): string => `${API_PRODUCTS_V1}/${id}/`,
     surfaceTypes: `${API_PRODUCTS_V1}/surface-types/`,
     surfaceTypeDetail: (id: string | number): string => `${API_PRODUCTS_V1}/surface-types/${id}/`,
+  },
+  complaints: {
+    list: `${API_COMPLAINTS_V1}/`,
+    detail: (id: string): string => `${API_COMPLAINTS_V1}/${id}/`,
+    sendMessage: (id: string): string => `${API_COMPLAINTS_V1}/${id}/messages/`,
+    markRead: (id: string): string => `${API_COMPLAINTS_V1}/${id}/mark-read/`,
+    resolve: (id: string): string => `${API_COMPLAINTS_V1}/${id}/resolve/`,
+    transfer: (id: string): string => `${API_COMPLAINTS_V1}/${id}/transfer/`,
+    escalate: (id: string): string => `${API_COMPLAINTS_V1}/${id}/escalate/`,
   },
 } as const;

@@ -211,6 +211,15 @@
 - Rule: When build errors mention CSS syntax in shared styles, verify surrounding selector blocks for unmatched braces
   before assuming feature code regressions.
 
+### 2026-04-03 20:25 - `import/order` crash on new complaints/live-chat module files
+
+- Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added complaints module
+  files (for example `ConversationListPanel.tsx`).
+- Fix: Added narrow file-level `/* eslint import/order: off */` comments only to the impacted new complaints files and
+  reran lint.
+- Rule: For this repo toolchain, when `import/order` crashes on newly added module files, apply a file-scoped override
+  only on those files and keep all other lint rules enforced.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

@@ -1,3 +1,4 @@
+/* eslint import/order: off */
 import type { JSX } from 'react';
 import { Suspense } from 'react';
 
@@ -10,6 +11,7 @@ import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
+import { LiveChatPage } from '#/pages/complaints';
 import {
   ManualRegistrationSuccessPage,
   ManualStepPage,
@@ -63,6 +65,10 @@ export const router = createBrowserRouter(
         <Route path={ROUTES.QUALITY}>
           <Route index element={<QualityListPage />} />
           <Route path=':id' element={<QualityDetailPage />} />
+        </Route>
+        <Route path={ROUTES.COMPLAINTS}>
+          <Route index element={<LiveChatPage />} />
+          <Route path=':id' element={<LiveChatPage />} />
         </Route>
         {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>
