@@ -13,13 +13,30 @@ export const queryKeys = {
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,
     requestInfo: ['claims', 'request-info'] as const,
-    },
-            dashboard: {
+  },
+  dashboard: {
     summary: 'dashboard-summary',
   },
   registrations: {
     all: ['registrations'] as const,
     list: (paramsKey: string): readonly ['registrations', string] => ['registrations', paramsKey] as const,
     detail: (id: string): readonly ['registration', string] => ['registration', id] as const,
+  },
+  products: {
+    all: ['products'] as const,
+    list: (paramsKey: string): readonly ['products', 'list', string] => ['products', 'list', paramsKey] as const,
+    detail: (id: string): readonly ['products', 'detail', string] => ['products', 'detail', id] as const,
+    create: ['products', 'create'] as const,
+    update: ['products', 'update'] as const,
+    delete: ['products', 'delete'] as const,
+  },
+  surfaceTypes: {
+    all: ['surface-types'] as const,
+    list: (paramsKey: string): readonly ['surface-types', 'list', string] =>
+      ['surface-types', 'list', paramsKey] as const,
+    detail: (id: string): readonly ['surface-type', string] => ['surface-type', id] as const,
+    create: ['surface-types', 'create'] as const,
+    update: ['surface-types', 'update'] as const,
+    delete: ['surface-types', 'delete'] as const,
   },
 } as const;

@@ -11,6 +11,7 @@ declare module '#env' {
     VITE_REPLAYS_ON_ERROR_SAMPLE_RATE?: string | number;
     VITE_ENCRYPTED_KEY: string;
     VITE_USE_MOCK_REGISTRATIONS?: boolean;
+    VITE_USE_MOCK_PRODUCTS?: boolean;
     [key: string]: EnvValue;
   }
 

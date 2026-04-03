@@ -10,6 +10,7 @@ const envSchema = z.object({
   VITE_REPLAYS_ON_ERROR_SAMPLE_RATE: z.preprocess(val => Number(val), z.number().min(0).max(1)).optional(),
   VITE_ENCRYPTED_KEY: z.string().min(1),
   VITE_USE_MOCK_REGISTRATIONS: z.preprocess(z.boolean()).default(true),
+  VITE_USE_MOCK_PRODUCTS: z.preprocess(z.boolean()).default(true),
 });
 
 let env;

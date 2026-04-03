@@ -10,6 +10,7 @@ import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { DashboardPage } from '#/pages/DashboardPage';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
+import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
 import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
@@ -64,9 +65,9 @@ export const router = createBrowserRouter(
           <Route path='success' element={<PlaceholderPage title='Manual registration — Success' />} />
         </Route>
         <Route path={ROUTES.PRODUCTS}>
-          <Route index element={<PlaceholderPage title='Product catalog' />} />
-          <Route path='new' element={<PlaceholderPage title='New product' />} />
-          <Route path=':id/edit' element={<PlaceholderPage title='Edit product' />} />
+          <Route index element={<ProductsListPage />} />
+          <Route path='new' element={<ProductCreatePage />} />
+          <Route path=':id/edit' element={<ProductEditPage />} />
         </Route>
       </Route>
 

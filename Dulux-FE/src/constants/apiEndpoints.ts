@@ -2,6 +2,7 @@ const API_USERS_V1 = '/users/api/v1/auth';
 const API_CLAIMS_V1 = '/claims';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
+const API_PRODUCTS_V1 = '/api/v1/products';
 
 export const apiEndpoints = {
   auth: {
@@ -25,5 +26,11 @@ export const apiEndpoints = {
   registrations: {
     list: `${API_WARRANTY_V1}/registrations/`,
     detail: (id: string | number): string => `${API_WARRANTY_V1}/registrations/${id}/`,
+  },
+  products: {
+    list: `${API_PRODUCTS_V1}/`,
+    detail: (id: string | number): string => `${API_PRODUCTS_V1}/${id}/`,
+    surfaceTypes: `${API_PRODUCTS_V1}/surface-types/`,
+    surfaceTypeDetail: (id: string | number): string => `${API_PRODUCTS_V1}/surface-types/${id}/`,
   },
 } as const;
