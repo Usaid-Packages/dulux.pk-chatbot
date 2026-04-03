@@ -1,12 +1,31 @@
 import { useMutation } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
-import { queryKeys } from '#/constants';
-import { forgotPassword } from '#/services/authService';
+import { apiEndpoints, POST, queryKeys } from '#/constants';
+import { performRequest } from '#/services';
 import type { ForgotPasswordPayload, ForgotPasswordResponse } from '#/types/auth.types';
 
-export const useForgotPasswordMutation = () => {
+interface PasswordResetMessageApiResponse {
+  detail: string;
+}
+
+export const useForgotPasswordMutation = (): UseMutationResult<
+  ForgotPasswordResponse,
+  Error,
+  ForgotPasswordPayload
+> => {
   return useMutation<ForgotPasswordResponse, Error, ForgotPasswordPayload>({
     mutationKey: [queryKeys.auth.forgotPassword],
-    mutationFn: forgotPassword,
+    mutationFn: async (payload: ForgotPasswordPayload): Promise<ForgotPasswordResponse> => {
+      const response = await performRequest<PasswordResetMessageApiResponse, ForgotPasswordPayload>({
+        method: POST,
+        url: apiEndpoints.auth.forgotPassword,
+        payload,
+      });
+
+      return {
+        message: response.detail ?? 'Request completed successfully.',
+      };
+    },
   });
 };

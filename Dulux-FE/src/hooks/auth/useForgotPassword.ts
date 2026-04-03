@@ -11,12 +11,12 @@ import { getApiErrorMessage } from '#/utils';
 export const useForgotPassword = () => {
   const [forgotPasswordErrorMessage, setForgotPasswordErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
-  const forgotPasswordMutation = useForgotPasswordMutation();
+  const { mutate: forgotPasswordMutate, isPending: isForgotPasswordPending } = useForgotPasswordMutation();
 
   const handleForgotPassword = (values: ForgotPasswordFormValues): void => {
     setForgotPasswordErrorMessage(null);
 
-    forgotPasswordMutation.mutate(values, {
+    forgotPasswordMutate(values, {
       onSuccess: response => {
         toast.success(response.message || 'Password reset instructions sent.');
         navigate(ROUTES.LOGIN, { replace: true });
@@ -29,7 +29,7 @@ export const useForgotPassword = () => {
 
   return {
     handleForgotPassword,
-    isForgotPasswordPending: forgotPasswordMutation.isPending,
+    isForgotPasswordPending,
     forgotPasswordErrorMessage,
   };
 };

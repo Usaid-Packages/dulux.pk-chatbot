@@ -1,7 +1,6 @@
 export * from './apiEndpoints';
 export * from './dashboardFlowConfigs';
 export * from './dashboardIconMap';
-export * from './detailRouteConfigs';
 export * from './layout/navigation';
 export * from './queryKeys';
 export * from './routes';

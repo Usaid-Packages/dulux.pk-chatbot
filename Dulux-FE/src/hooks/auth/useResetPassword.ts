@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { ROUTES } from '#/constants';
@@ -12,14 +12,16 @@ export const useResetPassword = () => {
   const [resetPasswordErrorMessage, setResetPasswordErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const resetPasswordMutation = useResetPasswordMutation();
+  const params = useParams<{ uid?: string; token?: string }>();
+  const { mutate: resetPasswordMutate, isPending: isResetPasswordPending } = useResetPasswordMutation();
 
   const handleResetPassword = (values: ResetPasswordFormValues): void => {
-    const token = searchParams.get('token') ?? undefined;
+    const uid = params.uid ?? searchParams.get('uid') ?? undefined;
+    const token = params.token ?? searchParams.get('token') ?? undefined;
     setResetPasswordErrorMessage(null);
 
-    resetPasswordMutation.mutate(
-      { ...values, token },
+    resetPasswordMutate(
+      { ...values, uid, token },
       {
         onSuccess: response => {
           toast.success(response.message || 'Password has been reset successfully.');
@@ -34,7 +36,7 @@ export const useResetPassword = () => {
 
   return {
     handleResetPassword,
-    isResetPasswordPending: resetPasswordMutation.isPending,
+    isResetPasswordPending,
     resetPasswordErrorMessage,
   };
 };

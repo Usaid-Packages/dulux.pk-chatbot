@@ -1,8 +1,6 @@
 export interface AuthUser {
   id: number;
   email: string;
-  firstName: string;
-  lastName: string;
   role: string;
 }
 
@@ -16,13 +14,10 @@ export interface ForgotPasswordPayload extends Record<string, unknown> {
 }
 
 export interface ResetPasswordPayload extends Record<string, unknown> {
+  uid?: string;
+  token?: string;
   password: string;
   confirmPassword: string;
-  token?: string;
-}
-
-export interface LogoutPayload extends Record<string, unknown> {
-  refreshToken: string;
 }
 
 export interface LoginResponse {
@@ -31,14 +26,22 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+export interface LoginApiUser {
+  pk: number;
+  email: string;
+  role: string;
+}
+
+export interface LoginApiResponse {
+  access: string;
+  refresh: string;
+  user: LoginApiUser;
+}
+
 export interface ForgotPasswordResponse {
   message: string;
 }
 
 export interface ResetPasswordResponse {
-  message: string;
-}
-
-export interface LogoutResponse {
   message: string;
 }
