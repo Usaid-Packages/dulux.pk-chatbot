@@ -141,6 +141,14 @@
   --color-status-resolved-bg: var(--status-resolved-bg);
 
   --color-status-resolved-text: var(--status-resolved-text);
+
+  --color-chip-claim-bg: var(--chip-claim-bg);
+
+  --color-chip-claim-text: var(--chip-claim-text);
+
+  --color-chip-reg-bg: var(--chip-reg-bg);
+
+  --color-chip-reg-text: var(--chip-reg-text);
 }
 
 /* ---break---
@@ -257,6 +265,14 @@
   --status-resolved-bg: #f0f0f0;
 
   --status-resolved-text: #888888;
+
+  --chip-claim-bg: #fff3e0;
+
+  --chip-claim-text: #e65100;
+
+  --chip-reg-bg: #f0f6ff;
+
+  --chip-reg-text: #4a90d9;
 }
 
 /* ---break---
@@ -371,6 +387,14 @@
   --status-resolved-bg: #2b2b3a;
 
   --status-resolved-text: #b7b7c8;
+
+  --chip-claim-bg: #4b3420;
+
+  --chip-claim-text: #ffbf75;
+
+  --chip-reg-bg: #1e2f44;
+
+  --chip-reg-text: #8ec0ff;
 }
 
 /* ---break---
@@ -408,5 +432,13 @@
 
   .app-sidebar-link-inactive {
     @apply hover:bg-sidebar-activeBg/50 hover:text-white;
+  }
+
+  .chip-claim {
+    @apply rounded bg-chip-claim-bg px-2 py-0.5 font-mono text-xs font-semibold text-chip-claim-text;
+  }
+
+  .chip-reg {
+    @apply rounded bg-chip-reg-bg px-2 py-0.5 font-mono text-xs text-chip-reg-text;
   }
 }

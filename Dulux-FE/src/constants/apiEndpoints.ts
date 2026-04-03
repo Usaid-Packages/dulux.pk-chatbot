@@ -1,4 +1,5 @@
 const API_USERS_V1 = '/users/api/v1/auth';
+const API_CLAIMS_V1 = '/claims';
 
 export const apiEndpoints = {
   auth: {
@@ -7,5 +8,13 @@ export const apiEndpoints = {
     forgotPassword: `${API_USERS_V1}/forgot-password/`,
     resetPassword: `${API_USERS_V1}/reset-password/`,
     logout: `${API_USERS_V1}/logout/`,
+  },
+  claims: {
+    list: `${API_CLAIMS_V1}/`,
+    detail: (id: string): string => `${API_CLAIMS_V1}/${id}/`,
+    approve: (id: string): string => `${API_CLAIMS_V1}/${id}/approve/`,
+    sendToQuality: (id: string): string => `${API_CLAIMS_V1}/${id}/send-to-quality/`,
+    reject: (id: string): string => `${API_CLAIMS_V1}/${id}/reject/`,
+    requestInfo: (id: string): string => `${API_CLAIMS_V1}/${id}/request-info/`,
   },
 } as const;

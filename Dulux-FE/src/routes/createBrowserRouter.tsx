@@ -7,6 +7,7 @@ import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
 import { DETAIL_ROUTE_CONFIGS, ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
+import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { PlaceholderPage } from '#/pages/PlaceholderPage';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
@@ -29,6 +30,8 @@ const protectedRouteGroup = (
   </PrivateRoute>
 );
 
+const placeholderDetailRouteConfigs = DETAIL_ROUTE_CONFIGS.filter(routeConfig => routeConfig.path !== ROUTES.CLAIMS);
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -41,7 +44,11 @@ export const router = createBrowserRouter(
       <Route element={protectedRouteGroup}>
         <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
         <Route path={ROUTES.DASHBOARD} element={<PlaceholderPage title='Dashboard' />} />
-        {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
+        <Route path={ROUTES.CLAIMS}>
+          <Route index element={<ClaimsListPage />} />
+          <Route path=':id' element={<ClaimDetailPage />} />
+        </Route>
+        {placeholderDetailRouteConfigs.map(routeConfig => (
           <Route key={routeConfig.path} path={routeConfig.path}>
             <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />
             <Route path=':id' element={<PlaceholderPage title={routeConfig.detailTitle} />} />
