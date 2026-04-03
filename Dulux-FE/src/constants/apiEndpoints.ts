@@ -32,6 +32,7 @@ export const apiEndpoints = {
   },
   registrations: {
     list: `${API_WARRANTY_V1}/registrations/`,
+    createManual: `${API_WARRANTY_V1}/registrations/`,
     detail: (id: string | number): string => `${API_WARRANTY_V1}/registrations/${id}/`,
   },
   products: {

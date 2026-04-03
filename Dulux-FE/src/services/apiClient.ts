@@ -19,7 +19,7 @@ import axiosInstance from './axiosInstance';
 
 export const performRequest = async <
   TResponse,
-  TPayload extends Record<string, unknown> | undefined = undefined,
+  TPayload = undefined,
   TParams extends Record<string, unknown> = Record<string, unknown>,
 >({
   method,

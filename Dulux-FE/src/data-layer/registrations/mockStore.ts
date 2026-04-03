@@ -1,3 +1,5 @@
+import type { ManualRegistrationFormValues, ManualRegistrationSubmissionResult } from '#/types/manualRegistration';
+
 const PAGE_SIZE = 10;
 const MOCK_DELAY_MS = 180;
 
@@ -364,6 +366,111 @@ const applyAction = (id: string, payload: RegistrationActionPayload): void => {
   registration.modified = timestamp;
 };
 
+const getNextRegistrationId = (): number => {
+  const currentIds = Array.from(registrationsMap.values()).map(item => item.id);
+  const highestId = currentIds.length ? Math.max(...currentIds) : 100;
+  return highestId + 1;
+};
+
+const formatRegistrationCode = (id: number): string => {
+  return `RG-${String(id).padStart(6, '0')}`;
+};
+
+const fileToObjectUrl = (file: File | null): string => {
+  if (!file) {
+    return '';
+  }
+
+  if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    return `mock://${file.name}`;
+  }
+
+  return URL.createObjectURL(file);
+};
+
+const createManualRegistrationEntry = (values: ManualRegistrationFormValues): ManualRegistrationSubmissionResult => {
+  const registrationId = getNextRegistrationId();
+  const registrationCode = formatRegistrationCode(registrationId);
+  const timestamp = new Date().toISOString();
+
+  const topcoatProductName = values.topcoatProductName.trim();
+  const basecoatProductName = values.basecoatProductName.trim();
+
+  const invoices: RegistrationDetail['paintPairInvoices'] = [
+    {
+      id: registrationId * 10 + 1,
+      invoiceType: 'TOPCOAT',
+      image: {
+        id: registrationId * 100 + 1,
+        image: fileToObjectUrl(values.topcoatInvoice),
+      },
+    },
+  ];
+
+  if (basecoatProductName && values.basecoatInvoice) {
+    invoices.push({
+      id: registrationId * 10 + 2,
+      invoiceType: 'BASECOAT',
+      image: {
+        id: registrationId * 100 + 2,
+        image: fileToObjectUrl(values.basecoatInvoice),
+      },
+    });
+  }
+
+  const entry: RegistrationDetail = {
+    id: registrationId,
+    registrationCode,
+    channel: 'WEBFORM',
+    state: 'SUBMITTED',
+    customerName: values.customerName.trim(),
+    phoneNumber: values.phoneNumber.trim(),
+    email: values.email.trim(),
+    city: values.city.trim(),
+    province: values.province.trim(),
+    siteAddress: values.siteAddress.trim(),
+    purchaseDate: values.purchaseDate.trim(),
+    purchaseDealer: values.purchaseDealer.trim(),
+    purchaseDealerCity: values.purchaseDealerCity.trim(),
+    purchaseDealerAddress: values.purchaseDealerAddress.trim(),
+    postalCode: values.postalCode.trim(),
+    notes: values.notes.trim(),
+    approvedBy: null,
+    approvedByEmail: null,
+    approvedAt: null,
+    warrantyCertificate: null,
+    paintPairs: [
+      {
+        id: registrationId * 10 + 1,
+        topcoat: {
+          id: registrationId * 1000 + 1,
+          name: topcoatProductName,
+          productType: 'TOPCOAT',
+        },
+        topcoatQuantity: values.topcoatQuantity.trim(),
+        basecoat: basecoatProductName
+          ? {
+              id: registrationId * 1000 + 2,
+              name: basecoatProductName,
+              productType: 'BASECOAT',
+            }
+          : null,
+        basecoatQuantity: values.basecoatQuantity.trim() || null,
+      },
+    ],
+    paintPairInvoices: invoices,
+    created: timestamp,
+    modified: timestamp,
+  };
+
+  registrationsMap.set(String(registrationId), entry);
+
+  return {
+    id: registrationId,
+    registrationCode,
+  };
+};
+
 export const registrationsMockStore = {
   async fetchRegistrations(params?: RegistrationsQueryParams): Promise<RegistrationsListResponse> {
     await wait();
@@ -376,5 +483,9 @@ export const registrationsMockStore = {
   async applyRegistrationAction(id: string, payload: RegistrationActionPayload): Promise<void> {
     await wait();
     applyAction(id, payload);
+  },
+  async createManualRegistration(values: ManualRegistrationFormValues): Promise<ManualRegistrationSubmissionResult> {
+    await wait();
+    return createManualRegistrationEntry(values);
   },
 };
