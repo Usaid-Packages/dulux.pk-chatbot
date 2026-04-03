@@ -1,0 +1,191 @@
+import type { JSX } from 'react';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from '#/components/ui';
+import { requestMoreInfoSchema, type RequestMoreInfoFormValues } from '#/schemas/claim.schema';
+import type { ClaimPriority } from '#/types/claims.types';
+import { REQUEST_INFO_ITEMS } from './constants';
+
+interface RequestMoreInfoModalProps {
+  isOpen: boolean;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onSubmit: (values: RequestMoreInfoFormValues) => void;
+}
+
+const PRIORITY_OPTIONS: ReadonlyArray<{ value: ClaimPriority; label: string }> = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'high', label: 'High' },
+];
+
+const OTHER_ITEM = 'Other';
+
+/**
+ * RequestMoreInfoModal captures requested evidence and follow-up context.
+ *
+ * @param props - Modal state and submit callback.
+ * @returns Request more info modal.
+ */
+export const RequestMoreInfoModal = ({
+  isOpen,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: RequestMoreInfoModalProps): JSX.Element => {
+  const {
+    handleSubmit,
+    register,
+    control,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<RequestMoreInfoFormValues>({
+    resolver: zodResolver(requestMoreInfoSchema),
+    defaultValues: {
+      items: [],
+      note: '',
+      otherDetails: '',
+      priority: 'normal',
+    },
+  });
+
+  const selectedItems = watch('items');
+  const isOtherSelected = selectedItems.includes(OTHER_ITEM);
+
+  const handleOpenChange = (open: boolean): void => {
+    if (!open) {
+      reset();
+      onClose();
+    }
+  };
+
+  const handleFormSubmit = (values: RequestMoreInfoFormValues): void => {
+    onSubmit(values);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request More Information</DialogTitle>
+          <DialogDescription>Select missing items and add context for the customer.</DialogDescription>
+        </DialogHeader>
+
+        <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
+          <div className='space-y-2'>
+            <p className='text-sm font-medium text-text-primary'>Requested items</p>
+            <Controller
+              control={control}
+              name='items'
+              render={({ field }) => (
+                <div className='space-y-2 rounded-md border border-border p-3'>
+                  {REQUEST_INFO_ITEMS.map(item => {
+                    const checkboxId = `request-info-${item.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                    const checked = field.value.includes(item);
+
+                    const handleCheckedChange = (): void => {
+                      if (checked) {
+                        field.onChange(field.value.filter(value => value !== item));
+                        return;
+                      }
+
+                      field.onChange([...field.value, item]);
+                    };
+
+                    return (
+                      <div key={item} className='flex items-start gap-2'>
+                        <input
+                          id={checkboxId}
+                          type='checkbox'
+                          checked={checked}
+                          onChange={handleCheckedChange}
+                          className='mt-1 h-4 w-4 rounded border-border'
+                        />
+                        <label htmlFor={checkboxId} className='text-sm text-text-primary'>
+                          {item}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            />
+            {errors.items ? <p className='text-xs text-destructive'>{errors.items.message}</p> : null}
+          </div>
+
+          {isOtherSelected ? (
+            <div className='space-y-2'>
+              <label htmlFor='request-other-details' className='text-sm font-medium text-text-primary'>
+                Other details
+              </label>
+              <Textarea
+                id='request-other-details'
+                {...register('otherDetails')}
+                aria-invalid={Boolean(errors.otherDetails)}
+              />
+              {errors.otherDetails ? <p className='text-xs text-destructive'>{errors.otherDetails.message}</p> : null}
+            </div>
+          ) : null}
+
+          <div className='space-y-2'>
+            <label htmlFor='request-note' className='text-sm font-medium text-text-primary'>
+              Note (Optional)
+            </label>
+            <Textarea id='request-note' {...register('note')} aria-invalid={Boolean(errors.note)} />
+            {errors.note ? <p className='text-xs text-destructive'>{errors.note.message}</p> : null}
+          </div>
+
+          <div className='space-y-2'>
+            <label htmlFor='request-priority' className='text-sm font-medium text-text-primary'>
+              Priority
+            </label>
+            <Controller
+              control={control}
+              name='priority'
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id='request-priority'>
+                    <SelectValue placeholder='Select priority' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.priority ? <p className='text-xs text-destructive'>{errors.priority.message}</p> : null}
+          </div>
+
+          <DialogFooter>
+            <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting ? 'Sending...' : 'Request Info'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
