@@ -29,7 +29,7 @@
 - **Single Responsibility:** Each component should do one thing well.
 - **Composition Over Props:** Prefer component composition over complex prop configurations.
 - **Prop Types:** Define explicit TypeScript interfaces for all component props.
-
+- **DRY PRINCIPLE:** Do not repeat yourself. 
 ### Hooks
 
 - **Hook Dependencies:** Always include all dependencies in useEffect/useCallback/useMemo deps arrays.
