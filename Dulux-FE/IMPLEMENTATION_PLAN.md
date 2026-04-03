@@ -72,7 +72,7 @@ After successful login, redirect to:
 ### 1.4 Screen-to-Route Mapping
 
 - `A1` Login -> `/login` ⚠️ **No Login wireframe provided in Phase 1** — implement as standard email+password form; layout pending design approval
-- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing flow cards and section stats (6 flows, 31 screens). No complex analytics; just a summary landing page.
+- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats. No complex analytics.
 - `B2/B3` Registrations list/detail -> `/app/registrations`, `/app/registrations/:id`
 - `B4/B5` Claims list/detail -> `/app/claims`, `/app/claims/:id`
 - `B6` Quality module -> `/app/quality`, `/app/quality/:id`
@@ -262,7 +262,7 @@ function useAuth() {
 - `step/:stepId` must enforce step-completion guard.
 - `/app/settings` is `ADMIN` only.
 - Add in-app `/app/*` not-found handling.
-- **Dashboard** implements the Wireframe Hub view (flow cards + section stats). Do NOT build `TrendChart`, `RecentActivity`, or `LatestTicketsTable` — those are not in Phase 1.
+- **Dashboard** implements the Wireframe Hub view (flow cards only, each card includes module-level stats). Do NOT build `TrendChart`, `RecentActivity`, or `LatestTicketsTable` — those are not in Phase 1.
 - **Login has no wireframe** — implement as standard email+password form; layout pending design approval.
 - **Data Import and Settings have no wireframes** — implement as empty placeholder route shells only (`<PlaceholderPage title="Coming Soon" />`). Do not implement CSV upload or settings management logic.
 - Manual Registration has **no sidebar nav item** — do not add it to `Sidebar.tsx` nav config.
@@ -384,10 +384,9 @@ Use feature naming namespaces inside current folders:
 
 #### Dashboard
 
-- `src/components/dashboard/DashboardOverviewStats.tsx`   — 3 stat cards: Total Flows, Total Screens, Phase
-- `src/components/dashboard/DashboardFlowCard.tsx`         — card per flow (title, icon, screen count, description)
-- `src/components/dashboard/DashboardFlowGrid.tsx`         — grid container for 6 flow cards
-- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (6 flows, 31 screens)
+- `src/components/dashboard/DashboardCard.tsx`         — clickable card per module (title, icon, screen count, module stats, description)
+- `src/components/dashboard/DashboardGrid.tsx`         — grid container for 6 module cards
+- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (6 module cards with navigation)
 
 #### Registrations (B2/B3)
 
@@ -585,25 +584,26 @@ src/components/layout/
 ```tsx
 <DashboardPage>
   <PageHeader title="Dulux CS Dashboard - Wireframe Hub" />
-  <DashboardOverviewStats>
-    <StatCard label="Total Flows" value="6" />
-    <StatCard label="Total Screens" value="31" />
-    <StatCard label="Phase" value="Phase 1" />
-  </DashboardOverviewStats>
-  <DashboardFlowGrid>
-    <DashboardFlowCard title="Registration Approvals" icon="check" screens={4}
+  <DashboardGrid>
+    <DashboardCard title="Registration Approvals" icon="check" screens={4}
+      stats={{ pending: 42, approvedToday: 18 }} to="/app/registrations"
       description="List, detail, resubmission & rejection modals" />
-    <DashboardFlowCard title="Manual Registration" icon="edit" screens={6}
+    <DashboardCard title="Manual Registration" icon="edit" screens={6}
+      stats={{ draftCount: 7, submittedToday: 5 }} to="/app/manual-registration/step/1"
       description="5-step form wizard with review & success states" />
-    <DashboardFlowCard title="Claims Approvals" icon="alert" screens={5}
+    <DashboardCard title="Claims Approvals" icon="alert" screens={5}
+      stats={{ pendingCsReview: 21, forwardedToQuality: 9 }} to="/app/claims"
       description="List, detail, forward, reject & request info modals" />
-    <DashboardFlowCard title="Quality Review" icon="inspect" screens={5}
+    <DashboardCard title="Quality Review" icon="inspect" screens={5}
+      stats={{ awaitingReview: 14, resolvedToday: 6 }} to="/app/quality"
       description="Technical review, approve, reject & request info modals" />
-    <DashboardFlowCard title="Live Chat" icon="chat" screens={6}
+    <DashboardCard title="Live Chat" icon="chat" screens={6}
+      stats={{ unassigned: 12, active: 19 }} to="/app/complaints"
       description="3-panel chat with resolve, transfer & escalate modals" />
-    <DashboardFlowCard title="Product Catalog" icon="box" screens={5}
+    <DashboardCard title="Product Catalog" icon="box" screens={5}
+      stats={{ products: 24, surfaceTypes: 8 }} to="/app/products"
       description="Products, surfaces, add/edit forms & delete modal" />
-  </DashboardFlowGrid>
+  </DashboardGrid>
 </DashboardPage>
 ```
 
@@ -2061,14 +2061,12 @@ src/components/ui/
   Input.tsx
   Select.tsx
   Badge.tsx
-  Modal.tsx
+  Dialogs.tsx
   Table.tsx
   Skeleton.tsx
   EmptyState.tsx
   Toast.tsx
   Pagination.tsx
-  FileUpload.tsx
-  Lightbox.tsx
 ```
 
 Rule:
@@ -2990,7 +2988,7 @@ The updated wireframes introduce **31 screens across 6 flows** that are signific
 
 | Area | Previous Plan | Wireframe Reality |
 |---|---|---|
-| Modals | Not specified | 13 distinct modal types across all flows |
+| Dialogs | Not specified | 13 distinct Dialogs types across all flows |
 | Registration list | Simple table | + Source column (WhatsApp / Manual) + Priority dot |
 | Registration statuses | 4 statuses | 5 statuses: Pending, Approved, Rejected, Resubmission (badge = `status-resubmission` = blue), also shown as tab |
 | Resubmission modal | Inline panel | Dedicated modal with 6 checkbox fields + note field |

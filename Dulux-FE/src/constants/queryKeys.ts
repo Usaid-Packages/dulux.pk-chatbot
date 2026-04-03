@@ -13,5 +13,13 @@ export const queryKeys = {
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,
     requestInfo: ['claims', 'request-info'] as const,
+    },
+            dashboard: {
+    summary: 'dashboard-summary',
+  },
+  registrations: {
+    all: ['registrations'] as const,
+    list: (paramsKey: string): readonly ['registrations', string] => ['registrations', paramsKey] as const,
+    detail: (id: string): readonly ['registration', string] => ['registration', id] as const,
   },
 } as const;

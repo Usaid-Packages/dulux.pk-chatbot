@@ -47,6 +47,9 @@
   --color-popover-foreground: var(--popover-foreground);
 
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-border: var(--primary-border);
 
   --color-primary-foreground: var(--primary-foreground);
 
@@ -105,6 +108,8 @@
   --color-sidebar-navGroup: var(--sidebar-navGroup);
 
   --color-sidebar-navText: var(--sidebar-navText);
+  --color-sidebar-badge-bg: var(--sidebar-badge-bg);
+  --color-sidebar-badge-text: var(--sidebar-badge-text);
 
   --color-page-body: var(--page-body);
 
@@ -113,10 +118,19 @@
   --color-surface: var(--surface);
 
   --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
 
   --color-text-primary: var(--text-primary);
-
+  --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-text-hint: var(--text-hint);
+  --color-text-faint: var(--text-faint);
+  --color-text-label: var(--text-label);
+  --color-text-nav: var(--text-nav);
+  --color-text-tableHead: var(--text-tableHead);
+  --color-border-light: var(--border-light);
+  --color-border-muted: var(--border-muted);
+  --color-border-strong: var(--border-strong);
 
   --color-status-pending-bg: var(--status-pending-bg);
 
@@ -149,6 +163,89 @@
   --color-chip-reg-bg: var(--chip-reg-bg);
 
   --color-chip-reg-text: var(--chip-reg-text);
+  --color-action-approve-bg: var(--action-approve-bg);
+  --color-action-approve-text: var(--action-approve-text);
+  --color-action-reject-bg: var(--action-reject-bg);
+  --color-action-reject-text: var(--action-reject-text);
+  --color-action-reject-border: var(--action-reject-border);
+  --color-action-rejectHover-bg: var(--action-rejectHover-bg);
+  --color-action-deleteHover-bg: var(--action-deleteHover-bg);
+  --color-action-deleteHover-border: var(--action-deleteHover-border);
+  --color-action-deleteHover-text: var(--action-deleteHover-text);
+  --color-danger-light: var(--danger-light);
+  --color-issue-bg: var(--issue-bg);
+  --color-issue-text: var(--issue-text);
+  --color-surfaceTag-bg: var(--surfaceTag-bg);
+  --color-surfaceTag-text: var(--surfaceTag-text);
+  --color-productType-topcoat-bg: var(--productType-topcoat-bg);
+  --color-productType-topcoat-text: var(--productType-topcoat-text);
+  --color-productType-basecoat-bg: var(--productType-basecoat-bg);
+  --color-productType-basecoat-text: var(--productType-basecoat-text);
+  --color-chipId-claim-bg: var(--chipId-claim-bg);
+  --color-chipId-claim-text: var(--chipId-claim-text);
+  --color-chipId-reg-bg: var(--chipId-reg-bg);
+  --color-chipId-reg-text: var(--chipId-reg-text);
+  --color-chat-panelBg: var(--chat-panelBg);
+  --color-chat-convActiveBg: var(--chat-convActiveBg);
+  --color-chat-convActiveBorder: var(--chat-convActiveBorder);
+  --color-chat-customerBubble: var(--chat-customerBubble);
+  --color-chat-agentBubble: var(--chat-agentBubble);
+  --color-chat-agentText: var(--chat-agentText);
+  --color-chat-agentTimeColor: var(--chat-agentTimeColor);
+  --color-chat-systemBg: var(--chat-systemBg);
+  --color-chat-systemText: var(--chat-systemText);
+  --color-chat-unreadDot: var(--chat-unreadDot);
+  --color-chat-unreadTime: var(--chat-unreadTime);
+  --color-stepper-activeBg: var(--stepper-activeBg);
+  --color-stepper-activeBorder: var(--stepper-activeBorder);
+  --color-stepper-activeText: var(--stepper-activeText);
+  --color-stepper-doneBg: var(--stepper-doneBg);
+  --color-stepper-doneBorder: var(--stepper-doneBorder);
+  --color-stepper-doneText: var(--stepper-doneText);
+  --color-stepper-doneLabel: var(--stepper-doneLabel);
+  --color-stepper-inactiveLine: var(--stepper-inactiveLine);
+  --color-stepper-doneLine: var(--stepper-doneLine);
+  --color-quality-avatarBg: var(--quality-avatarBg);
+  --color-quality-notesBg: var(--quality-notesBg);
+  --color-quality-notesBorder: var(--quality-notesBorder);
+  --color-quality-highlight: var(--quality-highlight);
+  --color-quality-roleBannerBg: var(--quality-roleBannerBg);
+  --color-quality-roleBannerBorder: var(--quality-roleBannerBorder);
+  --color-quality-roleBannerText: var(--quality-roleBannerText);
+  --color-quality-roleBannerDot: var(--quality-roleBannerDot);
+  --color-info-bg: var(--info-bg);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
+  --color-success-iconBg: var(--success-iconBg);
+  --color-success-iconText: var(--success-iconText);
+  --color-success-regIdBg: var(--success-regIdBg);
+  --color-success-regIdText: var(--success-regIdText);
+  --color-amber-highlight: var(--amber-highlight);
+  --color-source-whatsapp-bg: var(--source-whatsapp-bg);
+  --color-source-whatsapp-text: var(--source-whatsapp-text);
+  --color-source-manual-bg: var(--source-manual-bg);
+  --color-source-manual-text: var(--source-manual-text);
+  --color-priority-high-bg: var(--priority-high-bg);
+  --color-priority-high-text: var(--priority-high-text);
+  --color-priority-high-dot: var(--priority-high-dot);
+  --color-priority-normal-bg: var(--priority-normal-bg);
+  --color-priority-normal-text: var(--priority-normal-text);
+  --color-priority-normal-dot: var(--priority-normal-dot);
+  --color-priority-medium-dot: var(--priority-medium-dot);
+  --color-convStatus-unassigned-bg: var(--convStatus-unassigned-bg);
+  --color-convStatus-unassigned-text: var(--convStatus-unassigned-text);
+  --color-convStatus-active-bg: var(--convStatus-active-bg);
+  --color-convStatus-active-text: var(--convStatus-active-text);
+  --color-convStatus-resolved-bg: var(--convStatus-resolved-bg);
+  --color-convStatus-resolved-text: var(--convStatus-resolved-text);
+  --color-modal-warning-bg: var(--modal-warning-bg);
+  --color-modal-warning-text: var(--modal-warning-text);
+  --color-modal-info-bg: var(--modal-info-bg);
+  --color-modal-info-text: var(--modal-info-text);
+  --color-modal-success-bg: var(--modal-success-bg);
+  --color-modal-success-text: var(--modal-success-text);
+  --color-modal-purple-bg: var(--modal-purple-bg);
+  --color-modal-purple-text: var(--modal-purple-text);
 }
 
 /* ---break---
@@ -170,9 +267,12 @@
 
   --popover-foreground: oklch(0.145 0 0);
 
-  --primary: oklch(0.205 0 0);
+  --primary: #4a90d9;
+  --primary-hover: #3a7bc8;
+  --primary-light: #f0f6ff;
+  --primary-border: #bfdbfe;
 
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: #ffffff;
 
   --secondary: oklch(0.97 0 0);
 
@@ -188,7 +288,7 @@
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.922 0 0);
+  --border: #e0e0e0;
 
   --input: oklch(0.922 0 0);
 
@@ -230,6 +330,10 @@
 
   --sidebar-navText: #999999;
 
+  --sidebar-badge-bg: #2a4a6a;
+
+  --sidebar-badge-text: #6ab0ff;
+
   --page-body: #f5f5f5;
 
   --page-canvas: #f0f0f0;
@@ -238,9 +342,29 @@
 
   --surface-muted: #fafafa;
 
+  --surface-subtle: #fafbfc;
+
   --text-primary: #222222;
 
+  --text-secondary: #444444;
+
   --text-muted: #888888;
+
+  --text-hint: #aaaaaa;
+
+  --text-faint: #bbbbbb;
+
+  --text-label: #555555;
+
+  --text-nav: #999999;
+
+  --text-tableHead: #888888;
+
+  --border-light: #f0f0f0;
+
+  --border-muted: #eeeeee;
+
+  --border-strong: #dddddd;
 
   --status-pending-bg: #fef3c7;
 
@@ -273,6 +397,171 @@
   --chip-reg-bg: #f0f6ff;
 
   --chip-reg-text: #4a90d9;
+  --action-approve-bg: #16a34a;
+
+  --action-approve-text: #ffffff;
+
+  --action-reject-bg: #ffffff;
+
+  --action-reject-text: #dc2626;
+
+  --action-reject-border: #fca5a5;
+
+  --action-rejectHover-bg: #fef2f2;
+
+  --action-deleteHover-bg: #fef2f2;
+
+  --action-deleteHover-border: #fca5a5;
+
+  --action-deleteHover-text: #dc2626;
+
+  --danger-light: #fef2f2;
+
+  --issue-bg: #fef2f2;
+
+  --issue-text: #b91c1c;
+
+  --surfaceTag-bg: #f0f4ff;
+
+  --surfaceTag-text: #4a6fa5;
+
+  --productType-topcoat-bg: #f0f4ff;
+
+  --productType-topcoat-text: #4a6fa5;
+
+  --productType-basecoat-bg: #f5f0ff;
+
+  --productType-basecoat-text: #7c5caa;
+
+  --chipId-claim-bg: #fff3e0;
+
+  --chipId-claim-text: #e65100;
+
+  --chipId-reg-bg: #f0f6ff;
+
+  --chipId-reg-text: #4a90d9;
+
+  --chat-panelBg: #f8f9fa;
+
+  --chat-convActiveBg: #f0f6ff;
+
+  --chat-convActiveBorder: #4a90d9;
+
+  --chat-customerBubble: #ffffff;
+
+  --chat-agentBubble: #4a90d9;
+
+  --chat-agentText: #ffffff;
+
+  --chat-agentTimeColor: rgba(255, 255, 255, 0.6);
+
+  --chat-systemBg: #eff6ff;
+
+  --chat-systemText: #2563eb;
+
+  --chat-unreadDot: #f59e0b;
+
+  --chat-unreadTime: #f59e0b;
+
+  --stepper-activeBg: #4a90d9;
+
+  --stepper-activeBorder: #4a90d9;
+
+  --stepper-activeText: #ffffff;
+
+  --stepper-doneBg: #16a34a;
+
+  --stepper-doneBorder: #16a34a;
+
+  --stepper-doneText: #ffffff;
+
+  --stepper-doneLabel: #16a34a;
+
+  --stepper-inactiveLine: #dddddd;
+
+  --stepper-doneLine: #16a34a;
+
+  --quality-avatarBg: #16a34a;
+
+  --quality-notesBg: #faf5ff;
+
+  --quality-notesBorder: #e9d5ff;
+
+  --quality-highlight: #7c3aed;
+
+  --quality-roleBannerBg: #faf5ff;
+
+  --quality-roleBannerBorder: #e9d5ff;
+
+  --quality-roleBannerText: #7c3aed;
+
+  --quality-roleBannerDot: #7c3aed;
+
+  --info-bg: #eff6ff;
+
+  --info-border: #bfdbfe;
+
+  --info-text: #1e40af;
+
+  --success-iconBg: #dcfce7;
+
+  --success-iconText: #16a34a;
+
+  --success-regIdBg: #f0f6ff;
+
+  --success-regIdText: #4a90d9;
+
+  --amber-highlight: #f59e0b;
+
+  --source-whatsapp-bg: #ecfdf5;
+
+  --source-whatsapp-text: #16a34a;
+
+  --source-manual-bg: #f0f4ff;
+
+  --source-manual-text: #4a6fa5;
+
+  --priority-high-bg: #fef2f2;
+
+  --priority-high-text: #dc2626;
+
+  --priority-high-dot: #ef4444;
+
+  --priority-normal-bg: #f0f0f0;
+
+  --priority-normal-text: #666666;
+
+  --priority-normal-dot: #22c55e;
+
+  --priority-medium-dot: #f59e0b;
+
+  --convStatus-unassigned-bg: #fef3c7;
+
+  --convStatus-unassigned-text: #b45309;
+
+  --convStatus-active-bg: #e6f9e6;
+
+  --convStatus-active-text: #2e7d32;
+
+  --convStatus-resolved-bg: #f0f0f0;
+
+  --convStatus-resolved-text: #888888;
+
+  --modal-warning-bg: #fef3c7;
+
+  --modal-warning-text: #d97706;
+
+  --modal-info-bg: #dbeafe;
+
+  --modal-info-text: #2563eb;
+
+  --modal-success-bg: #dcfce7;
+
+  --modal-success-text: #16a34a;
+
+  --modal-purple-bg: #f3e8ff;
+
+  --modal-purple-text: #7c3aed;
 }
 
 /* ---break---
@@ -440,5 +729,75 @@
 
   .chip-reg {
     @apply rounded bg-chip-reg-bg px-2 py-0.5 font-mono text-xs text-chip-reg-text;
+  .card {
+    @apply rounded-lg border border-border bg-surface p-5;
+  }
+
+  .card-title {
+    @apply text-base font-bold text-text-primary;
+  }
+
+  .stat-label {
+    @apply text-xs font-semibold uppercase tracking-[0.5px] text-text-muted;
+  }
+
+  .dashboard-flow-card {
+    @apply flex h-full flex-col rounded-lg border border-border bg-surface p-5 transition-colors duration-150 hover:border-primary/40 hover:bg-primary/5;
+  }
+
+  .dashboard-flow-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary;
+  }
+
+  .dashboard-flow-screen-badge {
+    @apply rounded-2xl bg-surface-muted px-2 py-1 text-xs font-semibold text-text-muted;
+  }
+
+  .dashboard-flow-stat-box {
+    @apply rounded-md border border-border bg-surface-muted p-3;
+  }
+
+  .badge {
+    @apply inline-block rounded-2xl px-[10px] py-[3px] text-xs font-semibold;
+  }
+
+  .badge-pending {
+    @apply bg-status-pending-bg text-status-pending-text;
+  }
+
+  .badge-approved {
+    @apply bg-status-approved-bg text-status-approved-text;
+  }
+
+  .badge-rejected {
+    @apply bg-status-rejected-bg text-status-rejected-text;
+  }
+
+  .badge-forwarded {
+    @apply bg-status-forwarded-bg text-status-forwarded-text;
+  }
+
+  .badge-info-req {
+    @apply bg-status-infoReq-bg text-status-infoReq-text;
+  }
+
+  .badge-resolved {
+    @apply bg-status-resolved-bg text-status-resolved-text;
+  }
+
+  .chip-claim {
+    @apply rounded bg-chipId-claim-bg px-2 py-0.5 font-mono text-base font-semibold text-chipId-claim-text;
+  }
+
+  .chip-reg {
+    @apply rounded bg-chipId-reg-bg px-1.5 py-0.5 font-mono text-sm text-chipId-reg-text;
+  }
+
+  .source-whatsapp {
+    @apply inline-block rounded px-2 py-0.5 text-xs bg-source-whatsapp-bg text-source-whatsapp-text;
+  }
+
+  .source-manual {
+    @apply inline-block rounded px-2 py-0.5 text-xs bg-source-manual-bg text-source-manual-text;
   }
 }

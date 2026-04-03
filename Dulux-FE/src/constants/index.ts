@@ -1,4 +1,6 @@
 export * from './apiEndpoints';
+export * from './dashboardFlowConfigs';
+export * from './dashboardIconMap';
 export * from './detailRouteConfigs';
 export * from './layout/navigation';
 export * from './queryKeys';
@@ -6,3 +8,4 @@ export * from './routes';
 export * from './generic';
 export * from './statusCodes';
 export * from './forms/authFormFields';
+export * from './registrations';
