@@ -5,12 +5,11 @@ import { Suspense } from 'react';
 import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 
 import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
-import { DETAIL_ROUTE_CONFIGS, ROUTES } from '#/constants';
+import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { DashboardPage } from '#/pages/DashboardPage';
-import { PlaceholderPage } from '#/pages/PlaceholderPage';
 import { LiveChatPage } from '#/pages/complaints';
 import {
   ManualRegistrationSuccessPage,
@@ -20,7 +19,6 @@ import {
 } from '#/pages/registrations';
 import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
 import { QualityDetailPage, QualityListPage } from '#/pages/quality';
-import { RegistrationDetailPage, RegistrationsListPage } from '#/pages/registrations';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 const LoadingFallback = (): JSX.Element => (
@@ -70,12 +68,6 @@ export const router = createBrowserRouter(
           <Route index element={<LiveChatPage />} />
           <Route path=':id' element={<LiveChatPage />} />
         </Route>
-        {DETAIL_ROUTE_CONFIGS.map(routeConfig => (
-          <Route key={routeConfig.path} path={routeConfig.path}>
-            <Route index element={<PlaceholderPage title={routeConfig.indexTitle} />} />
-            <Route path=':id' element={<PlaceholderPage title={routeConfig.detailTitle} />} />
-          </Route>
-        ))}
         <Route path={ROUTES.MANUAL_REGISTRATION_ROOT} element={<ManualRegistrationLayout />}>
           <Route index element={<Navigate to='step/1' replace />} />
           <Route path='step/:stepId' element={<ManualStepPage />} />
