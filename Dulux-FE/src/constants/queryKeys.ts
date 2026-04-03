@@ -13,8 +13,16 @@ export const queryKeys = {
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,
     requestInfo: ['claims', 'request-info'] as const,
-    },
-            dashboard: {
+  },
+  quality: {
+    all: ['quality'] as const,
+    list: (filters: Record<string, unknown>) => ['quality', 'list', filters] as const,
+    detail: (id: string) => ['quality', 'detail', id] as const,
+    approve: ['quality', 'approve'] as const,
+    reject: ['quality', 'reject'] as const,
+    requestInfo: ['quality', 'request-info'] as const,
+  },
+  dashboard: {
     summary: 'dashboard-summary',
   },
   registrations: {
