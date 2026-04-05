@@ -22,7 +22,7 @@ export const QualityQuickInfoCard = ({
   priority,
 }: QualityQuickInfoCardProps): JSX.Element => {
   return (
-    <article className='rounded-lg border border-border bg-surface p-4'>
+    <article className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Queue Context</h2>
       <dl className='mt-3 space-y-2 text-sm'>
         <div className='flex items-start justify-between gap-2'>

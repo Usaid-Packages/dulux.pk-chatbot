@@ -12,7 +12,7 @@ import { Sidebar } from './Sidebar';
 export const AppLayout = (): JSX.Element => (
   <div className='flex h-screen overflow-hidden bg-page-canvas'>
     <Sidebar />
-    <div className='flex min-w-0 flex-1 flex-col'>
+    <div className='flex min-w-0 flex-1 flex-col bg-page-body'>
       <Header />
       <PageWrapper>
         <Outlet />

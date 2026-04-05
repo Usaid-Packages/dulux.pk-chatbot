@@ -78,7 +78,7 @@ export const ManualRegistrationLayout = (): JSX.Element => {
     >
       <FormProvider {...form}>
         <div className='space-y-4 p-6'>
-          <section className='rounded-lg border border-border bg-surface px-4 py-3'>
+          <section className='wf-card px-4 py-3'>
             <p className='text-sm font-medium text-text-secondary'>Registrations / Manual Entry</p>
             <h2 className='mt-1 text-xl font-semibold text-text-primary'>Manual Registration Wizard</h2>
           </section>

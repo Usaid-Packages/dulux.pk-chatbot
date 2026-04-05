@@ -16,12 +16,12 @@ interface QualityEvidencePhotosProps {
  */
 export const QualityEvidencePhotos = ({ photos }: QualityEvidencePhotosProps): JSX.Element => {
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Evidence Photos</h2>
       <p className='mt-1 text-sm text-text-muted'>Click to enlarge for technical inspection.</p>
       <div className='mt-4 grid gap-4 sm:grid-cols-3'>
         {photos.map(photo => (
-          <article key={photo.id} className='rounded-lg border border-border bg-surface-muted p-2'>
+          <article key={photo.id} className='wf-card-muted p-2'>
             <img
               className='h-[200px] w-full rounded-md object-cover'
               src={photo.url}

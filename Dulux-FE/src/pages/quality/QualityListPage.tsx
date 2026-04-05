@@ -7,12 +7,7 @@ import { useQualityQueue } from '#/hooks/quality';
 
 const PAGE_SIZE = 10;
 
-const STAT_CARD_STYLES = [
-  'border-border',
-  'border-l-4 border-l-quality-highlight',
-  'border-border',
-  'border-border',
-] as const;
+const STAT_CARD_STYLES = ['', 'wf-stat-card-highlight-purple', '', ''] as const;
 
 /**
  * QualityListPage renders the quality review queue with status tabs and summary stats.
@@ -40,22 +35,22 @@ export const QualityListPage = (): JSX.Element => {
   };
 
   return (
-    <main className='space-y-5'>
-      <section className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+    <main className='wf-list-shell'>
+      <section className='wf-stat-grid-4'>
         {[
           { label: 'Total In Queue', value: queueData?.stats.totalInQueue ?? 0 },
           { label: 'Awaiting Review', value: queueData?.stats.awaitingReview ?? 0 },
           { label: 'Info Requested', value: queueData?.stats.infoRequested ?? 0 },
           { label: 'Resolved Today', value: queueData?.stats.resolvedToday ?? 0 },
         ].map((card, index) => (
-          <article key={card.label} className={`rounded-lg border bg-surface p-4 ${STAT_CARD_STYLES[index]}`}>
+          <article key={card.label} className={`wf-stat-card ${STAT_CARD_STYLES[index]}`}>
             <p className='text-sm text-text-muted'>{card.label}</p>
             <p className='mt-1 text-2xl font-bold text-text-primary'>{card.value}</p>
           </article>
         ))}
       </section>
 
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           {QUALITY_STATUS_TABS.map(tab => {
             const isActive = filters.status === tab.value;
@@ -68,8 +63,8 @@ export const QualityListPage = (): JSX.Element => {
               <Button
                 key={tab.value}
                 type='button'
-                variant={isActive ? 'default' : 'outline'}
-                className='h-8 px-3 text-xs'
+                variant='ghost'
+                className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
                 onClick={handleTabClick}
               >
                 {tab.label}
@@ -80,7 +75,7 @@ export const QualityListPage = (): JSX.Element => {
       </section>
 
       {qualityQueueQuery.isLoading ? (
-        <section className='space-y-2 rounded-lg border border-border bg-surface p-4'>
+        <section className='space-y-2 wf-card wf-card-p4'>
           <Skeleton className='h-8 w-full' />
           <Skeleton className='h-8 w-full' />
           <Skeleton className='h-8 w-full' />
@@ -110,7 +105,7 @@ export const QualityListPage = (): JSX.Element => {
       {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && queueItems.length > 0 ? (
         <>
           <QualityQueueTable items={queueItems} />
-          <div className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+          <div className='wf-pagination-panel'>
             <p className='text-sm text-text-muted'>
               Page {filters.page} of {totalPages}
             </p>

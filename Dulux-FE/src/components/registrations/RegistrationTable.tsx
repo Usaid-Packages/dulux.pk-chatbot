@@ -45,7 +45,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
 
   if (isLoading) {
     return (
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-card wf-card-p4'>
         <div className='space-y-3'>
           <Skeleton className='h-9 w-full' />
           <Skeleton className='h-9 w-full' />
@@ -58,7 +58,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
 
   if (registrations.length === 0) {
     return (
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-card wf-card-p4'>
         <Empty>
           <EmptyHeader>
             <EmptyTitle>No registrations found</EmptyTitle>
@@ -70,7 +70,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
   }
 
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-card wf-card-p4'>
       <Table>
         <TableHeader>
           <TableRow>

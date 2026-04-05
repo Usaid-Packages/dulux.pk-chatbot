@@ -11,7 +11,7 @@ interface PlaceholderPageProps {
 
 export const PlaceholderPage = ({ title }: PlaceholderPageProps): JSX.Element => {
   return (
-    <section className='rounded-lg border border-border bg-surface p-6'>
+    <section className='wf-card wf-card-p6'>
       <h1 className='text-lg font-bold text-text-primary'>{title}</h1>
       <p className='mt-2 text-sm text-text-muted'>Placeholder — implementation pending.</p>
     </section>

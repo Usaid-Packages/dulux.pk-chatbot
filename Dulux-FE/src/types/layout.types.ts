@@ -5,8 +5,11 @@ export interface AppNavigationItem {
 }
 
 export interface SidebarNavItem {
+  icon: string;
   label: string;
   path: string;
+  group: 'Main' | 'Warranty' | 'Support' | 'Admin';
+  badgeCount?: number;
 }
 
 export interface HeaderTitleMapItem {

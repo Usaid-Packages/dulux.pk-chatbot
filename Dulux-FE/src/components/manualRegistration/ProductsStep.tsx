@@ -22,7 +22,7 @@ export const ProductsStep = (): JSX.Element => {
   const hasBasecoat = Boolean(selectedBasecoat);
 
   return (
-    <section className='space-y-4 rounded-lg border border-border bg-surface p-5'>
+    <section className='space-y-4 wf-card wf-card-p5'>
       <header>
         <h3 className='text-lg font-semibold text-text-primary'>Products</h3>
         <p className='text-sm text-text-muted'>Choose topcoat/basecoat products and add purchased quantities.</p>

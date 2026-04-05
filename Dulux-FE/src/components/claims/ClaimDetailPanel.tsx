@@ -27,7 +27,7 @@ export const ClaimDetailPanel = ({
 }: ClaimDetailPanelProps): JSX.Element => {
   return (
     <section className='space-y-4'>
-      <article className='rounded-lg border border-border bg-surface p-4'>
+      <article className='wf-card wf-card-p4'>
         <div className='flex items-start justify-between gap-2'>
           <div>
             <h1 className='text-lg font-bold text-text-primary'>{claim.customerName}</h1>
@@ -68,7 +68,7 @@ export const ClaimDetailPanel = ({
         <p className='mt-4 rounded-md bg-surface-muted p-3 text-sm text-text-primary'>{claim.description}</p>
       </article>
 
-      <article className='rounded-lg border border-border bg-surface p-4'>
+      <article className='wf-card wf-card-p4'>
         <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
         <p className='mt-1 text-sm text-text-muted'>Move claim to next workflow step.</p>
         <div className='mt-4 space-y-2'>

@@ -135,7 +135,7 @@ export const ConversationListPanel = ({
                     type='button'
                     variant='ghost'
                     className={cn(
-                      'h-auto w-full flex-col items-start gap-2 rounded-lg border border-border bg-surface p-3 text-left hover:bg-chat-convActiveBg',
+                      'h-auto w-full flex-col items-start gap-2 wf-card wf-card-p3 text-left hover:bg-chat-convActiveBg',
                       isSelected ? 'border-chat-convActiveBorder bg-chat-convActiveBg' : ''
                     )}
                     onClick={handleItemClick}

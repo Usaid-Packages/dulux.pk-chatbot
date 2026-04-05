@@ -26,7 +26,7 @@ interface QualityQueueTableProps {
  */
 export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Element => {
   return (
-    <div className='rounded-lg border border-border bg-surface'>
+    <div className='wf-card'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -65,7 +65,7 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
               <TableCell>
                 <Link
                   to={ROUTES.QUALITY_DETAIL(item.id)}
-                  className='text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                  className='wf-table-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 >
                   Open
                 </Link>

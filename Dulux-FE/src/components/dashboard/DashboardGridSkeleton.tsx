@@ -8,12 +8,12 @@ import type { JSX } from 'react';
 export const DashboardGridSkeleton = (): JSX.Element => {
   return (
     <section aria-label='Dashboard modules' className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
-      <div className='h-[290px] animate-pulse rounded-lg border border-border bg-surface-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
+      <div className='h-[290px] animate-pulse wf-card-muted' />
     </section>
   );
 };

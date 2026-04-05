@@ -17,6 +17,9 @@
 - Import `cn` from `#/utils`, not `#/utils/utils`.
 - Add new files with `git add` before running pre-commit hooks so lint-staged stash restore cannot fail on “untracked
   file would be overwritten”.
+- Do not repeat yourself (DRY) in layout and component styling updates.
+- If the user asks to remove shell/navigation UI, do not re-introduce it in later styling passes unless explicitly
+  requested.
 
 ## Mistake Log (Short)
 
@@ -219,6 +222,12 @@
   reran lint.
 - Rule: For this repo toolchain, when `import/order` crashes on newly added module files, apply a file-scoped override
   only on those files and keep all other lint rules enforced.
+
+### 2026-04-05 09:30 - Reintroduced non-required shell UI
+
+- Issue: Reintroduced header search and included unnecessary sidebar items during broad styling pass.
+- Fix: Removed header search bar, removed Import/Settings from sidebar nav config, and added explicit guard rules.
+- Rule: Respect current scope exactly; when a user removes a shell element, keep it removed and avoid adding extras.
 
 ## Final Check (Before Submit)
 

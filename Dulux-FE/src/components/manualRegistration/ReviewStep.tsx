@@ -24,7 +24,7 @@ export const ReviewStep = (): JSX.Element => {
   const values = useWatch({ control });
 
   return (
-    <section className='space-y-4 rounded-lg border border-border bg-surface p-5'>
+    <section className='space-y-4 wf-card wf-card-p5'>
       <header>
         <h3 className='text-lg font-semibold text-text-primary'>Review</h3>
         <p className='text-sm text-text-muted'>Confirm all details before submitting this manual registration.</p>

@@ -122,7 +122,7 @@ export const QualityDetailPage = (): JSX.Element => {
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
-          <section className='rounded-lg border border-border bg-surface p-4'>
+          <section className='wf-card wf-card-p4'>
             <div className='flex items-start justify-between gap-2'>
               <div>
                 <h1 className='text-lg font-bold text-text-primary'>{claim.customerName}</h1>
