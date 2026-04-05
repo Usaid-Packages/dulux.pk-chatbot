@@ -31,7 +31,7 @@ export const ProductTable = ({
   const allSelected = products.length > 0 && selectedProductIds.length === products.length;
 
   return (
-    <div className='rounded-lg border border-border bg-surface'>
+    <div className='wf-card'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -98,7 +98,7 @@ export const ProductTable = ({
                       <span className='text-xs text-text-muted'>No surfaces</span>
                     ) : (
                       product.surfaceTypes.map(surfaceType => (
-                        <span key={surfaceType.id} className='surface-tag'>
+                        <span key={surfaceType.id} className='wf-chip-surface'>
                           {surfaceType.name}
                         </span>
                       ))
@@ -115,10 +115,7 @@ export const ProductTable = ({
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center gap-2'>
-                    <Link
-                      className='text-sm font-semibold text-primary hover:underline'
-                      to={ROUTES.PRODUCT_EDIT(String(product.id))}
-                    >
+                    <Link className='wf-table-link' to={ROUTES.PRODUCT_EDIT(String(product.id))}>
                       Edit
                     </Link>
                     <Button

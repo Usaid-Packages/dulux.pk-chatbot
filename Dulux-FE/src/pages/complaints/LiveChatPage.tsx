@@ -147,7 +147,7 @@ export const LiveChatPage = (): JSX.Element => {
   }
 
   return (
-    <main className='space-y-4'>
+    <main className='wf-detail-shell'>
       <ConversationStats stats={conversationsQuery.data?.stats} />
 
       <section className='grid gap-4 xl:grid-cols-[340px_1fr_300px]'>
@@ -181,7 +181,7 @@ export const LiveChatPage = (): JSX.Element => {
         />
       </section>
 
-      <div className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+      <div className='wf-pagination-panel'>
         <p className='text-sm text-text-muted'>
           Page {filters.page} of {totalPages}
         </p>

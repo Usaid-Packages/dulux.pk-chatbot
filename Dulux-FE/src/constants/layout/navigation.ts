@@ -13,7 +13,14 @@ export const APP_NAVIGATION_ITEMS: AppNavigationItem[] = [
   { label: 'Settings', path: ROUTES.SETTINGS, headerTitle: 'Settings' },
 ];
 
-export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = APP_NAVIGATION_ITEMS.map(({ label, path }) => ({ label, path }));
+export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
+  { icon: 'LayoutDashboard', label: 'Dashboard', path: ROUTES.DASHBOARD, group: 'Main' },
+  { icon: 'ClipboardList', label: 'Registrations', path: ROUTES.REGISTRATIONS, group: 'Warranty', badgeCount: 12 },
+  { icon: 'ShieldCheck', label: 'Claims', path: ROUTES.CLAIMS, group: 'Warranty', badgeCount: 5 },
+  { icon: 'FlaskConical', label: 'Quality Review', path: ROUTES.QUALITY, group: 'Warranty' },
+  { icon: 'MessageSquareText', label: 'Live Chat', path: ROUTES.COMPLAINTS, group: 'Support', badgeCount: 3 },
+  { icon: 'Boxes', label: 'Product Catalog', path: ROUTES.PRODUCTS, group: 'Admin' },
+];
 
 export const HEADER_TITLE_MAP: HeaderTitleMapItem[] = [
   ...APP_NAVIGATION_ITEMS.map(({ path, headerTitle }) => ({ pathPrefix: path, title: headerTitle })),

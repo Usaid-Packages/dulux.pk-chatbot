@@ -1,7 +1,7 @@
 import type { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
 
-import { cn } from '#/utils/utils';
+import { cn } from '#/utils';
 
 function Empty({ className, ...props }: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
   return (

@@ -85,7 +85,7 @@ export const ManualStepPage = (): JSX.Element => {
       <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit, handleFormInvalidSubmit)}>
         <CurrentStepComponent />
 
-        <div className='flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-4'>
+        <div className='flex flex-wrap items-center gap-2 wf-card wf-card-p4'>
           <Button type='button' variant='outline' disabled={isFirstStep || isSubmitting} onClick={goToPreviousStep}>
             Previous
           </Button>

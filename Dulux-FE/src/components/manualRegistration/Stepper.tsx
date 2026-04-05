@@ -23,7 +23,7 @@ export const Stepper = ({ steps, currentStep, completedSteps }: StepperProps): J
   const isDoneStep = (stepId: number): boolean => completedSteps.includes(stepId) || stepId < currentStep;
 
   return (
-    <div className='overflow-x-auto rounded-lg border border-border bg-surface px-4 py-3'>
+    <div className='overflow-x-auto wf-card px-4 py-3'>
       <ol className='flex min-w-max items-center'>
         {steps.map((step, index) => {
           const isActive = step.id === currentStep;

@@ -18,7 +18,7 @@ interface LinkedRegistrationCardProps {
  */
 export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardProps): JSX.Element => {
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Linked Registration</h2>
       <dl className='mt-3 grid gap-2 text-sm'>
         <div className='flex justify-between gap-2'>

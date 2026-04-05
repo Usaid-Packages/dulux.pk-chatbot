@@ -21,12 +21,7 @@ import { CLAIM_ISSUE_TYPES } from '#/types/claims.types';
 
 const PAGE_SIZE = 10;
 
-const STAT_CARD_STYLES = [
-  'border-border',
-  'border-l-4 border-l-status-pending-text',
-  'border-border',
-  'border-border',
-] as const;
+const STAT_CARD_STYLES = ['', 'wf-stat-card-highlight-amber', '', ''] as const;
 
 /**
  * ClaimsListPage renders the end-to-end claims queue with filtering, tabs, stats, and pagination.
@@ -54,22 +49,22 @@ export const ClaimsListPage = (): JSX.Element => {
   };
 
   return (
-    <main className='space-y-5'>
-      <section className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+    <main className='wf-list-shell'>
+      <section className='wf-stat-grid-4'>
         {[
           { label: 'Total Claims', value: claimsData?.stats.totalClaims ?? 0 },
           { label: 'Pending CS Review', value: claimsData?.stats.pendingReview ?? 0 },
           { label: 'Forwarded to Quality', value: claimsData?.stats.forwardedToQuality ?? 0 },
           { label: 'Resolved', value: claimsData?.stats.resolved ?? 0 },
         ].map((card, index) => (
-          <article key={card.label} className={`rounded-lg border bg-surface p-4 ${STAT_CARD_STYLES[index]}`}>
+          <article key={card.label} className={`wf-stat-card ${STAT_CARD_STYLES[index]}`}>
             <p className='text-sm text-text-muted'>{card.label}</p>
             <p className='mt-1 text-2xl font-bold text-text-primary'>{card.value}</p>
           </article>
         ))}
       </section>
 
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           {CLAIM_STATUS_TABS.map(tab => {
             const isActive = filters.status === tab.value;
@@ -79,8 +74,8 @@ export const ClaimsListPage = (): JSX.Element => {
               <Button
                 key={tab.value}
                 type='button'
-                variant={isActive ? 'default' : 'outline'}
-                className='h-8 px-3 text-xs'
+                variant='ghost'
+                className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
                 onClick={handleTabClick}
               >
                 {tab.label}
@@ -90,7 +85,7 @@ export const ClaimsListPage = (): JSX.Element => {
         </div>
       </section>
 
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-toolbar-panel'>
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='space-y-1'>
             <label htmlFor='claim-from-date' className='text-xs font-medium text-text-muted'>
@@ -141,7 +136,7 @@ export const ClaimsListPage = (): JSX.Element => {
       </section>
 
       {claimsQuery.isLoading ? (
-        <section className='space-y-2 rounded-lg border border-border bg-surface p-4'>
+        <section className='space-y-2 wf-card wf-card-p4'>
           <Skeleton className='h-8 w-full' />
           <Skeleton className='h-8 w-full' />
           <Skeleton className='h-8 w-full' />
@@ -171,7 +166,7 @@ export const ClaimsListPage = (): JSX.Element => {
       {!claimsQuery.isLoading && !claimsQuery.isError && claimsItems.length > 0 ? (
         <>
           <ClaimsTable claims={claimsItems} />
-          <div className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+          <div className='wf-pagination-panel'>
             <p className='text-sm text-text-muted'>
               Page {filters.page} of {totalPages}
             </p>

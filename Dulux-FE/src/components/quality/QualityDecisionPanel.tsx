@@ -23,7 +23,7 @@ export const QualityDecisionPanel = ({
   onOpenRejectModal,
 }: QualityDecisionPanelProps): JSX.Element => {
   return (
-    <article className='rounded-lg border border-border bg-surface p-4'>
+    <article className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Technical Assessment</h2>
       <p className='mt-1 text-sm text-text-muted'>Review evidence and submit a quality decision.</p>
       <div className='mt-4 space-y-2'>

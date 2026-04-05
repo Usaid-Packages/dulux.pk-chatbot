@@ -339,18 +339,20 @@ export const ProductsListPage = (): JSX.Element => {
         <p className='text-sm text-text-muted'>Manage products and surface types from one catalog view.</p>
       </header>
 
-      <section className='rounded-lg border border-border bg-surface p-2'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           <Button
             type='button'
-            variant={activeTab === 'products' ? 'default' : 'outline'}
+            variant='ghost'
+            className={activeTab === 'products' ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
             onClick={() => setTab('products')}
           >
             Products ({productQuery.data?.count ?? 0})
           </Button>
           <Button
             type='button'
-            variant={activeTab === 'surface-types' ? 'default' : 'outline'}
+            variant='ghost'
+            className={activeTab === 'surface-types' ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
             onClick={() => setTab('surface-types')}
           >
             Surface Types ({surfaceTypesQuery.data?.count ?? 0})
@@ -360,7 +362,7 @@ export const ProductsListPage = (): JSX.Element => {
 
       {activeTab === 'products' ? (
         <>
-          <section className='rounded-lg border border-border bg-surface p-4'>
+          <section className='wf-toolbar-panel'>
             <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,auto]'>
               <Input
                 type='search'
@@ -404,7 +406,7 @@ export const ProductsListPage = (): JSX.Element => {
           </section>
 
           {productQuery.isLoading ? (
-            <section className='space-y-2 rounded-lg border border-border bg-surface p-4'>
+            <section className='space-y-2 wf-card wf-card-p4'>
               <Skeleton className='h-9 w-full' />
               <Skeleton className='h-9 w-full' />
               <Skeleton className='h-9 w-full' />
@@ -443,7 +445,7 @@ export const ProductsListPage = (): JSX.Element => {
                 onDelete={requestProductDelete}
               />
 
-              <section className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+              <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>Page {productPage}</p>
                 <div className='flex gap-2'>
                   <Button
@@ -469,7 +471,7 @@ export const ProductsListPage = (): JSX.Element => {
         </>
       ) : (
         <>
-          <section className='rounded-lg border border-border bg-surface p-4'>
+          <section className='wf-toolbar-panel'>
             <div className='grid gap-3 md:grid-cols-[2fr,1fr,auto]'>
               <Input
                 type='search'
@@ -495,7 +497,7 @@ export const ProductsListPage = (): JSX.Element => {
           </section>
 
           {surfaceTypesQuery.isLoading ? (
-            <section className='space-y-2 rounded-lg border border-border bg-surface p-4'>
+            <section className='space-y-2 wf-card wf-card-p4'>
               <Skeleton className='h-9 w-full' />
               <Skeleton className='h-9 w-full' />
               <Skeleton className='h-9 w-full' />
@@ -535,7 +537,7 @@ export const ProductsListPage = (): JSX.Element => {
                 onDelete={requestSurfaceTypeDelete}
               />
 
-              <section className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+              <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>Page {surfacePage}</p>
                 <div className='flex gap-2'>
                   <Button

@@ -8,7 +8,7 @@ interface ConversationStatsProps {
 }
 
 const STAT_CARD_STYLES = [
-  'border-border',
+  '',
   'border-l-4 border-l-chat-unreadDot',
   'border-l-4 border-l-convStatus-active-text',
   'border-l-4 border-l-convStatus-resolved-text',
@@ -29,9 +29,9 @@ export const ConversationStats = ({ stats }: ConversationStatsProps): JSX.Elemen
   ];
 
   return (
-    <section className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+    <section className='wf-stat-grid-4'>
       {items.map((card, index) => (
-        <article key={card.label} className={`rounded-lg border bg-surface p-4 ${STAT_CARD_STYLES[index]}`}>
+        <article key={card.label} className={`wf-stat-card ${STAT_CARD_STYLES[index]}`}>
           <p className='text-sm text-text-muted'>{card.label}</p>
           <p className='mt-1 text-2xl font-bold text-text-primary'>{card.value}</p>
         </article>

@@ -60,23 +60,23 @@ export const RegistrationsListPage = (): JSX.Element => {
   };
 
   return (
-    <section className='space-y-4'>
-      <div className='grid gap-3 md:grid-cols-3'>
-        <article className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-list-shell'>
+      <div className='wf-stat-grid-3'>
+        <article className='wf-stat-card'>
           <p className='text-sm text-text-muted'>Total Registrations</p>
           <p className='mt-2 text-2xl font-semibold text-text-primary'>{stats.total}</p>
         </article>
-        <article className='rounded-lg border border-l-4 border-l-amber-500 border-border bg-surface p-4'>
+        <article className='wf-stat-card wf-stat-card-highlight-amber'>
           <p className='text-sm text-text-muted'>Pending Review</p>
           <p className='mt-2 text-2xl font-semibold text-text-primary'>{stats.pending}</p>
         </article>
-        <article className='rounded-lg border border-border bg-surface p-4'>
+        <article className='wf-stat-card'>
           <p className='text-sm text-text-muted'>Approved</p>
           <p className='mt-2 text-2xl font-semibold text-text-primary'>{stats.approved}</p>
         </article>
       </div>
 
-      <section className='rounded-lg border border-border bg-surface p-2'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           {registrationFilterTabs.map(tab => (
             <button
@@ -84,10 +84,7 @@ export const RegistrationsListPage = (): JSX.Element => {
               type='button'
               data-tab={tab}
               onClick={handleTabClick}
-              className={cn(
-                'rounded-md px-4 py-2 text-sm font-medium transition',
-                tab === activeTab ? 'bg-primary text-white' : 'bg-surface-muted text-text-primary hover:bg-accent'
-              )}
+              className={cn('wf-pill-tab', tab === activeTab ? 'wf-pill-tab-active' : '')}
             >
               {tab}
             </button>
@@ -115,7 +112,7 @@ export const RegistrationsListPage = (): JSX.Element => {
         <RegistrationTable registrations={registrations} isLoading={isLoading} onOpenDetail={handleOpenDetail} />
       )}
 
-      <section className='flex items-center justify-between rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-pagination-panel'>
         <p className='text-sm text-text-muted'>Page {currentPage}</p>
         <div className='flex gap-2'>
           <Button type='button' variant='outline' disabled={!hasPreviousPage || isLoading} onClick={goToPreviousPage}>

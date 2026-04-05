@@ -19,7 +19,7 @@ interface ClaimsTableProps {
  */
 export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
   return (
-    <div className='rounded-lg border border-border bg-surface'>
+    <div className='wf-card'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -50,7 +50,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
                 <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>
               </TableCell>
               <TableCell>
-                <Link className='text-sm font-semibold text-primary hover:underline' to={ROUTES.CLAIM_DETAIL(claim.id)}>
+                <Link className='wf-table-link' to={ROUTES.CLAIM_DETAIL(claim.id)}>
                   View detail
                 </Link>
               </TableCell>

@@ -63,7 +63,7 @@ export const ChatThreadPanel = ({
 
   if (isLoading) {
     return (
-      <section className='rounded-lg border border-border bg-surface p-4'>
+      <section className='wf-card wf-card-p4'>
         <Skeleton className='h-8 w-1/2' />
         <div className='mt-4 space-y-3'>
           <Skeleton className='h-16 w-2/3' />
@@ -101,7 +101,7 @@ export const ChatThreadPanel = ({
   }
 
   return (
-    <section className='flex h-[calc(100vh-16rem)] flex-col rounded-lg border border-border bg-surface'>
+    <section className='flex h-[calc(100vh-16rem)] flex-col wf-card'>
       <header className='space-y-2 border-b border-border px-4 py-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div>

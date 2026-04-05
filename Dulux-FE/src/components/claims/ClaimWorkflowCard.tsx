@@ -30,7 +30,7 @@ export const ClaimWorkflowCard = ({ status }: ClaimWorkflowCardProps): JSX.Eleme
   const currentStep = getCurrentStep(status);
 
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Claim Workflow</h2>
       <ol className='mt-3 space-y-2'>
         {WORKFLOW_STEPS.map((step, index) => {

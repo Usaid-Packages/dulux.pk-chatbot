@@ -15,7 +15,7 @@ interface ClaimTimelineProps {
  */
 export const ClaimTimeline = ({ timeline }: ClaimTimelineProps): JSX.Element => {
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Claim Timeline</h2>
       <ul className='mt-4 space-y-3'>
         {timeline.map(item => (

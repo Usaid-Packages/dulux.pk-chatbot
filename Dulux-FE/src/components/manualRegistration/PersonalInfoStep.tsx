@@ -21,7 +21,7 @@ export const PersonalInfoStep = (): JSX.Element => {
   };
 
   return (
-    <section className='space-y-4 rounded-lg border border-border bg-surface p-5'>
+    <section className='space-y-4 wf-card wf-card-p5'>
       <header>
         <h3 className='text-lg font-semibold text-text-primary'>Personal Information</h3>
         <p className='text-sm text-text-muted'>Add customer contact and site details for this registration.</p>

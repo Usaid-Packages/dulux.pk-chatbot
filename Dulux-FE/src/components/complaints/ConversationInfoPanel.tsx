@@ -59,7 +59,7 @@ export const ConversationInfoPanel = ({
 }: ConversationInfoPanelProps): JSX.Element => {
   if (!thread) {
     return (
-      <aside className='rounded-lg border border-border bg-surface p-4 text-sm text-text-muted'>
+      <aside className='wf-card wf-card-p4 text-sm text-text-muted'>
         Customer details appear here after selecting a conversation.
       </aside>
     );
@@ -68,7 +68,7 @@ export const ConversationInfoPanel = ({
   const attachments = thread.messages.flatMap(message => message.attachments ?? []).slice(0, 3);
 
   return (
-    <aside className='space-y-4 rounded-lg border border-border bg-surface p-4'>
+    <aside className='space-y-4 wf-card wf-card-p4'>
       <section className='text-center'>
         <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
           {getInitials(thread.customerName)}

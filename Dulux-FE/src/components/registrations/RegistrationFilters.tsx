@@ -55,7 +55,7 @@ export const RegistrationFilters = ({
   };
 
   return (
-    <section className='rounded-lg border border-border bg-surface p-4'>
+    <section className='wf-toolbar-panel'>
       <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,auto]'>
         <Input
           type='search'

@@ -91,7 +91,7 @@ export const ProductForm = ({
   };
 
   return (
-    <section className='rounded-lg border border-border bg-surface p-6'>
+    <section className='wf-card wf-card-p6'>
       <header className='mb-5 space-y-1'>
         <h2 className='text-xl font-semibold text-text-primary'>{title}</h2>
         <p className='text-sm text-text-muted'>{description}</p>

@@ -56,7 +56,7 @@ export const RegistrationDetailPanel = ({
 
   if (!registration) {
     return (
-      <section className='rounded-lg border border-border bg-surface p-6'>
+      <section className='wf-card wf-card-p6'>
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Registration not found</EmptyTitle>
@@ -70,7 +70,7 @@ export const RegistrationDetailPanel = ({
   return (
     <section className='grid gap-4 xl:grid-cols-[1fr,340px]'>
       <div className='space-y-4'>
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Customer Information</h2>
           <dl className='mt-3 grid gap-3 text-sm md:grid-cols-2'>
             <div>
@@ -92,7 +92,7 @@ export const RegistrationDetailPanel = ({
           </dl>
         </article>
 
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Purchase Information</h2>
           <dl className='mt-3 grid gap-3 text-sm md:grid-cols-2'>
             <div>
@@ -116,7 +116,7 @@ export const RegistrationDetailPanel = ({
           </dl>
         </article>
 
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Products</h2>
           <div className='mt-3 overflow-x-auto'>
             <table className='min-w-full text-sm'>
@@ -142,7 +142,7 @@ export const RegistrationDetailPanel = ({
           </div>
         </article>
 
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Invoice Gallery</h2>
           <div className='mt-3 grid gap-3 sm:grid-cols-2'>
             {registration.paintPairInvoices.map(invoice => (
@@ -162,7 +162,7 @@ export const RegistrationDetailPanel = ({
       </div>
 
       <aside className='space-y-4'>
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Actions</h2>
           <div className='mt-4 space-y-2'>
             <Button type='button' className='w-full' disabled={isApprovePending} onClick={onApprove}>
@@ -177,7 +177,7 @@ export const RegistrationDetailPanel = ({
           </div>
         </article>
 
-        <article className='rounded-lg border border-border bg-surface p-5'>
+        <article className='wf-card wf-card-p5'>
           <h2 className='text-base font-semibold text-text-primary'>Quick Info</h2>
           <div className='mt-3 space-y-3 text-sm'>
             <div className='flex items-center justify-between'>

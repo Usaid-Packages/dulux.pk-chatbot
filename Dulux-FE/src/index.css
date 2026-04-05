@@ -699,8 +699,112 @@
 }
 
 @layer components {
+  .wf-card {
+    @apply rounded-lg border border-border bg-surface;
+  }
+
+  .wf-card-p2 {
+    @apply p-2;
+  }
+
+  .wf-card-p3 {
+    @apply p-3;
+  }
+
+  .wf-card-p4 {
+    @apply p-4;
+  }
+
+  .wf-card-p5 {
+    @apply p-5;
+  }
+
+  .wf-card-p6 {
+    @apply p-6;
+  }
+
+  .wf-card-soft {
+    @apply rounded-lg border border-border bg-surface-muted;
+  }
+
+  .wf-card-muted {
+    @apply rounded-lg border border-border bg-surface-muted;
+  }
+
+  .wf-stat-grid-3 {
+    @apply grid gap-4 md:grid-cols-3;
+  }
+
+  .wf-stat-grid-4 {
+    @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .wf-stat-card {
+    @apply rounded-lg border border-border bg-surface p-4;
+  }
+
+  .wf-stat-card-highlight-amber {
+    @apply border-l-4 border-l-amber-highlight;
+  }
+
+  .wf-stat-card-highlight-purple {
+    @apply border-l-4 border-l-quality-highlight;
+  }
+
+  .wf-toolbar-panel {
+    @apply rounded-lg border border-border bg-surface p-4;
+  }
+
+  .wf-tabs-panel {
+    @apply rounded-lg border border-border bg-surface p-2;
+  }
+
+  .wf-pagination-panel {
+    @apply flex items-center justify-between rounded-lg border border-border bg-surface p-4;
+  }
+
+  .wf-list-shell {
+    @apply space-y-5;
+  }
+
+  .wf-detail-shell {
+    @apply space-y-4;
+  }
+
+  .wf-section-title {
+    @apply text-[14px] font-bold text-text-primary;
+  }
+
+  .wf-section-subtitle {
+    @apply text-sm text-text-muted;
+  }
+
+  .wf-field-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.3px] text-text-muted;
+  }
+
+  .wf-pill-tab {
+    @apply rounded-full border border-border-strong bg-surface px-4 py-[7px] text-xs font-semibold text-text-muted transition-colors;
+  }
+
+  .wf-pill-tab-active {
+    @apply border-text-primary bg-text-primary text-white;
+  }
+
+  .wf-chip-surface {
+    @apply inline-block rounded bg-surfaceTag-bg px-2 py-0.5 text-xs text-surfaceTag-text;
+  }
+
+  .wf-chip-issue {
+    @apply inline-block rounded bg-issue-bg px-2 py-0.5 text-xs text-issue-text;
+  }
+
+  .wf-table-link {
+    @apply text-sm font-semibold text-primary hover:underline;
+  }
+
   .nav-item {
-    @apply flex items-center gap-[10px] border-l-[3px] border-transparent px-5 py-[10px] text-base text-sidebar-navText transition-all duration-150;
+    @apply flex items-center gap-[10px] border-l-[3px] border-transparent px-5 py-[10px] text-[13px] text-sidebar-navText transition-all duration-150;
   }
 
   .nav-item-active {
@@ -712,7 +816,7 @@
   }
 
   .app-sidebar-link-base {
-    @apply flex items-center gap-[10px] border-l-[3px] border-transparent rounded-none px-5 py-[10px] text-base text-sidebar-navText transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+    @apply flex items-center gap-[10px] border-l-[3px] border-transparent rounded-none px-5 py-[10px] text-[13px] text-sidebar-navText transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
   }
 
   .app-sidebar-link-active {
@@ -788,11 +892,11 @@
   }
 
   .chip-claim {
-    @apply rounded bg-chipId-claim-bg px-2 py-0.5 font-mono text-base font-semibold text-chipId-claim-text;
+    @apply rounded bg-chipId-claim-bg px-2 py-0.5 font-mono text-xs font-semibold text-chipId-claim-text;
   }
 
   .chip-reg {
-    @apply rounded bg-chipId-reg-bg px-1.5 py-0.5 font-mono text-sm text-chipId-reg-text;
+    @apply rounded bg-chipId-reg-bg px-1.5 py-0.5 font-mono text-xs text-chipId-reg-text;
   }
 
   .source-whatsapp {

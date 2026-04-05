@@ -18,7 +18,7 @@ export const SurfaceTypeTable = ({
   onDelete,
 }: SurfaceTypeTableProps): JSX.Element => {
   return (
-    <div className='rounded-lg border border-border bg-surface'>
+    <div className='wf-card'>
       <Table>
         <TableHeader>
           <TableRow>
