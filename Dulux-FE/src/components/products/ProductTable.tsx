@@ -8,9 +8,6 @@ import type { Product } from '#/types/products';
 
 interface ProductTableProps {
   products: Product[];
-  selectedProductIds: number[];
-  onToggleAll: (checked: boolean) => void;
-  onToggleOne: (id: number, checked: boolean) => void;
   onDelete: (product: Product) => void;
 }
 
@@ -20,28 +17,12 @@ const getTypeBadgeClassName = (type: Product['productType']): string => {
     : 'bg-productType-basecoat-bg text-productType-basecoat-text';
 };
 
-export const ProductTable = ({
-  products,
-  selectedProductIds,
-  onToggleAll,
-  onToggleOne,
-  onDelete,
-}: ProductTableProps): JSX.Element => {
-  const allSelected = products.length > 0 && selectedProductIds.length === products.length;
-
+export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Element => {
   return (
     <div className='wf-card'>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className='w-10'>
-              <input
-                type='checkbox'
-                aria-label='Select all products'
-                checked={allSelected}
-                onChange={event => onToggleAll(event.target.checked)}
-              />
-            </TableHead>
             <TableHead className='w-16'>Image</TableHead>
             <TableHead>Product Name</TableHead>
             <TableHead>Type</TableHead>
@@ -54,19 +35,10 @@ export const ProductTable = ({
         <TableBody>
           {products.map(product => {
             const imageUrl = product.images[0]?.image.url ?? product.images[0]?.image.image ?? '';
-            const isSelected = selectedProductIds.includes(product.id);
             const handleDeleteClick = (): void => onDelete(product);
 
             return (
               <TableRow key={product.id}>
-                <TableCell>
-                  <input
-                    type='checkbox'
-                    aria-label={`Select ${product.name}`}
-                    checked={isSelected}
-                    onChange={event => onToggleOne(product.id, event.target.checked)}
-                  />
-                </TableCell>
                 <TableCell>
                   {imageUrl ? (
                     <img

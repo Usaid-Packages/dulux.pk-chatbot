@@ -3,9 +3,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { Product, ProductMutationPayload } from '#/types/products';
-import { productMockStore } from '../mockStore';
 import { normalizeProduct, type ProductApiResponse } from '../queries/shared';
-import { shouldUseMockProducts } from '../transport';
 
 interface UpdateProductVariables {
   id: string;
@@ -13,10 +11,6 @@ interface UpdateProductVariables {
 }
 
 const updateProduct = async ({ id, payload }: UpdateProductVariables): Promise<Product> => {
-  if (shouldUseMockProducts()) {
-    return productMockStore.updateProduct(id, payload);
-  }
-
   const response = await performRequest<ProductApiResponse, ProductMutationPayload>({
     method: 'patch',
     url: apiEndpoints.products.detail(id),

@@ -17,6 +17,13 @@ export interface ProductImage {
   created: string;
 }
 
+export interface ProductImageListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: ProductImage[];
+}
+
 export interface SurfaceType {
   id: number;
   name: string;
@@ -58,6 +65,7 @@ export interface ProductQueryParams extends Record<string, unknown> {
   search?: string;
   product_type?: ProductType;
   is_active?: boolean;
+  page_size?: number;
   page?: number;
   ordering?: string;
 }
@@ -83,6 +91,15 @@ export interface ProductMutationPayload extends Record<string, unknown> {
 export interface SurfaceTypeMutationPayload extends Record<string, unknown> {
   name: string;
   environment: ProductEnvironment;
+}
+
+export interface AttachProductImagePayload extends Record<string, unknown> {
+  image_id: number;
+}
+
+export interface RemoveProductImagePayload extends Record<string, unknown> {
+  productId: string;
+  imageId: string;
 }
 
 export interface ProductFormValues {

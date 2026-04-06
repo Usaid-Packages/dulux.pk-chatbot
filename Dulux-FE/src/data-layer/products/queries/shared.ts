@@ -1,6 +1,7 @@
 import type {
   Product,
   ProductImage,
+  ProductImageListResponse,
   ProductListResponse,
   ProductQueryParams,
   ProductType,
@@ -33,12 +34,18 @@ interface SurfaceTypeApiResponse {
 interface ProductApiResponse {
   id?: number;
   name?: string;
+  productType?: string;
   product_type?: string;
+  warrantyYears?: number;
   warranty_years?: number;
   features?: string;
+  coverageDetails?: string;
   coverage_details?: string;
+  webpageUrl?: string;
   webpage_url?: string;
+  isActive?: boolean;
   is_active?: boolean;
+  surfaceTypes?: SurfaceTypeApiResponse[];
   surface_types?: SurfaceTypeApiResponse[];
   images?: ProductImageApiResponse[];
   created?: string;
@@ -54,7 +61,7 @@ interface PaginatedApiResponse<T> {
 
 const isProductType = (value: string): value is ProductType => value === 'TOPCOAT' || value === 'BASECOAT';
 
-const normalizeProductImage = (response: ProductImageApiResponse): ProductImage => ({
+export const normalizeProductImage = (response: ProductImageApiResponse): ProductImage => ({
   id: response.id ?? 0,
   image: {
     id: response.image?.id ?? 0,
@@ -76,13 +83,17 @@ export const normalizeSurfaceType = (response: SurfaceTypeApiResponse): SurfaceT
 export const normalizeProduct = (response: ProductApiResponse): Product => ({
   id: response.id ?? 0,
   name: response.name ?? '',
-  productType: isProductType(response.product_type ?? '') ? response.product_type : 'TOPCOAT',
-  warrantyYears: response.warranty_years ?? 0,
+  productType: isProductType(response.productType ?? '')
+    ? response.productType
+    : isProductType(response.product_type ?? '')
+      ? response.product_type
+      : 'TOPCOAT',
+  warrantyYears: response.warrantyYears ?? response.warranty_years ?? 0,
   features: response.features ?? '',
-  coverageDetails: response.coverage_details ?? '',
-  webpageUrl: response.webpage_url ?? '',
-  isActive: response.is_active ?? false,
-  surfaceTypes: (response.surface_types ?? []).map(normalizeSurfaceType),
+  coverageDetails: response.coverageDetails ?? response.coverage_details ?? '',
+  webpageUrl: response.webpageUrl ?? response.webpage_url ?? '',
+  isActive: response.isActive ?? response.is_active ?? false,
+  surfaceTypes: (response.surfaceTypes ?? response.surface_types ?? []).map(normalizeSurfaceType),
   images: (response.images ?? []).map(normalizeProductImage),
   created: response.created ?? '',
   modified: response.modified ?? '',
@@ -93,6 +104,15 @@ export const normalizeProductsResponse = (response: PaginatedApiResponse<Product
   next: response.next ?? null,
   previous: response.previous ?? null,
   results: (response.results ?? []).map(normalizeProduct),
+});
+
+export const normalizeProductImagesResponse = (
+  response: PaginatedApiResponse<ProductImageApiResponse>
+): ProductImageListResponse => ({
+  count: response.count ?? response.results?.length ?? 0,
+  next: response.next ?? null,
+  previous: response.previous ?? null,
+  results: (response.results ?? []).map(normalizeProductImage),
 });
 
 export const normalizeSurfaceTypesResponse = (
@@ -126,4 +146,4 @@ export const serializeSurfaceTypeParams = (params?: SurfaceTypeQueryParams): str
   return JSON.stringify(Object.fromEntries(toSortedEntries(params)));
 };
 
-export type { PaginatedApiResponse, ProductApiResponse, SurfaceTypeApiResponse };
+export type { PaginatedApiResponse, ProductApiResponse, ProductImageApiResponse, SurfaceTypeApiResponse };
