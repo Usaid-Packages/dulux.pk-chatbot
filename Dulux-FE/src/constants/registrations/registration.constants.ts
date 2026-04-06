@@ -1,5 +1,25 @@
 import type { RegistrationFilterTab, RegistrationStatus } from '#/types/registrations';
 
+export const REGISTRATION_HTTP_METHODS = {
+  PATCH: 'patch',
+} as const;
+
+export const REGISTRATION_ACTIONS = {
+  APPROVE: 'APPROVE',
+  REJECT: 'REJECT',
+  RESUBMIT: 'RESUBMIT',
+} as const;
+
+export const REGISTRATION_PRODUCT_TYPES = {
+  TOPCOAT: 'TOPCOAT',
+  BASECOAT: 'BASECOAT',
+} as const;
+
+export const REGISTRATION_INVOICE_TYPES = {
+  TOPCOAT: 'TOPCOAT',
+  BASECOAT: 'BASECOAT',
+} as const;
+
 export const REGISTRATION_TAB_TO_STATUS: Record<RegistrationFilterTab, RegistrationStatus | undefined> = {
   All: undefined,
   Pending: 'SUBMITTED',

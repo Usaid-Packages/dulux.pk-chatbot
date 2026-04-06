@@ -99,3 +99,50 @@ export interface RegistrationActionPayload extends Record<string, unknown> {
   notes?: string;
   rejectionFields?: ResubmissionFieldPayload[];
 }
+
+export interface RegistrationDetailApiPaintPair {
+  id?: number;
+  topcoat?: number;
+  topcoatName?: string;
+  topcoatQuantity?: string;
+  basecoat?: number | null;
+  basecoatName?: string | null;
+  basecoatQuantity?: string | null;
+}
+
+export interface RegistrationDetailApiInvoice {
+  id?: number;
+  image?: {
+    id?: number;
+    image?: string;
+  };
+  invoiceType?: 'TOPCOAT' | 'BASECOAT';
+}
+
+export interface RegistrationDetailApiResponse {
+  id?: number;
+  registrationCode?: string;
+  registrationNumber?: string;
+  channel?: RegistrationChannel;
+  state?: RegistrationStatus;
+  customerName?: string;
+  phoneNumber?: string;
+  email?: string;
+  city?: string;
+  province?: string;
+  siteAddress?: string;
+  purchaseDate?: string;
+  purchaseDealer?: string;
+  purchaseDealerCity?: string;
+  purchaseDealerAddress?: string;
+  postalCode?: string;
+  notes?: string;
+  approvedBy?: number | null;
+  approvedByEmail?: string | null;
+  approvedAt?: string | null;
+  warrantyCertificate?: string | null;
+  created?: string;
+  modified?: string;
+  paintPairs?: RegistrationDetailApiPaintPair[];
+  paintPairInvoices?: RegistrationDetailApiInvoice[];
+}

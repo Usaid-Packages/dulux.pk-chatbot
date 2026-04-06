@@ -1,89 +1,110 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, queryKeys, REGISTRATION_INVOICE_TYPES, REGISTRATION_PRODUCT_TYPES } from '#/constants';
+import { getActiveProductIdByNameRequest } from '#/data-layer/products/queries';
 import { performRequest } from '#/services';
 import type {
   ManualRegistrationApiResponse,
   ManualRegistrationFormValues,
   ManualRegistrationSubmissionResult,
 } from '#/types/manualRegistration';
-import env from '#env';
-import { registrationsMockStore } from '../mockStore';
+import { normalizeManualRegistrationCreateResponse } from '#/utils';
+import { uploadRegistrationImageRequest } from './useUploadRegistrationImageMutation';
 
-const shouldUseRegistrationMock = env.VITE_USE_MOCK_REGISTRATIONS !== false;
+interface RegistrationCreatePaintPair {
+  topcoat: number;
+  topcoatQuantity: string;
+  basecoat?: number;
+  basecoatQuantity?: string;
+}
 
-const appendIfPresent = (formData: FormData, key: string, value: string): void => {
-  if (value.trim()) {
-    formData.append(key, value.trim());
+interface RegistrationCreateInvoice {
+  imageId: number;
+  invoiceType: (typeof REGISTRATION_INVOICE_TYPES)[keyof typeof REGISTRATION_INVOICE_TYPES];
+}
+
+interface RegistrationCreatePayload {
+  channel: 'WEBFORM';
+  customerName: string;
+  phoneNumber: string;
+  email: string;
+  city: string;
+  province: string;
+  siteAddress: string;
+  purchaseDate: string;
+  purchaseDealer: string;
+  purchaseDealerCity: string;
+  purchaseDealerAddress: string;
+  postalCode: string;
+  notes: string;
+  paintPairs: RegistrationCreatePaintPair[];
+  paintPairInvoices: RegistrationCreateInvoice[];
+}
+
+const buildCreateRegistrationPayload = async (
+  values: ManualRegistrationFormValues
+): Promise<RegistrationCreatePayload> => {
+  if (!values.topcoatInvoice) {
+    throw new Error('Topcoat invoice is required before submitting registration.');
   }
-};
 
-const createManualRegistrationFormData = (values: ManualRegistrationFormValues): FormData => {
-  const formData = new FormData();
+  const topcoatId = await getActiveProductIdByNameRequest({
+    name: values.topcoatProductName,
+    productType: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+  });
+  const basecoatId = values.basecoatProductName
+    ? await getActiveProductIdByNameRequest({
+        name: values.basecoatProductName,
+        productType: REGISTRATION_PRODUCT_TYPES.BASECOAT,
+      })
+    : undefined;
+  const topcoatInvoiceId = await uploadRegistrationImageRequest({ image: values.topcoatInvoice });
+  const basecoatInvoiceId = values.basecoatInvoice
+    ? await uploadRegistrationImageRequest({ image: values.basecoatInvoice })
+    : undefined;
 
-  appendIfPresent(formData, 'customer_name', values.customerName);
-  appendIfPresent(formData, 'phone_number', values.phoneNumber);
-  appendIfPresent(formData, 'email', values.email);
-  appendIfPresent(formData, 'city', values.city);
-  appendIfPresent(formData, 'province', values.province);
-  appendIfPresent(formData, 'site_address', values.siteAddress);
-  appendIfPresent(formData, 'postal_code', values.postalCode);
-  appendIfPresent(formData, 'purchase_date', values.purchaseDate);
-  appendIfPresent(formData, 'purchase_dealer', values.purchaseDealer);
-  appendIfPresent(formData, 'purchase_dealer_city', values.purchaseDealerCity);
-  appendIfPresent(formData, 'purchase_dealer_address', values.purchaseDealerAddress);
-  appendIfPresent(formData, 'notes', values.notes);
-  appendIfPresent(formData, 'topcoat_product_name', values.topcoatProductName);
-  appendIfPresent(formData, 'topcoat_quantity', values.topcoatQuantity);
-  appendIfPresent(formData, 'basecoat_product_name', values.basecoatProductName);
-  appendIfPresent(formData, 'basecoat_quantity', values.basecoatQuantity);
+  const paintPair: RegistrationCreatePaintPair = {
+    topcoat: topcoatId,
+    topcoatQuantity: values.topcoatQuantity,
+  };
 
-  if (values.topcoatInvoice) {
-    formData.append('topcoat_invoice', values.topcoatInvoice);
+  if (basecoatId && values.basecoatQuantity) {
+    paintPair.basecoat = basecoatId;
+    paintPair.basecoatQuantity = values.basecoatQuantity;
   }
 
-  if (values.basecoatInvoice) {
-    formData.append('basecoat_invoice', values.basecoatInvoice);
+  const paintPairInvoices: RegistrationCreateInvoice[] = [
+    {
+      imageId: topcoatInvoiceId,
+      invoiceType: REGISTRATION_INVOICE_TYPES.TOPCOAT,
+    },
+  ];
+
+  if (basecoatInvoiceId) {
+    paintPairInvoices.push({
+      imageId: basecoatInvoiceId,
+      invoiceType: REGISTRATION_INVOICE_TYPES.BASECOAT,
+    });
   }
-
-  formData.append('channel', 'WEBFORM');
-
-  return formData;
-};
-
-const normalizeManualRegistrationResponse = (
-  response: ManualRegistrationApiResponse
-): ManualRegistrationSubmissionResult => {
-  const id = response.id ?? response.registration?.id ?? 0;
-  const registrationCode = response.registrationCode ?? response.registration?.registrationCode ?? '';
 
   return {
-    id,
-    registrationCode,
+    channel: 'WEBFORM',
+    customerName: values.customerName.trim(),
+    phoneNumber: values.phoneNumber.trim(),
+    email: values.email.trim(),
+    city: values.city.trim(),
+    province: values.province.trim(),
+    siteAddress: values.siteAddress.trim(),
+    purchaseDate: values.purchaseDate.trim(),
+    purchaseDealer: values.purchaseDealer.trim(),
+    purchaseDealerCity: values.purchaseDealerCity.trim(),
+    purchaseDealerAddress: values.purchaseDealerAddress.trim(),
+    postalCode: values.postalCode.trim(),
+    notes: values.notes.trim(),
+    paintPairs: [paintPair],
+    paintPairInvoices,
   };
-};
-
-const createManualRegistration = async (
-  values: ManualRegistrationFormValues
-): Promise<ManualRegistrationSubmissionResult> => {
-  if (shouldUseRegistrationMock) {
-    return registrationsMockStore.createManualRegistration(values);
-  }
-
-  const formData = createManualRegistrationFormData(values);
-
-  const response = await performRequest<ManualRegistrationApiResponse, FormData>({
-    method: 'post',
-    url: apiEndpoints.registrations.createManual,
-    payload: formData,
-    config: {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    },
-  });
-
-  return normalizeManualRegistrationResponse(response);
 };
 
 /**
@@ -100,7 +121,16 @@ export const useCreateManualRegistrationMutation = (): UseMutationResult<
 
   return useMutation<ManualRegistrationSubmissionResult, Error, ManualRegistrationFormValues>({
     mutationKey: queryKeys.registrations.manualCreate,
-    mutationFn: createManualRegistration,
+    mutationFn: async (values: ManualRegistrationFormValues): Promise<ManualRegistrationSubmissionResult> => {
+      const payload = await buildCreateRegistrationPayload(values);
+      const response = await performRequest<ManualRegistrationApiResponse, RegistrationCreatePayload>({
+        method: 'post',
+        url: apiEndpoints.registrations.createManual,
+        payload,
+      });
+
+      return normalizeManualRegistrationCreateResponse(response);
+    },
     onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: queryKeys.registrations.all });
       if (data.id > 0) {

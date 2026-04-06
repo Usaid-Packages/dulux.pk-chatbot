@@ -20,6 +20,20 @@
 - Do not repeat yourself (DRY) in layout and component styling updates.
 - If the user asks to remove shell/navigation UI, do not re-introduce it in later styling passes unless explicitly
   requested.
+- In data-layer hooks, keep `performRequest` inside `queryFn` / `mutationFn`; avoid separate exported/local async API
+  wrapper functions for the same hook operation.
+- For image upload endpoints used by registration/claim flows, create a dedicated upload mutation hook and reuse its
+  request function in composed mutations.
+- Keep response normalization reusable in `src/utils/helperFunctions.ts` and invoke it from query/mutation hooks.
+- Avoid magic literals for API actions/methods/types (`APPROVE`, `REJECT`, `RESUBMIT`, `patch`, `TOPCOAT`, `BASECOAT`);
+  always use named constants from `src/constants/**`.
+- Before implementing any new change, review this file first and explicitly apply listed rules to current edits.
+- Manual registration draft features (`Save as Draft`, `Resume draft`) are out of scope unless explicitly requested by
+  the user.
+- Sidebar must include `Manual Registration` and route it to `ROUTES.MANUAL_REGISTRATION_STEP_1`; do not remove this
+  nav item unless the user explicitly asks.
+- After reviewing lint rules, enforce import-order shape before finalizing changes: avoid mixed value+type imports in
+  one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
 
 ## Mistake Log (Short)
 
@@ -228,6 +242,65 @@
 - Issue: Reintroduced header search and included unnecessary sidebar items during broad styling pass.
 - Fix: Removed header search bar, removed Import/Settings from sidebar nav config, and added explicit guard rules.
 - Rule: Respect current scope exactly; when a user removes a shell element, keep it removed and avoid adding extras.
+
+### 2026-04-06 10:55 - Registration hooks used detached API wrapper functions
+
+- Issue: Registration data-layer hooks used external/local async wrappers (for example `approveRegistration`,
+  `createManualRegistration`) instead of placing request calls directly inside `mutationFn` / `queryFn`, which drifted
+  from requested project convention.
+- Fix: Refactored registration queries/mutations to keep `performRequest` directly in `queryFn` / `mutationFn`.
+- Rule: For this codebase convention, write transport calls inline in hook `queryFn`/`mutationFn`; only extract shared
+  normalization/helpers.
+
+### 2026-04-06 10:56 - Upload image flow was not represented as a dedicated mutation
+
+- Issue: Registration image upload used only an internal helper and did not expose a dedicated upload mutation hook.
+- Fix: Added `useUploadRegistrationImageMutation` and reused its request function in manual registration creation flow.
+- Rule: Endpoint-level upload operations should have a dedicated mutation hook when part of feature workflows.
+
+### 2026-04-06 10:57 - Normalization logic was embedded in query files
+
+- Issue: Registration response normalization lived inline in query files instead of reusable helpers.
+- Fix: Moved reusable normalization functions to `src/utils/helperFunctions.ts` and consumed them from hooks.
+- Rule: Keep normalization reusable and centralized in helper utilities; hooks should orchestrate and consume helpers.
+
+### 2026-04-06 11:20 - API action/method/type literals were hardcoded in registrations flow
+
+- Issue: Registration mutations and manual registration payload flow used repeated hardcoded literals (`APPROVE`,
+  `REJECT`, `RESUBMIT`, `patch`, `TOPCOAT`, `BASECOAT`) instead of constants, causing style drift and repeat mistakes.
+- Fix: Added and used shared constants (`REGISTRATION_ACTIONS`, `REGISTRATION_HTTP_METHODS`,
+  `REGISTRATION_PRODUCT_TYPES`, `REGISTRATION_INVOICE_TYPES`) in registrations data-layer.
+- Rule: No repeated protocol/domain literals in hooks; always define and consume constants from `src/constants/**`.
+
+### 2026-04-06 11:25 - Product-id lookup request lived as local helper in registration mutation file
+
+- Issue: Product lookup by name/type made network requests from a local helper in the registration mutation module,
+  instead of a reusable query-layer request utility.
+- Fix: Added `getActiveProductIdByNameRequest` under `src/data-layer/products/queries/` and reused it in manual
+  registration mutation.
+- Rule: Reusable endpoint lookups belong in feature query/mutation modules, not ad-hoc local helpers in unrelated
+  files.
+
+### 2026-04-06 11:40 - Suggested out-of-scope manual draft features
+
+- Issue: Called out `Save as Draft` and `Resume draft` as gaps even though they are not required in current scope.
+- Fix: Marked both features explicitly out of scope in quick rules.
+- Rule: Do not propose or implement manual-draft features unless the user explicitly asks for them.
+
+### 2026-04-06 11:52 - Manual registration sidebar item was missing
+
+- Issue: Sidebar navigation did not expose Manual Registration entry for direct access.
+- Fix: Added `Manual Registration` under Warranty and pointed it to `ROUTES.MANUAL_REGISTRATION_STEP_1`.
+- Rule: Keep Manual Registration in sidebar unless explicitly removed by user request.
+
+### 2026-04-06 12:05 - `import/order` crash after import-shape drift in helper utilities
+
+- Issue: Linting hit `TypeError: sourceCode.getTokenOrCommentBefore is not a function` on `helperFunctions.ts` under
+  `import/order` due to import-shape/tooling sensitivity.
+- Fix: Reordered imports per ESLint config and split mixed value+type imports into separate statements in touched
+  files.
+- Rule: For this repo/toolchain, never use mixed value+type imports in one line; always keep import groups/newlines
+  and alphabetical order aligned with `eslint.config.ts`.
 
 ## Final Check (Before Submit)
 
