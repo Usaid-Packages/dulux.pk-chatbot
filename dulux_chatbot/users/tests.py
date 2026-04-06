@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
 from django.test import TestCase
 
 from dulux_chatbot.users.api.v1.serializers import UserDetailsSerializer
@@ -11,7 +10,7 @@ User = get_user_model()
 
 class UserModelTests(TestCase):
     def test_create_user_requires_role(self):
-        with self.assertRaises(IntegrityError):
+        with self.assertRaisesMessage(ValueError, "User role must be set."):
             User.objects.create_user(
                 email="customer@example.com",
                 password="test-password-123",

@@ -30,6 +30,8 @@ urlpatterns = [
     path("api/v1/products/", include("dulux_chatbot.products.api.v1.urls")),
     path("api/v1/users/", include("dulux_chatbot.users.api.v1.urls")),
     path("api/v1/warranty/", include("dulux_chatbot.warranty.api.v1.urls")),
+    path("api/v1/complaints/", include("dulux_chatbot.complaints.api.v1.urls")),
+    path("api/v1/chatbot/", include("dulux_chatbot.chatbot.api.v1.urls")),
     re_path(
         r"^app/confirm-email/(?P<key>[-:\w]+)/$",
         TemplateView.as_view(),

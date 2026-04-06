@@ -26,11 +26,11 @@ class WarrantyRegistrationModelTests(TestCase):
 
         self.assertEqual(len(registration.registration_code), 6)
 
-    def test_phone_number_unique_constraint_is_enforced(self):
+    def test_phone_number_can_be_reused_across_registrations(self):
         create_registration(phone_number="923001111111")
+        second_registration = create_registration(phone_number="923001111111")
 
-        with self.assertRaises(IntegrityError):
-            create_registration(phone_number="923001111111")
+        self.assertEqual(second_registration.phone_number, "923001111111")
 
 
 class InvoiceModelTests(TestCase):
