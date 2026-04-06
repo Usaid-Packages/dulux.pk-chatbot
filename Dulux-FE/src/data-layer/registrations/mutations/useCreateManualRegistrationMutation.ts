@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys, REGISTRATION_INVOICE_TYPES, REGISTRATION_PRODUCT_TYPES } from '#/constants';
-import { getActiveProductIdByNameRequest } from '#/data-layer/products/queries';
+import { apiEndpoints, queryKeys, REGISTRATION_INVOICE_TYPES } from '#/constants';
 import { performRequest } from '#/services';
 import type {
   ManualRegistrationApiResponse,
@@ -10,7 +9,6 @@ import type {
   ManualRegistrationSubmissionResult,
 } from '#/types/manualRegistration';
 import { normalizeManualRegistrationCreateResponse } from '#/utils';
-import { uploadRegistrationImageRequest } from './useUploadRegistrationImageMutation';
 
 interface RegistrationCreatePaintPair {
   topcoat: number;
@@ -42,6 +40,28 @@ interface RegistrationCreatePayload {
   paintPairInvoices: RegistrationCreateInvoice[];
 }
 
+interface UploadImageResponse {
+  id: number;
+}
+
+const uploadRegistrationImage = async (image: File): Promise<number> => {
+  const payload = new FormData();
+  payload.append('image', image);
+
+  const response = await performRequest<UploadImageResponse, FormData>({
+    method: 'post',
+    url: apiEndpoints.core.uploadImage,
+    payload,
+    config: {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  });
+
+  return response.id;
+};
+
 const buildCreateRegistrationPayload = async (
   values: ManualRegistrationFormValues
 ): Promise<RegistrationCreatePayload> => {
@@ -49,27 +69,25 @@ const buildCreateRegistrationPayload = async (
     throw new Error('Topcoat invoice is required before submitting registration.');
   }
 
-  const topcoatId = await getActiveProductIdByNameRequest({
-    name: values.topcoatProductName,
-    productType: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
-  });
-  const basecoatId = values.basecoatProductName
-    ? await getActiveProductIdByNameRequest({
-        name: values.basecoatProductName,
-        productType: REGISTRATION_PRODUCT_TYPES.BASECOAT,
-      })
-    : undefined;
-  const topcoatInvoiceId = await uploadRegistrationImageRequest({ image: values.topcoatInvoice });
-  const basecoatInvoiceId = values.basecoatInvoice
-    ? await uploadRegistrationImageRequest({ image: values.basecoatInvoice })
-    : undefined;
+  const topcoatId = Number.parseInt(values.topcoatProductId, 10);
+  if (!Number.isFinite(topcoatId) || topcoatId <= 0) {
+    throw new Error('A valid topcoat product is required before submitting registration.');
+  }
+
+  const basecoatId = values.basecoatProductId ? Number.parseInt(values.basecoatProductId, 10) : undefined;
+  if (values.basecoatProductId && (!Number.isFinite(basecoatId) || (basecoatId ?? 0) <= 0)) {
+    throw new Error('A valid basecoat product is required when basecoat is selected.');
+  }
+
+  const topcoatInvoiceId = await uploadRegistrationImage(values.topcoatInvoice);
+  const basecoatInvoiceId = values.basecoatInvoice ? await uploadRegistrationImage(values.basecoatInvoice) : undefined;
 
   const paintPair: RegistrationCreatePaintPair = {
     topcoat: topcoatId,
     topcoatQuantity: values.topcoatQuantity,
   };
 
-  if (basecoatId && values.basecoatQuantity) {
+  if (basecoatId !== undefined && values.basecoatQuantity) {
     paintPair.basecoat = basecoatId;
     paintPair.basecoatQuantity = values.basecoatQuantity;
   }

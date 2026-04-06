@@ -1,6 +1,5 @@
 import type {
   ManualRegistrationFormValues,
-  ManualRegistrationProductOption,
   ManualRegistrationStep,
   ManualRegistrationStepId,
 } from '#/types/manualRegistration';
@@ -17,19 +16,6 @@ export const MANUAL_REGISTRATION_STEPS: ManualRegistrationStep[] = [
   { id: 5, label: 'Review' },
 ];
 
-export const MANUAL_REGISTRATION_TOPCOAT_PRODUCTS: ManualRegistrationProductOption[] = [
-  { id: 'dulux_weathershield', label: 'Dulux WeatherShield' },
-  { id: 'dulux_easyclean', label: 'Dulux EasyClean' },
-  { id: 'dulux_ambiance', label: 'Dulux Ambiance' },
-  { id: 'dulux_pentalite', label: 'Dulux Pentalite Ultra' },
-];
-
-export const MANUAL_REGISTRATION_BASECOAT_PRODUCTS: ManualRegistrationProductOption[] = [
-  { id: 'dulux_primer_base', label: 'Dulux Primer Base' },
-  { id: 'dulux_undercoat', label: 'Dulux Undercoat' },
-  { id: 'dulux_sealer', label: 'Dulux Sealer Pro' },
-];
-
 export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = {
   customerName: '',
   phoneNumber: '',
@@ -43,9 +29,9 @@ export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = 
   purchaseDealerCity: '',
   purchaseDealerAddress: '',
   notes: '',
-  topcoatProductName: '',
+  topcoatProductId: '',
   topcoatQuantity: '',
-  basecoatProductName: '',
+  basecoatProductId: '',
   basecoatQuantity: '',
   topcoatInvoice: null,
   basecoatInvoice: null,
@@ -57,7 +43,7 @@ export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
 > = {
   1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress', 'postalCode'],
   2: ['purchaseDate', 'purchaseDealer', 'purchaseDealerCity', 'purchaseDealerAddress', 'notes'],
-  3: ['topcoatProductName', 'topcoatQuantity', 'basecoatProductName', 'basecoatQuantity'],
-  4: ['topcoatInvoice', 'basecoatInvoice', 'basecoatProductName'],
+  3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity'],
+  4: ['topcoatInvoice', 'basecoatInvoice', 'basecoatProductId'],
   5: [],
 };

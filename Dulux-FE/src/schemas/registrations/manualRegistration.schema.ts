@@ -32,20 +32,20 @@ const manualRegistrationBaseSchema = z.object({
   purchaseDealerCity: z.string().trim().min(2, 'Dealer city is required.'),
   purchaseDealerAddress: z.string().trim().min(5, 'Dealer address is required.'),
   notes: z.string().trim().max(500, 'Notes must be 500 characters or less.'),
-  topcoatProductName: z.string().trim().min(1, 'Topcoat product is required.'),
+  topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
   topcoatQuantity: z
     .string()
     .trim()
     .min(1, 'Topcoat quantity is required.')
     .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
-  basecoatProductName: z.string().trim(),
+  basecoatProductId: z.string().trim(),
   basecoatQuantity: z.string().trim(),
   topcoatInvoice: fileSchema,
   basecoatInvoice: fileSchema.nullable(),
 });
 
 export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine((values, context) => {
-  if (values.basecoatProductName && !values.basecoatQuantity) {
+  if (values.basecoatProductId && !values.basecoatQuantity) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['basecoatQuantity'],
@@ -53,10 +53,10 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
     });
   }
 
-  if (values.basecoatQuantity && !values.basecoatProductName) {
+  if (values.basecoatQuantity && !values.basecoatProductId) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ['basecoatProductName'],
+      path: ['basecoatProductId'],
       message: 'Select a basecoat product before adding quantity.',
     });
   }
@@ -69,7 +69,7 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
     });
   }
 
-  if (values.basecoatProductName && !values.basecoatInvoice) {
+  if (values.basecoatProductId && !values.basecoatInvoice) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['basecoatInvoice'],
@@ -97,16 +97,16 @@ export const manualRegistrationStep2Schema = manualRegistrationBaseSchema.pick({
 });
 
 export const manualRegistrationStep3Schema = manualRegistrationBaseSchema.pick({
-  topcoatProductName: true,
+  topcoatProductId: true,
   topcoatQuantity: true,
-  basecoatProductName: true,
+  basecoatProductId: true,
   basecoatQuantity: true,
 });
 
 export const manualRegistrationStep4Schema = manualRegistrationBaseSchema.pick({
   topcoatInvoice: true,
   basecoatInvoice: true,
-  basecoatProductName: true,
+  basecoatProductId: true,
 });
 
 export type ManualRegistrationSchemaValues = z.infer<typeof manualRegistrationSchema>;

@@ -24,7 +24,7 @@ export const InvoicesStep = (): JSX.Element => {
 
   const topcoatInvoice = useWatch({ control, name: 'topcoatInvoice' });
   const basecoatInvoice = useWatch({ control, name: 'basecoatInvoice' });
-  const selectedBasecoat = useWatch({ control, name: 'basecoatProductName' });
+  const selectedBasecoat = useWatch({ control, name: 'basecoatProductId' });
   const hasBasecoat = Boolean(selectedBasecoat);
 
   const handleTopcoatFileChange = (event: ChangeEvent<HTMLInputElement>): void => {

@@ -39,6 +39,7 @@ export const queryKeys = {
     list: (paramsKey: string): readonly ['registrations', string] => ['registrations', paramsKey] as const,
     detail: (id: string): readonly ['registration', string] => ['registration', id] as const,
     manualCreate: ['registrations', 'manual-create'] as const,
+    manualProducts: ['registrations', 'manual-products'] as const,
   },
   products: {
     all: ['products'] as const,
