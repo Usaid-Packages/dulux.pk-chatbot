@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -47,6 +47,7 @@ const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 type ProductTab = 'products' | 'surface-types';
 type ProductTypeFilter = ProductType | 'ALL';
 type ProductStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+type ProductOrdering = 'name' | '-name' | 'created' | '-created';
 type SurfaceEnvironmentFilter = ProductEnvironment | 'ALL';
 
 const isProductTab = (value: string | null): value is ProductTab => {
@@ -73,13 +74,13 @@ export const ProductsListPage = (): JSX.Element => {
   const [productSearch, setProductSearch] = useState<string>('');
   const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>('ALL');
   const [productStatusFilter, setProductStatusFilter] = useState<ProductStatusFilter>('ALL');
+  const [productOrdering, setProductOrdering] = useState<ProductOrdering>('-created');
+  const [productPageSize, setProductPageSize] = useState<number>(10);
   const [productPage, setProductPage] = useState<number>(FIRST_PAGE);
 
   const [surfaceSearch, setSurfaceSearch] = useState<string>('');
   const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = useState<SurfaceEnvironmentFilter>('ALL');
   const [surfacePage, setSurfacePage] = useState<number>(FIRST_PAGE);
-
-  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 
   const [productDeleteTarget, setProductDeleteTarget] = useState<Product | null>(null);
   const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
@@ -91,6 +92,8 @@ export const ProductsListPage = (): JSX.Element => {
     search: productSearch.trim() || undefined,
     product_type: productTypeFilter === 'ALL' ? undefined : productTypeFilter,
     is_active: productStatusFilter === 'ALL' ? undefined : productStatusFilter === 'ACTIVE',
+    ordering: productOrdering,
+    page_size: productPageSize,
     page: productPage,
   });
 
@@ -112,19 +115,6 @@ export const ProductsListPage = (): JSX.Element => {
 
   const linkedProductCountMap = useMemo<Record<number, number>>(() => {
     return buildSurfaceLinkedCountMap(products);
-  }, [products]);
-
-  useEffect(() => {
-    const visibleIds = new Set(products.map(product => product.id));
-    setSelectedProductIds(previousIds => {
-      const nextIds = previousIds.filter(id => visibleIds.has(id));
-
-      if (nextIds.length === previousIds.length && nextIds.every((id, index) => id === previousIds[index])) {
-        return previousIds;
-      }
-
-      return nextIds;
-    });
   }, [products]);
 
   const setTab = (tab: ProductTab): void => {
@@ -183,23 +173,18 @@ export const ProductsListPage = (): JSX.Element => {
     setProductPage(FIRST_PAGE);
   };
 
-  const handleToggleAllProducts = (checked: boolean): void => {
-    if (!checked) {
-      setSelectedProductIds([]);
-      return;
-    }
-
-    setSelectedProductIds(products.map(product => product.id));
+  const handleProductOrderingChange = (value: string): void => {
+    setProductOrdering(value as ProductOrdering);
+    setProductPage(FIRST_PAGE);
   };
 
-  const handleToggleProduct = (id: number, checked: boolean): void => {
-    setSelectedProductIds(previousIds => {
-      if (checked) {
-        return previousIds.includes(id) ? previousIds : [...previousIds, id];
-      }
-
-      return previousIds.filter(currentId => currentId !== id);
-    });
+  const handleProductPageSizeChange = (value: string): void => {
+    const nextPageSize = Number.parseInt(value, 10);
+    if (Number.isNaN(nextPageSize)) {
+      return;
+    }
+    setProductPageSize(nextPageSize);
+    setProductPage(FIRST_PAGE);
   };
 
   const requestProductDelete = (product: Product): void => {
@@ -362,7 +347,7 @@ export const ProductsListPage = (): JSX.Element => {
       {activeTab === 'products' ? (
         <>
           <section className='wf-toolbar-panel'>
-            <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,auto]'>
+            <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,1fr,auto]'>
               <Input
                 type='search'
                 value={productSearch}
@@ -390,10 +375,28 @@ export const ProductsListPage = (): JSX.Element => {
                   <SelectItem value='INACTIVE'>Inactive</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={productOrdering} onValueChange={handleProductOrderingChange}>
+                <SelectTrigger aria-label='Order products'>
+                  <SelectValue placeholder='Order By' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='-created'>Newest first</SelectItem>
+                  <SelectItem value='created'>Oldest first</SelectItem>
+                  <SelectItem value='name'>Name (A-Z)</SelectItem>
+                  <SelectItem value='-name'>Name (Z-A)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={String(productPageSize)} onValueChange={handleProductPageSizeChange}>
+                <SelectTrigger aria-label='Products per page'>
+                  <SelectValue placeholder='Page Size' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='10'>10 / page</SelectItem>
+                  <SelectItem value='25'>25 / page</SelectItem>
+                  <SelectItem value='50'>50 / page</SelectItem>
+                </SelectContent>
+              </Select>
               <div className='flex items-center justify-end gap-2'>
-                <Button type='button' variant='outline'>
-                  Filters
-                </Button>
                 <Button type='button' variant='outline' onClick={handleExportProducts}>
                   Export
                 </Button>
@@ -436,13 +439,7 @@ export const ProductsListPage = (): JSX.Element => {
 
           {!productQuery.isLoading && !productQuery.isError && products.length > 0 ? (
             <>
-              <ProductTable
-                products={products}
-                selectedProductIds={selectedProductIds}
-                onToggleAll={handleToggleAllProducts}
-                onToggleOne={handleToggleProduct}
-                onDelete={requestProductDelete}
-              />
+              <ProductTable products={products} onDelete={requestProductDelete} />
 
               <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>Page {productPage}</p>

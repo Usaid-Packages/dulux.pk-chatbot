@@ -3,15 +3,9 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { Product, ProductMutationPayload } from '#/types/products';
-import { productMockStore } from '../mockStore';
 import { normalizeProduct, type ProductApiResponse } from '../queries/shared';
-import { shouldUseMockProducts } from '../transport';
 
 const createProduct = async (payload: ProductMutationPayload): Promise<Product> => {
-  if (shouldUseMockProducts()) {
-    return productMockStore.createProduct(payload);
-  }
-
   const response = await performRequest<ProductApiResponse, ProductMutationPayload>({
     method: 'post',
     url: apiEndpoints.products.list,

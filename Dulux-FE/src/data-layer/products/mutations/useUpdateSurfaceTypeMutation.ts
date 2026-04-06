@@ -3,9 +3,7 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { SurfaceType, SurfaceTypeMutationPayload } from '#/types/products';
-import { productMockStore } from '../mockStore';
 import { normalizeSurfaceType, type SurfaceTypeApiResponse } from '../queries/shared';
-import { shouldUseMockProducts } from '../transport';
 
 interface UpdateSurfaceTypeVariables {
   id: string;
@@ -13,10 +11,6 @@ interface UpdateSurfaceTypeVariables {
 }
 
 const updateSurfaceType = async ({ id, payload }: UpdateSurfaceTypeVariables): Promise<SurfaceType> => {
-  if (shouldUseMockProducts()) {
-    return productMockStore.updateSurfaceType(id, payload);
-  }
-
   const response = await performRequest<SurfaceTypeApiResponse, SurfaceTypeMutationPayload>({
     method: 'patch',
     url: apiEndpoints.products.surfaceTypeDetail(id),

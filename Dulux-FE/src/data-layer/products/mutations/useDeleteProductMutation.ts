@@ -2,15 +2,8 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
-import { productMockStore } from '../mockStore';
-import { shouldUseMockProducts } from '../transport';
 
 const deleteProduct = async (id: string): Promise<void> => {
-  if (shouldUseMockProducts()) {
-    await productMockStore.deleteProduct(id);
-    return;
-  }
-
   await performRequest<void>({
     method: 'delete',
     url: apiEndpoints.products.detail(id),
