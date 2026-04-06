@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import {
@@ -14,7 +13,6 @@ import {
 } from '#/components/ui';
 import type { ConversationListItem, ConversationPriorityFilter, ConversationStatusFilter } from '#/types/complaints';
 import { cn } from '#/utils';
-
 import {
   CONVERSATION_CHANNEL_LABELS,
   CONVERSATION_PRIORITY_CLASSNAMES,

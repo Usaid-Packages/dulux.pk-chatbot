@@ -1,10 +1,9 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
-import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
+import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 /**

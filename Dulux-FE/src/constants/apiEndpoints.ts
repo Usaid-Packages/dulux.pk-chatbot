@@ -1,6 +1,5 @@
 const API_USERS_V1 = '/api/v1/users';
 const API_CORE_V1 = '/api/v1/core';
-const API_CLAIMS_V1 = '/claims';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
 const API_PRODUCTS_V1 = '/api/v1/products';
@@ -18,12 +17,9 @@ export const apiEndpoints = {
     uploadImage: `${API_CORE_V1}/upload-image/`,
   },
   claims: {
-    list: `${API_CLAIMS_V1}/`,
-    detail: (id: string): string => `${API_CLAIMS_V1}/${id}/`,
-    approve: (id: string): string => `${API_CLAIMS_V1}/${id}/approve/`,
-    sendToQuality: (id: string): string => `${API_CLAIMS_V1}/${id}/send-to-quality/`,
-    reject: (id: string): string => `${API_CLAIMS_V1}/${id}/reject/`,
-    requestInfo: (id: string): string => `${API_CLAIMS_V1}/${id}/request-info/`,
+    list: `${API_WARRANTY_V1}/claims/`,
+    create: `${API_WARRANTY_V1}/claims/`,
+    detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
   },
   quality: {
     list: '/quality/',

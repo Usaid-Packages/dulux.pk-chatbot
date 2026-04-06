@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 export { ApproveClaimModal } from './ApproveClaimModal';
 export { QUALITY_STATUS_TABS } from './constants';
 export { QualityAgentNotesCard } from './QualityAgentNotesCard';

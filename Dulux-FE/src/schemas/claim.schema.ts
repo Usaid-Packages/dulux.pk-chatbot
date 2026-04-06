@@ -22,6 +22,7 @@ export const claimEvidencePhotoSchema = z.object({
 
 export const linkedRegistrationSummarySchema = z.object({
   registrationId: z.string().min(1),
+  registrationRecordId: z.string().min(1),
   customerName: z.string().min(1),
   purchaseDate: z.string().min(1),
   dealerName: z.string().min(1),
@@ -72,6 +73,29 @@ export const claimsListResponseSchema = z.object({
   stats: claimsStatsSchema,
 });
 
+const CLAIM_CREATE_ISSUE_TYPES = [
+  'PEELING_CRACKING',
+  'COLOR_FADING',
+  'ALGAE_FUNGUS',
+  'WATER_INGRESS',
+  'COVERAGE_VARIANCE',
+  'NON_UNIFORM_FINISH',
+  'OTHERS',
+] as const;
+
+export const createClaimSchema = z.object({
+  registrationId: z.string().min(1, 'Registration is required.'),
+  paintPairId: z.string().min(1, 'Selected topcoat/basecoat combination is not valid for this registration.'),
+  topcoatProductId: z.string().min(1, 'Topcoat product is required.'),
+  basecoatProductId: z.string().min(1, 'Basecoat selection is required.'),
+  issueType: z.enum(CLAIM_CREATE_ISSUE_TYPES),
+  affectedAreaSqft: z.coerce.number().positive('Affected area must be greater than zero.'),
+  notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
+  longShotPhoto: z.instanceof(File, { message: 'Long shot photo is required.' }),
+  closeShotPhoto: z.instanceof(File, { message: 'Close shot photo is required.' }),
+  alternateAnglePhoto: z.instanceof(File, { message: 'Alternate angle photo is required.' }),
+});
+
 export const forwardToQualitySchema = z.object({
   notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
   priority: claimPrioritySchema,
@@ -103,6 +127,7 @@ export const requestMoreInfoSchema = z
     }
   });
 
+export type CreateClaimFormValues = z.infer<typeof createClaimSchema>;
 export type ForwardToQualityFormValues = z.infer<typeof forwardToQualitySchema>;
 export type RejectClaimFormValues = z.infer<typeof rejectClaimSchema>;
 export type RequestMoreInfoFormValues = z.infer<typeof requestMoreInfoSchema>;

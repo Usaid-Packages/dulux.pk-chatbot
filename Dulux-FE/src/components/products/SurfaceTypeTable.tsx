@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';

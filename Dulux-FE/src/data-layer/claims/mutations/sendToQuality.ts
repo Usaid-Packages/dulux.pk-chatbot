@@ -1,27 +1,25 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { claimDetailSchema } from '#/schemas/claim.schema';
+import { PATCH, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
+import type { ApiClaimDetail, SendToQualityRequestPayload } from '#/types/claims.api.types';
 import type { ClaimDetail, SendToQualityPayload } from '#/types/claims.types';
-import { sendMockClaimToQuality } from '../mockClaimsStore';
-import { isNetworkError, shouldUseMockClaims } from '../transport';
+import { normalizeClaimDetail } from '../normalizers';
+import { toSendToQualityNotes } from '../payloadHelpers';
 
 export const sendToQuality = async (payload: SendToQualityPayload): Promise<ClaimDetail> => {
-  try {
-    const response = await performRequest<ClaimDetail, SendToQualityPayload>({
-      method: POST,
-      url: apiEndpoints.claims.sendToQuality(payload.id),
-      payload,
-    });
+  const requestPayload: SendToQualityRequestPayload = {
+    action: 'QA_REVIEW',
+    notes: toSendToQualityNotes(payload),
+  };
 
-    return claimDetailSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockClaims() && isNetworkError(error)) {
-      return claimDetailSchema.parse(sendMockClaimToQuality(payload));
-    }
-    throw error;
-  }
+  const response = await performRequest<ApiClaimDetail, SendToQualityRequestPayload>({
+    method: PATCH,
+    url: apiEndpoints.claims.detail(payload.id),
+    payload: requestPayload,
+  });
+
+  return normalizeClaimDetail(response);
 };
 
 export const useSendToQualityMutation = (): UseMutationResult<ClaimDetail, Error, SendToQualityPayload> => {

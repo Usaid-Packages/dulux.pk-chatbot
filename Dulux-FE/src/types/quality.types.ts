@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { ClaimDetail, ClaimPriority, ClaimStatus } from '#/types/claims.types';
 
 export const QUALITY_REQUEST_FROM_OPTIONS = ['cs_agent', 'customer'] as const;

@@ -1,12 +1,11 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { Product, ProductMutationPayload } from '#/types/products';
 import { productMockStore } from '../mockStore';
-import { shouldUseMockProducts } from '../transport';
 import { normalizeProduct, type ProductApiResponse } from '../queries/shared';
+import { shouldUseMockProducts } from '../transport';
 
 interface UpdateProductVariables {
   id: string;

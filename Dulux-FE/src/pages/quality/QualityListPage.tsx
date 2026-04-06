@@ -1,8 +1,7 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
-import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
+import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { useQualityQueue } from '#/hooks/quality';
 
 const PAGE_SIZE = 10;

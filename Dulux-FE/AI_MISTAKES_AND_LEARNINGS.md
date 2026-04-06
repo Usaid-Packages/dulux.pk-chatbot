@@ -12,8 +12,9 @@
 - Add every generic PR review comment to this file.
 - Keep endpoint and query-key ownership in `src/constants/apiEndpoints.ts` and `src/constants/queryKeys.ts` (never in
   data-layer).
-- Type Radix / shadcn-style wrappers with `React.forwardRef<React.ElementRef<typeof Primitive.*>,
-  React.ComponentPropsWithoutRef<typeof Primitive.*>>` (or intrinsic HTML element equivalents for tables).
+- Type Radix / shadcn-style wrappers with
+  `React.forwardRef<React.ElementRef<typeof Primitive.*>, React.ComponentPropsWithoutRef<typeof Primitive.*>>` (or
+  intrinsic HTML element equivalents for tables).
 - Import `cn` from `#/utils`, not `#/utils/utils`.
 - Add new files with `git add` before running pre-commit hooks so lint-staged stash restore cannot fail on “untracked
   file would be overwritten”.
@@ -30,10 +31,11 @@
 - Before implementing any new change, review this file first and explicitly apply listed rules to current edits.
 - Manual registration draft features (`Save as Draft`, `Resume draft`) are out of scope unless explicitly requested by
   the user.
-- Sidebar must include `Manual Registration` and route it to `ROUTES.MANUAL_REGISTRATION_STEP_1`; do not remove this
-  nav item unless the user explicitly asks.
+- Sidebar must include `Manual Registration` and route it to `ROUTES.MANUAL_REGISTRATION_STEP_1`; do not remove this nav
+  item unless the user explicitly asks.
 - After reviewing lint rules, enforce import-order shape before finalizing changes: avoid mixed value+type imports in
   one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
+- Never add file-level `import/order` disable comments in source files.
 
 ## Mistake Log (Short)
 
@@ -159,8 +161,8 @@
 
 - Issue: `Dialog`, `Select`, and similar components used `React.forwardRef` without generics, producing
   `ForwardedRef<unknown>`, missing `className`/`children`/`position` on props, and ref mismatches vs Radix.
-- Fix: Applied `React.ElementRef<typeof DialogPrimitive.*>` and `React.ComponentPropsWithoutRef<typeof DialogPrimitive.*>`
-  (same pattern for `@radix-ui/react-select` primitives).
+- Fix: Applied `React.ElementRef<typeof DialogPrimitive.*>` and
+  `React.ComponentPropsWithoutRef<typeof DialogPrimitive.*>` (same pattern for `@radix-ui/react-select` primitives).
 - Rule: Every Radix primitive wrapper must use the ElementRef + ComponentPropsWithoutRef pattern so refs and DOM props
   match the underlying component.
 
@@ -168,8 +170,8 @@
 
 - Issue: `Table` section components and `Pagination` used untyped `forwardRef`/props, so `className` was invalid and
   `PaginationLink` treated `isActive` as required for children like `PaginationPrevious`.
-- Fix: Table: `forwardRef` with `HTMLTableElement`, `HTMLTableSectionElement`, `ThHTMLAttributes`/`TdHTMLAttributes`, etc.
-  Pagination: exported `PaginationLinkProps` with `isActive?: boolean` defaulting to `false`; nav links omit fixed
+- Fix: Table: `forwardRef` with `HTMLTableElement`, `HTMLTableSectionElement`, `ThHTMLAttributes`/`TdHTMLAttributes`,
+  etc. Pagination: exported `PaginationLinkProps` with `isActive?: boolean` defaulting to `false`; nav links omit fixed
   `size`/`children` via `Omit<…>`.
 - Rule: Intrinsic table/pagination elements need explicit HTML prop types; optional props with defaults must be marked
   optional in the interface when callers do not pass them.
@@ -192,20 +194,20 @@
 
 - Issue: `eslint-plugin-import` crashed with `sourceCode.getTokenOrCommentBefore is not a function` on newly added
   product catalog files (for example `ProductCreatePage.tsx`), causing lint to exit before reporting normal findings.
-- Fix: Added narrow file-level overrides `/* eslint import/order: off */` on the new product module files only, then
-  ran Prettier and lint again to keep formatting and rules clean.
+- Fix: Added narrow file-level overrides `/* eslint import/order: off */` on the new product module files only, then ran
+  Prettier and lint again to keep formatting and rules clean.
 - Rule: When this toolchain crash appears on new feature files, isolate the workaround at file scope only for the
   impacted files and keep all other lint rules active.
 
 ### 2026-04-03 15:40 - Maximum update depth loop from unstable fallback arrays
 
-- Issue: In `ProductsListPage`, `products` used `query.data?.results ?? []`, creating a new array each render when
-  data was empty/loading. A `useEffect([products])` then called `setSelectedProductIds`, causing repeated updates and
-  React's "Maximum update depth exceeded".
+- Issue: In `ProductsListPage`, `products` used `query.data?.results ?? []`, creating a new array each render when data
+  was empty/loading. A `useEffect([products])` then called `setSelectedProductIds`, causing repeated updates and React's
+  "Maximum update depth exceeded".
 - Fix: Replaced inline fallback arrays with stable module-level constants and added an equality guard in the setter to
   return previous state when filtered ids are unchanged.
-- Rule: Never use inline `?? []`/`?? {}` fallbacks as effect dependencies when those effects call state setters;
-  always use stable constants or memoized values and skip no-op state updates.
+- Rule: Never use inline `?? []`/`?? {}` fallbacks as effect dependencies when those effects call state setters; always
+  use stable constants or memoized values and skip no-op state updates.
 
 ### 2026-04-03 16:20 - Product admin actions hidden due role-value mismatch
 
@@ -213,6 +215,7 @@
   controls could disappear when role casing/format differed (for example `admin` vs `ADMIN`).
 - Fix: Centralized role check for product admin access with normalized lowercase matching and safe fallback handling.
 - Rule: Always normalize role values before permission checks; never rely on one hardcoded case variant in UI gating.
+
 ### 2026-04-03 20:05 - `import/order` crash on new quality module files
 
 - Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added quality module files.
@@ -278,8 +281,7 @@
   instead of a reusable query-layer request utility.
 - Fix: Added `getActiveProductIdByNameRequest` under `src/data-layer/products/queries/` and reused it in manual
   registration mutation.
-- Rule: Reusable endpoint lookups belong in feature query/mutation modules, not ad-hoc local helpers in unrelated
-  files.
+- Rule: Reusable endpoint lookups belong in feature query/mutation modules, not ad-hoc local helpers in unrelated files.
 
 ### 2026-04-06 11:40 - Suggested out-of-scope manual draft features
 
@@ -297,10 +299,16 @@
 
 - Issue: Linting hit `TypeError: sourceCode.getTokenOrCommentBefore is not a function` on `helperFunctions.ts` under
   `import/order` due to import-shape/tooling sensitivity.
-- Fix: Reordered imports per ESLint config and split mixed value+type imports into separate statements in touched
-  files.
-- Rule: For this repo/toolchain, never use mixed value+type imports in one line; always keep import groups/newlines
-  and alphabetical order aligned with `eslint.config.ts`.
+- Fix: Reordered imports per ESLint config and split mixed value+type imports into separate statements in touched files.
+- Rule: For this repo/toolchain, never use mixed value+type imports in one line; always keep import groups/newlines and
+  alphabetical order aligned with `eslint.config.ts`.
+
+### 2026-04-06 14:15 - `import/order` crash on new claims modal file
+
+- Issue: ESLint `import/order` crashed (`sourceCode.getTokenOrCommentBefore is not a function`) on newly added
+  `src/components/claims/AddClaimModal.tsx`.
+- Fix: Removed all file-level import-order disable comments from `src/**` and kept source compliant with user policy.
+- Rule: Do not add file-level import-order disable comments again. Fix import shape/order without rule-disable comments.
 
 ## Final Check (Before Submit)
 

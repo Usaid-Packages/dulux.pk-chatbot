@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import { z } from 'zod';
 
 import { claimDetailSchema, claimPrioritySchema, claimStatusSchema } from '#/schemas/claim.schema';

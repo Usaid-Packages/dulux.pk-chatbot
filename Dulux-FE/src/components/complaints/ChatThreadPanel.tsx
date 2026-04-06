@@ -1,11 +1,9 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 import { useEffect, useRef } from 'react';
 
 import { Badge, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import type { ConversationThread } from '#/types/complaints';
 import { cn } from '#/utils';
-
 import {
   CONVERSATION_CHANNEL_LABELS,
   CONVERSATION_PRIORITY_CLASSNAMES,

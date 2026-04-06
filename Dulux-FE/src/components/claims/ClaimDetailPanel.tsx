@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 
 import { Badge, Button } from '#/components/ui';
+import { getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimDetail } from '#/types/claims.types';
 import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
 
@@ -45,7 +46,7 @@ export const ClaimDetailPanel = ({
           </div>
           <div className='flex justify-between gap-2'>
             <dt className='text-text-muted'>Issue Type</dt>
-            <dd className='font-medium text-text-primary'>{claim.issueType}</dd>
+            <dd className='font-medium text-text-primary'>{getClaimIssueTypeLabel(claim.issueType)}</dd>
           </div>
           <div className='flex justify-between gap-2'>
             <dt className='text-text-muted'>Area</dt>

@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 import { Suspense } from 'react';
 
@@ -9,16 +8,16 @@ import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
-import { DashboardPage } from '#/pages/DashboardPage';
 import { LiveChatPage } from '#/pages/complaints';
+import { DashboardPage } from '#/pages/DashboardPage';
+import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
+import { QualityDetailPage, QualityListPage } from '#/pages/quality';
 import {
   ManualRegistrationSuccessPage,
   ManualStepPage,
   RegistrationDetailPage,
   RegistrationsListPage,
 } from '#/pages/registrations';
-import { ProductCreatePage, ProductEditPage, ProductsListPage } from '#/pages/products';
-import { QualityDetailPage, QualityListPage } from '#/pages/quality';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 
 const LoadingFallback = (): JSX.Element => (

@@ -1,6 +1,14 @@
 export const CLAIM_STATUSES = ['pending', 'forwarded', 'approved', 'rejected', 'infoRequested', 'resolved'] as const;
 export const CLAIM_PRIORITIES = ['normal', 'high'] as const;
-export const CLAIM_ISSUE_TYPES = ['Peeling', 'Discoloration', 'Cracking', 'Blistering', 'Fading', 'Other'] as const;
+export const CLAIM_ISSUE_TYPES = [
+  'PEELING_CRACKING',
+  'COLOR_FADING',
+  'ALGAE_FUNGUS',
+  'WATER_INGRESS',
+  'COVERAGE_VARIANCE',
+  'NON_UNIFORM_FINISH',
+  'OTHERS',
+] as const;
 
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 export type ClaimPriority = (typeof CLAIM_PRIORITIES)[number];
@@ -23,6 +31,7 @@ export interface ClaimEvidencePhoto {
 
 export interface LinkedRegistrationSummary {
   registrationId: string;
+  registrationRecordId: string;
   customerName: string;
   purchaseDate: string;
   dealerName: string;
@@ -68,8 +77,7 @@ export interface ClaimsStats {
 export interface ClaimsListRequestParams {
   status: ClaimListStatusFilter;
   issueType: 'all' | ClaimIssueType;
-  fromDate?: string;
-  toDate?: string;
+  search?: string;
   page: number;
   pageSize: number;
 }
@@ -80,6 +88,19 @@ export interface ClaimsListResponse {
   page: number;
   pageSize: number;
   stats: ClaimsStats;
+}
+
+export interface CreateClaimPayload extends Record<string, unknown> {
+  registration: number;
+  paintPair: number;
+  issueType: string;
+  affectedAreaSqft: string;
+  notes: string;
+  photos: {
+    longShot: File;
+    closeShot: File;
+    alternateAngle: File;
+  };
 }
 
 export interface ApproveClaimPayload extends Record<string, unknown> {

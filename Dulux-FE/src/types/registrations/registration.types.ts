@@ -90,7 +90,7 @@ export interface RegistrationsQueryParams extends Record<string, unknown> {
 }
 
 export interface ResubmissionFieldPayload {
-  fieldName: string;
+  field_name: string;
   note?: string;
 }
 

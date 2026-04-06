@@ -1,3 +1,4 @@
+export { AddClaimModal } from './AddClaimModal';
 export { ClaimDetailPanel } from './ClaimDetailPanel';
 export { ClaimImages } from './ClaimImages';
 export { ClaimTimeline } from './ClaimTimeline';

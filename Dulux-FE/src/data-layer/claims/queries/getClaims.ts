@@ -1,9 +1,9 @@
-import { GET, apiEndpoints } from '#/constants';
+import { GET, apiEndpoints, toClaimsIssueTypeFilter, toClaimsStateFilter } from '#/constants';
 import { claimsListResponseSchema } from '#/schemas/claim.schema';
 import { performRequest } from '#/services/apiClient';
+import type { ClaimsListApiQuery, ClaimsListApiResponse } from '#/types/claims.api.types';
 import type { ClaimsListRequestParams, ClaimsListResponse } from '#/types/claims.types';
-import { getMockClaims } from '../mockClaimsStore';
-import { isNetworkError, shouldUseMockClaims } from '../transport';
+import { normalizeClaimsListResponse } from '../normalizers';
 
 const DEFAULT_LIST_PARAMS: ClaimsListRequestParams = {
   status: 'all',
@@ -14,19 +14,31 @@ const DEFAULT_LIST_PARAMS: ClaimsListRequestParams = {
 
 export const getClaims = async (params?: Partial<ClaimsListRequestParams>): Promise<ClaimsListResponse> => {
   const requestParams = { ...DEFAULT_LIST_PARAMS, ...params };
+  const state = toClaimsStateFilter(requestParams.status);
+  const issueType = toClaimsIssueTypeFilter(requestParams.issueType);
 
-  try {
-    const response = await performRequest<ClaimsListResponse, undefined, ClaimsListRequestParams>({
-      method: GET,
-      url: apiEndpoints.claims.list,
-      params: requestParams,
-    });
+  const query: ClaimsListApiQuery = {
+    page: requestParams.page,
+    page_size: requestParams.pageSize,
+  };
 
-    return claimsListResponseSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockClaims() && isNetworkError(error)) {
-      return claimsListResponseSchema.parse(getMockClaims(requestParams));
-    }
-    throw error;
+  if (state) {
+    query.state = state;
   }
+  if (issueType) {
+    query.issue_type = issueType;
+  }
+  if (requestParams.search) {
+    query.search = requestParams.search;
+  }
+
+  const response = await performRequest<ClaimsListApiResponse, undefined, ClaimsListApiQuery>({
+    method: GET,
+    url: apiEndpoints.claims.list,
+    params: query,
+  });
+
+  return claimsListResponseSchema.parse(
+    normalizeClaimsListResponse(response, requestParams.page, requestParams.pageSize)
+  );
 };

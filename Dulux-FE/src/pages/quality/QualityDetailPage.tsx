@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 import { useState } from 'react';
 
@@ -16,7 +15,7 @@ import {
   RoleBanner,
 } from '#/components/quality';
 import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import { useQualityDetail } from '#/hooks/quality';
 import type {
   QualityApproveFormValues,
@@ -134,7 +133,7 @@ export const QualityDetailPage = (): JSX.Element => {
             <dl className='mt-4 grid gap-2 text-sm'>
               <div className='flex justify-between gap-2'>
                 <dt className='text-text-muted'>Issue Type</dt>
-                <dd className='font-medium text-text-primary'>{claim.issueType}</dd>
+                <dd className='font-medium text-text-primary'>{getClaimIssueTypeLabel(claim.issueType)}</dd>
               </div>
               <div className='flex justify-between gap-2'>
                 <dt className='text-text-muted'>Area</dt>

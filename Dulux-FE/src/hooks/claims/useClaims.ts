@@ -1,15 +1,18 @@
 import { useState } from 'react';
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
-import { getClaims } from '#/data-layer/claims';
+import { getClaims, useCreateClaimMutation } from '#/data-layer/claims';
 import type {
   ClaimIssueType,
   ClaimListStatusFilter,
   ClaimsListRequestParams,
   ClaimsListResponse,
+  CreateClaimPayload,
 } from '#/types/claims.types';
+import { getApiErrorMessage } from '#/utils';
 
 const DEFAULT_FILTERS: ClaimsListRequestParams = {
   status: 'all',
@@ -23,9 +26,10 @@ interface UseClaimsResult {
   filters: ClaimsListRequestParams;
   setStatusFilter: (status: ClaimListStatusFilter) => void;
   setIssueTypeFilter: (issueType: 'all' | ClaimIssueType) => void;
-  setFromDate: (fromDate?: string) => void;
-  setToDate: (toDate?: string) => void;
+  setSearch: (search?: string) => void;
   setPage: (page: number) => void;
+  handleCreateClaim: (payload: CreateClaimPayload, options?: { onSuccess?: () => void }) => void;
+  isCreateClaimPending: boolean;
 }
 
 /**
@@ -35,6 +39,7 @@ interface UseClaimsResult {
  */
 export const useClaims = (): UseClaimsResult => {
   const [filters, setFilters] = useState<ClaimsListRequestParams>(DEFAULT_FILTERS);
+  const createClaimMutation = useCreateClaimMutation();
 
   const claimsQuery = useQuery<ClaimsListResponse, Error>({
     queryKey: queryKeys.claims.list(filters),
@@ -49,16 +54,29 @@ export const useClaims = (): UseClaimsResult => {
     setFilters(previous => ({ ...previous, issueType, page: 1 }));
   };
 
-  const setFromDate = (fromDate?: string): void => {
-    setFilters(previous => ({ ...previous, fromDate, page: 1 }));
-  };
-
-  const setToDate = (toDate?: string): void => {
-    setFilters(previous => ({ ...previous, toDate, page: 1 }));
+  const setSearch = (search?: string): void => {
+    const normalizedSearch = search?.trim();
+    setFilters(previous => ({
+      ...previous,
+      search: normalizedSearch && normalizedSearch.length > 0 ? normalizedSearch : undefined,
+      page: 1,
+    }));
   };
 
   const setPage = (page: number): void => {
     setFilters(previous => ({ ...previous, page }));
+  };
+
+  const handleCreateClaim = (payload: CreateClaimPayload, options?: { onSuccess?: () => void }): void => {
+    createClaimMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success('Claim created successfully.');
+        options?.onSuccess?.();
+      },
+      onError: error => {
+        toast.error(getApiErrorMessage(error));
+      },
+    });
   };
 
   return {
@@ -66,8 +84,9 @@ export const useClaims = (): UseClaimsResult => {
     filters,
     setStatusFilter,
     setIssueTypeFilter,
-    setFromDate,
-    setToDate,
+    setSearch,
     setPage,
+    handleCreateClaim,
+    isCreateClaimPending: createClaimMutation.isPending,
   };
 };

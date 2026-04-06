@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 

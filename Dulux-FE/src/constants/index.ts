@@ -1,4 +1,5 @@
 export * from './apiEndpoints';
+export * from './claimsApiMappings';
 export * from './dashboardFlowConfigs';
 export * from './dashboardIconMap';
 export * from './layout/navigation';

@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { BadgeProps } from '#/components/ui/Badge';
 import type { ClaimPriority } from '#/types/claims.types';
 
