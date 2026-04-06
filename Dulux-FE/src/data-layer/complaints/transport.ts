@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import value from '#env';
 
 const NETWORK_ERROR_CODE = 'ERR_NETWORK';

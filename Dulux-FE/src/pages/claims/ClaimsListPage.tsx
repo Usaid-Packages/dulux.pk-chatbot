@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
+import { useState } from 'react';
 
-import { CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
+import { AddClaimModal, CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
 import {
   Button,
   Empty,
@@ -16,8 +17,9 @@ import {
   SelectValue,
   Skeleton,
 } from '#/components/ui';
+import { getClaimIssueTypeLabel } from '#/constants';
 import { useClaims } from '#/hooks/claims';
-import { CLAIM_ISSUE_TYPES } from '#/types/claims.types';
+import { CLAIM_ISSUE_TYPES, type CreateClaimPayload } from '#/types/claims.types';
 
 const PAGE_SIZE = 10;
 
@@ -29,7 +31,17 @@ const STAT_CARD_STYLES = ['', 'wf-stat-card-highlight-amber', '', ''] as const;
  * @returns Claims list page.
  */
 export const ClaimsListPage = (): JSX.Element => {
-  const { claimsQuery, filters, setStatusFilter, setIssueTypeFilter, setFromDate, setToDate, setPage } = useClaims();
+  const {
+    claimsQuery,
+    filters,
+    setStatusFilter,
+    setIssueTypeFilter,
+    setSearch,
+    setPage,
+    handleCreateClaim,
+    isCreateClaimPending,
+  } = useClaims();
+  const [isAddClaimModalOpen, setAddClaimModalOpen] = useState(false);
 
   const claimsData = claimsQuery.data;
   const claimsItems = claimsData?.items ?? [];
@@ -46,6 +58,16 @@ export const ClaimsListPage = (): JSX.Element => {
     if (filters.page < totalPages) {
       setPage(filters.page + 1);
     }
+  };
+
+  const openAddClaimModal = (): void => setAddClaimModalOpen(true);
+
+  const closeAddClaimModal = (): void => setAddClaimModalOpen(false);
+
+  const submitAddClaim = (payload: CreateClaimPayload): void => {
+    handleCreateClaim(payload, {
+      onSuccess: closeAddClaimModal,
+    });
   };
 
   return (
@@ -65,49 +87,43 @@ export const ClaimsListPage = (): JSX.Element => {
       </section>
 
       <section className='wf-tabs-panel'>
-        <div className='flex flex-wrap gap-2'>
-          {CLAIM_STATUS_TABS.map(tab => {
-            const isActive = filters.status === tab.value;
-            const handleTabClick = (): void => setStatusFilter(tab.value);
+        <div className='flex flex-wrap items-center justify-between gap-3'>
+          <div className='flex flex-wrap gap-2'>
+            {CLAIM_STATUS_TABS.map(tab => {
+              const isActive = filters.status === tab.value;
+              const handleTabClick = (): void => setStatusFilter(tab.value);
 
-            return (
-              <Button
-                key={tab.value}
-                type='button'
-                variant='ghost'
-                className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
-                onClick={handleTabClick}
-              >
-                {tab.label}
-              </Button>
-            );
-          })}
+              return (
+                <Button
+                  key={tab.value}
+                  type='button'
+                  variant='ghost'
+                  className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
+                  onClick={handleTabClick}
+                >
+                  {tab.label}
+                </Button>
+              );
+            })}
+          </div>
+          <Button type='button' onClick={openAddClaimModal}>
+            Add Claim
+          </Button>
         </div>
       </section>
 
       <section className='wf-toolbar-panel'>
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='space-y-1'>
-            <label htmlFor='claim-from-date' className='text-xs font-medium text-text-muted'>
-              From Date
+            <label htmlFor='claim-search' className='text-xs font-medium text-text-muted'>
+              Search
             </label>
             <Input
-              id='claim-from-date'
-              type='date'
-              value={filters.fromDate ?? ''}
-              onChange={event => setFromDate(event.target.value || undefined)}
-            />
-          </div>
-
-          <div className='space-y-1'>
-            <label htmlFor='claim-to-date' className='text-xs font-medium text-text-muted'>
-              To Date
-            </label>
-            <Input
-              id='claim-to-date'
-              type='date'
-              value={filters.toDate ?? ''}
-              onChange={event => setToDate(event.target.value || undefined)}
+              id='claim-search'
+              type='search'
+              placeholder='Search by registration or issue'
+              value={filters.search ?? ''}
+              onChange={event => setSearch(event.target.value)}
             />
           </div>
 
@@ -126,7 +142,7 @@ export const ClaimsListPage = (): JSX.Element => {
                 <SelectItem value='all'>All issue types</SelectItem>
                 {CLAIM_ISSUE_TYPES.map(issueType => (
                   <SelectItem key={issueType} value={issueType}>
-                    {issueType}
+                    {getClaimIssueTypeLabel(issueType)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -181,6 +197,13 @@ export const ClaimsListPage = (): JSX.Element => {
           </div>
         </>
       ) : null}
+
+      <AddClaimModal
+        isOpen={isAddClaimModalOpen}
+        isSubmitting={isCreateClaimPending}
+        onClose={closeAddClaimModal}
+        onSubmit={submitAddClaim}
+      />
     </main>
   );
 };

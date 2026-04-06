@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type {
   Product,
   ProductListResponse,

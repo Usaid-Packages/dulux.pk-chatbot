@@ -1,29 +1,18 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { approveMockQualityClaim } from '#/data-layer/claims/mockClaimsStore';
 import { qualityDetailSchema } from '#/schemas/quality.schema';
 import { performRequest } from '#/services/apiClient';
 import type { QualityApprovePayload, QualityDetail } from '#/types/quality.types';
 
-import { isNetworkError, shouldUseMockQuality } from '../transport';
-
 export const approveQualityClaim = async (payload: QualityApprovePayload): Promise<QualityDetail> => {
-  try {
-    const response = await performRequest<QualityDetail, QualityApprovePayload>({
-      method: POST,
-      url: apiEndpoints.quality.approve(payload.id),
-      payload,
-    });
+  const response = await performRequest<QualityDetail, QualityApprovePayload>({
+    method: POST,
+    url: apiEndpoints.quality.approve(payload.id),
+    payload,
+  });
 
-    return qualityDetailSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockQuality() && isNetworkError(error)) {
-      return qualityDetailSchema.parse(approveMockQualityClaim(payload));
-    }
-    throw error;
-  }
+  return qualityDetailSchema.parse(response);
 };
 
 export const useApproveQualityClaimMutation = (): UseMutationResult<QualityDetail, Error, QualityApprovePayload> => {

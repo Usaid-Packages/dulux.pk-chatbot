@@ -1,7 +1,7 @@
-/* eslint import/order: off */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
+import { queryKeys } from '#/constants';
 import {
   getQualityClaimById,
   useApproveQualityClaimMutation,
@@ -15,8 +15,6 @@ import type {
   QualityRequestInfoPayload,
 } from '#/types/quality.types';
 import { getApiErrorMessage } from '#/utils';
-
-import { queryKeys } from '#/constants';
 
 interface UseQualityDetailResult {
   qualityDetailQuery: UseQueryResult<QualityDetail, Error>;

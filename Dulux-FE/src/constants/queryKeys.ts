@@ -8,6 +8,7 @@ export const queryKeys = {
     all: ['claims'] as const,
     list: (filters: Record<string, unknown>) => ['claims', 'list', filters] as const,
     detail: (id: string) => ['claims', 'detail', id] as const,
+    create: ['claims', 'create'] as const,
     approve: ['claims', 'approve'] as const,
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,

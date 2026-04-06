@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 export * from './useCreateProductMutation';
 export * from './useCreateSurfaceTypeMutation';
 export * from './useDeleteProductMutation';

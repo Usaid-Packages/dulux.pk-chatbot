@@ -1,8 +1,7 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
-import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';

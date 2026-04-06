@@ -1,10 +1,10 @@
-/* eslint import/order: off */
 import { useEffect } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
+import { queryKeys } from '#/constants';
 import {
   useEscalateConversationMutation,
   getConversationById,
@@ -13,7 +13,6 @@ import {
   useSendConversationMessageMutation,
   useTransferConversationMutation,
 } from '#/data-layer/complaints';
-import { queryKeys } from '#/constants';
 import type {
   ConversationThread,
   EscalateConversationPayload,

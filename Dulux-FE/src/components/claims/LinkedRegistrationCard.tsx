@@ -17,6 +17,8 @@ interface LinkedRegistrationCardProps {
  * @returns Registration summary card.
  */
 export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardProps): JSX.Element => {
+  const canOpenRegistration = registration.registrationRecordId !== 'N/A';
+
   return (
     <section className='wf-card wf-card-p4'>
       <h2 className='text-md font-semibold text-text-primary'>Linked Registration</h2>
@@ -40,12 +42,16 @@ export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardP
           <dd className='font-medium text-text-primary'>{registration.dealerName}</dd>
         </div>
       </dl>
-      <Link
-        className='mt-3 inline-block text-sm font-semibold text-primary hover:underline'
-        to={ROUTES.REGISTRATION_DETAIL(registration.registrationId)}
-      >
-        Open registration
-      </Link>
+      {canOpenRegistration ? (
+        <Link
+          className='mt-3 inline-block text-sm font-semibold text-primary hover:underline'
+          to={ROUTES.REGISTRATION_DETAIL(registration.registrationRecordId)}
+        >
+          Open registration
+        </Link>
+      ) : (
+        <p className='mt-3 text-sm text-text-muted'>Registration link unavailable</p>
+      )}
     </section>
   );
 };

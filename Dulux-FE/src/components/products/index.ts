@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 export * from './DeleteConfirmModal';
 export * from './ProductForm';
 export * from './ProductTable';

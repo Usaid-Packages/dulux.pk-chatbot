@@ -1,27 +1,25 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { claimDetailSchema } from '#/schemas/claim.schema';
+import { PATCH, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
+import type { ApiClaimDetail, RejectClaimRequestPayload } from '#/types/claims.api.types';
 import type { ClaimDetail, RejectClaimPayload } from '#/types/claims.types';
-import { rejectMockClaim } from '../mockClaimsStore';
-import { isNetworkError, shouldUseMockClaims } from '../transport';
+import { normalizeClaimDetail } from '../normalizers';
+import { toRejectNotes } from '../payloadHelpers';
 
 export const rejectClaim = async (payload: RejectClaimPayload): Promise<ClaimDetail> => {
-  try {
-    const response = await performRequest<ClaimDetail, RejectClaimPayload>({
-      method: POST,
-      url: apiEndpoints.claims.reject(payload.id),
-      payload,
-    });
+  const requestPayload: RejectClaimRequestPayload = {
+    action: 'REJECT',
+    notes: toRejectNotes(payload),
+  };
 
-    return claimDetailSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockClaims() && isNetworkError(error)) {
-      return claimDetailSchema.parse(rejectMockClaim(payload));
-    }
-    throw error;
-  }
+  const response = await performRequest<ApiClaimDetail, RejectClaimRequestPayload>({
+    method: PATCH,
+    url: apiEndpoints.claims.detail(payload.id),
+    payload: requestPayload,
+  });
+
+  return normalizeClaimDetail(response);
 };
 
 export const useRejectClaimMutation = (): UseMutationResult<ClaimDetail, Error, RejectClaimPayload> => {

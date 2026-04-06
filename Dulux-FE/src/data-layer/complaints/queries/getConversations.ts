@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import { GET, apiEndpoints } from '#/constants';
 import { conversationListResponseSchema } from '#/schemas/complaints.schema';
 import { performRequest } from '#/services/apiClient';

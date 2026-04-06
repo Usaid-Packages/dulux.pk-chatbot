@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 export const productTypes = ['TOPCOAT', 'BASECOAT'] as const;
 export const productEnvironments = ['INTERIOR', 'EXTERIOR'] as const;
 

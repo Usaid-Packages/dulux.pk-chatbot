@@ -1,10 +1,8 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import { Badge, Button } from '#/components/ui';
 import type { ConversationThread } from '#/types/complaints';
 import { cn } from '#/utils';
-
 import {
   CONVERSATION_PRIORITY_CLASSNAMES,
   CONVERSATION_STATUS_CLASSNAMES,

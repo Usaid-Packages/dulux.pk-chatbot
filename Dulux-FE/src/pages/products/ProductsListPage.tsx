@@ -1,9 +1,8 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { toast } from 'react-toastify';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
 import {

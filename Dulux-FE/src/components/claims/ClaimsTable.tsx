@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimListItem } from '#/types/claims.types';
 import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
 
@@ -27,7 +27,6 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
             <TableHead>Customer</TableHead>
             <TableHead>Reg. ID</TableHead>
             <TableHead>Issue Type</TableHead>
-            <TableHead>Photos</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
@@ -43,8 +42,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
               <TableCell>
                 <span className='chip-reg'>{claim.registrationId}</span>
               </TableCell>
-              <TableCell>{claim.issueType}</TableCell>
-              <TableCell>{claim.photoCount}</TableCell>
+              <TableCell>{getClaimIssueTypeLabel(claim.issueType)}</TableCell>
               <TableCell>{formatDate(claim.submittedAt)}</TableCell>
               <TableCell>
                 <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>

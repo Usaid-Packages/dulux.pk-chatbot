@@ -1,8 +1,6 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import type { DashboardFlowCardModel } from '#/types/dashboard.types';
-
 import { DashboardCard } from './DashboardCard';
 import { DashboardGridSkeleton } from './DashboardGridSkeleton';
 

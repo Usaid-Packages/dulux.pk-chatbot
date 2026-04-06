@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import type { QualityQueueStatusFilter } from '#/types/quality.types';
 
 export const QUALITY_STATUS_TABS: ReadonlyArray<{ value: QualityQueueStatusFilter; label: string }> = [

@@ -1,10 +1,9 @@
-/* eslint import/order: off */
 import type { JSX } from 'react';
 
 import { Link } from 'react-router-dom';
 
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { QualityQueueItem } from '#/types/quality.types';
 import {
   getPriorityClass,
@@ -48,7 +47,7 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
                 <span className='chip-claim'>{item.claimNumber}</span>
               </TableCell>
               <TableCell>{item.customerName}</TableCell>
-              <TableCell>{item.issueType}</TableCell>
+              <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
               <TableCell>{item.city}</TableCell>
               <TableCell>
                 <span
