@@ -1,18 +1,34 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+/* eslint import/order: off */
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
-import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { qualityDetailSchema } from '#/schemas/quality.schema';
+import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
 import type { QualityDetail, QualityRequestInfoPayload } from '#/types/quality.types';
 
+import type { WarrantyClaimApiResponse } from '../apiMappers';
+import { mapQualityClaimDetail } from '../apiMappers';
+
 export const requestMoreInfoQuality = async (payload: QualityRequestInfoPayload): Promise<QualityDetail> => {
-  const response = await performRequest<QualityDetail, QualityRequestInfoPayload>({
-    method: POST,
+  const itemsList = payload.items.join(', ');
+  const notes = [
+    `Requested From: ${payload.requestFrom === 'cs_agent' ? 'CS Agent' : 'Customer'}`,
+    `Missing Items: ${itemsList}`,
+    payload.notes ? `Notes: ${payload.notes}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const response = await performRequest<WarrantyClaimApiResponse, { action: 'RESUBMIT'; notes: string }>({
+    method: 'patch',
     url: apiEndpoints.quality.requestInfo(payload.id),
-    payload,
+    payload: {
+      action: 'RESUBMIT',
+      notes,
+    },
   });
 
-  return qualityDetailSchema.parse(response);
+  return mapQualityClaimDetail(response);
 };
 
 export const useRequestMoreInfoQAMutation = (): UseMutationResult<QualityDetail, Error, QualityRequestInfoPayload> => {

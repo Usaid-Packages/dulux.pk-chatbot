@@ -1,18 +1,29 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+/* eslint import/order: off */
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
-import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { qualityDetailSchema } from '#/schemas/quality.schema';
+import { apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
 import type { QualityApprovePayload, QualityDetail } from '#/types/quality.types';
 
+import type { WarrantyClaimApiResponse } from '../apiMappers';
+import { mapQualityClaimDetail } from '../apiMappers';
+
 export const approveQualityClaim = async (payload: QualityApprovePayload): Promise<QualityDetail> => {
-  const response = await performRequest<QualityDetail, QualityApprovePayload>({
-    method: POST,
+  const mergedNotes = payload.notes
+    ? `Assessment: ${payload.assessment}\n\n${payload.notes}`
+    : `Assessment: ${payload.assessment}`;
+
+  const response = await performRequest<WarrantyClaimApiResponse, { action: 'APPROVE'; notes: string }>({
+    method: 'patch',
     url: apiEndpoints.quality.approve(payload.id),
-    payload,
+    payload: {
+      action: 'APPROVE',
+      notes: mergedNotes,
+    },
   });
 
-  return qualityDetailSchema.parse(response);
+  return mapQualityClaimDetail(response);
 };
 
 export const useApproveQualityClaimMutation = (): UseMutationResult<QualityDetail, Error, QualityApprovePayload> => {

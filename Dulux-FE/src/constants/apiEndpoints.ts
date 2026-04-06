@@ -22,11 +22,11 @@ export const apiEndpoints = {
     detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
   },
   quality: {
-    list: '/quality/',
-    detail: (id: string): string => `/quality/${id}/`,
-    approve: (id: string): string => `/quality/${id}/approve/`,
-    reject: (id: string): string => `/quality/${id}/reject/`,
-    requestInfo: (id: string): string => `/quality/${id}/request-info/`,
+    list: `${API_WARRANTY_V1}/claims/`,
+    detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    approve: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    reject: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    requestInfo: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
   },
   dashboard: {
     summary: `${API_DASHBOARD_V1}/summary/`,
