@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const renderReviewRow = (label: string, value?: string): JSX.Element => {
@@ -20,8 +21,17 @@ const renderReviewRow = (label: string, value?: string): JSX.Element => {
  */
 export const ReviewStep = (): JSX.Element => {
   const { control } = useFormContext<ManualRegistrationFormValues>();
+  const manualProductsQuery = useGetManualRegistrationProductsQuery();
 
   const values = useWatch({ control });
+  const allProducts = [
+    ...(manualProductsQuery.data?.topcoatProducts ?? []),
+    ...(manualProductsQuery.data?.basecoatProducts ?? []),
+  ];
+  const topcoatProductLabel = allProducts.find(product => product.id === values.topcoatProductId)?.label ?? '—';
+  const basecoatProductLabel = values.basecoatProductId
+    ? (allProducts.find(product => product.id === values.basecoatProductId)?.label ?? values.basecoatProductId)
+    : '';
 
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
@@ -57,9 +67,9 @@ export const ReviewStep = (): JSX.Element => {
       <div className='space-y-3'>
         <h4 className='text-sm font-semibold text-text-primary'>Products & Invoices</h4>
         <div className='grid gap-3 md:grid-cols-2'>
-          {renderReviewRow('Topcoat Product', values.topcoatProductName)}
+          {renderReviewRow('Topcoat Product', topcoatProductLabel)}
           {renderReviewRow('Topcoat Quantity', values.topcoatQuantity)}
-          {renderReviewRow('Basecoat Product', values.basecoatProductName)}
+          {renderReviewRow('Basecoat Product', basecoatProductLabel)}
           {renderReviewRow('Basecoat Quantity', values.basecoatQuantity)}
           {renderReviewRow('Topcoat Invoice', values.topcoatInvoice?.name)}
           {renderReviewRow('Basecoat Invoice', values.basecoatInvoice?.name)}

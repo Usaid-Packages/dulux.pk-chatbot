@@ -25,9 +25,9 @@ export interface ManualRegistrationFormValues {
   purchaseDealerCity: string;
   purchaseDealerAddress: string;
   notes: string;
-  topcoatProductName: string;
+  topcoatProductId: string;
   topcoatQuantity: string;
-  basecoatProductName: string;
+  basecoatProductId: string;
   basecoatQuantity: string;
   topcoatInvoice: File | null;
   basecoatInvoice: File | null;
