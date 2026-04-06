@@ -1,41 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, queryKeys, REGISTRATION_ACTIONS, REGISTRATION_HTTP_METHODS } from '#/constants';
 import { performRequest } from '#/services';
 import type { RegistrationActionPayload } from '#/types/registrations';
-import env from '#env';
-import { registrationsMockStore } from '../mockStore';
 
 interface ResubmitRegistrationVariables {
   id: string;
   fields: string[];
   note?: string;
 }
-
-const shouldUseRegistrationMock = env.VITE_USE_MOCK_REGISTRATIONS !== false;
-
-const resubmitRegistration = async ({ id, fields, note }: ResubmitRegistrationVariables): Promise<void> => {
-  const payload: RegistrationActionPayload = {
-    action: 'RESUBMIT',
-    notes: note,
-    rejectionFields: fields.map(fieldName => ({
-      fieldName,
-      note,
-    })),
-  };
-
-  if (shouldUseRegistrationMock) {
-    await registrationsMockStore.applyRegistrationAction(id, payload);
-    return;
-  }
-
-  await performRequest<void, RegistrationActionPayload>({
-    method: 'patch',
-    url: apiEndpoints.registrations.detail(id),
-    payload,
-  });
-};
 
 /**
  * Sends resubmission request for selected fields and refreshes related cache.
@@ -46,7 +20,22 @@ export const useResubmitRegistrationMutation = (): UseMutationResult<void, Error
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, ResubmitRegistrationVariables>({
-    mutationFn: resubmitRegistration,
+    mutationFn: async ({ id, fields, note }: ResubmitRegistrationVariables): Promise<void> => {
+      const payload: RegistrationActionPayload = {
+        action: REGISTRATION_ACTIONS.RESUBMIT,
+        notes: note,
+        rejectionFields: fields.map(fieldName => ({
+          fieldName,
+          note,
+        })),
+      };
+
+      await performRequest<void, RegistrationActionPayload>({
+        method: REGISTRATION_HTTP_METHODS.PATCH,
+        url: apiEndpoints.registrations.detail(id),
+        payload,
+      });
+    },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.registrations.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.registrations.detail(variables.id) });

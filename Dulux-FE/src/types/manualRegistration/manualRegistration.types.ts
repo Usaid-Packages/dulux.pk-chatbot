@@ -46,6 +46,7 @@ export interface ManualRegistrationSubmissionState {
 export interface ManualRegistrationApiResponse {
   id?: number;
   registrationCode?: string;
+  registrationNumber?: string;
   registration?: {
     id?: number;
     registrationCode?: string;

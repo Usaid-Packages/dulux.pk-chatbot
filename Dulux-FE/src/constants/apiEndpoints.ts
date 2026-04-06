@@ -1,4 +1,5 @@
 const API_USERS_V1 = '/api/v1/users';
+const API_CORE_V1 = '/api/v1/core';
 const API_CLAIMS_V1 = '/claims';
 const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
@@ -12,6 +13,9 @@ export const apiEndpoints = {
     verify: `${API_USERS_V1}/token/verify/`,
     forgotPassword: `${API_USERS_V1}/password/reset/`,
     resetPassword: `${API_USERS_V1}/password/reset/confirm/`,
+  },
+  core: {
+    uploadImage: `${API_CORE_V1}/upload-image/`,
   },
   claims: {
     list: `${API_CLAIMS_V1}/`,
