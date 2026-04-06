@@ -32,6 +32,8 @@
   the user.
 - Sidebar must include `Manual Registration` and route it to `ROUTES.MANUAL_REGISTRATION_STEP_1`; do not remove this
   nav item unless the user explicitly asks.
+- After reviewing lint rules, enforce import-order shape before finalizing changes: avoid mixed value+type imports in
+  one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
 
 ## Mistake Log (Short)
 
@@ -290,6 +292,15 @@
 - Issue: Sidebar navigation did not expose Manual Registration entry for direct access.
 - Fix: Added `Manual Registration` under Warranty and pointed it to `ROUTES.MANUAL_REGISTRATION_STEP_1`.
 - Rule: Keep Manual Registration in sidebar unless explicitly removed by user request.
+
+### 2026-04-06 12:05 - `import/order` crash after import-shape drift in helper utilities
+
+- Issue: Linting hit `TypeError: sourceCode.getTokenOrCommentBefore is not a function` on `helperFunctions.ts` under
+  `import/order` due to import-shape/tooling sensitivity.
+- Fix: Reordered imports per ESLint config and split mixed value+type imports into separate statements in touched
+  files.
+- Rule: For this repo/toolchain, never use mixed value+type imports in one line; always keep import groups/newlines
+  and alphabetical order aligned with `eslint.config.ts`.
 
 ## Final Check (Before Submit)
 
