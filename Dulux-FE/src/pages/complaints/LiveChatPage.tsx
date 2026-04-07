@@ -10,12 +10,10 @@ import {
   ResolveConversationModal,
   ConversationStats,
 } from '#/components/complaints';
-import { Button, Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '#/components/ui';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import { useComplaintThread, useComplaints } from '#/hooks/complaints';
 import type { ConversationListItem } from '#/types/complaints';
-
-const PAGE_SIZE = 10;
 const EMPTY_CONVERSATIONS: ConversationListItem[] = [];
 
 /**
@@ -27,7 +25,7 @@ export const LiveChatPage = (): JSX.Element => {
   const { id: selectedThreadId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { conversationsQuery, filters, setStatusFilter, setSearch, setPage } = useComplaints();
+  const { conversationsQuery, filters, setStatusFilter, setSearch } = useComplaints();
 
   const threadId = selectedThreadId ?? '';
   const { threadQuery, sendMessage, resolveConversation, isMessageSending, isActionPending } =
@@ -35,9 +33,6 @@ export const LiveChatPage = (): JSX.Element => {
   const [isResolveOpen, setResolveOpen] = useState(false);
 
   const conversationItems = conversationsQuery.data?.items ?? EMPTY_CONVERSATIONS;
-  const totalItems = conversationsQuery.data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-
   useEffect(() => {
     if (selectedThreadId) {
       return;
@@ -57,18 +52,6 @@ export const LiveChatPage = (): JSX.Element => {
     }
 
     navigate(ROUTES.COMPLAINT_THREAD(threadItemId));
-  };
-
-  const handlePrevPage = (): void => {
-    if (filters.page > 1) {
-      setPage(filters.page - 1);
-    }
-  };
-
-  const handleNextPage = (): void => {
-    if (filters.page < totalPages) {
-      setPage(filters.page + 1);
-    }
   };
 
   const handleResolveConversation = (): void => {
@@ -106,10 +89,10 @@ export const LiveChatPage = (): JSX.Element => {
   }
 
   return (
-    <main className='wf-detail-shell'>
+    <main className='wf-detail-shell flex h-[calc(100vh-8.75rem)] flex-col overflow-hidden'>
       <ConversationStats stats={conversationsQuery.data?.stats} />
 
-      <section className='grid gap-4 xl:grid-cols-[340px_1fr_300px]'>
+      <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>
         <ConversationListPanel
           items={conversationItems}
           isLoading={conversationsQuery.isLoading}
@@ -132,21 +115,6 @@ export const LiveChatPage = (): JSX.Element => {
 
         <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
       </section>
-
-      <div className='wf-pagination-panel'>
-        <p className='text-sm text-text-muted'>
-          Page {filters.page} of {totalPages}
-        </p>
-
-        <div className='flex gap-2'>
-          <Button type='button' variant='outline' onClick={handlePrevPage} disabled={filters.page <= 1}>
-            Previous
-          </Button>
-          <Button type='button' variant='outline' onClick={handleNextPage} disabled={filters.page >= totalPages}>
-            Next
-          </Button>
-        </div>
-      </div>
 
       <ResolveConversationModal
         isOpen={isResolveOpen}

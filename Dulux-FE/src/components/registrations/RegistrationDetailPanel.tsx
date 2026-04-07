@@ -8,6 +8,7 @@ import { SourceTag } from './SourceTag';
 interface RegistrationDetailPanelProps {
   registration: RegistrationDetail;
   isApprovePending: boolean;
+  isApproveDisabled: boolean;
   onApprove: () => void;
   onOpenResubmitModal: () => void;
   onOpenRejectModal: () => void;
@@ -38,6 +39,7 @@ const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | '
 export const RegistrationDetailPanel = ({
   registration,
   isApprovePending,
+  isApproveDisabled,
   onApprove,
   onOpenResubmitModal,
   onOpenRejectModal,
@@ -95,8 +97,8 @@ export const RegistrationDetailPanel = ({
         <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
         <p className='mt-1 text-sm text-text-muted'>Move registration to next workflow step.</p>
         <div className='mt-4 space-y-2'>
-          <Button type='button' className='w-full' disabled={isApprovePending} onClick={onApprove}>
-            {isApprovePending ? 'Approving...' : 'Approve'}
+          <Button type='button' className='w-full' disabled={isApprovePending || isApproveDisabled} onClick={onApprove}>
+            {isApprovePending ? 'Approving...' : isApproveDisabled ? 'Approved' : 'Approve'}
           </Button>
           <Button type='button' variant='outline' className='w-full' onClick={onOpenResubmitModal}>
             Request Resubmission

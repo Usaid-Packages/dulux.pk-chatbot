@@ -102,11 +102,19 @@ export interface RegistrationActionPayload extends Record<string, unknown> {
 export interface RegistrationDetailApiPaintPair {
   id?: number;
   topcoat?: number;
+  topcoatId?: number;
+  topcoat_id?: number;
   topcoatName?: string;
+  topcoat_name?: string;
   topcoatQuantity?: string;
+  topcoat_quantity?: string;
   basecoat?: number | null;
+  basecoatId?: number | null;
+  basecoat_id?: number | null;
   basecoatName?: string | null;
+  basecoat_name?: string | null;
   basecoatQuantity?: string | null;
+  basecoat_quantity?: string | null;
 }
 
 export interface RegistrationDetailApiInvoice {
@@ -143,5 +151,7 @@ export interface RegistrationDetailApiResponse {
   created?: string;
   modified?: string;
   paintPairs?: RegistrationDetailApiPaintPair[];
+  paint_pairs?: RegistrationDetailApiPaintPair[];
   paintPairInvoices?: RegistrationDetailApiInvoice[];
+  paint_pair_invoices?: RegistrationDetailApiInvoice[];
 }

@@ -16,7 +16,6 @@ export const APP_NAVIGATION_ITEMS: AppNavigationItem[] = [
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   { icon: 'LayoutDashboard', label: 'Dashboard', path: ROUTES.DASHBOARD, group: 'Main' },
   { icon: 'ClipboardList', label: 'Registrations', path: ROUTES.REGISTRATIONS, group: 'Warranty', badgeCount: 12 },
-  { icon: 'FileUp', label: 'Manual Registration', path: ROUTES.MANUAL_REGISTRATION_STEP_1, group: 'Warranty' },
   { icon: 'ShieldCheck', label: 'Claims', path: ROUTES.CLAIMS, group: 'Warranty', badgeCount: 5 },
   { icon: 'FlaskConical', label: 'Quality Review', path: ROUTES.QUALITY, group: 'Warranty' },
   { icon: 'MessageSquareText', label: 'Live Chat', path: ROUTES.COMPLAINTS, group: 'Support', badgeCount: 3 },

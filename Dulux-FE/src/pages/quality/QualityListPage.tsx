@@ -35,6 +35,13 @@ export const QualityListPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
+      <header className='rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4'>
+        <h2 className='text-2xl font-semibold text-text-primary'>Quality Review Queue</h2>
+        <p className='text-sm text-text-muted'>
+          Track QA workload and move claims through technical assessment faster.
+        </p>
+      </header>
+
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total In Queue', value: queueData?.stats.totalInQueue ?? 0 },
@@ -49,10 +56,18 @@ export const QualityListPage = (): JSX.Element => {
         ))}
       </section>
 
-      <section className='wf-tabs-panel'>
-        <div className='flex flex-wrap gap-2'>
+      <section className='wf-tabs-panel wf-tabs-panel-contrast'>
+        <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
           {QUALITY_STATUS_TABS.map(tab => {
             const isActive = filters.status === tab.value;
+            const tabCount =
+              tab.value === 'all'
+                ? (queueData?.stats.totalInQueue ?? 0)
+                : tab.value === 'forwarded'
+                  ? (queueData?.stats.awaitingReview ?? 0)
+                  : tab.value === 'infoRequested'
+                    ? (queueData?.stats.infoRequested ?? 0)
+                    : (queueData?.stats.resolvedToday ?? 0);
 
             const handleTabClick = (): void => {
               setStatusFilter(tab.value);
@@ -63,10 +78,13 @@ export const QualityListPage = (): JSX.Element => {
                 key={tab.value}
                 type='button'
                 variant='ghost'
-                className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
+                className={isActive ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
                 onClick={handleTabClick}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                <span className='rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary'>
+                  {tabCount}
+                </span>
               </Button>
             );
           })}

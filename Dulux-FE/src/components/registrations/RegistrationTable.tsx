@@ -112,7 +112,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
                   data-registration-id={String(registration.id)}
                   onClick={handleOpenDetailClick}
                 >
-                  View
+                  View Detail
                 </Button>
               </TableCell>
             </TableRow>

@@ -37,8 +37,7 @@ export const toCreateClaimPayload = (
   ],
 });
 
-export const toSendToQualityNotes = (payload: SendToQualityPayload): string =>
-  `${payload.notes}\nPriority: ${payload.priority}\nVerification: ${payload.verificationPackSummary}`;
+export const toSendToQualityNotes = (payload: SendToQualityPayload): string => payload.notes;
 
 export const toRejectNotes = (payload: RejectClaimPayload): string => {
   if (payload.notes) {

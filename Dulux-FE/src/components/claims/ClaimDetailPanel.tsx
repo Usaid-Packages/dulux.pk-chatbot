@@ -11,6 +11,7 @@ interface ClaimDetailPanelProps {
   onOpenRequestInfoModal: () => void;
   onOpenRejectModal: () => void;
   isActionPending: boolean;
+  isSendToQualityDisabled: boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ export const ClaimDetailPanel = ({
   onOpenRequestInfoModal,
   onOpenRejectModal,
   isActionPending,
+  isSendToQualityDisabled,
 }: ClaimDetailPanelProps): JSX.Element => {
   return (
     <section className='space-y-4'>
@@ -73,8 +75,8 @@ export const ClaimDetailPanel = ({
         <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
         <p className='mt-1 text-sm text-text-muted'>Move claim to next workflow step.</p>
         <div className='mt-4 space-y-2'>
-          <Button className='w-full' onClick={onOpenForwardModal} disabled={isActionPending}>
-            Send To Quality
+          <Button className='w-full' onClick={onOpenForwardModal} disabled={isActionPending || isSendToQualityDisabled}>
+            {isSendToQualityDisabled ? 'Sent To Quality' : 'Send To Quality'}
           </Button>
           <Button className='w-full' variant='outline' onClick={onOpenRequestInfoModal} disabled={isActionPending}>
             Request More Info
