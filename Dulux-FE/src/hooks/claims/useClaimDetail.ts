@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
@@ -5,6 +7,7 @@ import { queryKeys } from '#/constants';
 import {
   getClaimById,
   useApproveClaimMutation,
+  useMarkClaimInReviewMutation,
   useRejectClaimMutation,
   useRequestMoreInfoClaimMutation,
   useSendToQualityMutation,
@@ -34,6 +37,8 @@ interface UseClaimDetailResult {
  * @returns Detail query and action handlers.
  */
 export const useClaimDetail = (id: string): UseClaimDetailResult => {
+  const hasAttemptedAutoInReviewRef = useRef(false);
+
   const claimQuery = useQuery<ClaimDetail, Error>({
     queryKey: queryKeys.claims.detail(id),
     queryFn: () => getClaimById(id),
@@ -41,9 +46,30 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   });
 
   const approveMutation = useApproveClaimMutation();
+  const markInReviewMutation = useMarkClaimInReviewMutation();
   const rejectMutation = useRejectClaimMutation();
   const sendToQualityMutation = useSendToQualityMutation();
   const requestMoreInfoMutation = useRequestMoreInfoClaimMutation();
+
+  useEffect(() => {
+    hasAttemptedAutoInReviewRef.current = false;
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !claimQuery.data) {
+      return;
+    }
+
+    if (hasAttemptedAutoInReviewRef.current) {
+      return;
+    }
+    if (claimQuery.data.workflowState !== 'SUBMITTED') {
+      return;
+    }
+
+    hasAttemptedAutoInReviewRef.current = true;
+    markInReviewMutation.mutate({ id });
+  }, [claimQuery.data, id, markInReviewMutation]);
 
   const handleApprove = (payload: ApproveClaimPayload): void => {
     approveMutation.mutate(payload, {
@@ -91,6 +117,7 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
 
   const isActionPending =
     approveMutation.isPending ||
+    markInReviewMutation.isPending ||
     rejectMutation.isPending ||
     sendToQualityMutation.isPending ||
     requestMoreInfoMutation.isPending;

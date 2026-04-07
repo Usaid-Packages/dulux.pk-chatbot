@@ -10,6 +10,7 @@ export const queryKeys = {
     detail: (id: string) => ['claims', 'detail', id] as const,
     create: ['claims', 'create'] as const,
     approve: ['claims', 'approve'] as const,
+    markInReview: ['claims', 'in-review'] as const,
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,
     requestInfo: ['claims', 'request-info'] as const,

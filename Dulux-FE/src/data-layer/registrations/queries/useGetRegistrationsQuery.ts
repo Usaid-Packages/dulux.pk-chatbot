@@ -21,7 +21,7 @@ const serializeRegistrationsParams = (params?: RegistrationsQueryParams): string
 };
 
 /**
- * Fetches the registration list with optional search/status/date filters.
+ * Fetches the registration list with optional API-supported filters.
  *
  * @param params - List query params.
  * @returns React Query result for registrations list.

@@ -124,7 +124,7 @@ export const ClaimDetailPage = (): JSX.Element => {
             onOpenRejectModal={openRejectModal}
             isActionPending={isActionPending}
           />
-          <ClaimWorkflowCard status={claim.status} />
+          <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
         </div>
       </section>
 

@@ -93,6 +93,10 @@ export interface ApproveClaimRequestPayload {
   action: 'APPROVE';
 }
 
+export interface MarkClaimInReviewRequestPayload {
+  action: 'IN_REVIEW';
+}
+
 export interface SendToQualityRequestPayload {
   action: 'QA_REVIEW';
   notes: string;

@@ -16,7 +16,7 @@ interface DashboardCardProps {
  * @returns Clickable dashboard card.
  */
 export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
-  const { title, description, screens, stats, to, icon } = flow;
+  const { title, description, stats, to, icon } = flow;
   const Icon = DASHBOARD_ICON_MAP[icon];
 
   return (
@@ -30,7 +30,6 @@ export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
           <span className='dashboard-flow-icon'>
             <Icon aria-hidden='true' className='h-5 w-5' />
           </span>
-          <span className='dashboard-flow-screen-badge'>{screens} screens</span>
         </div>
 
         <div className='mt-4'>

@@ -1,4 +1,4 @@
-import { toUiClaimIssueType, toUiClaimStatus } from '#/constants';
+import { toApiClaimWorkflowState, toUiClaimIssueType, toUiClaimStatus } from '#/constants';
 import { claimDetailSchema, claimListItemSchema } from '#/schemas/claim.schema';
 import type { ApiClaimDetail, ApiClaimListItem, ApiPaginationResponse } from '#/types/claims.api.types';
 import type { ClaimDetail, ClaimListItem, ClaimsListResponse, ClaimsStats } from '#/types/claims.types';
@@ -53,6 +53,7 @@ const toClaimListItem = (claim: ApiClaimListItem): ClaimListItem =>
     issueType: toUiClaimIssueType(readIssueType(claim)),
     photoCount: 0,
     submittedAt: readSubmittedAt(claim),
+    workflowState: toApiClaimWorkflowState(readState(claim)),
     status: toUiClaimStatus(readState(claim)),
     priority: 'normal',
   });
@@ -89,6 +90,7 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     issueType: toUiClaimIssueType(readIssueType(claim)),
     photoCount: Array.isArray(claim.images) ? claim.images.length : 0,
     submittedAt: readSubmittedAt(claim),
+    workflowState: toApiClaimWorkflowState(readState(claim)),
     status: toUiClaimStatus(readState(claim)),
     priority: 'normal',
     phone: asString(claim.registration?.phone_number),

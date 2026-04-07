@@ -4,15 +4,18 @@ import { Button, Input } from '#/components/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/Select';
 import { registrationStatuses, type RegistrationStatus } from '#/types/registrations';
 
+const toStatusLabel = (status: string): string =>
+  status
+    .toLowerCase()
+    .split('_')
+    .map(token => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+
 interface RegistrationFiltersProps {
   searchValue: string;
   statusValue: RegistrationStatus | 'ALL';
-  dateFrom: string;
-  dateTo: string;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: RegistrationStatus | 'ALL') => void;
-  onDateFromChange: (value: string) => void;
-  onDateToChange: (value: string) => void;
   onAddManualRegistration: () => void;
 }
 
@@ -25,12 +28,8 @@ interface RegistrationFiltersProps {
 export const RegistrationFilters = ({
   searchValue,
   statusValue,
-  dateFrom,
-  dateTo,
   onSearchChange,
   onStatusChange,
-  onDateFromChange,
-  onDateToChange,
   onAddManualRegistration,
 }: RegistrationFiltersProps): JSX.Element => {
   const handleSearchInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -46,17 +45,9 @@ export const RegistrationFilters = ({
     onStatusChange(value as RegistrationStatus);
   };
 
-  const handleDateFromInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    onDateFromChange(event.target.value);
-  };
-
-  const handleDateToInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    onDateToChange(event.target.value);
-  };
-
   return (
     <section className='wf-toolbar-panel'>
-      <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,auto]'>
+      <div className='grid gap-3 md:grid-cols-[2fr,1fr,auto]'>
         <Input
           type='search'
           value={searchValue}
@@ -72,13 +63,11 @@ export const RegistrationFilters = ({
             <SelectItem value='ALL'>All statuses</SelectItem>
             {registrationStatuses.map(status => (
               <SelectItem key={status} value={status}>
-                {status.replace('_', ' ')}
+                {toStatusLabel(status)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Input type='date' value={dateFrom} onChange={handleDateFromInputChange} aria-label='Date from' />
-        <Input type='date' value={dateTo} onChange={handleDateToInputChange} aria-label='Date to' />
         <Button type='button' onClick={onAddManualRegistration}>
           Add Manual Registration
         </Button>

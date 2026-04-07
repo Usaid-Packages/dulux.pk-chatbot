@@ -16,14 +16,17 @@ interface ClaimImagesProps {
  */
 export const ClaimImages = ({ photos }: ClaimImagesProps): JSX.Element => {
   const [activePhoto, setActivePhoto] = useState<ClaimEvidencePhoto | null>(null);
+  const [isModalImageLoading, setModalImageLoading] = useState(false);
 
   const openPhotoModal = (photo: ClaimEvidencePhoto): void => {
     setActivePhoto(photo);
+    setModalImageLoading(true);
   };
 
   const handleModalOpenChange = (open: boolean): void => {
     if (!open) {
       setActivePhoto(null);
+      setModalImageLoading(false);
     }
   };
 
@@ -59,12 +62,22 @@ export const ClaimImages = ({ photos }: ClaimImagesProps): JSX.Element => {
             <DialogDescription>Full-size image preview</DialogDescription>
           </DialogHeader>
           {activePhoto ? (
-            <img
-              className='max-h-[75vh] w-full rounded-md object-contain'
-              src={activePhoto.url}
-              alt={activePhoto.label}
-              loading='lazy'
-            />
+            <div className='relative h-[72vh] w-full rounded-md bg-surface-muted'>
+              {isModalImageLoading ? (
+                <div className='absolute inset-0 animate-pulse rounded-md bg-surface-subtle' aria-hidden='true' />
+              ) : null}
+              <img
+                className={[
+                  'h-full w-full rounded-md object-contain transition-opacity duration-200',
+                  isModalImageLoading ? 'opacity-0' : 'opacity-100',
+                ].join(' ')}
+                src={activePhoto.url}
+                alt={activePhoto.label}
+                loading='eager'
+                onLoad={() => setModalImageLoading(false)}
+                onError={() => setModalImageLoading(false)}
+              />
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>

@@ -20,8 +20,6 @@ export const RegistrationsListPage = (): JSX.Element => {
     activeTab,
     searchValue,
     statusValue,
-    dateFrom,
-    dateTo,
     currentPage,
     registrations,
     stats,
@@ -32,8 +30,6 @@ export const RegistrationsListPage = (): JSX.Element => {
     hasPreviousPage,
     setSearchValue,
     setStatusValue,
-    setDateFrom,
-    setDateTo,
     setActiveTab,
     goToNextPage,
     goToPreviousPage,
@@ -95,12 +91,8 @@ export const RegistrationsListPage = (): JSX.Element => {
       <RegistrationFilters
         searchValue={searchValue}
         statusValue={statusValue}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
         onSearchChange={setSearchValue}
         onStatusChange={setStatusValue}
-        onDateFromChange={setDateFrom}
-        onDateToChange={setDateTo}
         onAddManualRegistration={handleAddManualRegistration}
       />
 

@@ -12,7 +12,6 @@ import {
   QualityQuickInfoCard,
   RejectClaimQAModal,
   RequestInfoQAModal,
-  RoleBanner,
 } from '#/components/quality';
 import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
@@ -113,8 +112,6 @@ export const QualityDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <RoleBanner />
-
       <Button type='button' variant='outline' onClick={handleBackClick}>
         Back To Quality Queue
       </Button>
@@ -165,7 +162,7 @@ export const QualityDetailPage = (): JSX.Element => {
             onOpenRequestInfoModal={openRequestInfoModal}
             onOpenRejectModal={openRejectModal}
           />
-          <ClaimWorkflowCard status={claim.status} />
+          <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
           <QualityQuickInfoCard
             forwardedBy={claim.forwardedBy}
             forwardedAt={claim.forwardedAt}

@@ -1,5 +1,5 @@
 /* eslint import/order: off */
-import { toUiClaimIssueType } from '#/constants';
+import { toApiClaimWorkflowState, toUiClaimIssueType } from '#/constants';
 import env from '#env';
 import { qualityDetailSchema, qualityQueueResponseSchema } from '#/schemas/quality.schema';
 import type {
@@ -203,6 +203,7 @@ export const mapQualityClaimDetail = (claim: WarrantyClaimApiResponse): QualityD
     issueType: normalizeIssueType(claim.issueType),
     photoCount: claim.images?.length ?? 0,
     submittedAt,
+    workflowState: toApiClaimWorkflowState(claim.state ?? ''),
     status: normalizeStatus(claim.state),
     priority: normalizePriority(claim.priority),
     phone: linkedRegistration?.phoneNumber ?? '-',

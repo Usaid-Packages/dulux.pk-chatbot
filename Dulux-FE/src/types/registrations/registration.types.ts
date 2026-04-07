@@ -84,9 +84,8 @@ export interface RegistrationsQueryParams extends Record<string, unknown> {
   state?: RegistrationStatus;
   channel?: RegistrationChannel;
   page?: number;
+  page_size?: number;
   ordering?: string;
-  createdAfter?: string;
-  createdBefore?: string;
 }
 
 export interface ResubmissionFieldPayload {
