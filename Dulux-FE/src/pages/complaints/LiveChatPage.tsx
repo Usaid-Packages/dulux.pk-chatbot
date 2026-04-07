@@ -7,19 +7,12 @@ import {
   ChatThreadPanel,
   ConversationInfoPanel,
   ConversationListPanel,
-  ConversationStats,
-  EscalateConversationModal,
   ResolveConversationModal,
-  TransferConversationModal,
+  ConversationStats,
 } from '#/components/complaints';
 import { Button, Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import { useComplaintThread, useComplaints } from '#/hooks/complaints';
-import type {
-  EscalateConversationFormValues,
-  ResolveConversationFormValues,
-  TransferConversationFormValues,
-} from '#/schemas/complaints.schema';
 import type { ConversationListItem } from '#/types/complaints';
 
 const PAGE_SIZE = 10;
@@ -34,22 +27,12 @@ export const LiveChatPage = (): JSX.Element => {
   const { id: selectedThreadId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { conversationsQuery, filters, setStatusFilter, setPriorityFilter, setSearch, setPage } = useComplaints();
+  const { conversationsQuery, filters, setStatusFilter, setSearch, setPage } = useComplaints();
 
   const threadId = selectedThreadId ?? '';
-  const {
-    threadQuery,
-    sendMessage,
-    resolveConversation,
-    transferConversation,
-    escalateConversation,
-    isMessageSending,
-    isActionPending,
-  } = useComplaintThread(threadId);
-
+  const { threadQuery, sendMessage, resolveConversation, isMessageSending, isActionPending } =
+    useComplaintThread(threadId);
   const [isResolveOpen, setResolveOpen] = useState(false);
-  const [isTransferOpen, setTransferOpen] = useState(false);
-  const [isEscalateOpen, setEscalateOpen] = useState(false);
 
   const conversationItems = conversationsQuery.data?.items ?? EMPTY_CONVERSATIONS;
   const totalItems = conversationsQuery.data?.total ?? 0;
@@ -88,48 +71,25 @@ export const LiveChatPage = (): JSX.Element => {
     }
   };
 
-  const openResolveModal = (): void => setResolveOpen(true);
-  const openTransferModal = (): void => setTransferOpen(true);
-  const openEscalateModal = (): void => setEscalateOpen(true);
-
-  const closeResolveModal = (): void => setResolveOpen(false);
-  const closeTransferModal = (): void => setTransferOpen(false);
-  const closeEscalateModal = (): void => setEscalateOpen(false);
-
-  const submitResolve = (values: ResolveConversationFormValues): void => {
+  const handleResolveConversation = (): void => {
     if (!threadId) {
       return;
     }
 
-    resolveConversation({
-      threadId,
-      ...values,
-    });
-    closeResolveModal();
+    setResolveOpen(true);
   };
 
-  const submitTransfer = (values: TransferConversationFormValues): void => {
-    if (!threadId) {
-      return;
-    }
-
-    transferConversation({
-      threadId,
-      ...values,
-    });
-    closeTransferModal();
+  const closeResolveModal = (): void => {
+    setResolveOpen(false);
   };
 
-  const submitEscalate = (values: EscalateConversationFormValues): void => {
+  const confirmResolveConversation = (closureNote: string): void => {
     if (!threadId) {
       return;
     }
 
-    escalateConversation({
-      threadId,
-      ...values,
-    });
-    closeEscalateModal();
+    resolveConversation(closureNote);
+    setResolveOpen(false);
   };
 
   if (conversationsQuery.isError) {
@@ -154,11 +114,9 @@ export const LiveChatPage = (): JSX.Element => {
           items={conversationItems}
           isLoading={conversationsQuery.isLoading}
           status={filters.status}
-          priority={filters.priority}
           search={filters.search ?? ''}
           selectedThreadId={selectedThreadId}
           onStatusChange={setStatusFilter}
-          onPriorityChange={setPriorityFilter}
           onSearchChange={setSearch}
           onThreadSelect={handleThreadSelect}
         />
@@ -172,12 +130,7 @@ export const LiveChatPage = (): JSX.Element => {
           onSendMessage={sendMessage}
         />
 
-        <ConversationInfoPanel
-          thread={threadQuery.data}
-          onResolve={openResolveModal}
-          onTransfer={openTransferModal}
-          onEscalate={openEscalateModal}
-        />
+        <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
       </section>
 
       <div className='wf-pagination-panel'>
@@ -199,21 +152,7 @@ export const LiveChatPage = (): JSX.Element => {
         isOpen={isResolveOpen}
         isSubmitting={isActionPending}
         onClose={closeResolveModal}
-        onSubmit={submitResolve}
-      />
-
-      <TransferConversationModal
-        isOpen={isTransferOpen}
-        isSubmitting={isActionPending}
-        onClose={closeTransferModal}
-        onSubmit={submitTransfer}
-      />
-
-      <EscalateConversationModal
-        isOpen={isEscalateOpen}
-        isSubmitting={isActionPending}
-        onClose={closeEscalateModal}
-        onSubmit={submitEscalate}
+        onConfirm={confirmResolveConversation}
       />
     </main>
   );

@@ -28,10 +28,9 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) => ['complaints', 'list', filters] as const,
     detail: (id: string) => ['complaints', 'detail', id] as const,
     sendMessage: ['complaints', 'send-message'] as const,
-    markRead: ['complaints', 'mark-read'] as const,
+    markInProgress: ['complaints', 'mark-in-progress'] as const,
     resolve: ['complaints', 'resolve'] as const,
-    transfer: ['complaints', 'transfer'] as const,
-    escalate: ['complaints', 'escalate'] as const,
+    close: ['complaints', 'close'] as const,
   },
   dashboard: {
     all: ['dashboard'] as const,

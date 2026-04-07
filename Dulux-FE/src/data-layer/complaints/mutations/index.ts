@@ -1,5 +1,4 @@
-export { escalateConversation, useEscalateConversationMutation } from './escalateConversation';
-export { markConversationThreadRead, useMarkConversationReadMutation } from './markThreadRead';
+export { markConversationInProgress, useMarkConversationInProgressMutation } from './markConversationInProgress';
 export { resolveConversation, useResolveConversationMutation } from './resolveConversation';
+export { closeConversation, useCloseConversationMutation } from './closeConversation';
 export { sendConversationMessage, useSendConversationMessageMutation } from './sendMessage';
-export { transferConversation, useTransferConversationMutation } from './transferConversation';

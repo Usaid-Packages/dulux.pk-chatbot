@@ -27,7 +27,7 @@ export interface LoginResponse {
 }
 
 export interface LoginApiUser {
-  pk: number;
+  id: number;
   email: string;
   role: string;
 }

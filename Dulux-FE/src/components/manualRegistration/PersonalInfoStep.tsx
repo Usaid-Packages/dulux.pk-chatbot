@@ -20,6 +20,13 @@ export const PersonalInfoStep = (): JSX.Element => {
     event.currentTarget.value = event.currentTarget.value.replace(/[^a-zA-Z0-9-]/g, '');
   };
 
+  const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const sanitized = event.currentTarget.value.replace(/[^\d+]/g, '');
+    const hasLeadingPlus = sanitized.startsWith('+');
+    const numericPart = sanitized.replace(/\D/g, '').slice(0, 12);
+    event.currentTarget.value = hasLeadingPlus ? `+${numericPart}` : numericPart;
+  };
+
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
       <header>
@@ -36,7 +43,7 @@ export const PersonalInfoStep = (): JSX.Element => {
 
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Phone Number</span>
-          <Input placeholder='e.g. 03001234567' {...register('phoneNumber')} />
+          <Input placeholder='e.g. 923001234567' {...register('phoneNumber')} onChange={handlePhoneNumberChange} />
           {errors.phoneNumber ? <p className='text-xs text-destructive'>{errors.phoneNumber.message}</p> : null}
         </label>
 

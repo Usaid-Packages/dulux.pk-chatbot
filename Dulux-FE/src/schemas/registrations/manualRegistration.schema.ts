@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
 
 const quantityPattern = /^\d+(\.\d{1,2})?$/;
+const pakistanPhoneInputPattern = /^(?:\+?92)3\d{9}$/;
 
 const fileSchema = z
   .instanceof(File, { message: 'Please upload a valid file.' })
@@ -20,8 +21,9 @@ const manualRegistrationBaseSchema = z.object({
   phoneNumber: z
     .string()
     .trim()
-    .min(10, 'Phone number must be at least 10 digits.')
-    .max(20, 'Phone number is too long.'),
+    .refine(value => pakistanPhoneInputPattern.test(value.replace(/[\s-]/g, '')), {
+      message: 'Phone number must start with 92 and include 10 digits after it.',
+    }),
   email: z.string().trim().min(1, 'Email is required.').pipe(z.email('Please enter a valid email address.')),
   city: z.string().trim().min(2, 'City is required.'),
   province: z.string().trim().min(2, 'Province is required.'),

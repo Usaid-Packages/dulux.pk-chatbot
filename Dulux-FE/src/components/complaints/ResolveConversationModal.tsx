@@ -1,7 +1,5 @@
+import { useMemo, useState } from 'react';
 import type { JSX } from 'react';
-
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
 
 import {
   Button,
@@ -13,128 +11,70 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
-import { resolveConversationSchema } from '#/schemas/complaints.schema';
-import type { ResolveConversationFormValues } from '#/schemas/complaints.schema';
 
 interface ResolveConversationModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
   onClose: () => void;
-  onSubmit: (values: ResolveConversationFormValues) => void;
+  onConfirm: (closureNote: string) => void;
 }
 
 /**
- * ResolveConversationModal captures resolution details for closing a conversation.
+ * ResolveConversationModal confirms marking a complaint as resolved.
  *
- * @param props - Modal state and submit callback.
- * @returns Resolve conversation modal.
+ * @param props - Modal visibility and action handlers.
+ * @returns Resolve confirmation dialog.
  */
 export const ResolveConversationModal = ({
   isOpen,
   isSubmitting,
   onClose,
-  onSubmit,
+  onConfirm,
 }: ResolveConversationModalProps): JSX.Element => {
-  const {
-    control,
-    register,
-    reset,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ResolveConversationFormValues>({
-    resolver: zodResolver(resolveConversationSchema),
-    defaultValues: {
-      resolutionType: 'issueResolved',
-      summary: '',
-      notifyCustomer: true,
-    },
-  });
+  const [closureNote, setClosureNote] = useState('');
+  const trimmedClosureNote = useMemo(() => closureNote.trim(), [closureNote]);
 
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset();
-      onClose();
-    }
+  const handleClose = (): void => {
+    setClosureNote('');
+    onClose();
+  };
+
+  const handleConfirm = (): void => {
+    onConfirm(trimmedClosureNote);
+    setClosureNote('');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={open => (!open ? handleClose() : undefined)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Resolve Conversation</DialogTitle>
-          <DialogDescription>Mark this conversation as resolved and notify customer.</DialogDescription>
+          <DialogTitle>Mark Complaint as Resolved</DialogTitle>
+          <DialogDescription>
+            This will resolve and close the complaint. Please provide a closure note.
+          </DialogDescription>
         </DialogHeader>
 
-        <form className='space-y-4' onSubmit={handleSubmit(onSubmit)}>
-          <div className='space-y-2'>
-            <p className='text-sm font-medium text-text-primary'>Resolution Type</p>
-            <Controller
-              name='resolutionType'
-              control={control}
-              render={({ field }) => {
-                const handleIssueResolved = (): void => field.onChange('issueResolved');
-                const handleNeedFollowUp = (): void => field.onChange('needQualityFollowUp');
+        <div className='space-y-2'>
+          <label htmlFor='closure-note' className='text-sm font-medium text-text-primary'>
+            Closure Note
+          </label>
+          <Textarea
+            id='closure-note'
+            rows={4}
+            value={closureNote}
+            onChange={event => setClosureNote(event.target.value)}
+            placeholder='Issue resolved and confirmed by customer.'
+          />
+        </div>
 
-                return (
-                  <div className='space-y-2 rounded-md border border-border p-3'>
-                    <label className='flex items-center gap-2 text-sm text-text-primary'>
-                      <input
-                        type='radio'
-                        checked={field.value === 'issueResolved'}
-                        onChange={handleIssueResolved}
-                        className='h-4 w-4'
-                      />
-                      Issue Resolved
-                    </label>
-                    <label className='flex items-center gap-2 text-sm text-text-primary'>
-                      <input
-                        type='radio'
-                        checked={field.value === 'needQualityFollowUp'}
-                        onChange={handleNeedFollowUp}
-                        className='h-4 w-4'
-                      />
-                      Needs Quality Follow-up
-                    </label>
-                  </div>
-                );
-              }}
-            />
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='resolve-summary' className='text-sm font-medium text-text-primary'>
-              Resolution Summary
-            </label>
-            <Textarea id='resolve-summary' {...register('summary')} aria-invalid={Boolean(errors.summary)} />
-            {errors.summary ? <p className='text-xs text-destructive'>{errors.summary.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <Controller
-              name='notifyCustomer'
-              control={control}
-              render={({ field }) => {
-                const handleToggle = (): void => field.onChange(!field.value);
-
-                return (
-                  <label className='flex items-center gap-2 text-sm text-text-primary'>
-                    <input type='checkbox' checked={field.value} onChange={handleToggle} className='h-4 w-4 rounded' />
-                    Send resolution update to customer
-                  </label>
-                );
-              }}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type='submit' disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Mark as Resolved'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button type='button' variant='outline' onClick={handleClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type='button' onClick={handleConfirm} disabled={isSubmitting || trimmedClosureNote.length === 0}>
+            {isSubmitting ? 'Updating...' : 'Resolve & Close'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

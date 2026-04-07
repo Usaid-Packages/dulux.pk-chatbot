@@ -11,11 +11,10 @@ import {
   SelectValue,
   Skeleton,
 } from '#/components/ui';
-import type { ConversationListItem, ConversationPriorityFilter, ConversationStatusFilter } from '#/types/complaints';
+import type { ConversationListItem, ConversationStatusFilter } from '#/types/complaints';
 import { cn } from '#/utils';
 import {
   CONVERSATION_CHANNEL_LABELS,
-  CONVERSATION_PRIORITY_CLASSNAMES,
   CONVERSATION_STATUS_CLASSNAMES,
   CONVERSATION_STATUS_LABELS,
   CONVERSATION_STATUS_TABS,
@@ -25,11 +24,9 @@ interface ConversationListPanelProps {
   items: ConversationListItem[];
   isLoading: boolean;
   status: ConversationStatusFilter;
-  priority: ConversationPriorityFilter;
   search: string;
   selectedThreadId?: string;
   onStatusChange: (status: ConversationStatusFilter) => void;
-  onPriorityChange: (priority: ConversationPriorityFilter) => void;
   onSearchChange: (search: string) => void;
   onThreadSelect: (threadId: string) => void;
 }
@@ -58,11 +55,9 @@ export const ConversationListPanel = ({
   items,
   isLoading,
   status,
-  priority,
   search,
   selectedThreadId,
   onStatusChange,
-  onPriorityChange,
   onSearchChange,
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
@@ -73,11 +68,11 @@ export const ConversationListPanel = ({
           <Input
             value={search}
             onChange={event => onSearchChange(event.target.value)}
-            placeholder='Search by customer, claim, city, or registration'
+            placeholder='Search by customer, subject, or phone'
             aria-label='Search conversations'
           />
 
-          <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-2'>
             <Select value={status} onValueChange={value => onStatusChange(value as ConversationStatusFilter)}>
               <SelectTrigger>
                 <SelectValue placeholder='Status' />
@@ -88,17 +83,6 @@ export const ConversationListPanel = ({
                     {tab.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={priority} onValueChange={value => onPriorityChange(value as ConversationPriorityFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder='Priority' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='all'>All priorities</SelectItem>
-                <SelectItem value='high'>High</SelectItem>
-                <SelectItem value='normal'>Normal</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -139,29 +123,22 @@ export const ConversationListPanel = ({
                     onClick={handleItemClick}
                   >
                     <div className='flex w-full items-start justify-between gap-2'>
-                      <div>
-                        <p className='text-sm font-semibold text-text-primary'>{item.customerName}</p>
-                        <p className='text-xs text-text-muted'>
-                          {item.claimNumber} · {item.city}
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
+                        <p className='truncate text-xs text-text-muted'>
+                          {item.issueType} · {item.customerPhone}
                         </p>
                       </div>
-                      <p className='text-[11px] text-text-muted'>{formatConversationTime(item.lastMessageAt)}</p>
+                      <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>
+                        {formatConversationTime(item.lastMessageAt)}
+                      </p>
                     </div>
 
                     <p className='line-clamp-2 w-full text-xs text-text-secondary'>{item.lastMessagePreview}</p>
 
                     <div className='flex w-full flex-wrap items-center gap-2'>
-                      <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.status])}>
-                        {CONVERSATION_STATUS_LABELS[item.status]}
-                      </Badge>
-
-                      <Badge
-                        className={cn(
-                          'rounded-md px-2 py-0.5 capitalize',
-                          CONVERSATION_PRIORITY_CLASSNAMES[item.priority]
-                        )}
-                      >
-                        {item.priority}
+                      <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.apiStatus])}>
+                        {CONVERSATION_STATUS_LABELS[item.apiStatus]}
                       </Badge>
 
                       <Badge className='rounded-md px-2 py-0.5'>{CONVERSATION_CHANNEL_LABELS[item.channel]}</Badge>

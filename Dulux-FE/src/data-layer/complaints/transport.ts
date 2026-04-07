@@ -1,17 +1,16 @@
 import value from '#env';
 
-const NETWORK_ERROR_CODE = 'ERR_NETWORK';
+export const buildComplaintsSocketUrl = (threadId: string, accessToken: string): string => {
+  const configuredBaseUrl = value.VITE_COMPLAINTS_SOCKET_BASE_URL;
+  const socketBaseUrl = new URL(configuredBaseUrl);
 
-export const shouldUseMockComplaints = (): boolean => {
-  const rawValue = value.VITE_USE_MOCK_COMPLAINTS;
-  return rawValue === undefined || String(rawValue).toLowerCase() === 'true';
-};
-
-export const isNetworkError = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') {
-    return false;
+  if (socketBaseUrl.protocol === 'https:') {
+    socketBaseUrl.protocol = 'wss:';
+  } else if (socketBaseUrl.protocol === 'http:') {
+    socketBaseUrl.protocol = 'ws:';
   }
 
-  const typedError = error as { code?: string };
-  return typedError.code === NETWORK_ERROR_CODE;
+  socketBaseUrl.pathname = `/ws/complaints/${threadId}/chat/`;
+  socketBaseUrl.search = `token=${encodeURIComponent(accessToken)}`;
+  return socketBaseUrl.toString();
 };

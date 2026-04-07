@@ -18,7 +18,7 @@ export const useLogin = () => {
       token: response.access,
       refreshToken: response.refresh,
       user: {
-        id: response.user.pk,
+        id: response.user.id,
         email: response.user.email,
         role: response.user.role,
       },

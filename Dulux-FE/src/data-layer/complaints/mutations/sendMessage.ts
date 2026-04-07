@@ -2,42 +2,48 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 import { POST, apiEndpoints, queryKeys } from '#/constants';
-import { conversationThreadSchema } from '#/schemas/complaints.schema';
+import { complaintApiMessageSchema } from '#/schemas/complaints.schema';
 import { performRequest } from '#/services/apiClient';
-import type { ConversationThread, SendMessagePayload } from '#/types/complaints';
-import { sendMockMessage } from '../mockComplaintsStore';
-import { isNetworkError, shouldUseMockComplaints } from '../transport';
+import type { ChatMessage } from '#/types/complaints';
+import type { ComplaintApiMessage } from '#/types/complaints';
+import type { ConversationThread } from '#/types/complaints';
+import type { SendMessagePayload } from '#/types/complaints';
+import { appendMessageToConversationThread, normalizeComplaintApiMessage } from '#/utils';
 
-export const sendConversationMessage = async (payload: SendMessagePayload): Promise<ConversationThread> => {
-  try {
-    const response = await performRequest<ConversationThread, SendMessagePayload>({
-      method: POST,
-      url: apiEndpoints.complaints.sendMessage(payload.threadId),
-      payload,
-    });
+interface SendMessageRequestBody {
+  text: string;
+}
 
-    return conversationThreadSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockComplaints() && isNetworkError(error)) {
-      return conversationThreadSchema.parse(sendMockMessage(payload));
-    }
+export const sendConversationMessage = async (payload: SendMessagePayload): Promise<ChatMessage> => {
+  const response = await performRequest<ComplaintApiMessage, SendMessageRequestBody>({
+    method: POST,
+    url: apiEndpoints.complaints.sendMessage(payload.threadId),
+    payload: {
+      text: payload.message.trim(),
+    },
+  });
 
-    throw error;
-  }
+  const parsedResponse = complaintApiMessageSchema.parse(response);
+  return normalizeComplaintApiMessage(parsedResponse, payload.threadId);
 };
 
-export const useSendConversationMessageMutation = (): UseMutationResult<
-  ConversationThread,
-  Error,
-  SendMessagePayload
-> => {
+export const useSendConversationMessageMutation = (): UseMutationResult<ChatMessage, Error, SendMessagePayload> => {
   const queryClient = useQueryClient();
 
-  return useMutation<ConversationThread, Error, SendMessagePayload>({
+  return useMutation<ChatMessage, Error, SendMessagePayload>({
     mutationKey: queryKeys.complaints.sendMessage,
     mutationFn: sendConversationMessage,
-    onSuccess: updatedThread => {
-      queryClient.setQueryData(queryKeys.complaints.detail(updatedThread.id), updatedThread);
+    onSuccess: (message, variables) => {
+      queryClient.setQueryData<ConversationThread | undefined>(
+        queryKeys.complaints.detail(variables.threadId),
+        previous => {
+          if (!previous) {
+            return previous;
+          }
+
+          return appendMessageToConversationThread(previous, message);
+        }
+      );
       void queryClient.invalidateQueries({ queryKey: queryKeys.complaints.all });
     },
   });

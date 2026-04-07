@@ -1,19 +1,11 @@
 import type { JSX } from 'react';
 
-import { Badge, Button } from '#/components/ui';
+import { Button } from '#/components/ui';
 import type { ConversationThread } from '#/types/complaints';
-import { cn } from '#/utils';
-import {
-  CONVERSATION_PRIORITY_CLASSNAMES,
-  CONVERSATION_STATUS_CLASSNAMES,
-  CONVERSATION_STATUS_LABELS,
-} from './constants';
 
 interface ConversationInfoPanelProps {
   thread?: ConversationThread;
   onResolve: () => void;
-  onTransfer: () => void;
-  onEscalate: () => void;
 }
 
 const formatDateTime = (isoDateTime?: string): string => {
@@ -44,17 +36,12 @@ const getInitials = (name: string): string => {
 };
 
 /**
- * ConversationInfoPanel renders customer and complaint detail context plus action buttons.
+ * ConversationInfoPanel renders scoped customer and complaint summary with supported actions only.
  *
- * @param props - Thread data and modal action handlers.
+ * @param props - Thread data and resolve action handler.
  * @returns Right-side info panel.
  */
-export const ConversationInfoPanel = ({
-  thread,
-  onResolve,
-  onTransfer,
-  onEscalate,
-}: ConversationInfoPanelProps): JSX.Element => {
+export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPanelProps): JSX.Element => {
   if (!thread) {
     return (
       <aside className='wf-card wf-card-p4 text-sm text-text-muted'>
@@ -62,8 +49,6 @@ export const ConversationInfoPanel = ({
       </aside>
     );
   }
-
-  const attachments = thread.messages.flatMap(message => message.attachments ?? []).slice(0, 3);
 
   return (
     <aside className='space-y-4 wf-card wf-card-p4'>
@@ -73,9 +58,6 @@ export const ConversationInfoPanel = ({
         </div>
         <h3 className='mt-2 text-base font-semibold text-text-primary'>{thread.customerName}</h3>
         <p className='text-xs text-text-muted'>{thread.customerPhone}</p>
-        <p className='mt-1 text-xs text-status-approved-text'>
-          {thread.whatsappConnected ? 'WhatsApp Connected' : 'WhatsApp Offline'}
-        </p>
       </section>
 
       <section className='space-y-2 rounded-md border border-border p-3'>
@@ -85,88 +67,49 @@ export const ConversationInfoPanel = ({
           <span className='font-medium text-text-primary'>{thread.ticketId}</span>
           <span className='text-text-muted'>Submitted</span>
           <span className='font-medium text-text-primary'>{formatDateTime(thread.submittedAt)}</span>
+          <span className='text-text-muted'>Subject</span>
+          <span className='font-medium text-text-primary'>{thread.issueType}</span>
+          <span className='text-text-muted'>Description</span>
+          <span className='font-medium text-text-primary'>{thread.description || '--'}</span>
+          <span className='text-text-muted'>Registration</span>
+          <span className='font-medium text-text-primary'>{thread.registrationId || '--'}</span>
           <span className='text-text-muted'>Status</span>
-          <span>
-            <Badge className={cn('rounded px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[thread.status])}>
-              {CONVERSATION_STATUS_LABELS[thread.status]}
-            </Badge>
-          </span>
-          <span className='text-text-muted'>Assigned To</span>
-          <span className='font-medium text-text-primary'>{thread.assignedAgent ?? 'Unassigned'}</span>
-          <span className='text-text-muted'>Priority</span>
-          <span>
-            <Badge className={cn('rounded px-2 py-0.5 capitalize', CONVERSATION_PRIORITY_CLASSNAMES[thread.priority])}>
-              {thread.priority}
-            </Badge>
-          </span>
-          <span className='text-text-muted'>City</span>
-          <span className='font-medium text-text-primary'>{thread.city}</span>
+          <span className='font-medium text-text-primary'>{thread.apiStatus}</span>
+          <span className='text-text-muted'>Closure Note</span>
+          <span className='font-medium text-text-primary'>{thread.closureNote || '--'}</span>
+          <span className='text-text-muted'>Closed At</span>
+          <span className='font-medium text-text-primary'>{formatDateTime(thread.closedAt ?? undefined)}</span>
         </div>
       </section>
 
       <section className='space-y-2 rounded-md border border-border p-3'>
-        <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Product & Site</p>
-        <div className='grid grid-cols-2 gap-2 text-xs'>
-          <span className='text-text-muted'>Topcoat</span>
-          <span className='font-medium text-text-primary'>{thread.topcoat ?? '--'}</span>
-          <span className='text-text-muted'>Dealer</span>
-          <span className='font-medium text-text-primary'>{thread.dealerName ?? '--'}</span>
-          <span className='text-text-muted'>Area (sq ft)</span>
-          <span className='font-medium text-text-primary'>
-            {thread.affectedAreaSqFt !== undefined ? thread.affectedAreaSqFt : '--'}
-          </span>
-          <span className='text-text-muted'>Escalation</span>
-          <span className='font-medium text-text-primary'>{thread.escalationLevel ?? 'None'}</span>
-        </div>
-      </section>
-
-      <section className='space-y-2 rounded-md border border-border p-3'>
-        <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>
-          Attached Images ({attachments.length})
-        </p>
-        <div className='grid grid-cols-3 gap-2'>
-          {attachments.length > 0
-            ? attachments.map(attachment => (
-                <a
-                  key={attachment.id}
-                  href={attachment.url}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='flex h-14 items-center justify-center rounded border border-border bg-surface-subtle px-1 text-[10px] text-text-muted hover:bg-surface-muted'
-                >
-                  IMG
-                </a>
-              ))
-            : null}
-        </div>
-      </section>
-
-      <section className='space-y-2 rounded-md border border-border p-3'>
-        <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Customer History</p>
-        <div className='grid grid-cols-2 gap-2 text-xs'>
-          <span className='text-text-muted'>Registrations</span>
-          <span className='font-medium text-text-primary'>{thread.customerHistory.registrations}</span>
-          <span className='text-text-muted'>Claims</span>
-          <span className='font-medium text-text-primary'>{thread.customerHistory.claims}</span>
-          <span className='text-text-muted'>Past Complaints</span>
-          <span className='font-medium text-text-primary'>{thread.customerHistory.pastComplaints}</span>
-        </div>
+        <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
+        {thread.complaintImages.length === 0 ? (
+          <p className='text-xs text-text-muted'>No images</p>
+        ) : (
+          <div className='grid grid-cols-2 gap-2'>
+            {thread.complaintImages.map(image => (
+              <a key={image.id} href={image.url} target='_blank' rel='noreferrer'>
+                <img
+                  src={image.url}
+                  alt={image.name}
+                  className='h-24 w-full rounded-md border border-border object-cover'
+                  loading='lazy'
+                />
+              </a>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className='space-y-2'>
-        <Button type='button' className='w-full' onClick={onResolve}>
-          Mark as Resolved
-        </Button>
-        <Button type='button' variant='outline' className='w-full' onClick={onTransfer}>
-          Transfer to Agent
-        </Button>
         <Button
           type='button'
-          variant='outline'
-          className='w-full text-destructive hover:text-destructive'
-          onClick={onEscalate}
+          className='w-full'
+          onClick={onResolve}
+          disabled={thread.apiStatus === 'RESOLVED' || thread.apiStatus === 'CLOSED'}
         >
-          Escalate
+          Mark as Resolved
         </Button>
       </section>
     </aside>

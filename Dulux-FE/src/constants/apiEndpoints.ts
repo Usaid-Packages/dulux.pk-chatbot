@@ -2,7 +2,7 @@ const API_USERS_V1 = '/api/v1/users';
 const API_CORE_V1 = '/api/v1/core';
 const API_WARRANTY_V1 = '/api/v1/warranty';
 const API_PRODUCTS_V1 = '/api/v1/products';
-const API_COMPLAINTS_V1 = '/complaints';
+const API_COMPLAINTS_V1 = '/api/v1/complaints';
 
 export const apiEndpoints = {
   auth: {
@@ -50,9 +50,5 @@ export const apiEndpoints = {
     list: `${API_COMPLAINTS_V1}/`,
     detail: (id: string): string => `${API_COMPLAINTS_V1}/${id}/`,
     sendMessage: (id: string): string => `${API_COMPLAINTS_V1}/${id}/messages/`,
-    markRead: (id: string): string => `${API_COMPLAINTS_V1}/${id}/mark-read/`,
-    resolve: (id: string): string => `${API_COMPLAINTS_V1}/${id}/resolve/`,
-    transfer: (id: string): string => `${API_COMPLAINTS_V1}/${id}/transfer/`,
-    escalate: (id: string): string => `${API_COMPLAINTS_V1}/${id}/escalate/`,
   },
 } as const;
