@@ -53,7 +53,9 @@ class ReissuanceFlow(BaseFlow):
     def prompt_registration_select(self) -> None:
         options = (self.session.session_data or {}).get("registration_options", [])
         if not options:
-            self._send_validation_error("Registration options are unavailable. Please start over.")
+            self._send_validation_error(
+                "Registration options are unavailable. Please return to the main menu and try again."
+            )
             return
         lines = [
             "We found multiple registrations for this phone number. Please select one:",

@@ -10,10 +10,8 @@ from dulux_chatbot.core.models import Image
 class BaseFlow(ABC):
     initial_step = ""
     BACK_COMMAND = "0"
-    RESTART_COMMAND = "00"
-    MAIN_MENU_COMMAND = "000"
+    MAIN_MENU_COMMAND = "00"
     TEXT_BACK_COMMANDS = {"BACK"}
-    TEXT_RESTART_COMMANDS = {"RESTART", "START OVER"}
     TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
 
     def __init__(self, session, client):
@@ -26,17 +24,11 @@ class BaseFlow(ABC):
         if command.upper() in self.TEXT_BACK_COMMANDS:
             self._go_back()
             return
-        if command.upper() in self.TEXT_RESTART_COMMANDS:
-            self._start_over()
-            return
         if command.upper() in self.TEXT_MAIN_MENU_COMMANDS:
             self._go_main_menu()
             return
         if command == self.BACK_COMMAND:
             self._go_back()
-            return
-        if command == self.RESTART_COMMAND:
-            self._start_over()
             return
         if command == self.MAIN_MENU_COMMAND:
             self._go_main_menu()
@@ -93,7 +85,7 @@ class BaseFlow(ABC):
     def _send_step_prompt(self, text: str) -> None:
         self.client.send_text(
             self.session.phone_number,
-            f"{text}\n\n0. Go back\n00. Start over\n000. Main menu",
+            f"{text}\n\n0. Go back\n00. Main menu",
         )
 
     def _get_text(self, message: dict) -> str:
@@ -128,15 +120,6 @@ class BaseFlow(ABC):
         self.session.save(update_fields=["current_step", "session_data", "modified"])
         self.send_prompt()
 
-    def _start_over(self) -> None:
-        if self.session.current_step == self.initial_step:
-            self._go_main_menu()
-            return
-        self.session.current_step = self.initial_step
-        self.session.session_data = {}
-        self.session.save(update_fields=["current_step", "session_data", "modified"])
-        self.send_initial_prompt()
-
     def _go_main_menu(self) -> None:
         self._reset()
         self.client.send_text(
@@ -170,3 +153,17 @@ class BaseFlow(ABC):
         if len(normalized) == 12 and normalized.startswith("92") and normalized[2] == "3":
             return normalized
         return ""
+
+    def _set_choice_options(self, key: str, options: list[tuple[str, int]]) -> None:
+        session_data = self.session.session_data or {}
+        session_data[key] = {option: object_id for option, object_id in options}
+        self.session.session_data = session_data
+        self.session.save(update_fields=["session_data", "modified"])
+
+    def _get_choice_value(self, key: str, selected_option: str):
+        session_data = self.session.session_data or {}
+        options = session_data.get(key, {})
+        return options.get(selected_option)
+
+    def _build_choice_lines(self, items, *, start_index: int = 1) -> list[tuple[str, int, str]]:
+        return [(str(index), item.id, item.name) for index, item in enumerate(items, start=start_index)]
