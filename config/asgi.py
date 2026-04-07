@@ -7,7 +7,7 @@ from django.core.asgi import get_asgi_application
 from dulux_chatbot.complaints.routing import websocket_urlpatterns
 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 application = ProtocolTypeRouter(
     {

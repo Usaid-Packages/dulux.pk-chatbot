@@ -4,6 +4,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.api.v1.serializers import (
     ChatMessageCreateSerializer,
     ChatMessageSerializer,
@@ -66,6 +67,7 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         message = serializer.save()
+        complaint = serializer.context["complaint"]
 
         payload = ChatMessageSerializer(message).data
         async_to_sync(get_channel_layer().group_send)(
@@ -75,5 +77,16 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
                 "message": payload,
             },
         )
+
+        try:
+            WhatsAppClient().send_text(complaint.phone_number, message.text)
+        except WhatsAppAPIError:
+            return Response(
+                {
+                    "detail": "Message saved but could not be sent to WhatsApp.",
+                    "message": payload,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         return Response(payload, status=status.HTTP_201_CREATED)
