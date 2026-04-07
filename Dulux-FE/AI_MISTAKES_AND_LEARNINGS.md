@@ -410,6 +410,14 @@
 - Rule: Keep chart palette values in CSS theme tokens (not component-level hex constants) so theme updates remain
   centralized.
 
+### 2026-04-07 18:55 - HTTP method literals reintroduced in product data-layer changes
+
+- Issue: New/updated product query and mutation files used hardcoded request methods (`'get'`, `'post'`, `'patch'`,
+  `'delete'`) instead of shared constants.
+- Fix: Replaced literals with `GET`, `POST`, `PATCH`, `DELETE` imports from `src/constants/generic.ts` across product
+  data-layer files.
+- Rule: Never hardcode request method strings in data-layer; always use method constants from `src/constants/generic.ts`.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

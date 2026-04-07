@@ -1,7 +1,7 @@
 /* eslint import/order: off */
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, POST, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { AttachProductImagePayload, ProductImage } from '#/types/products';
 import { normalizeProductImage, type ProductImageApiResponse } from '../queries/shared';
@@ -13,7 +13,7 @@ interface AttachProductImageVariables {
 
 const attachProductImage = async ({ productId, payload }: AttachProductImageVariables): Promise<ProductImage> => {
   const response = await performRequest<ProductImageApiResponse, AttachProductImagePayload>({
-    method: 'post',
+    method: POST,
     url: apiEndpoints.products.images(productId),
     payload,
   });

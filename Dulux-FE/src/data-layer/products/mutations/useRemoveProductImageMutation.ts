@@ -1,13 +1,13 @@
 /* eslint import/order: off */
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, DELETE, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { RemoveProductImagePayload } from '#/types/products';
 
 const removeProductImage = async ({ productId, imageId }: RemoveProductImagePayload): Promise<void> => {
   await performRequest<void>({
-    method: 'delete',
+    method: DELETE,
     url: apiEndpoints.products.imageDetail(productId, imageId),
   });
 };

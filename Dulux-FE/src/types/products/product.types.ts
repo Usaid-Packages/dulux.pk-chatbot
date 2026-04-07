@@ -32,6 +32,16 @@ export interface SurfaceType {
   modified: string;
 }
 
+export interface LinkedBasecoat {
+  id: number;
+  name: string;
+  productType: ProductType;
+  warrantyYears: number;
+  isActive: boolean;
+  created: string;
+  modified: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -42,6 +52,7 @@ export interface Product {
   webpageUrl: string;
   isActive: boolean;
   surfaceTypes: SurfaceType[];
+  basecoats: LinkedBasecoat[];
   images: ProductImage[];
   created: string;
   modified: string;
@@ -86,6 +97,7 @@ export interface ProductMutationPayload extends Record<string, unknown> {
   webpage_url: string;
   is_active: boolean;
   surface_types: number[];
+  basecoats?: number[];
 }
 
 export interface SurfaceTypeMutationPayload extends Record<string, unknown> {
@@ -111,6 +123,7 @@ export interface ProductFormValues {
   features: string;
   isActive: boolean;
   surfaceTypeIds: number[];
+  basecoatIds: number[];
 }
 
 export interface SurfaceTypeFormValues {

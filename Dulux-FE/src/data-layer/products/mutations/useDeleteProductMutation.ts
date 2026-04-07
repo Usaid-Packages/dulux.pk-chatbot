@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, DELETE, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 
 const deleteProduct = async (id: string): Promise<void> => {
   await performRequest<void>({
-    method: 'delete',
+    method: DELETE,
     url: apiEndpoints.products.detail(id),
   });
 };

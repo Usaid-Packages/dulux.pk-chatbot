@@ -15,6 +15,7 @@ export const mapProductFormValuesToPayload = (values: ProductFormValues): Produc
   webpage_url: values.webpageUrl.trim(),
   is_active: values.isActive,
   surface_types: values.surfaceTypeIds,
+  basecoats: values.productType === 'TOPCOAT' ? values.basecoatIds : [],
 });
 
 export const mapProductToFormValues = (product: Product): ProductFormValues => ({
@@ -26,6 +27,7 @@ export const mapProductToFormValues = (product: Product): ProductFormValues => (
   features: product.features,
   isActive: product.isActive,
   surfaceTypeIds: product.surfaceTypes.map(surfaceType => surfaceType.id),
+  basecoatIds: product.basecoats.map(basecoat => basecoat.id),
 });
 
 export const mapSurfaceTypeFormToPayload = (values: SurfaceTypeFormValues): SurfaceTypeMutationPayload => ({

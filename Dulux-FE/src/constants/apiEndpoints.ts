@@ -39,6 +39,7 @@ export const apiEndpoints = {
   products: {
     list: `${API_PRODUCTS_V1}/`,
     detail: (id: string | number): string => `${API_PRODUCTS_V1}/${id}/`,
+    basecoats: (id: string | number): string => `${API_PRODUCTS_V1}/${id}/basecoats/`,
     images: (productId: string | number): string => `${API_PRODUCTS_V1}/${productId}/images/`,
     imageDetail: (productId: string | number, imageId: string | number): string =>
       `${API_PRODUCTS_V1}/${productId}/images/${imageId}/`,

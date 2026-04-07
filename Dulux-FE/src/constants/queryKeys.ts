@@ -49,6 +49,7 @@ export const queryKeys = {
     all: ['products'] as const,
     list: (paramsKey: string): readonly ['products', 'list', string] => ['products', 'list', paramsKey] as const,
     detail: (id: string): readonly ['products', 'detail', string] => ['products', 'detail', id] as const,
+    basecoats: (id: string): readonly ['products', 'basecoats', string] => ['products', 'basecoats', id] as const,
     images: (productId: string): readonly ['products', 'images', string] => ['products', 'images', productId] as const,
     imageAttach: ['products', 'image-attach'] as const,
     imageRemove: ['products', 'image-remove'] as const,

@@ -27,6 +27,7 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
             <TableHead>Product Name</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Surface Types</TableHead>
+            <TableHead>Linked Basecoats</TableHead>
             <TableHead>Coverage</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
@@ -75,6 +76,21 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                       ))
                     )}
                   </div>
+                </TableCell>
+                <TableCell>
+                  {product.productType !== 'TOPCOAT' ? (
+                    <span className='text-xs text-text-muted'>N/A</span>
+                  ) : product.basecoats.length === 0 ? (
+                    <span className='text-xs text-text-muted'>No linked basecoats</span>
+                  ) : (
+                    <div className='flex flex-wrap gap-1'>
+                      {product.basecoats.map(basecoat => (
+                        <span key={basecoat.id} className='wf-chip-surface'>
+                          {basecoat.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <p className='text-sm text-text-primary'>{product.coverageDetails}</p>
