@@ -41,3 +41,21 @@ export interface DashboardFlowCardModel {
   screens: number;
   stats: [DashboardStatItem, DashboardStatItem];
 }
+
+export interface DashboardTrendPoint {
+  day: string;
+  registrations: number;
+  claims: number;
+}
+
+export interface DashboardWorkloadPoint {
+  module: string;
+  pending: number;
+  inReview: number;
+  resolved: number;
+}
+
+export interface DashboardAnalyticsModel {
+  trendSeries: DashboardTrendPoint[];
+  workloadSeries: DashboardWorkloadPoint[];
+}

@@ -29,7 +29,7 @@ export const getDashboardSummary = async (): Promise<DashboardSummaryResponse> =
   try {
     const response = await performRequest<unknown>({
       method: GET,
-      url: apiEndpoints.dashboard.summary,
+      url: apiEndpoints.dashboard.cards,
     });
 
     return validateDashboardSummary(response);

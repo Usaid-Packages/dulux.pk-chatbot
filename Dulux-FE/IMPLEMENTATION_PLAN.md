@@ -72,7 +72,7 @@ After successful login, redirect to:
 ### 1.4 Screen-to-Route Mapping
 
 - `A1` Login -> `/login` ⚠️ **No Login wireframe provided in Phase 1** — implement as standard email+password form; layout pending design approval
-- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats. No complex analytics.
+- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
 - `B2/B3` Registrations list/detail -> `/app/registrations`, `/app/registrations/:id`
 - `B4/B5` Claims list/detail -> `/app/claims`, `/app/claims/:id`
 - `B6` Quality module -> `/app/quality`, `/app/quality/:id`
@@ -262,7 +262,10 @@ function useAuth() {
 - `step/:stepId` must enforce step-completion guard.
 - `/app/settings` is `ADMIN` only.
 - Add in-app `/app/*` not-found handling.
-- **Dashboard** implements the Wireframe Hub view (flow cards only, each card includes module-level stats). Do NOT build `TrendChart`, `RecentActivity`, or `LatestTicketsTable` — those are not in Phase 1.
+- **Dashboard** implements the Wireframe Hub view with module flow cards and exactly two lightweight analytics graphs:
+  - `Weekly Submissions Trend` (Registrations vs Claims, 7-day line graph)
+  - `Queue Workload Split` (Pending/In Review/Resolved stacked distribution by module)
+- Do not add `RecentActivity` feed or `LatestTicketsTable` in this phase.
 - **Login has no wireframe** — implement as standard email+password form; layout pending design approval.
 - **Data Import and Settings have no wireframes** — implement as empty placeholder route shells only (`<PlaceholderPage title="Coming Soon" />`). Do not implement CSV upload or settings management logic.
 - Manual Registration has **no sidebar nav item** — do not add it to `Sidebar.tsx` nav config.
@@ -604,8 +607,16 @@ src/components/layout/
       stats={{ products: 24, surfaceTypes: 8 }} to="/app/products"
       description="Products, surfaces, add/edit forms & delete modal" />
   </DashboardGrid>
+  <DashboardTrendChart data={weeklyTrendData} />
+  <DashboardWorkloadChart data={queueSplitData} />
 </DashboardPage>
 ```
+
+Dashboard chart data source rules:
+
+- Use mock data for charts until backend analytics endpoints are delivered.
+- Keep chart payload mapping in typed dashboard models (`src/types/dashboard.types.ts`).
+- Keep card summary endpoint as independent API from analytics endpoint for isolated cache invalidation.
 
 #### B2 Registrations List
 
@@ -1251,6 +1262,29 @@ export const QUERY_KEYS = {
   DASHBOARD: ["dashboard"] as const,
 } as const;
 ```
+
+### 5.4 Services Layer (Use Provided Transport)
+
+### 5.3.1 Dashboard API Contract Additions (Backend Alignment)
+
+Required endpoints for dashboard UX:
+
+- `GET /dashboard/api/v1/cards/`
+  - Purpose: module card counts and KPI values (used in 6 dashboard cards).
+- `GET /dashboard/api/v1/analytics/`
+  - Purpose: chart payload for:
+    - weekly submissions trend (registrations vs claims)
+    - queue workload split (pending/in-review/resolved by module)
+
+Response ownership:
+
+- `cards` endpoint feeds `DashboardGrid` only.
+- `analytics` endpoint feeds `DashboardTrendChart` and `DashboardWorkloadChart` only.
+- Keep cards and analytics separate to avoid over-fetching and to support independent cache invalidation.
+
+Fallback policy:
+
+- If analytics endpoint is unavailable, frontend renders chart section using typed mock dataset.
 
 ### 5.4 Services Layer (Use Provided Transport)
 

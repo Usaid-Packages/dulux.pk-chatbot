@@ -2,6 +2,7 @@ export * from './apiEndpoints';
 export * from './claimsApiMappings';
 export * from './claims.constants';
 export * from './dashboardFlowConfigs';
+export * from './dashboardAnalyticsMock';
 export * from './dashboardIconMap';
 export * from './layout/navigation';
 export * from './queryKeys';

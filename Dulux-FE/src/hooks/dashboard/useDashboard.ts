@@ -1,11 +1,12 @@
-import { DASHBOARD_SUMMARY_FALLBACK } from '#/constants';
+import { DASHBOARD_ANALYTICS_MOCK, DASHBOARD_SUMMARY_FALLBACK } from '#/constants';
 import { useDashboardSummaryQuery } from '#/data-layer/dashboard';
-import type { DashboardFlowCardModel } from '#/types/dashboard.types';
+import type { DashboardAnalyticsModel, DashboardFlowCardModel } from '#/types/dashboard.types';
 import { getApiErrorMessage } from '#/utils';
 import { mapDashboardCards } from './dashboardHelpers';
 
 interface UseDashboardResult {
   flowCards: DashboardFlowCardModel[];
+  analytics: DashboardAnalyticsModel;
   isLoading: boolean;
   isError: boolean;
   isRefetching: boolean;
@@ -26,6 +27,7 @@ export const useDashboard = (): UseDashboardResult => {
 
   return {
     flowCards,
+    analytics: DASHBOARD_ANALYTICS_MOCK,
     isLoading,
     isError,
     isRefetching,

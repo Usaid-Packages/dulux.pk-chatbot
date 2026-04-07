@@ -35,6 +35,8 @@ export const queryKeys = {
   },
   dashboard: {
     summary: 'dashboard-summary',
+    cards: 'dashboard-cards',
+    analytics: 'dashboard-analytics',
   },
   registrations: {
     all: ['registrations'] as const,
