@@ -3961,3 +3961,84 @@ Admin
 - Tailwind config extended with source, priority, convStatus, modal, and quality token groups.
 - `usePermissions` hook expanded to cover all 17 action types across all roles.
 - "Complaints" nav item confirmed disabled in Phase 1.
+
+### 14.12 API Reference Alignment Addendum (2026-04-07)
+
+This addendum aligns product catalog implementation with `frontend-api-reference.md` additions for topcoat/basecoat linkage.
+
+#### 14.12.1 Product Domain Model Update
+
+`Product` model includes linked `basecoats` from API responses:
+
+```ts
+interface Product {
+  id: number;
+  name: string;
+  productType: "TOPCOAT" | "BASECOAT";
+  // ...
+  basecoats: LinkedBasecoat[];
+}
+```
+
+`ProductMutationPayload` includes:
+
+```ts
+basecoats?: number[];
+```
+
+Rule:
+- Always send `basecoats` for product create/update payloads.
+- For `BASECOAT` products, send an empty array.
+
+#### 14.12.2 Product Form Update (UI + Validation)
+
+`ProductForm` must support selecting linked basecoats when the selected product type is `TOPCOAT`.
+
+Behavior:
+- Show `Linked Basecoats` checkbox group only when `productType === "TOPCOAT"`.
+- Hide group for `BASECOAT`.
+- If user switches from `TOPCOAT` to `BASECOAT`, clear selected basecoats immediately.
+
+Validation:
+- `basecoatIds` is optional but must contain positive numeric IDs.
+- if `productType !== "TOPCOAT"` and `basecoatIds` is non-empty, reject with:
+  - `Basecoats can only be assigned to TOPCOAT products.`
+
+#### 14.12.3 Product Catalog Table Update
+
+Products table includes a new `Linked Basecoats` column:
+- For `TOPCOAT`: show linked basecoat chips by name.
+- For `BASECOAT`: show `N/A`.
+- For topcoats with no links: show `No linked basecoats`.
+
+#### 14.12.4 Endpoint + Query Key Additions
+
+Add endpoint:
+
+```ts
+apiEndpoints.products.basecoats = (id) => `/api/v1/products/${id}/basecoats/`
+```
+
+Add query key:
+
+```ts
+queryKeys.products.basecoats = (id) => ["products", "basecoats", id]
+```
+
+Add query hook:
+
+```ts
+useGetProductBasecoatsQuery(productId)
+```
+
+Purpose:
+- fetches linked basecoats for a selected topcoat detail context
+- keeps response normalized with products query normalization helpers
+
+#### 14.12.5 Data-Layer Convention Reinforcement
+
+For product queries/mutations:
+- Keep `performRequest` inside `queryFn` / `mutationFn`.
+- Keep endpoint ownership in `src/constants/apiEndpoints.ts`.
+- Keep query-key ownership in `src/constants/queryKeys.ts`.
+- Keep API normalization in shared product query helpers.

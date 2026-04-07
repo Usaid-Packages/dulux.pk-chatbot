@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, POST, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { SurfaceType, SurfaceTypeMutationPayload } from '#/types/products';
 import { normalizeSurfaceType, type SurfaceTypeApiResponse } from '../queries/shared';
 
 const createSurfaceType = async (payload: SurfaceTypeMutationPayload): Promise<SurfaceType> => {
   const response = await performRequest<SurfaceTypeApiResponse, SurfaceTypeMutationPayload>({
-    method: 'post',
+    method: POST,
     url: apiEndpoints.products.surfaceTypes,
     payload,
   });

@@ -1,4 +1,5 @@
-import type { JSX } from 'react';
+import type { ChangeEvent, JSX } from 'react';
+import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,7 +15,7 @@ import {
   Textarea,
 } from '#/components/ui';
 import { productFormSchema, type ProductFormSchemaValues } from '#/schemas/products';
-import { productTypes, type ProductFormValues, type SurfaceType } from '#/types/products';
+import { productTypes, type LinkedBasecoat, type ProductFormValues, type SurfaceType } from '#/types/products';
 
 interface ProductFormProps {
   title: string;
@@ -23,6 +24,7 @@ interface ProductFormProps {
   isSubmitting: boolean;
   initialValues?: ProductFormValues;
   surfaceTypes: SurfaceType[];
+  basecoatOptions: LinkedBasecoat[];
   onSubmit: (values: ProductFormValues) => void;
   onCancel: () => void;
 }
@@ -36,6 +38,7 @@ const DEFAULT_VALUES: ProductFormValues = {
   features: '',
   isActive: true,
   surfaceTypeIds: [],
+  basecoatIds: [],
 };
 
 const PRODUCT_STATUS_OPTIONS = [
@@ -54,6 +57,7 @@ export const ProductForm = ({
   isSubmitting,
   initialValues,
   surfaceTypes,
+  basecoatOptions,
   onSubmit,
   onCancel,
 }: ProductFormProps): JSX.Element => {
@@ -69,9 +73,17 @@ export const ProductForm = ({
     defaultValues: initialValues ?? DEFAULT_VALUES,
   });
 
+  const selectedProductType = watch('productType');
   const selectedSurfaceTypeIds = watch('surfaceTypeIds');
+  const selectedBasecoatIds = watch('basecoatIds');
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
+
+  useEffect(() => {
+    if (selectedProductType !== 'TOPCOAT' && selectedBasecoatIds.length > 0) {
+      setValue('basecoatIds', [], { shouldValidate: true });
+    }
+  }, [selectedBasecoatIds, selectedProductType, setValue]);
 
   const toggleSurfaceSelection = (surfaceTypeId: number, checked: boolean): void => {
     const selectedIds = new Set(selectedSurfaceTypeIds);
@@ -88,6 +100,30 @@ export const ProductForm = ({
   const handleFormSubmit = (values: ProductFormSchemaValues): void => {
     onSubmit(values);
   };
+
+  const toggleBasecoatSelection = (basecoatId: number, checked: boolean): void => {
+    const selectedIds = new Set(selectedBasecoatIds);
+
+    if (checked) {
+      selectedIds.add(basecoatId);
+    } else {
+      selectedIds.delete(basecoatId);
+    }
+
+    setValue('basecoatIds', Array.from(selectedIds), { shouldValidate: true });
+  };
+
+  const createSurfaceCheckboxChangeHandler =
+    (surfaceTypeId: number) =>
+    (event: ChangeEvent<HTMLInputElement>): void => {
+      toggleSurfaceSelection(surfaceTypeId, event.target.checked);
+    };
+
+  const createBasecoatCheckboxChangeHandler =
+    (basecoatId: number) =>
+    (event: ChangeEvent<HTMLInputElement>): void => {
+      toggleBasecoatSelection(basecoatId, event.target.checked);
+    };
 
   return (
     <section className='wf-card wf-card-p6'>
@@ -236,7 +272,7 @@ export const ProductForm = ({
                       <input
                         type='checkbox'
                         checked={checked}
-                        onChange={event => toggleSurfaceSelection(surfaceType.id, event.target.checked)}
+                        onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
                       />
                       {surfaceType.name}
                     </label>
@@ -259,7 +295,7 @@ export const ProductForm = ({
                       <input
                         type='checkbox'
                         checked={checked}
-                        onChange={event => toggleSurfaceSelection(surfaceType.id, event.target.checked)}
+                        onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
                       />
                       {surfaceType.name}
                     </label>
@@ -274,6 +310,35 @@ export const ProductForm = ({
 
           {errors.surfaceTypeIds ? <p className='text-xs text-destructive'>{errors.surfaceTypeIds.message}</p> : null}
         </fieldset>
+
+        {selectedProductType === 'TOPCOAT' ? (
+          <fieldset className='space-y-3'>
+            <legend className='text-sm font-medium text-text-primary'>Linked Basecoats</legend>
+            <div className='rounded-md border border-border p-3'>
+              <div className='space-y-2'>
+                {basecoatOptions.map(basecoat => {
+                  const checked = selectedBasecoatIds.includes(basecoat.id);
+
+                  return (
+                    <label key={basecoat.id} className='flex items-center gap-2 text-sm text-text-primary'>
+                      <input
+                        type='checkbox'
+                        checked={checked}
+                        onChange={createBasecoatCheckboxChangeHandler(basecoat.id)}
+                      />
+                      <span className='font-medium'>{basecoat.name}</span>
+                      <span className='text-xs text-text-muted'>{basecoat.warrantyYears} years</span>
+                    </label>
+                  );
+                })}
+                {basecoatOptions.length === 0 ? (
+                  <p className='text-xs text-text-muted'>No basecoat products available.</p>
+                ) : null}
+              </div>
+            </div>
+            {errors.basecoatIds ? <p className='text-xs text-destructive'>{errors.basecoatIds.message}</p> : null}
+          </fieldset>
+        ) : null}
 
         <div className='flex items-center justify-end gap-2'>
           <Button type='button' variant='outline' onClick={onCancel} disabled={isSubmitting}>

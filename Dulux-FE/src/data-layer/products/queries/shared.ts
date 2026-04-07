@@ -1,4 +1,5 @@
 import type {
+  LinkedBasecoat,
   Product,
   ProductImage,
   ProductImageListResponse,
@@ -45,6 +46,7 @@ interface ProductApiResponse {
   webpage_url?: string;
   isActive?: boolean;
   is_active?: boolean;
+  basecoats?: ProductApiResponse[];
   surfaceTypes?: SurfaceTypeApiResponse[];
   surface_types?: SurfaceTypeApiResponse[];
   images?: ProductImageApiResponse[];
@@ -80,6 +82,20 @@ export const normalizeSurfaceType = (response: SurfaceTypeApiResponse): SurfaceT
   modified: response.modified ?? '',
 });
 
+export const normalizeLinkedBasecoat = (response: ProductApiResponse): LinkedBasecoat => ({
+  id: response.id ?? 0,
+  name: response.name ?? '',
+  productType: isProductType(response.productType ?? '')
+    ? response.productType
+    : isProductType(response.product_type ?? '')
+      ? response.product_type
+      : 'BASECOAT',
+  warrantyYears: response.warrantyYears ?? response.warranty_years ?? 0,
+  isActive: response.isActive ?? response.is_active ?? false,
+  created: response.created ?? '',
+  modified: response.modified ?? '',
+});
+
 export const normalizeProduct = (response: ProductApiResponse): Product => ({
   id: response.id ?? 0,
   name: response.name ?? '',
@@ -93,6 +109,7 @@ export const normalizeProduct = (response: ProductApiResponse): Product => ({
   coverageDetails: response.coverageDetails ?? response.coverage_details ?? '',
   webpageUrl: response.webpageUrl ?? response.webpage_url ?? '',
   isActive: response.isActive ?? response.is_active ?? false,
+  basecoats: (response.basecoats ?? []).map(normalizeLinkedBasecoat),
   surfaceTypes: (response.surfaceTypes ?? response.surface_types ?? []).map(normalizeSurfaceType),
   images: (response.images ?? []).map(normalizeProductImage),
   created: response.created ?? '',

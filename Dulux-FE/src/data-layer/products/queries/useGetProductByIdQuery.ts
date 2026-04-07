@@ -1,13 +1,13 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, GET, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { Product } from '#/types/products';
 import { normalizeProduct, type ProductApiResponse } from './shared';
 
 const fetchProductById = async (id: string): Promise<Product> => {
   const response = await performRequest<ProductApiResponse>({
-    method: 'get',
+    method: GET,
     url: apiEndpoints.products.detail(id),
   });
 

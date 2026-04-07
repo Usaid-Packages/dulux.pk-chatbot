@@ -1,7 +1,7 @@
 /* eslint import/order: off */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, GET, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { ProductImageListResponse } from '#/types/products';
 import { normalizeProductImagesResponse, type PaginatedApiResponse, type ProductImageApiResponse } from './shared';
@@ -10,7 +10,7 @@ const STALE_TIME_FIVE_MINUTES = 5 * 60 * 1000;
 
 const fetchProductImages = async (productId: string): Promise<ProductImageListResponse> => {
   const response = await performRequest<PaginatedApiResponse<ProductImageApiResponse>>({
-    method: 'get',
+    method: GET,
     url: apiEndpoints.products.images(productId),
   });
 

@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, GET, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { SurfaceTypeListResponse, SurfaceTypeQueryParams } from '#/types/products';
 import {
@@ -18,7 +18,7 @@ const fetchSurfaceTypes = async (params?: SurfaceTypeQueryParams): Promise<Surfa
     undefined,
     SurfaceTypeQueryParams
   >({
-    method: 'get',
+    method: GET,
     url: apiEndpoints.products.surfaceTypes,
     params,
   });

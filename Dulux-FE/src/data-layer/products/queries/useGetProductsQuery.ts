@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { apiEndpoints, GET, queryKeys } from '#/constants';
 import { performRequest } from '#/services';
 import type { ProductListResponse, ProductQueryParams } from '#/types/products';
 import {
@@ -14,7 +14,7 @@ const STALE_TIME_FIVE_MINUTES = 5 * 60 * 1000;
 
 const fetchProducts = async (params?: ProductQueryParams): Promise<ProductListResponse> => {
   const response = await performRequest<PaginatedApiResponse<ProductApiResponse>, undefined, ProductQueryParams>({
-    method: 'get',
+    method: GET,
     url: apiEndpoints.products.list,
     params,
   });
