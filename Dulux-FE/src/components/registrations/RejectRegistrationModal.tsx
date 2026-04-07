@@ -53,7 +53,7 @@ export const RejectRegistrationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Reject Registration</DialogTitle>
           <DialogDescription>Provide a reason and notes so the customer understands what failed.</DialogDescription>
@@ -91,7 +91,7 @@ export const RejectRegistrationModal = ({
             <textarea
               id='reject-notes'
               rows={4}
-              className='w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm'
+              className='w-full rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm'
               placeholder='Describe what must be corrected...'
               {...register('notes')}
             />
@@ -102,7 +102,7 @@ export const RejectRegistrationModal = ({
             <Button type='button' variant='outline' onClick={handleModalClose}>
               Cancel
             </Button>
-            <Button type='submit' variant='destructive' disabled={isSubmitting}>
+            <Button type='submit' variant='destructive' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Reject Registration'}
             </Button>
           </DialogFooter>

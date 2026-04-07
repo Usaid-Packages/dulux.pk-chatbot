@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { Navigate } from 'react-router-dom';
 
-import { AuthCard, ForgotPasswordForm } from '#/components/auth';
+import { AuthCard, AuthShell, ForgotPasswordForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useForgotPassword } from '#/hooks';
@@ -21,14 +21,14 @@ export const ForgotPasswordPage = (): JSX.Element => {
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-linear-to-b from-background to-muted/40 px-4 py-12'>
-      <AuthCard title='Forgot your password?' subtitle='Enter your email and we will send reset instructions.'>
+    <AuthShell>
+      <AuthCard title='Forgot Password' subtitle='Enter your email and we will send secure reset instructions.'>
         <ForgotPasswordForm
           isSubmitting={isForgotPasswordPending}
           errorMessage={forgotPasswordErrorMessage}
           onSubmit={handleForgotPassword}
         />
       </AuthCard>
-    </main>
+    </AuthShell>
   );
 };

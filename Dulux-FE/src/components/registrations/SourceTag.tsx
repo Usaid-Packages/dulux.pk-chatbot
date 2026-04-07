@@ -20,8 +20,10 @@ export const SourceTag = ({ source }: SourceTagProps): JSX.Element => {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-2xl px-2.5 py-1 text-xs font-semibold',
-        isWhatsApp ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+        'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold',
+        isWhatsApp
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+          : 'border-primary/25 bg-primary/10 text-primary'
       )}
     >
       {REGISTRATION_CHANNEL_LABELS[source] ?? source}

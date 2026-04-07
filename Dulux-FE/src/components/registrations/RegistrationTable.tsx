@@ -45,7 +45,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
 
   if (isLoading) {
     return (
-      <section className='wf-card wf-card-p4'>
+      <section className='wf-card wf-card-p4 border-primary/15 bg-white/90'>
         <div className='space-y-3'>
           <Skeleton className='h-9 w-full' />
           <Skeleton className='h-9 w-full' />
@@ -58,7 +58,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
 
   if (registrations.length === 0) {
     return (
-      <section className='wf-card wf-card-p4'>
+      <section className='wf-card wf-card-p4 border-primary/15 bg-white/90'>
         <Empty>
           <EmptyHeader>
             <EmptyTitle>No registrations found</EmptyTitle>
@@ -70,14 +70,13 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
   }
 
   return (
-    <section className='wf-card wf-card-p4'>
-      <Table>
+    <section className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+      <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto'>
         <TableHeader>
           <TableRow>
             <TableHead>Reg. ID</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead>City</TableHead>
             <TableHead>Source</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
@@ -88,13 +87,12 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
           {registrations.map(registration => (
             <TableRow key={registration.id}>
               <TableCell>
-                <span className='inline-flex rounded-2xl border border-border bg-surface-muted px-2.5 py-1 text-xs font-semibold'>
+                <span className='inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary'>
                   {registration.registrationCode}
                 </span>
               </TableCell>
               <TableCell>{registration.customerName}</TableCell>
               <TableCell>{registration.phoneNumber}</TableCell>
-              <TableCell>{registration.city}</TableCell>
               <TableCell>
                 <SourceTag source={registration.channel} />
               </TableCell>
@@ -109,6 +107,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
                   type='button'
                   variant='outline'
                   size='sm'
+                  className='rounded-lg border-primary/25 bg-white text-primary hover:bg-primary/10'
                   data-registration-id={String(registration.id)}
                   onClick={handleOpenDetailClick}
                 >

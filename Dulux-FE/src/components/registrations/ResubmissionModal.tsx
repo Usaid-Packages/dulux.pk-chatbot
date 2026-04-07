@@ -46,7 +46,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Request Resubmission</DialogTitle>
           <DialogDescription>Select the fields that need correction and add notes for the customer.</DialogDescription>
@@ -57,7 +57,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
             {RESUBMISSION_FIELDS.map(field => (
               <label
                 key={field.id}
-                className='flex cursor-pointer items-start gap-3 rounded-md border border-border p-2'
+                className='flex cursor-pointer items-start gap-3 rounded-xl border border-primary/15 bg-white/85 p-2.5'
               >
                 <input type='checkbox' className='mt-1' value={field.id} {...register('fields')} />
                 <span>
@@ -75,7 +75,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
             <textarea
               id='resubmission-note'
               rows={4}
-              className='w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm'
+              className='w-full rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm'
               placeholder='Add context for the customer...'
               {...register('note')}
             />
@@ -85,7 +85,11 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
             <Button type='button' variant='outline' onClick={handleModalClose}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Sending...' : 'Send Request'}
             </Button>
           </DialogFooter>

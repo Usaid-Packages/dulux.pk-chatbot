@@ -59,16 +59,20 @@ export const ResetPasswordForm = ({ isSubmitting, errorMessage, onSubmit }: Rese
       {errorMessage && (
         <p
           role='alert'
-          className='rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+          className='rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'
         >
           {errorMessage}
         </p>
       )}
-      <Button className='w-full' type='submit' disabled={isSubmitting}>
+      <Button
+        className='h-11 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_28px_rgba(24,102,198,0.35)] hover:brightness-105'
+        type='submit'
+        disabled={isSubmitting}
+      >
         {isSubmitting ? 'Updating...' : 'Reset password'}
       </Button>
       <div className='text-center'>
-        <Link className='text-sm text-primary underline-offset-2 hover:underline' to={ROUTES.LOGIN}>
+        <Link className='text-sm font-semibold text-primary underline-offset-2 hover:underline' to={ROUTES.LOGIN}>
           Back to login
         </Link>
       </div>

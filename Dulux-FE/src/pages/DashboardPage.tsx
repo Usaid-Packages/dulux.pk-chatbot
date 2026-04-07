@@ -14,26 +14,42 @@ export const DashboardPage = (): JSX.Element => {
   const { flowCards, analytics, isLoading, isError, isRefetching, errorMessage, refetchDashboard } = useDashboard();
 
   return (
-    <div className='mx-auto w-full max-w-[1280px] space-y-6'>
-      <section className='space-y-1'>
-        <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
-          <div className='space-y-1'>
-            <p className='text-sm font-semibold uppercase tracking-[1.6px] text-primary'>Dulux Assurance</p>
-            <h1 className='text-3xl font-bold leading-tight text-text-primary md:text-[2rem]'>Dulux CS Dashboard</h1>
-            <p className='text-base text-text-muted'>Track module progress and open any module directly from here.</p>
+    <div className='mx-auto w-full max-w-[1320px] space-y-6'>
+      <section className='relative overflow-hidden rounded-3xl border border-primary/15 bg-[linear-gradient(125deg,#0d4ea8_0%,#1f75d2_42%,#73bbff_100%)] px-6 py-7 text-white shadow-[0_24px_55px_rgba(20,82,170,0.34)] md:px-8 md:py-8'>
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.28),transparent_40%)]'
+        />
+
+        <div className='relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between'>
+          <div className='max-w-[720px]'>
+            <p className='text-xs font-semibold uppercase tracking-[2.2px] text-blue-100'>Dulux Operations</p>
+            <h1 className='mt-2 text-3xl font-extrabold leading-tight tracking-tight md:text-[2.15rem]'>
+              Command Center Dashboard
+            </h1>
+            <p className='mt-2 max-w-[620px] text-sm text-blue-50/90 md:text-base'>
+              A sharper overview to monitor workload, jump into workflows, and keep quality response times consistent.
+            </p>
+            <p className='mt-3 text-xs font-semibold uppercase tracking-[1.8px] text-blue-100'>
+              Live insights for your operations team
+            </p>
           </div>
-          <img
-            src={dashboardVisual}
-            alt='Dulux dashboard visual'
-            className='h-[215px] w-[287px] shrink-0 self-end object-contain md:self-center'
-          />
+
+          <div className='relative hidden md:block'>
+            <div className='absolute -inset-3 rounded-full bg-white/25 blur-2xl' />
+            <img
+              src={dashboardVisual}
+              alt='Dulux dashboard visual'
+              className='relative h-[150px] w-[190px] rounded-2xl border border-white/35 bg-white/10 p-3 backdrop-blur-xl'
+            />
+          </div>
         </div>
       </section>
 
       {isError && (
         <section
           role='alert'
-          className='flex flex-col gap-3 rounded-lg border border-status-rejected-text/30 bg-status-rejected-bg px-4 py-3 md:flex-row md:items-center md:justify-between'
+          className='flex flex-col gap-3 rounded-2xl border border-status-rejected-text/30 bg-status-rejected-bg px-4 py-3 md:flex-row md:items-center md:justify-between'
         >
           <div>
             <p className='text-sm font-semibold text-status-rejected-text'>Dashboard data could not be refreshed.</p>
@@ -46,8 +62,15 @@ export const DashboardPage = (): JSX.Element => {
       )}
 
       <section className='space-y-1'>
-        <h2 className='card-title'>Operational Overview</h2>
-        <p className='text-sm text-text-muted'>Open a workflow area instantly and review its latest queue stats.</p>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+          <div className='space-y-1'>
+            <h2 className='card-title'>Operational Overview</h2>
+            <p className='text-sm text-text-muted'>Open a workflow area instantly and review its latest queue stats.</p>
+          </div>
+          <Button variant='outline' onClick={refetchDashboard} disabled={isRefetching}>
+            {isRefetching ? 'Refreshing...' : 'Refresh insights'}
+          </Button>
+        </div>
       </section>
 
       <DashboardGrid flows={flowCards} isLoading={isLoading} />
