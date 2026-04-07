@@ -45,14 +45,14 @@ const getInitials = (name: string): string => {
 export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPanelProps): JSX.Element => {
   if (!thread) {
     return (
-      <aside className='flex h-[calc(100vh-16rem)] flex-col wf-card wf-card-p4 text-sm text-text-muted'>
+      <aside className='flex h-[calc(100vh-16rem)] flex-col rounded-2xl border border-primary/15 bg-white/95 p-4 text-sm text-text-muted shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
         Customer details appear here after selecting a conversation.
       </aside>
     );
   }
 
   return (
-    <aside className='flex h-[calc(100vh-16rem)] flex-col gap-4 wf-card wf-card-p4'>
+    <aside className='flex h-[calc(100vh-16rem)] flex-col gap-4 rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
       <section className='text-center'>
         <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
           {getInitials(thread.customerName)}
@@ -61,7 +61,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
         <p className='text-xs text-text-muted'>{thread.customerPhone}</p>
       </section>
 
-      <section className='space-y-2 rounded-md border border-border p-3'>
+      <section className='space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3'>
         <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Details</p>
         <div className='grid grid-cols-2 gap-2 text-xs'>
           <span className='text-text-muted'>Ticket</span>
@@ -83,7 +83,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
         </div>
       </section>
 
-      <section className='flex-1 space-y-2 overflow-y-auto rounded-md border border-border p-3'>
+      <section className='flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
         <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
         {thread.complaintImages.length === 0 ? (
           <p className='text-xs text-text-muted'>No images</p>
@@ -94,7 +94,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
                 <img
                   src={image.url}
                   alt={image.name}
-                  className='h-24 w-full rounded-md border border-border object-cover'
+                  className='h-24 w-full rounded-xl border border-primary/20 object-cover'
                   loading='lazy'
                 />
               </a>
@@ -106,7 +106,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
       <section className='space-y-2'>
         <Button
           type='button'
-          className='w-full'
+          className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
           onClick={onResolve}
           disabled={thread.apiStatus === 'RESOLVED' || thread.apiStatus === 'CLOSED'}
         >

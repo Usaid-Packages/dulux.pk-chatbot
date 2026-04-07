@@ -81,7 +81,7 @@ export const SurfaceTypeModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -94,6 +94,7 @@ export const SurfaceTypeModal = ({
             </label>
             <Input
               id='surface-name'
+              className='rounded-xl border-primary/20 bg-white'
               placeholder='e.g. Concrete, Plaster, Tile...'
               {...register('name')}
               aria-invalid={Boolean(errors.name)}
@@ -133,6 +134,7 @@ export const SurfaceTypeModal = ({
             <Textarea
               id='surface-description'
               rows={3}
+              className='rounded-xl border-primary/20 bg-white'
               placeholder='Optional description for this surface type...'
               {...register('description')}
               aria-invalid={Boolean(errors.description)}
@@ -166,7 +168,11 @@ export const SurfaceTypeModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Saving...' : submitLabel}
             </Button>
           </DialogFooter>

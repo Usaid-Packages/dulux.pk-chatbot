@@ -62,7 +62,7 @@ export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Approve Claim (Quality)</DialogTitle>
           <DialogDescription>Select a technical assessment and optional notes.</DialogDescription>
@@ -98,11 +98,16 @@ export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: A
             <label htmlFor='qa-approval-notes' className='text-sm font-medium text-text-primary'>
               Technical Notes (Optional)
             </label>
-            <Textarea id='qa-approval-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
+            <Textarea
+              id='qa-approval-notes'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('notes')}
+              aria-invalid={Boolean(errors.notes)}
+            />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
-          <div className='rounded-md border border-border bg-surface-muted p-3'>
+          <div className='rounded-xl border border-primary/20 bg-primary/5 p-3'>
             <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Outcome Summary</p>
             <p className='mt-1 text-sm text-text-primary'>
               This claim will move to approved state with QA decision history recorded.
@@ -113,7 +118,11 @@ export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: A
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Submitting...' : 'Approve Claim'}
             </Button>
           </DialogFooter>

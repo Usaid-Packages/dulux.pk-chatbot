@@ -62,13 +62,14 @@ export const ConversationListPanel = ({
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
   return (
-    <section className='flex h-[calc(100vh-16rem)] flex-col rounded-lg border border-border bg-chat-panelBg p-4'>
-      <div className='space-y-3'>
-        <div className='space-y-2 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-3'>
+    <section className='flex h-[calc(100vh-16rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <div className='flex min-h-0 flex-1 flex-col gap-3'>
+        <div className='space-y-2 rounded-xl border border-primary/20 bg-white/85 p-3'>
           <Input
             value={search}
             onChange={event => onSearchChange(event.target.value)}
             placeholder='Search by customer, subject, or phone'
+            className='h-10 rounded-xl border-primary/25 bg-white'
             aria-label='Search conversations'
           />
 
@@ -88,7 +89,7 @@ export const ConversationListPanel = ({
           </div>
         </div>
 
-        <div className='flex-1 space-y-2 overflow-y-auto pr-1'>
+        <div className='min-h-0 flex-1 space-y-2 overflow-y-auto pr-1'>
           {isLoading ? (
             <>
               <Skeleton className='h-20 w-full rounded-lg' />
@@ -117,8 +118,8 @@ export const ConversationListPanel = ({
                     type='button'
                     variant='ghost'
                     className={cn(
-                      'h-auto w-full flex-col items-start gap-2 wf-card wf-card-p3 text-left hover:bg-chat-convActiveBg',
-                      isSelected ? 'border-chat-convActiveBorder bg-chat-convActiveBg' : ''
+                      'h-auto w-full flex-col items-start gap-2 rounded-xl border border-primary/15 bg-white px-3 py-3 text-left transition-all hover:bg-primary/5',
+                      isSelected ? 'border-primary/40 bg-primary/10 shadow-[0_10px_24px_rgba(19,87,167,0.12)]' : ''
                     )}
                     onClick={handleItemClick}
                   >

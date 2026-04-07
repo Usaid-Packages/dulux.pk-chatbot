@@ -46,7 +46,7 @@ export const ResolveConversationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={open => (!open ? handleClose() : undefined)}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Mark Complaint as Resolved</DialogTitle>
           <DialogDescription>
@@ -61,6 +61,7 @@ export const ResolveConversationModal = ({
           <Textarea
             id='closure-note'
             rows={4}
+            className='rounded-xl border-primary/20 bg-white'
             value={closureNote}
             onChange={event => setClosureNote(event.target.value)}
             placeholder='Issue resolved and confirmed by customer.'
@@ -71,7 +72,12 @@ export const ResolveConversationModal = ({
           <Button type='button' variant='outline' onClick={handleClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type='button' onClick={handleConfirm} disabled={isSubmitting || trimmedClosureNote.length === 0}>
+          <Button
+            type='button'
+            className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+            onClick={handleConfirm}
+            disabled={isSubmitting || trimmedClosureNote.length === 0}
+          >
             {isSubmitting ? 'Updating...' : 'Resolve & Close'}
           </Button>
         </DialogFooter>

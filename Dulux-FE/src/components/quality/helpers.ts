@@ -21,8 +21,8 @@ const PRIORITY_LABELS: Record<ClaimPriority, string> = {
 };
 
 const PRIORITY_CLASSES: Record<ClaimPriority, string> = {
-  high: 'bg-priority-high-bg text-priority-high-text',
-  normal: 'bg-priority-normal-bg text-priority-normal-text',
+  high: 'border-priority-high-text/30 bg-priority-high-bg text-priority-high-text',
+  normal: 'border-priority-normal-dot/30 bg-priority-normal-bg text-priority-normal-text',
 };
 
 const QUALITY_STATUS_LABELS: Record<string, string> = {

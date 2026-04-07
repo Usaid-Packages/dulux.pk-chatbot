@@ -62,7 +62,7 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Reject Claim</DialogTitle>
           <DialogDescription>Provide a reason before rejecting this claim.</DialogDescription>
@@ -98,7 +98,12 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
             <label htmlFor='reject-notes' className='text-sm font-medium text-text-primary'>
               Notes (Optional)
             </label>
-            <Textarea id='reject-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
+            <Textarea
+              id='reject-notes'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('notes')}
+              aria-invalid={Boolean(errors.notes)}
+            />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
@@ -106,7 +111,7 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' variant='destructive' disabled={isSubmitting}>
+            <Button type='submit' variant='destructive' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Rejecting...' : 'Reject Claim'}
             </Button>
           </DialogFooter>

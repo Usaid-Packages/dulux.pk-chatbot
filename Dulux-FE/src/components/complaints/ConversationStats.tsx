@@ -7,10 +7,9 @@ interface ConversationStatsProps {
 }
 
 const STAT_CARD_STYLES = [
-  'border-l-4 border-l-convStatus-active-text',
-  'border-l-4 border-l-convStatus-active-text',
-  'border-l-4 border-l-convStatus-resolved-text',
-  'border-l-4 border-l-convStatus-resolved-text',
+  'border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]',
+  'border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]',
+  'border-slate-300/50 bg-[linear-gradient(140deg,#f8fafc_0%,#eef2f7_100%)]',
 ] as const;
 
 /**
@@ -21,18 +20,17 @@ const STAT_CARD_STYLES = [
  */
 export const ConversationStats = ({ stats }: ConversationStatsProps): JSX.Element => {
   const items = [
-    { label: 'OPEN', value: stats?.open ?? 0 },
-    { label: 'IN_PROGRESS', value: stats?.inProgress ?? 0 },
-    { label: 'RESOLVED', value: stats?.resolved ?? 0 },
-    { label: 'CLOSED', value: stats?.closed ?? 0 },
+    { label: 'Open', value: stats?.open ?? 0 },
+    { label: 'In Progress', value: stats?.inProgress ?? 0 },
+    { label: 'Closed', value: stats?.closed ?? 0 },
   ];
 
   return (
     <section className='wf-stat-grid-4'>
       {items.map((card, index) => (
         <article key={card.label} className={`wf-stat-card ${STAT_CARD_STYLES[index]}`}>
-          <p className='text-sm text-text-muted'>{card.label}</p>
-          <p className='mt-1 text-2xl font-bold text-text-primary'>{card.value}</p>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
+          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
         </article>
       ))}
     </section>
