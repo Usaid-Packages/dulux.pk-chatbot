@@ -11,6 +11,7 @@ from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
     create_product,
+    create_product_basecoat,
     create_product_surface_mapping,
     create_surface_type,
 )
@@ -84,6 +85,7 @@ class FlowTests(TestCase):
     def test_registration_flow_end_to_end(self):
         topcoat = create_product(name="Flow Topcoat")
         basecoat = create_product(name="Flow Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat)
 
         self.dispatch_text("1")
         self.assertEqual(self.session.flow, "REGISTRATION")
@@ -99,9 +101,9 @@ class FlowTests(TestCase):
         self.dispatch_text("Dealer")
         self.dispatch_text("Karachi")
         self.dispatch_text("Dealer Address")
-        self.dispatch_text(topcoat.name)
+        self.dispatch_text("1")
         self.dispatch_text("10.00")
-        self.dispatch_text(basecoat.name)
+        self.dispatch_text("1")
         self.dispatch_text("5.00")
         self.dispatch_text("NO")
         self.dispatch_image("invoice-media-1")
@@ -155,7 +157,7 @@ class FlowTests(TestCase):
         self.dispatch_text("Dealer")
         self.dispatch_text("Karachi")
         self.dispatch_text("Dealer Address")
-        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("1")
         self.dispatch_text("10.00")
         self.dispatch_text("SKIP")
         self.dispatch_text("NO")
@@ -180,7 +182,7 @@ class FlowTests(TestCase):
         self.dispatch_text("Dealer")
         self.dispatch_text("Karachi")
         self.dispatch_text("Dealer Address")
-        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("1")
         self.dispatch_text("Ah")
 
         self.assertEqual(self.session.current_step, "topcoat_quantity")
@@ -190,8 +192,9 @@ class FlowTests(TestCase):
         )
 
     def test_registration_rejects_invalid_basecoat_quantity_immediately(self):
-        create_product(name="Flow Topcoat")
-        create_product(name="Flow Basecoat", product_type="BASECOAT", warranty_years=3)
+        topcoat = create_product(name="Flow Topcoat")
+        basecoat = create_product(name="Flow Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat)
 
         self.dispatch_text("1")
         self.dispatch_text("YES")
@@ -204,9 +207,9 @@ class FlowTests(TestCase):
         self.dispatch_text("Dealer")
         self.dispatch_text("Karachi")
         self.dispatch_text("Dealer Address")
-        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("1")
         self.dispatch_text("10")
-        self.dispatch_text("Flow Basecoat")
+        self.dispatch_text("1")
         self.dispatch_text("Ah")
 
         self.assertEqual(self.session.current_step, "basecoat_quantity")
@@ -238,7 +241,7 @@ class FlowTests(TestCase):
         self.dispatch_text("Dealer")
         self.dispatch_text("Karachi")
         self.dispatch_text("Dealer Address")
-        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("1")
         self.dispatch_text("10.00")
         self.dispatch_text("SKIP")
         self.dispatch_text("NO")
@@ -279,7 +282,7 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
 
-    def test_numeric_commands_take_priority_over_registration_input(self):
+    def test_main_menu_command_takes_priority_over_registration_input(self):
         self.dispatch_text("1")
         self.dispatch_text("YES")
         self.dispatch_text("Customer Name")
@@ -292,15 +295,16 @@ class FlowTests(TestCase):
 
         self.dispatch_text("00")
 
-        self.assertEqual(self.session.flow, "REGISTRATION")
-        self.assertEqual(self.session.current_step, "consent")
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
         self.assertEqual(self.session.session_data, {})
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
 
     def test_numeric_commands_take_priority_over_claim_input(self):
         self.dispatch_text("2")
         self.assertEqual(self.session.current_step, "registration_lookup")
 
-        self.dispatch_text("000")
+        self.dispatch_text("00")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
@@ -315,7 +319,7 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "registration_lookup")
 
         self.dispatch_text(registration.registration_code)
-        self.dispatch_text(paint_pair.topcoat.name)
+        self.dispatch_text("1")
         self.assertIn("1. Peeling Or Cracking", self.client.text_messages[-1]["text"])
         self.dispatch_text("1")
         self.dispatch_text("100")
@@ -336,7 +340,7 @@ class FlowTests(TestCase):
 
         self.dispatch_text("2")
         self.dispatch_text(registration.registration_code)
-        self.dispatch_text(paint_pair.topcoat.name)
+        self.dispatch_text("1")
 
         self.assertEqual(self.session.current_step, "paint_pair_select")
         self.assertIn(
@@ -351,7 +355,7 @@ class FlowTests(TestCase):
 
         self.dispatch_text("2")
         self.dispatch_text(registration.registration_code)
-        self.dispatch_text(paint_pair.topcoat.name)
+        self.dispatch_text("1")
 
         self.assertEqual(self.session.current_step, "issue_type")
         self.assertIn("Please select the issue type:", self.client.text_messages[-1]["text"])
@@ -362,7 +366,7 @@ class FlowTests(TestCase):
 
         self.dispatch_text("2")
         self.dispatch_text(registration.registration_code)
-        self.dispatch_text(paint_pair.topcoat.name)
+        self.dispatch_text("1")
         self.dispatch_text("INVALID_ISSUE")
 
         self.assertEqual(self.session.current_step, "issue_type")
@@ -375,7 +379,7 @@ class FlowTests(TestCase):
 
         self.dispatch_text("2")
         self.dispatch_text(registration.registration_code)
-        self.dispatch_text(paint_pair.topcoat.name)
+        self.dispatch_text("1")
         self.dispatch_text(IssueType.PEELING_CRACKING)
         self.dispatch_text("-5")
 
@@ -540,22 +544,11 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.current_step, "name")
 
-    def test_restart_command_resets_flow_to_initial_step(self):
-        self.dispatch_text("1")
-        self.dispatch_text("YES")
-        self.dispatch_text("Customer Name")
-
-        self.dispatch_text("00")
-
-        self.assertEqual(self.session.flow, "REGISTRATION")
-        self.assertEqual(self.session.current_step, "consent")
-        self.assertEqual(self.session.session_data, {})
-
     def test_main_menu_command_resets_active_flow(self):
         self.dispatch_text("4")
         self.dispatch_text("Paint damaged")
 
-        self.dispatch_text("000")
+        self.dispatch_text("00")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")

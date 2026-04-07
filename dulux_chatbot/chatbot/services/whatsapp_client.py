@@ -111,7 +111,7 @@ class WhatsAppClient:
     def _build_absolute_media_url(self, document_url: str) -> str:
         if document_url.startswith(("http://", "https://")):
             return document_url
-        base_url = env_config("NGROK_URL", default="").strip() or env_config("BASE_URL", default="").strip()
+        base_url = env_config("CERTIFICATE_MEDIA_URL", default="").strip() or env_config("BASE_URL", default="").strip()
         if not base_url:
             return document_url
         return urljoin(f"{base_url.rstrip('/')}/", document_url.lstrip("/"))

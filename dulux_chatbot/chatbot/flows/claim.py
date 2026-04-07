@@ -27,7 +27,25 @@ class ClaimFlow(BaseFlow):
         self._send_step_prompt("Please share the registration code for the claim.")
 
     def prompt_paint_pair_select(self) -> None:
-        self._send_step_prompt("Please share the topcoat product name for the claim.")
+        registration_id = (self.session.session_data or {}).get("registration_id")
+        paint_pairs = list(
+            RegistrationPaintPair.objects.select_related("topcoat")
+            .filter(registration_id=registration_id)
+            .order_by("topcoat__name", "id")
+        )
+        if not paint_pairs:
+            self._send_validation_error("No paint pairs were found for the selected registration.")
+            return
+        option_lines = [
+            (str(index), paint_pair.id, paint_pair.topcoat.name)
+            for index, paint_pair in enumerate(paint_pairs, start=1)
+        ]
+        self._set_choice_options(
+            "claim_paint_pair_options", [(option, paint_pair_id) for option, paint_pair_id, _ in option_lines]
+        )
+        prompt_lines = ["Please select the topcoat product for the claim:"]
+        prompt_lines.extend(f"{option}. {label}" for option, _, label in option_lines)
+        self._send_step_prompt("\n".join(prompt_lines))
 
     def prompt_issue_type(self, error_message: str = "") -> None:
         lines = []
@@ -64,21 +82,21 @@ class ClaimFlow(BaseFlow):
         self._advance_to("paint_pair_select")
 
     def handle_paint_pair_select(self, message: dict) -> None:
-        product_name = self._get_text(message)
         registration_id = (self.session.session_data or {}).get("registration_id")
-        if not product_name:
-            self._send_validation_error("Please share a valid topcoat product name.")
+        paint_pair_id = self._get_choice_value("claim_paint_pair_options", self._get_text(message))
+        if paint_pair_id is None:
+            self.prompt_paint_pair_select()
             return
         paint_pair = (
             RegistrationPaintPair.objects.select_related("topcoat")
             .filter(
                 registration_id=registration_id,
-                topcoat__name__iexact=product_name,
+                id=paint_pair_id,
             )
             .first()
         )
         if paint_pair is None:
-            self._send_validation_error("Topcoat product not found for the selected registration.")
+            self.prompt_paint_pair_select()
             return
         if WarrantyClaim.objects.filter(
             registration_id=registration_id,

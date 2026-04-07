@@ -39,13 +39,13 @@ class WhatsAppClientTests(SimpleTestCase):
         response.raise_for_status.return_value = None
         post_mock.return_value = response
 
-        self.addCleanup(lambda: os.environ.pop("NGROK_URL", None))
-        os.environ["NGROK_URL"] = "https://example-ngrok.ngrok-free.app"
+        self.addCleanup(lambda: os.environ.pop("CERTIFICATE_MEDIA_URL", None))
+        os.environ["CERTIFICATE_MEDIA_URL"] = "https://example-media.ngrok-free.app"
         client = WhatsAppClient()
         client.send_document("923001234567", "/django-media/certificates/sample.pdf", "sample.pdf")
 
         payload = post_mock.call_args.kwargs["json"]
         self.assertEqual(
             payload["document"]["link"],
-            "https://example-ngrok.ngrok-free.app/django-media/certificates/sample.pdf",
+            "https://example-media.ngrok-free.app/django-media/certificates/sample.pdf",
         )

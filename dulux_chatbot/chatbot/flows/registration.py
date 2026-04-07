@@ -46,13 +46,33 @@ class RegistrationFlow(BaseFlow):
         self._send_step_prompt("Please share dealer address.")
 
     def prompt_topcoat_select(self) -> None:
-        self._send_step_prompt("Please share topcoat product name.")
+        topcoats = list(Product.objects.filter(product_type=ProductType.TOPCOAT, is_active=True).order_by("name"))
+        if not topcoats:
+            self._send_validation_error("No active topcoat products are available right now.")
+            return
+        option_lines = self._build_choice_lines(topcoats)
+        self._set_choice_options("topcoat_options", [(option, product_id) for option, product_id, _ in option_lines])
+        prompt_lines = ["Please select a topcoat product:"]
+        prompt_lines.extend(f"{option}. {label}" for option, _, label in option_lines)
+        self._send_step_prompt("\n".join(prompt_lines))
 
     def prompt_topcoat_quantity(self) -> None:
         self._send_step_prompt("Please share topcoat quantity in liters.")
 
     def prompt_basecoat_select(self) -> None:
-        self._send_step_prompt("Please share basecoat product name or SKIP.")
+        current_topcoat_id = (self.session.session_data or {}).get("current_topcoat_id")
+        linked_basecoats = list(
+            Product.objects.filter(topcoat_mappings__topcoat_id=current_topcoat_id, is_active=True).order_by("name")
+        )
+        if not linked_basecoats:
+            self._set_choice_options("basecoat_options", [])
+            self._send_step_prompt("No linked basecoats are available for this topcoat. Reply SKIP.")
+            return
+        option_lines = self._build_choice_lines(linked_basecoats)
+        self._set_choice_options("basecoat_options", [(option, product_id) for option, product_id, _ in option_lines])
+        prompt_lines = ["Please select a basecoat product or reply SKIP:"]
+        prompt_lines.extend(f"{option}. {label}" for option, _, label in option_lines)
+        self._send_step_prompt("\n".join(prompt_lines))
 
     def prompt_basecoat_quantity(self) -> None:
         self._send_step_prompt("Please share basecoat quantity in liters.")
@@ -195,11 +215,12 @@ class RegistrationFlow(BaseFlow):
         self._advance_to("topcoat_select")
 
     def handle_topcoat_select(self, message: dict) -> None:
-        product = self._get_product(message, product_type=ProductType.TOPCOAT)
-        if product is None:
-            self._send_validation_error("Please share a valid active TOPCOAT product name.")
+        selected_option = self._get_text(message)
+        product_id = self._get_choice_value("topcoat_options", selected_option)
+        if product_id is None:
+            self.prompt_topcoat_select()
             return
-        self._save_data("current_topcoat_id", product.id)
+        self._save_data("current_topcoat_id", product_id)
         self.prompt_topcoat_quantity()
         self._advance_to("topcoat_quantity")
 
@@ -219,11 +240,11 @@ class RegistrationFlow(BaseFlow):
             self.prompt_add_more_pairs()
             self._advance_to("add_more_pairs")
             return
-        product = self._get_product(message, product_type=ProductType.BASECOAT)
-        if product is None:
-            self._send_validation_error("Please share a valid active BASECOAT product name or SKIP.")
+        product_id = self._get_choice_value("basecoat_options", self._get_text(message))
+        if product_id is None:
+            self.prompt_basecoat_select()
             return
-        self._save_data("current_basecoat_id", product.id)
+        self._save_data("current_basecoat_id", product_id)
         self.prompt_basecoat_quantity()
         self._advance_to("basecoat_quantity")
 
@@ -257,7 +278,7 @@ class RegistrationFlow(BaseFlow):
             if not (self.session.session_data or {}).get("paint_pair_invoices"):
                 self.client.send_text(
                     self.session.phone_number,
-                    "At least one invoice image is required before submission.\n\n0. Go back\n00. Start over\n000. Main menu",
+                    "At least one invoice image is required before submission.\n\n0. Go back\n00. Main menu",
                 )
                 return
             self.handle_complete(message)
@@ -337,12 +358,6 @@ class RegistrationFlow(BaseFlow):
         session_data["paint_pairs"] = paint_pairs
         self.session.session_data = session_data
         self.session.save(update_fields=["session_data", "modified"])
-
-    def _get_product(self, message: dict, *, product_type: str):
-        value = self._get_text(message)
-        if not value:
-            return None
-        return Product.objects.filter(name__iexact=value, product_type=product_type, is_active=True).first()
 
     def _parse_quantity(self, value: str) -> str | None:
         if not value:
