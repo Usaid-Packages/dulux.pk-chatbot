@@ -75,7 +75,7 @@ services:
 
   daphne:
     <<: [*django-build, *common]
-    command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program daphne -b 0.0.0.0 -p 8001 config.asgi:application"
+    command: bash -c "daphne -b 0.0.0.0 -p 8001 config.asgi:application"
     entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
     ports:
       - "8001"
