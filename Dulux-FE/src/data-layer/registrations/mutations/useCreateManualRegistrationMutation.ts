@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys, REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { apiEndpoints, GET, POST, queryKeys, REGISTRATION_INVOICE_TYPES } from '#/constants';
 import { performRequest } from '#/services';
 import type {
   ManualRegistrationApiResponse,
   ManualRegistrationFormValues,
   ManualRegistrationSubmissionResult,
 } from '#/types/manualRegistration';
+import type { ProductListResponse } from '#/types/products';
 import { normalizeManualRegistrationCreateResponse } from '#/utils';
 
 interface RegistrationCreatePaintPair {
@@ -44,12 +45,35 @@ interface UploadImageResponse {
   id: number;
 }
 
+const PAKISTAN_PHONE_REGEX = /^92\d{10}$/;
+
+const normalizePakistanPhoneNumber = (phoneNumber: string): string => {
+  const digits = phoneNumber.replace(/\D/g, '');
+  return digits;
+};
+
+const assertLinkedBasecoatForTopcoat = async (topcoatId: number, basecoatId?: number): Promise<void> => {
+  if (basecoatId === undefined) {
+    return;
+  }
+
+  const response = await performRequest<ProductListResponse>({
+    method: GET,
+    url: apiEndpoints.products.basecoats(topcoatId),
+  });
+
+  const linkedBasecoatIds = new Set(response.results.map(product => product.id));
+  if (!linkedBasecoatIds.has(basecoatId)) {
+    throw new Error('Basecoat must be linked to the selected topcoat product.');
+  }
+};
+
 const uploadRegistrationImage = async (image: File): Promise<number> => {
   const payload = new FormData();
   payload.append('image', image);
 
   const response = await performRequest<UploadImageResponse, FormData>({
-    method: 'post',
+    method: POST,
     url: apiEndpoints.core.uploadImage,
     payload,
     config: {
@@ -77,6 +101,13 @@ const buildCreateRegistrationPayload = async (
   const basecoatId = values.basecoatProductId ? Number.parseInt(values.basecoatProductId, 10) : undefined;
   if (values.basecoatProductId && (!Number.isFinite(basecoatId) || (basecoatId ?? 0) <= 0)) {
     throw new Error('A valid basecoat product is required when basecoat is selected.');
+  }
+
+  await assertLinkedBasecoatForTopcoat(topcoatId, basecoatId);
+
+  const normalizedPhoneNumber = normalizePakistanPhoneNumber(values.phoneNumber);
+  if (!PAKISTAN_PHONE_REGEX.test(normalizedPhoneNumber)) {
+    throw new Error('Phone number must start with 92 and include 10 digits after it.');
   }
 
   const topcoatInvoiceId = await uploadRegistrationImage(values.topcoatInvoice);
@@ -109,7 +140,7 @@ const buildCreateRegistrationPayload = async (
   return {
     channel: 'WEBFORM',
     customerName: values.customerName.trim(),
-    phoneNumber: values.phoneNumber.trim(),
+    phoneNumber: normalizedPhoneNumber,
     email: values.email.trim(),
     city: values.city.trim(),
     province: values.province.trim(),
@@ -142,7 +173,7 @@ export const useCreateManualRegistrationMutation = (): UseMutationResult<
     mutationFn: async (values: ManualRegistrationFormValues): Promise<ManualRegistrationSubmissionResult> => {
       const payload = await buildCreateRegistrationPayload(values);
       const response = await performRequest<ManualRegistrationApiResponse, RegistrationCreatePayload>({
-        method: 'post',
+        method: POST,
         url: apiEndpoints.registrations.createManual,
         payload,
       });

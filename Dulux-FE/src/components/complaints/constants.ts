@@ -1,27 +1,24 @@
-import type { ConversationPriority, ConversationStatus } from '#/types/complaints';
+import type { ComplaintApiStatus, ConversationStatusFilter } from '#/types/complaints';
 
-export const CONVERSATION_STATUS_TABS: Array<{ label: string; value: 'all' | ConversationStatus }> = [
+export const CONVERSATION_STATUS_TABS: Array<{ label: string; value: ConversationStatusFilter }> = [
   { label: 'All', value: 'all' },
-  { label: 'Unassigned', value: 'unassigned' },
-  { label: 'Active', value: 'active' },
-  { label: 'Resolved', value: 'resolved' },
+  { label: 'Open', value: 'OPEN' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Closed', value: 'CLOSED' },
 ];
 
-export const CONVERSATION_STATUS_LABELS: Record<ConversationStatus, string> = {
-  unassigned: 'Unassigned',
-  active: 'Active',
-  resolved: 'Resolved',
+export const CONVERSATION_STATUS_LABELS: Record<ComplaintApiStatus, string> = {
+  OPEN: 'Open',
+  IN_PROGRESS: 'In Progress',
+  RESOLVED: 'Resolved',
+  CLOSED: 'Closed',
 };
 
-export const CONVERSATION_STATUS_CLASSNAMES: Record<ConversationStatus, string> = {
-  unassigned: 'bg-convStatus-unassigned-bg text-convStatus-unassigned-text',
-  active: 'bg-convStatus-active-bg text-convStatus-active-text',
-  resolved: 'bg-convStatus-resolved-bg text-convStatus-resolved-text',
-};
-
-export const CONVERSATION_PRIORITY_CLASSNAMES: Record<ConversationPriority, string> = {
-  high: 'bg-priority-high-bg text-priority-high-text',
-  normal: 'bg-priority-normal-bg text-priority-normal-text',
+export const CONVERSATION_STATUS_CLASSNAMES: Record<ComplaintApiStatus, string> = {
+  OPEN: 'bg-convStatus-active-bg text-convStatus-active-text',
+  IN_PROGRESS: 'bg-convStatus-active-bg text-convStatus-active-text',
+  RESOLVED: 'bg-convStatus-resolved-bg text-convStatus-resolved-text',
+  CLOSED: 'bg-convStatus-resolved-bg text-convStatus-resolved-text',
 };
 
 export const CONVERSATION_CHANNEL_LABELS = {

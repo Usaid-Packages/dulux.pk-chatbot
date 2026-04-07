@@ -3,6 +3,7 @@ declare module '#env' {
 
   interface EnvShape {
     VITE_BACKEND_BASE_URL: string;
+    VITE_COMPLAINTS_SOCKET_BASE_URL?: string;
     VITE_ENV: 'development' | 'staging' | 'production';
     VITE_SENTRY?: string;
     VITE_SENTRY_DSN?: string;

@@ -1,20 +1,28 @@
-export const CONVERSATION_STATUSES = ['unassigned', 'active', 'resolved'] as const;
-export const CONVERSATION_PRIORITIES = ['normal', 'high'] as const;
+export const CONVERSATION_STATUSES = ['active', 'resolved'] as const;
 export const CONVERSATION_CHANNELS = ['whatsapp', 'manual'] as const;
 export const MESSAGE_KINDS = ['customer', 'agent', 'system'] as const;
-export const ESCALATION_LEVELS = ['L1', 'L2', 'L3'] as const;
-export const ESCALATION_URGENCIES = ['normal', 'high', 'critical'] as const;
-export const TRANSFER_TARGETS = ['agent', 'queue'] as const;
+export const COMPLAINT_API_STATUS_VALUES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
+
+export const COMPLAINT_ACTIONS = {
+  ASSIGN: 'ASSIGN',
+  RESOLVE: 'RESOLVE',
+  CLOSE: 'CLOSE',
+  REOPEN: 'REOPEN',
+} as const;
+
+export const COMPLAINT_API_STATUSES = {
+  OPEN: 'OPEN',
+  IN_PROGRESS: 'IN_PROGRESS',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED',
+} as const;
 
 export type ConversationStatus = (typeof CONVERSATION_STATUSES)[number];
-export type ConversationPriority = (typeof CONVERSATION_PRIORITIES)[number];
 export type ConversationChannel = (typeof CONVERSATION_CHANNELS)[number];
 export type MessageKind = (typeof MESSAGE_KINDS)[number];
-export type EscalationLevel = (typeof ESCALATION_LEVELS)[number];
-export type EscalationUrgency = (typeof ESCALATION_URGENCIES)[number];
-export type TransferTarget = (typeof TRANSFER_TARGETS)[number];
-export type ConversationStatusFilter = 'all' | ConversationStatus;
-export type ConversationPriorityFilter = 'all' | ConversationPriority;
+export type ConversationStatusFilter = 'all' | ComplaintApiStatus;
+export type ComplaintAction = (typeof COMPLAINT_ACTIONS)[keyof typeof COMPLAINT_ACTIONS];
+export type ComplaintApiStatus = (typeof COMPLAINT_API_STATUS_VALUES)[number];
 
 export interface ChatAttachment {
   id: string;
@@ -36,12 +44,14 @@ export interface ConversationListItem {
   id: string;
   claimNumber: string;
   customerName: string;
+  customerPhone: string;
   city: string;
   issueType: string;
+  apiStatus: ComplaintApiStatus;
   status: ConversationStatus;
-  priority: ConversationPriority;
   channel: ConversationChannel;
   unreadCount: number;
+  assignedToId?: number | null;
   assignedAgent?: string;
   lastMessagePreview: string;
   lastMessageAt: string;
@@ -52,32 +62,32 @@ export interface ConversationThread extends ConversationListItem {
   submittedAt: string;
   registrationId: string;
   customerPhone: string;
+  description?: string;
+  closureNote?: string;
+  closedAt?: string | null;
   whatsappConnected: boolean;
   affectedAreaSqFt?: number;
   topcoat?: string;
   dealerName?: string;
-  escalationLevel?: EscalationLevel;
-  lastTransferredAt?: string;
   lastResolvedAt?: string;
   customerHistory: {
     registrations: number;
     claims: number;
     pastComplaints: number;
   };
+  complaintImages: ChatAttachment[];
   messages: ChatMessage[];
 }
 
 export interface ConversationStats {
-  totalConversations: number;
-  unassigned: number;
-  active: number;
+  open: number;
+  inProgress: number;
   resolved: number;
-  unreadMessages: number;
+  closed: number;
 }
 
 export interface ConversationListRequestParams {
   status: ConversationStatusFilter;
-  priority: ConversationPriorityFilter;
   search?: string;
   page: number;
   pageSize: number;
@@ -96,31 +106,67 @@ export interface SendMessagePayload extends Record<string, unknown> {
   message: string;
 }
 
-export interface MarkThreadReadPayload extends Record<string, unknown> {
-  threadId: string;
+export interface ComplaintApiMessage extends Record<string, unknown> {
+  id: string | number;
+  sender?: string;
+  text: string;
+  created?: string;
+  createdAt?: string;
+}
+
+export interface ComplaintListApiItem extends Record<string, unknown> {
+  id: number;
+  registrationNumber?: string;
+  phoneNumber: string;
+  customerName: string;
+  subject: string;
+  status: ComplaintApiStatus;
+  assignedTo?: number | null;
+  assignedToEmail?: string | null;
+  created: string;
+}
+
+export interface ComplaintListApiResponse extends Record<string, unknown> {
+  count: number;
+  next?: string | null;
+  previous?: string | null;
+  results: ComplaintListApiItem[];
+}
+
+export interface ComplaintDetailApiImage extends Record<string, unknown> {
+  id: number;
+  image?: {
+    id: number;
+    image: string;
+    created: string;
+  } | null;
+  created: string;
+}
+
+export interface ComplaintDetailApiResponse extends Record<string, unknown> {
+  id: number;
+  registration?: number | null;
+  registrationNumber?: string;
+  phoneNumber: string;
+  customerName: string;
+  subject: string;
+  description?: string;
+  status: ComplaintApiStatus;
+  assignedTo?: number | null;
+  assignedToEmail?: string | null;
+  closedAt?: string | null;
+  closureNote?: string;
+  images?: ComplaintDetailApiImage[];
+  messages?: ComplaintApiMessage[];
+  created: string;
+  modified?: string;
 }
 
 export interface ResolveConversationPayload extends Record<string, unknown> {
   threadId: string;
-  resolutionType: 'issueResolved' | 'needQualityFollowUp';
-  summary: string;
-  notifyCustomer: boolean;
 }
 
-export interface TransferConversationPayload extends Record<string, unknown> {
+export interface CloseConversationPayload extends Record<string, unknown> {
   threadId: string;
-  transferTo: TransferTarget;
-  agentId?: string;
-  queueName?: string;
-  reason: string;
-  internalNote?: string;
-  ccCurrentAgent: boolean;
-}
-
-export interface EscalateConversationPayload extends Record<string, unknown> {
-  threadId: string;
-  level: EscalationLevel;
-  reason: string;
-  urgency: EscalationUrgency;
-  description: string;
+  closureNote: string;
 }

@@ -1,29 +1,28 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { POST, apiEndpoints, queryKeys } from '#/constants';
+import { PATCH, apiEndpoints, queryKeys } from '#/constants';
 import { conversationThreadSchema } from '#/schemas/complaints.schema';
 import { performRequest } from '#/services/apiClient';
-import type { ConversationThread, ResolveConversationPayload } from '#/types/complaints';
-import { resolveMockConversation } from '../mockComplaintsStore';
-import { isNetworkError, shouldUseMockComplaints } from '../transport';
+import { COMPLAINT_ACTIONS } from '#/types/complaints';
+import type { ComplaintDetailApiResponse, ConversationThread, ResolveConversationPayload } from '#/types/complaints';
+import { normalizeComplaintDetailResponse } from '#/utils';
+
+interface ComplaintActionRequestPayload {
+  action: string;
+}
 
 export const resolveConversation = async (payload: ResolveConversationPayload): Promise<ConversationThread> => {
-  try {
-    const response = await performRequest<ConversationThread, ResolveConversationPayload>({
-      method: POST,
-      url: apiEndpoints.complaints.resolve(payload.threadId),
-      payload,
-    });
+  const response = await performRequest<ComplaintDetailApiResponse, ComplaintActionRequestPayload>({
+    method: PATCH,
+    url: apiEndpoints.complaints.detail(payload.threadId),
+    payload: {
+      action: COMPLAINT_ACTIONS.RESOLVE,
+    },
+  });
 
-    return conversationThreadSchema.parse(response);
-  } catch (error) {
-    if (shouldUseMockComplaints() && isNetworkError(error)) {
-      return conversationThreadSchema.parse(resolveMockConversation(payload));
-    }
-
-    throw error;
-  }
+  const normalizedResponse = normalizeComplaintDetailResponse(response);
+  return conversationThreadSchema.parse(normalizedResponse);
 };
 
 export const useResolveConversationMutation = (): UseMutationResult<

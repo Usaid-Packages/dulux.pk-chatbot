@@ -2,14 +2,10 @@ import type { JSX } from 'react';
 import { useEffect, useRef } from 'react';
 
 import { Badge, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
+import { COMPLAINT_API_STATUSES } from '#/types/complaints';
 import type { ConversationThread } from '#/types/complaints';
 import { cn } from '#/utils';
-import {
-  CONVERSATION_CHANNEL_LABELS,
-  CONVERSATION_PRIORITY_CLASSNAMES,
-  CONVERSATION_STATUS_CLASSNAMES,
-  CONVERSATION_STATUS_LABELS,
-} from './constants';
+import { CONVERSATION_CHANNEL_LABELS, CONVERSATION_STATUS_CLASSNAMES, CONVERSATION_STATUS_LABELS } from './constants';
 import { MessageComposer } from './MessageComposer';
 
 interface ChatThreadPanelProps {
@@ -110,24 +106,13 @@ export const ChatThreadPanel = ({
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>
-            <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[thread.status])}>
-              {CONVERSATION_STATUS_LABELS[thread.status]}
-            </Badge>
-            <Badge
-              className={cn('rounded-md px-2 py-0.5 capitalize', CONVERSATION_PRIORITY_CLASSNAMES[thread.priority])}
-            >
-              {thread.priority}
+            <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[thread.apiStatus])}>
+              {CONVERSATION_STATUS_LABELS[thread.apiStatus]}
             </Badge>
             <Badge className='rounded-md px-2 py-0.5'>{CONVERSATION_CHANNEL_LABELS[thread.channel]}</Badge>
           </div>
         </div>
       </header>
-
-      {thread.status === 'unassigned' ? (
-        <div className='border-b border-amber-200 bg-amber-highlight/30 px-4 py-2 text-xs text-amber-900'>
-          Unassigned ticket: transfer or assign this conversation before replying.
-        </div>
-      ) : null}
 
       <div ref={messageListRef} className='flex-1 space-y-3 overflow-y-auto bg-chat-panelBg px-4 py-4'>
         {thread.messages.map(message => {
@@ -155,10 +140,8 @@ export const ChatThreadPanel = ({
         })}
       </div>
 
-      {thread.status === 'resolved' ? (
-        <div className='border-t border-border bg-surface p-3 text-xs text-text-muted'>
-          Conversation is resolved. You can still reopen by escalating or transferring if needed.
-        </div>
+      {thread.apiStatus === COMPLAINT_API_STATUSES.RESOLVED || thread.apiStatus === COMPLAINT_API_STATUSES.CLOSED ? (
+        <div className='border-t border-border bg-surface p-3 text-xs text-text-muted'>Conversation is resolved.</div>
       ) : (
         <MessageComposer isSubmitting={isSending} onSubmit={onSendMessage} />
       )}

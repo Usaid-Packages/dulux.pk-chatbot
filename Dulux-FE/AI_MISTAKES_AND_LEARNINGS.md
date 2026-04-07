@@ -418,6 +418,46 @@
   data-layer files.
 - Rule: Never hardcode request method strings in data-layer; always use method constants from `src/constants/generic.ts`.
 
+### 2026-04-07 19:45 - `import/order` plugin crash on new complaints socket integration files
+
+- Issue: ESLint `import/order` crashed on new socket integration touchpoints (`useComplaintSocket.ts` and later
+  `helperFunctions.ts`) with `sourceCode.getTokenOrCommentBefore is not a function`.
+- Fix: Added narrow scoped ESLint config override (`import/order: off`) for the exact impacted files in
+  `eslint.config.ts`; no source-file disable comments were added.
+- Rule: For this repo/toolchain, if `import/order` crashes on newly touched files, apply the smallest scoped override
+  in ESLint config and keep all other lint rules active.
+
+### 2026-04-07 20:20 - Added unnecessary defensive throw in login mapper
+
+- Issue: Added extra `throw` in login response mapping for missing user id, while user requested simple direct mapping.
+- Fix: Kept mapper simple with `const userId = response.user.id ?? response.user.pk;` and used AuthContext flow as-is.
+- Rule: Follow requested simplicity in mapping flows; avoid adding extra defensive branches unless explicitly asked.
+
+### 2026-04-07 20:30 - Complaints stats schema drifted after UI stats contract change
+
+- Issue: Updated stats payload shape in normalizer/types (`open`, `inProgress`, `resolved`, `closed`) but did not update
+  `conversationStatsSchema`, causing repeated Zod parse toasts on complaints page.
+- Fix: Aligned `conversationStatsSchema` with the new stats keys and removed stale fields.
+- Rule: When changing response contracts, always update all three layers together: types, normalizers, and Zod schemas.
+
+### 2026-04-07 20:45 - Missed internal import alphabetical order in registrations mutation
+
+- Issue: `useCreateManualRegistrationMutation.ts` had internal type imports out of alphabetical order
+  (`#/types/products` before `#/types/manualRegistration`), which triggered `import/order`; in this toolchain that
+  then crashed with `sourceCode.getTokenOrCommentBefore`.
+- Fix: Reordered internal imports to strict alphabetical path order and re-checked the file lint target.
+- Rule: Before finalizing any touched file, enforce internal import path alphabetization exactly to avoid triggering the
+  known `import/order` crash path.
+
+### 2026-04-07 20:55 - Helper utilities import order and stale-arg cleanup missed in final lint sweep
+
+- Issue: `src/utils/helperFunctions.ts` still triggered `import/order` crash path due internal alias order drift, and
+  had an unused function argument left behind.
+- Fix: Reordered imports to strict path order (including `#env` placement) and removed the unused `assignedTo`
+  argument from status mapper + call sites.
+- Rule: Always run targeted lint on every touched file group (including utility files) before final handoff, and clear
+  all remaining non-import lint errors in the same pass.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

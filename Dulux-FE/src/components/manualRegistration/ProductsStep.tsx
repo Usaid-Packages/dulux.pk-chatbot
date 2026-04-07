@@ -1,8 +1,10 @@
 import type { JSX } from 'react';
+import { useEffect } from 'react';
 
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
+import { useGetProductBasecoatsQuery } from '#/data-layer/products';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
@@ -15,15 +17,35 @@ export const ProductsStep = (): JSX.Element => {
   const {
     control,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<ManualRegistrationFormValues>();
   const manualProductsQuery = useGetManualRegistrationProductsQuery();
 
+  const selectedTopcoat = useWatch({ control, name: 'topcoatProductId' });
   const selectedBasecoat = useWatch({ control, name: 'basecoatProductId' });
   const hasBasecoat = Boolean(selectedBasecoat);
   const topcoatProducts = manualProductsQuery.data?.topcoatProducts ?? [];
-  const basecoatProducts = manualProductsQuery.data?.basecoatProducts ?? [];
+  const linkedBasecoatQuery = useGetProductBasecoatsQuery(selectedTopcoat);
+  const basecoatProducts = selectedTopcoat
+    ? (linkedBasecoatQuery.data?.results.map(product => ({ id: String(product.id), label: product.name })) ?? [])
+    : (manualProductsQuery.data?.basecoatProducts ?? []);
   const productLoadError = manualProductsQuery.error?.message ?? 'Unable to load product options.';
+  const linkedBasecoatLoadError =
+    linkedBasecoatQuery.error?.message ?? 'Unable to load linked basecoats for the selected topcoat.';
+
+  useEffect(() => {
+    if (!selectedBasecoat) {
+      return;
+    }
+
+    const hasMatchingBasecoat = basecoatProducts.some(product => product.id === selectedBasecoat);
+    if (!hasMatchingBasecoat) {
+      setValue('basecoatProductId', '', { shouldValidate: true });
+      setValue('basecoatQuantity', '', { shouldValidate: true });
+      setValue('basecoatInvoice', null, { shouldValidate: true });
+    }
+  }, [basecoatProducts, selectedBasecoat, setValue]);
 
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
@@ -86,6 +108,12 @@ export const ProductsStep = (): JSX.Element => {
               </Select>
             )}
           />
+          {selectedTopcoat && linkedBasecoatQuery.isLoading ? (
+            <p className='text-xs text-text-muted'>Loading linked basecoats...</p>
+          ) : null}
+          {selectedTopcoat && linkedBasecoatQuery.isError ? (
+            <p className='text-xs text-destructive'>{linkedBasecoatLoadError}</p>
+          ) : null}
           {errors.basecoatProductId ? (
             <p className='text-xs text-destructive'>{errors.basecoatProductId.message}</p>
           ) : null}

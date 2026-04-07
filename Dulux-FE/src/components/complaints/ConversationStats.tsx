@@ -7,9 +7,9 @@ interface ConversationStatsProps {
 }
 
 const STAT_CARD_STYLES = [
-  '',
-  'border-l-4 border-l-chat-unreadDot',
   'border-l-4 border-l-convStatus-active-text',
+  'border-l-4 border-l-convStatus-active-text',
+  'border-l-4 border-l-convStatus-resolved-text',
   'border-l-4 border-l-convStatus-resolved-text',
 ] as const;
 
@@ -21,10 +21,10 @@ const STAT_CARD_STYLES = [
  */
 export const ConversationStats = ({ stats }: ConversationStatsProps): JSX.Element => {
   const items = [
-    { label: 'Total Conversations', value: stats?.totalConversations ?? 0 },
-    { label: 'Unread Messages', value: stats?.unreadMessages ?? 0 },
-    { label: 'Active Threads', value: stats?.active ?? 0 },
-    { label: 'Resolved Threads', value: stats?.resolved ?? 0 },
+    { label: 'OPEN', value: stats?.open ?? 0 },
+    { label: 'IN_PROGRESS', value: stats?.inProgress ?? 0 },
+    { label: 'RESOLVED', value: stats?.resolved ?? 0 },
+    { label: 'CLOSED', value: stats?.closed ?? 0 },
   ];
 
   return (

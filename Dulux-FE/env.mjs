@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   VITE_BACKEND_BASE_URL: z.string().url(),
+  VITE_COMPLAINTS_SOCKET_BASE_URL: z.string().url().optional(),
   VITE_ENV: z.enum(['development', 'staging', 'production']),
   VITE_SENTRY: z.string().min(1),
   VITE_SENTRY_DSN: z.string().url().optional(),
