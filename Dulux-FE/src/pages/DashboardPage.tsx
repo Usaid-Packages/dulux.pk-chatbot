@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 
+import dashboardVisual from '#/assets/images/dulux-logo.png';
 import { DashboardGrid } from '#/components/dashboard';
 import { Button } from '#/components/ui/Button';
 import { useDashboard } from '#/hooks';
@@ -15,8 +16,18 @@ export const DashboardPage = (): JSX.Element => {
   return (
     <div className='mx-auto w-full max-w-[1280px] space-y-6'>
       <section className='space-y-1'>
-        <h1 className='text-lg font-bold text-text-primary'>Dulux CS Dashboard</h1>
-        <p className='text-sm text-text-muted'>Track module progress and open any module directly from here.</p>
+        <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
+          <div className='space-y-1'>
+            <p className='text-sm font-semibold uppercase tracking-[1.6px] text-primary'>Dulux Assurance</p>
+            <h1 className='text-3xl font-bold leading-tight text-text-primary md:text-[2rem]'>Dulux CS Dashboard</h1>
+            <p className='text-base text-text-muted'>Track module progress and open any module directly from here.</p>
+          </div>
+          <img
+            src={dashboardVisual}
+            alt='Dulux dashboard visual'
+            className='h-[215px] w-[287px] shrink-0 self-end object-contain md:self-center'
+          />
+        </div>
       </section>
 
       {isError && (

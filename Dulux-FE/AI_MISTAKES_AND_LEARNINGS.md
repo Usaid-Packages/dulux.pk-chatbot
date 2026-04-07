@@ -21,6 +21,8 @@
 - Do not repeat yourself (DRY) in layout and component styling updates.
 - If the user asks to remove shell/navigation UI, do not re-introduce it in later styling passes unless explicitly
   requested.
+- If sidebar numeric badges/count pills are removed by user request, do not re-add them in any later pass unless
+  explicitly requested.
 - In data-layer hooks, keep `performRequest` inside `queryFn` / `mutationFn`; avoid separate exported/local async API
   wrapper functions for the same hook operation.
 - For image upload endpoints used by registration/claim flows, create a dedicated upload mutation hook and reuse its
@@ -36,6 +38,10 @@
 - After reviewing lint rules, enforce import-order shape before finalizing changes: avoid mixed value+type imports in
   one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
 - Never add file-level `import/order` disable comments in source files.
+- On claim detail page open, fetch claim detail and if backend state is `SUBMITTED`, trigger a follow-up claim action
+  transition to `IN_REVIEW`.
+- When extending shared detail schemas (for example quality detail extends claim detail), always update every mapper to
+  populate newly required fields (for example `workflowState`) before parse.
 
 ## Mistake Log (Short)
 
@@ -255,6 +261,13 @@
 - Rule: For this codebase convention, write transport calls inline in hook `queryFn`/`mutationFn`; only extract shared
   normalization/helpers.
 
+### 2026-04-07 16:25 - Sidebar numeric badges were kept/reintroduced against request
+
+- Issue: Sidebar nav still rendered numeric count pills (for example `12`, `5`, `3`) after user requested removal.
+- Fix: Removed sidebar badge rendering block from nav items so counts never display.
+- Rule: When user asks to remove sidebar number badges, keep badge UI fully removed and do not reintroduce it unless
+  explicitly requested.
+
 ### 2026-04-06 10:56 - Upload image flow was not represented as a dedicated mutation
 
 - Issue: Registration image upload used only an internal helper and did not expose a dedicated upload mutation hook.
@@ -318,6 +331,31 @@
   consistent.
 - Rule: Never mix value and type specifiers in one import statement; always use separate `import` and `import type`
   lines in touched files.
+
+### 2026-04-06 16:35 - Claim detail view missed required state transition
+
+- Issue: Claim detail flow only fetched `GET /api/v1/warranty/claims/{id}/` and did not trigger the required
+  `PATCH` action transition from `SUBMITTED` to `IN_REVIEW` when opening View Detail.
+- Fix: Added one-time auto transition in claim detail hook using dedicated claims mutation
+  (`action: IN_REVIEW`) guarded by normalized backend workflow state.
+- Rule: For claim review entry flow, always perform detail fetch first, then transition `SUBMITTED -> IN_REVIEW` once
+  when applicable.
+
+### 2026-04-06 16:55 - Quality detail parse failed after shared schema field expansion
+
+- Issue: `qualityDetailSchema` inherits from `claimDetailSchema`; after `workflowState` became required, quality mapper
+  did not populate it, causing Zod invalid enum errors on quality detail load.
+- Fix: Added `workflowState` mapping in `mapQualityClaimDetail` using API `state` via `toApiClaimWorkflowState`.
+- Rule: Any required-field change in shared schemas must be mirrored in all consuming feature mappers before merge.
+
+### 2026-04-06 17:20 - Workflow-state constant used as object keys though it was an array
+
+- Issue: Auto-transition guard compared against `CLAIM_WORKFLOW_STATES.SUBMITTED` even though
+  `CLAIM_WORKFLOW_STATES` is an array, causing the check value to be `undefined` and incorrectly skipping patch.
+- Fix: Switched runtime comparisons/assignments to explicit literal states (`'SUBMITTED'`, `'IN_REVIEW'`) in claim
+  detail auto-transition flow.
+- Rule: Never use array-typed enum lists as keyed objects at runtime; use explicit literals or a dedicated keyed enum
+  object.
 
 ### 2026-04-06 15:22 - `import/order` crash persisted on quality approve mutation despite clean import shape
 

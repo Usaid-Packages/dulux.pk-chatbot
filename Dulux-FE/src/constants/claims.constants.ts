@@ -1,0 +1,7 @@
+export const CLAIM_ACTIONS = {
+  IN_REVIEW: 'IN_REVIEW',
+  QA_REVIEW: 'QA_REVIEW',
+  APPROVE: 'APPROVE',
+  REJECT: 'REJECT',
+  RESUBMIT: 'RESUBMIT',
+} as const;

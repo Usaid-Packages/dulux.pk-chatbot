@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
-import { CLAIM_ISSUE_TYPES, CLAIM_PRIORITIES, CLAIM_STATUSES } from '#/types/claims.types';
+import { CLAIM_ISSUE_TYPES, CLAIM_PRIORITIES, CLAIM_STATUSES, CLAIM_WORKFLOW_STATES } from '#/types/claims.types';
 
 export const claimStatusSchema = z.enum(CLAIM_STATUSES);
 export const claimPrioritySchema = z.enum(CLAIM_PRIORITIES);
+export const claimWorkflowStateSchema = z.enum(CLAIM_WORKFLOW_STATES);
 export const claimIssueTypeSchema = z.enum(CLAIM_ISSUE_TYPES);
 
 export const claimTimelineItemSchema = z.object({
@@ -37,6 +38,7 @@ export const claimListItemSchema = z.object({
   issueType: claimIssueTypeSchema,
   photoCount: z.number().int().nonnegative(),
   submittedAt: z.string().min(1),
+  workflowState: claimWorkflowStateSchema,
   status: claimStatusSchema,
   priority: claimPrioritySchema,
 });

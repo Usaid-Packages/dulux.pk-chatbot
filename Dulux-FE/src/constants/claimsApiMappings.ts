@@ -1,4 +1,4 @@
-import type { ClaimIssueType, ClaimListItem, ClaimListStatusFilter } from '#/types/claims.types';
+import type { ClaimIssueType, ClaimListItem, ClaimListStatusFilter, ClaimWorkflowState } from '#/types/claims.types';
 
 const ISSUE_TYPE_TO_UI_MAP: Record<string, ClaimIssueType> = {
   PEELING_CRACKING: 'PEELING_CRACKING',
@@ -20,6 +20,16 @@ const STATUS_TO_UI_MAP: Record<string, ClaimListItem['status']> = {
   REJECTED: 'rejected',
   RESUBMIT: 'infoRequested',
   RESOLVED: 'resolved',
+};
+
+const WORKFLOW_STATE_MAP: Record<string, ClaimWorkflowState> = {
+  SUBMITTED: 'SUBMITTED',
+  IN_REVIEW: 'IN_REVIEW',
+  QA_REVIEW: 'QA_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  RESUBMIT: 'RESUBMIT',
+  RESOLVED: 'RESOLVED',
 };
 
 const UI_STATUS_TO_API_MAP: Record<Exclude<ClaimListStatusFilter, 'all'>, string> = {
@@ -58,7 +68,13 @@ export const getClaimIssueTypeLabel = (issueType: string): string => {
   return ISSUE_TYPE_LABELS[normalizedIssueType];
 };
 
-export const toUiClaimStatus = (status: string): ClaimListItem['status'] => STATUS_TO_UI_MAP[status] ?? 'pending';
+const normalizeEnumKey = (value: string): string => value.trim().toUpperCase();
+
+export const toUiClaimStatus = (status: string): ClaimListItem['status'] =>
+  STATUS_TO_UI_MAP[normalizeEnumKey(status)] ?? 'pending';
+
+export const toApiClaimWorkflowState = (state: string): ClaimWorkflowState =>
+  WORKFLOW_STATE_MAP[normalizeEnumKey(state)] ?? 'IN_REVIEW';
 
 export const toClaimsStateFilter = (status: ClaimListStatusFilter): string | undefined => {
   if (status === 'all') {
