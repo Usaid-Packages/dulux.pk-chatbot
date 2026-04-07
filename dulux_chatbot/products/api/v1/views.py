@@ -1,12 +1,16 @@
+from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
+from rest_framework.exceptions import ValidationError
 
 from dulux_chatbot.core.permissions import IsAdminUser
 from dulux_chatbot.products.api.v1.serializers import (
+    ProductBasecoatSerializer,
     ProductImageSerializer,
     ProductSerializer,
     SurfaceTypeSerializer,
 )
+from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product, ProductImage, SurfaceType
 
 
@@ -37,6 +41,32 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         if self.request.method in {"PUT", "PATCH", "DELETE"}:
             permissions.append(IsAdminUser())
         return permissions
+
+    def perform_destroy(self, instance: Product) -> None:
+        try:
+            super().perform_destroy(instance)
+        except ProtectedError as exc:
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Product cannot be deleted because it is linked to existing warranty registrations, claims, "
+                        "or product mappings."
+                    )
+                }
+            ) from exc
+
+
+class ProductBasecoatListAPIView(generics.ListAPIView):
+    serializer_class = ProductBasecoatSerializer
+
+    def get_queryset(self):
+        product = get_object_or_404(
+            Product.objects.prefetch_related("basecoat_mappings__basecoat"),
+            pk=self.kwargs.get("pk"),
+        )
+        if product.product_type != ProductType.TOPCOAT:
+            raise ValidationError({"detail": "Basecoat list is only available for TOPCOAT products."})
+        return Product.objects.filter(topcoat_mappings__topcoat=product).order_by("name")
 
 
 class ProductImageListCreateAPIView(generics.ListCreateAPIView):

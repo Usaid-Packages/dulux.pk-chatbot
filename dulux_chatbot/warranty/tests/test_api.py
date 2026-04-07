@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from dulux_chatbot.products.tests.factories import create_product
+from dulux_chatbot.products.tests.factories import create_product, create_product_basecoat
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationChannel, RegistrationState
 from dulux_chatbot.warranty.tests.factories import (
     create_claim,
@@ -64,6 +64,7 @@ class WarrantyRegistrationAPITests(TestCase):
         image = create_image()
         topcoat = create_product(name="API Topcoat")
         basecoat = create_product(name="API Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat)
         self.client.force_authenticate(user=self.cs_user)
         response = self.client.post(
             self.list_url,
@@ -128,6 +129,47 @@ class WarrantyRegistrationAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_registration_rejects_basecoat_not_linked_to_topcoat(self):
+        topcoat = create_product(name="Mapped Topcoat")
+        linked_basecoat = create_product(name="Linked Basecoat", product_type="BASECOAT", warranty_years=3)
+        invalid_basecoat = create_product(name="Invalid Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=linked_basecoat)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "channel": RegistrationChannel.WEB,
+                "customer_name": "Customer Name",
+                "phone_number": "923001010101",
+                "email": "customer@example.com",
+                "city": "Karachi",
+                "province": "Sindh",
+                "site_address": "123 Street",
+                "purchase_date": str(date.today() - timedelta(days=1)),
+                "purchase_dealer": "Dealer",
+                "purchase_dealer_city": "Karachi",
+                "purchase_dealer_address": "Dealer Address",
+                "postal_code": "75000",
+                "notes": "",
+                "paint_pairs": [
+                    {
+                        "topcoat": topcoat.id,
+                        "topcoat_quantity": "10.00",
+                        "basecoat": invalid_basecoat.id,
+                        "basecoat_quantity": "5.00",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["paint_pairs"][0]["basecoat"][0],
+            "Basecoat must be linked to the selected topcoat product.",
+        )
+
     @patch("dulux_chatbot.warranty.api.v1.serializers.generate_and_send_certificate.delay")
     def test_registration_transition_approve(self, delay_mock):
         registration = create_registration()
@@ -154,12 +196,78 @@ class WarrantyRegistrationAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_registration_update_rejects_replacing_claimed_paint_pairs(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        protected_paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=protected_paint_pair, state=ClaimState.SUBMITTED)
+        replacement_topcoat = create_product(name="Replacement Topcoat")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "paint_pairs": [
+                    {
+                        "topcoat": replacement_topcoat.id,
+                        "topcoat_quantity": "12.00",
+                    }
+                ]
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["paint_pairs"],
+            "Paint pairs cannot be replaced because one or more existing paint pairs are already linked to claims.",
+        )
+
+    def test_registration_update_rejects_basecoat_not_linked_to_topcoat(self):
+        registration = create_registration()
+        topcoat = create_product(name="Update Topcoat")
+        linked_basecoat = create_product(name="Update Linked Basecoat", product_type="BASECOAT", warranty_years=3)
+        invalid_basecoat = create_product(name="Update Invalid Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=linked_basecoat)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "paint_pairs": [
+                    {
+                        "topcoat": topcoat.id,
+                        "topcoat_quantity": "12.00",
+                        "basecoat": invalid_basecoat.id,
+                        "basecoat_quantity": "4.00",
+                    }
+                ]
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["paint_pairs"][0]["basecoat"][0],
+            "Basecoat must be linked to the selected topcoat product.",
+        )
+
 
 class WarrantyClaimAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.cs_user = create_cs_user()
         self.list_url = reverse("claim_list_create")
+
+    def test_claim_list_includes_customer_name(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.SUBMITTED)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"][0]["customer_name"], registration.customer_name)
 
     def test_cannot_create_claim_for_non_approved_registration(self):
         registration = create_registration(state=RegistrationState.SUBMITTED)
