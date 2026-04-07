@@ -374,6 +374,22 @@
 - Rule: For this toolchain bug, once one file in a tightly-related new module crashes, proactively harden sibling files
   in that module with minimal scoped overrides to avoid repeated lint interruptions.
 
+### 2026-04-07 11:02 - Inline style slipped into dashboard workload graph
+
+- Issue: A dashboard chart segment initially used inline `style={{ width: ... }}` for dynamic bar width, which violates
+  frontend standards (`No Inline Styles`).
+- Fix: Replaced width styling with SVG `rect` rendering driven by typed percentages.
+- Rule: For data-driven visual widths, use SVG attributes or pre-defined utility classes; avoid inline style objects.
+
+### 2026-04-07 11:12 - `import/order` plugin crash on recharts dashboard components
+
+- Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on the new Recharts dashboard files.
+- Fix: Added a narrowly-scoped ESLint config override to disable only `import/order` for:
+  - `src/components/dashboard/DashboardTrendChart.tsx`
+  - `src/components/dashboard/DashboardWorkloadChart.tsx`
+- Rule: When this known plugin crash persists on specific files, prefer scoped ESLint config overrides over source-file
+  disable comments.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

@@ -30,6 +30,8 @@ export const apiEndpoints = {
   },
   dashboard: {
     summary: `${API_DASHBOARD_V1}/summary/`,
+    cards: `${API_DASHBOARD_V1}/cards/`,
+    analytics: `${API_DASHBOARD_V1}/analytics/`,
   },
   registrations: {
     list: `${API_WARRANTY_V1}/registrations/`,

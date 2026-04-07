@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import dashboardVisual from '#/assets/images/dulux-logo.png';
-import { DashboardGrid } from '#/components/dashboard';
+import { DashboardGrid, DashboardTrendChart, DashboardWorkloadChart } from '#/components/dashboard';
 import { Button } from '#/components/ui/Button';
 import { useDashboard } from '#/hooks';
 
@@ -11,7 +11,7 @@ import { useDashboard } from '#/hooks';
  * @returns Dashboard page component.
  */
 export const DashboardPage = (): JSX.Element => {
-  const { flowCards, isLoading, isError, isRefetching, errorMessage, refetchDashboard } = useDashboard();
+  const { flowCards, analytics, isLoading, isError, isRefetching, errorMessage, refetchDashboard } = useDashboard();
 
   return (
     <div className='mx-auto w-full max-w-[1280px] space-y-6'>
@@ -51,6 +51,16 @@ export const DashboardPage = (): JSX.Element => {
       </section>
 
       <DashboardGrid flows={flowCards} isLoading={isLoading} />
+
+      <section className='space-y-1 pt-2'>
+        <h2 className='card-title'>Performance Insights</h2>
+        <p className='text-sm text-text-muted'>Quick visual trends to monitor submission and queue movement.</p>
+      </section>
+
+      <section className='grid gap-4 lg:grid-cols-2'>
+        <DashboardTrendChart data={analytics.trendSeries} />
+        <DashboardWorkloadChart data={analytics.workloadSeries} />
+      </section>
     </div>
   );
 };

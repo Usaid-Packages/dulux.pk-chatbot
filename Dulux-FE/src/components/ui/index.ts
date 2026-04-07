@@ -19,3 +19,4 @@ export { Skeleton } from './Skeleton';
 export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from './Table';
 export { Textarea } from './Textarea';
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './Dialog';
+export { ImagePreviewGallery } from './ImagePreviewGallery';
