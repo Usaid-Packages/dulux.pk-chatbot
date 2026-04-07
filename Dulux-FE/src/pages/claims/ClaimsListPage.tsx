@@ -121,7 +121,7 @@ export const ClaimsListPage = (): JSX.Element => {
             <Input
               id='claim-search'
               type='search'
-              placeholder='Search by registration or issue'
+              placeholder='Search by registration or phone number'
               value={filters.search ?? ''}
               onChange={event => setSearch(event.target.value)}
             />

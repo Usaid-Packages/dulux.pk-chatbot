@@ -42,6 +42,8 @@
   transition to `IN_REVIEW`.
 - When extending shared detail schemas (for example quality detail extends claim detail), always update every mapper to
   populate newly required fields (for example `workflowState`) before parse.
+- Do not hardcode dashboard chart colors in TSX components; define theme tokens in `src/index.css` and consume via CSS
+  variables.
 
 ## Mistake Log (Short)
 
@@ -389,6 +391,24 @@
   - `src/components/dashboard/DashboardWorkloadChart.tsx`
 - Rule: When this known plugin crash persists on specific files, prefer scoped ESLint config overrides over source-file
   disable comments.
+
+### 2026-04-07 17:35 - Claims list mapper assumed a single payload shape for customer and registration
+
+- Issue: Claims list table showed `N/A` for Customer and Reg. ID because list normalization handled a narrow subset of
+  response key variants and missed alternate/nested forms used by the live API contract in some flows.
+- Fix: Hardened claims list normalization to resolve customer and registration from snake_case/camelCase/top-level and
+  nested `registration` payload variants, with safe scalar/object handling.
+- Rule: For list APIs with evolving serializers, normalize identity/display fields via multi-shape readers and avoid
+  single-key assumptions in list mappers.
+
+### 2026-04-07 18:20 - Dashboard chart palette hardcoded in component constants
+
+- Issue: Dashboard trend/workload chart colors were hardcoded as hex constants inside TSX files, making them harder to
+  theme and inconsistent with token-driven styling.
+- Fix: Moved chart color values into `src/index.css` theme tokens and switched Recharts `stroke`/`fill` props to CSS
+  variable references.
+- Rule: Keep chart palette values in CSS theme tokens (not component-level hex constants) so theme updates remain
+  centralized.
 
 ## Final Check (Before Submit)
 

@@ -8,7 +8,7 @@ const DASHBOARD_STALE_TIME_MS = 1000 * 60 * 5;
 
 export const useDashboardSummaryQuery = (): UseQueryResult<DashboardSummaryResponse, Error> => {
   return useQuery<DashboardSummaryResponse, Error>({
-    queryKey: [queryKeys.dashboard.summary],
+    queryKey: queryKeys.dashboard.summary,
     queryFn: getDashboardSummary,
     staleTime: DASHBOARD_STALE_TIME_MS,
   });

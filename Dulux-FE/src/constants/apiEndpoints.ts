@@ -1,6 +1,5 @@
 const API_USERS_V1 = '/api/v1/users';
 const API_CORE_V1 = '/api/v1/core';
-const API_DASHBOARD_V1 = '/dashboard/api/v1';
 const API_WARRANTY_V1 = '/api/v1/warranty';
 const API_PRODUCTS_V1 = '/api/v1/products';
 const API_COMPLAINTS_V1 = '/complaints';
@@ -29,9 +28,8 @@ export const apiEndpoints = {
     requestInfo: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
   },
   dashboard: {
-    summary: `${API_DASHBOARD_V1}/summary/`,
-    cards: `${API_DASHBOARD_V1}/cards/`,
-    analytics: `${API_DASHBOARD_V1}/analytics/`,
+    cards: `${API_USERS_V1}/cards/`,
+    analytics: `${API_USERS_V1}/analytics/`,
   },
   registrations: {
     list: `${API_WARRANTY_V1}/registrations/`,

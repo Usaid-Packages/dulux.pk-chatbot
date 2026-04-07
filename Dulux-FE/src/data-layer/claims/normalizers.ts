@@ -36,6 +36,53 @@ const readSubmittedAt = (claim: ApiClaimListItem | ApiClaimDetail): string =>
   );
 const readState = (claim: ApiClaimListItem | ApiClaimDetail): string =>
   asString((claim as { state?: string; status?: string }).state ?? (claim as { status?: string }).status, 'SUBMITTED');
+const readRegistrationSummary = (
+  claim: ApiClaimListItem
+):
+  | {
+      customerName?: string;
+      registrationNumber?: string | number;
+      registrationCode?: string | number;
+      id?: string | number;
+    }
+  | undefined => {
+  const registration = (claim as ApiClaimListItem & { registration?: unknown }).registration;
+  if (!registration || typeof registration !== 'object') {
+    return undefined;
+  }
+
+  return registration as {
+    customerName?: string;
+    registrationNumber?: string | number;
+    registrationCode?: string | number;
+    id?: string | number;
+  };
+};
+const readListCustomerName = (claim: ApiClaimListItem): string => {
+  const registration = readRegistrationSummary(claim);
+  const claimWithAliases = claim as ApiClaimListItem & {
+    customerName?: string;
+    customer?: string;
+  };
+  return asString(claimWithAliases.customerName ?? claimWithAliases.customer ?? registration?.customerName);
+};
+const readListRegistrationId = (claim: ApiClaimListItem): string => {
+  const registration = readRegistrationSummary(claim);
+  const claimWithAliases = claim as ApiClaimListItem & {
+    registrationNumber?: string | number;
+    registrationId?: string | number;
+    registration?: string | number;
+  };
+  return asIdString(
+    claimWithAliases.registrationNumber ??
+      claimWithAliases.registrationId ??
+      claimWithAliases.registrationCode ??
+      claimWithAliases.registration ??
+      registration?.registrationNumber ??
+      registration?.registrationCode ??
+      registration?.id
+  );
+};
 const readRegistrationCode = (claim: ApiClaimDetail): string =>
   asString(
     (claim.registration as { registration_code?: string; registrationCode?: string } | undefined)?.registration_code ??
@@ -48,8 +95,8 @@ const toClaimListItem = (claim: ApiClaimListItem): ClaimListItem =>
   claimListItemSchema.parse({
     id: String(claim.id),
     claimNumber: toClaimNumber(claim.id),
-    customerName: UNKNOWN_VALUE,
-    registrationId: claim.registration_number ?? claim.registration_code ?? UNKNOWN_VALUE,
+    customerName: readListCustomerName(claim),
+    registrationId: readListRegistrationId(claim),
     issueType: toUiClaimIssueType(readIssueType(claim)),
     photoCount: 0,
     submittedAt: readSubmittedAt(claim),

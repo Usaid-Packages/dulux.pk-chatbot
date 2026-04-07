@@ -34,15 +34,27 @@ export const DashboardWorkloadChart = ({ data }: DashboardWorkloadChartProps): J
             <XAxis dataKey='module' tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} />
             <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} />
             <Tooltip />
-            <Bar dataKey='pending' name='Pending' stackId='queue' fill='var(--color-chart-4)' radius={[6, 6, 0, 0]} />
+            <Bar
+              dataKey='pending'
+              name='Pending'
+              stackId='queue'
+              fill='var(--color-dashboard-workload-pending)'
+              radius={[6, 6, 0, 0]}
+            />
             <Bar
               dataKey='inReview'
               name='In Review'
               stackId='queue'
-              fill='var(--color-chart-3)'
+              fill='var(--color-dashboard-workload-inReview)'
               radius={[6, 6, 0, 0]}
             />
-            <Bar dataKey='resolved' name='Resolved' stackId='queue' fill='var(--color-chart-2)' radius={[6, 6, 0, 0]} />
+            <Bar
+              dataKey='resolved'
+              name='Resolved'
+              stackId='queue'
+              fill='var(--color-dashboard-workload-resolved)'
+              radius={[6, 6, 0, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
