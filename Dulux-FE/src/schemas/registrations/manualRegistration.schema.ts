@@ -16,6 +16,19 @@ const fileSchema = z
     'Only JPG, PNG, or PDF files are allowed.'
   );
 
+const paintPairSchema = z.object({
+  topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
+  topcoatQuantity: z
+    .string()
+    .trim()
+    .min(1, 'Topcoat quantity is required.')
+    .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
+  basecoatProductId: z.string().trim(),
+  basecoatQuantity: z.string().trim(),
+  topcoatInvoice: fileSchema,
+  basecoatInvoice: fileSchema.nullable(),
+});
+
 const manualRegistrationBaseSchema = z.object({
   customerName: z.string().trim().min(2, 'Customer name is required.'),
   phoneNumber: z
@@ -28,7 +41,12 @@ const manualRegistrationBaseSchema = z.object({
   city: z.string().trim().min(2, 'City is required.'),
   province: z.string().trim().min(2, 'Province is required.'),
   siteAddress: z.string().trim().min(5, 'Site address is required.'),
-  postalCode: z.string().trim().min(3, 'Postal code is required.'),
+  postalCode: z
+    .string()
+    .trim()
+    .refine(value => value.length === 0 || value.length >= 3, {
+      message: 'Postal code must be at least 3 characters.',
+    }),
   purchaseDate: z.string().trim().min(1, 'Purchase date is required.'),
   purchaseDealer: z.string().trim().min(2, 'Dealer name is required.'),
   purchaseDealerCity: z.string().trim().min(2, 'Dealer city is required.'),
@@ -44,40 +62,59 @@ const manualRegistrationBaseSchema = z.object({
   basecoatQuantity: z.string().trim(),
   topcoatInvoice: fileSchema,
   basecoatInvoice: fileSchema.nullable(),
+  additionalPaintPairs: z.array(paintPairSchema).default([]),
 });
 
 export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine((values, context) => {
-  if (values.basecoatProductId && !values.basecoatQuantity) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['basecoatQuantity'],
-      message: 'Basecoat quantity is required when basecoat is selected.',
-    });
-  }
+  const allPairs = [
+    {
+      topcoatProductId: values.topcoatProductId,
+      topcoatQuantity: values.topcoatQuantity,
+      basecoatProductId: values.basecoatProductId,
+      basecoatQuantity: values.basecoatQuantity,
+      topcoatInvoice: values.topcoatInvoice,
+      basecoatInvoice: values.basecoatInvoice,
+      rootPath: [] as Array<string | number>,
+    },
+    ...values.additionalPaintPairs.map((pair, index) => ({
+      ...pair,
+      rootPath: ['additionalPaintPairs', index] as Array<string | number>,
+    })),
+  ];
 
-  if (values.basecoatQuantity && !values.basecoatProductId) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['basecoatProductId'],
-      message: 'Select a basecoat product before adding quantity.',
-    });
-  }
+  allPairs.forEach(pair => {
+    if (pair.basecoatProductId && !pair.basecoatQuantity) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'basecoatQuantity'],
+        message: 'Basecoat quantity is required when basecoat is selected.',
+      });
+    }
 
-  if (values.basecoatQuantity && !quantityPattern.test(values.basecoatQuantity)) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['basecoatQuantity'],
-      message: 'Enter a valid quantity (e.g., 5 or 5.5).',
-    });
-  }
+    if (pair.basecoatQuantity && !pair.basecoatProductId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'basecoatProductId'],
+        message: 'Select a basecoat product before adding quantity.',
+      });
+    }
 
-  if (values.basecoatProductId && !values.basecoatInvoice) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['basecoatInvoice'],
-      message: 'Basecoat invoice is required when basecoat is selected.',
-    });
-  }
+    if (pair.basecoatQuantity && !quantityPattern.test(pair.basecoatQuantity)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'basecoatQuantity'],
+        message: 'Enter a valid quantity (e.g., 5 or 5.5).',
+      });
+    }
+
+    if (pair.basecoatProductId && !pair.basecoatInvoice) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'basecoatInvoice'],
+        message: 'Basecoat invoice is required when basecoat is selected.',
+      });
+    }
+  });
 });
 
 export const manualRegistrationStep1Schema = manualRegistrationBaseSchema.pick({
@@ -103,12 +140,14 @@ export const manualRegistrationStep3Schema = manualRegistrationBaseSchema.pick({
   topcoatQuantity: true,
   basecoatProductId: true,
   basecoatQuantity: true,
+  additionalPaintPairs: true,
 });
 
 export const manualRegistrationStep4Schema = manualRegistrationBaseSchema.pick({
   topcoatInvoice: true,
   basecoatInvoice: true,
   basecoatProductId: true,
+  additionalPaintPairs: true,
 });
 
 export type ManualRegistrationSchemaValues = z.infer<typeof manualRegistrationSchema>;

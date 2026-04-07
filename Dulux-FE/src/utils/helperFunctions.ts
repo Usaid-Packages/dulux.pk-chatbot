@@ -91,28 +91,31 @@ export const normalizeRegistrationsListResponse = (
 };
 
 export const normalizeRegistrationDetailResponse = (response: RegistrationDetailApiResponse): RegistrationDetail => {
-  const normalizedPaintPairs = (response.paintPairs ?? []).map(pair => {
+  const normalizedPaintPairs = (response.paintPairs ?? response.paint_pairs ?? []).map(pair => {
+    const topcoatId = pair.topcoat ?? pair.topcoatId ?? pair.topcoat_id ?? 0;
+    const basecoatId = pair.basecoat ?? pair.basecoatId ?? pair.basecoat_id;
+
     return {
       id: pair.id ?? 0,
       topcoat: {
-        id: pair.topcoat ?? 0,
-        name: pair.topcoatName ?? '',
+        id: topcoatId,
+        name: pair.topcoatName ?? pair.topcoat_name ?? '',
         productType: 'TOPCOAT',
       },
-      topcoatQuantity: pair.topcoatQuantity ?? '',
+      topcoatQuantity: pair.topcoatQuantity ?? pair.topcoat_quantity ?? '',
       basecoat:
-        pair.basecoat === null || pair.basecoat === undefined
+        basecoatId === null || basecoatId === undefined
           ? null
           : {
-              id: pair.basecoat,
-              name: pair.basecoatName ?? '',
+              id: basecoatId,
+              name: pair.basecoatName ?? pair.basecoat_name ?? '',
               productType: 'BASECOAT',
             },
-      basecoatQuantity: pair.basecoatQuantity ?? null,
+      basecoatQuantity: pair.basecoatQuantity ?? pair.basecoat_quantity ?? null,
     };
   });
 
-  const normalizedInvoices = (response.paintPairInvoices ?? []).map(invoice => {
+  const normalizedInvoices = (response.paintPairInvoices ?? response.paint_pair_invoices ?? []).map(invoice => {
     return {
       id: invoice.id ?? 0,
       image: {

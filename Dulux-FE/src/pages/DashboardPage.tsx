@@ -46,8 +46,8 @@ export const DashboardPage = (): JSX.Element => {
       )}
 
       <section className='space-y-1'>
-        <h2 className='card-title'>Modules</h2>
-        <p className='text-sm text-text-muted'>Each card includes module stats and links to the module page.</p>
+        <h2 className='card-title'>Operational Overview</h2>
+        <p className='text-sm text-text-muted'>Open a workflow area instantly and review its latest queue stats.</p>
       </section>
 
       <DashboardGrid flows={flowCards} isLoading={isLoading} />

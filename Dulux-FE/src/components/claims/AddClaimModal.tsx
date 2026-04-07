@@ -20,13 +20,10 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
-import {
-  useGetManualRegistrationProductsQuery,
-  useGetRegistrationByIdQuery,
-  useGetRegistrationsQuery,
-} from '#/data-layer/registrations';
+import { useGetRegistrationByIdQuery, useGetRegistrationsQuery } from '#/data-layer/registrations';
 import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.schema';
 import type { CreateClaimPayload } from '#/types/claims.types';
+import type { RegistrationPaintPair } from '#/types/registrations';
 
 interface AddClaimModalProps {
   isOpen: boolean;
@@ -36,6 +33,7 @@ interface AddClaimModalProps {
 }
 
 const NO_BASECOAT_OPTION_VALUE = 'NONE';
+const EMPTY_PAINT_PAIRS: RegistrationPaintPair[] = [];
 
 const ISSUE_TYPE_OPTIONS: ReadonlyArray<{ label: string; value: CreateClaimFormValues['issueType'] }> = [
   { label: 'Peeling / Cracking', value: 'PEELING_CRACKING' },
@@ -71,7 +69,6 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     state: 'APPROVED',
     ordering: '-created',
   });
-  const productsQuery = useGetManualRegistrationProductsQuery();
 
   const {
     register,
@@ -104,6 +101,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
   const alternateAnglePhoto = useWatch({ control, name: 'alternateAnglePhoto' });
 
   const registrationDetailQuery = useGetRegistrationByIdQuery(registrationId);
+  const registrationPaintPairs = registrationDetailQuery.data?.paintPairs ?? EMPTY_PAINT_PAIRS;
 
   const registrationOptions = useMemo(() => {
     return (registrationsQuery.data?.results ?? []).map(registration => ({
@@ -111,6 +109,50 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
       label: `${registration.registrationCode} - ${registration.customerName}`,
     }));
   }, [registrationsQuery.data?.results]);
+
+  const topcoatOptions = useMemo(() => {
+    const topcoatMap = new Map<number, string>();
+
+    registrationPaintPairs.forEach(pair => {
+      if (!topcoatMap.has(pair.topcoat.id)) {
+        topcoatMap.set(pair.topcoat.id, pair.topcoat.name);
+      }
+    });
+
+    return Array.from(topcoatMap.entries()).map(([id, label]) => ({
+      id: String(id),
+      label,
+    }));
+  }, [registrationPaintPairs]);
+
+  const selectedTopcoatId = toNumericId(topcoatProductId);
+
+  const basecoatOptions = useMemo(() => {
+    if (selectedTopcoatId === null) {
+      return {
+        hasNoBasecoat: false,
+        items: [] as Array<{ id: string; label: string }>,
+      };
+    }
+
+    const selectedTopcoatPairs = registrationPaintPairs.filter(pair => pair.topcoat.id === selectedTopcoatId);
+    const hasNoBasecoat = selectedTopcoatPairs.some(pair => pair.basecoat === null);
+    const basecoatMap = new Map<number, string>();
+
+    selectedTopcoatPairs.forEach(pair => {
+      if (pair.basecoat && !basecoatMap.has(pair.basecoat.id)) {
+        basecoatMap.set(pair.basecoat.id, pair.basecoat.name);
+      }
+    });
+
+    return {
+      hasNoBasecoat,
+      items: Array.from(basecoatMap.entries()).map(([id, label]) => ({
+        id: String(id),
+        label,
+      })),
+    };
+  }, [registrationPaintPairs, selectedTopcoatId]);
 
   const selectedPaintPairId = useMemo(() => {
     if (!registrationDetailQuery.data) {
@@ -130,7 +172,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     });
 
     return matchingPaintPair ? String(matchingPaintPair.id) : '';
-  }, [registrationDetailQuery.data, topcoatProductId, basecoatProductId]);
+  }, [registrationPaintPairs, topcoatProductId, basecoatProductId]);
 
   useEffect(() => {
     setValue('paintPairId', selectedPaintPairId, {
@@ -139,6 +181,25 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
       shouldTouch: true,
     });
   }, [selectedPaintPairId, setValue]);
+
+  useEffect(() => {
+    setValue('topcoatProductId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+  }, [registrationId, setValue]);
+
+  useEffect(() => {
+    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+  }, [topcoatProductId, setValue]);
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -263,12 +324,20 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id='claim-topcoat'>
-                      <SelectValue placeholder={productsQuery.isLoading ? 'Loading topcoats...' : 'Select topcoat'} />
+                      <SelectValue
+                        placeholder={
+                          registrationId
+                            ? registrationDetailQuery.isLoading
+                              ? 'Loading topcoats...'
+                              : 'Select topcoat'
+                            : 'Select registration first'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {(productsQuery.data?.topcoatProducts ?? []).map(product => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.label}
+                      {topcoatOptions.map(option => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -290,13 +359,23 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id='claim-basecoat'>
-                      <SelectValue placeholder={productsQuery.isLoading ? 'Loading basecoats...' : 'Select basecoat'} />
+                      <SelectValue
+                        placeholder={
+                          topcoatProductId
+                            ? registrationDetailQuery.isLoading
+                              ? 'Loading basecoats...'
+                              : 'Select basecoat'
+                            : 'Select topcoat first'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={NO_BASECOAT_OPTION_VALUE}>No basecoat</SelectItem>
-                      {(productsQuery.data?.basecoatProducts ?? []).map(product => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.label}
+                      {basecoatOptions.hasNoBasecoat ? (
+                        <SelectItem value={NO_BASECOAT_OPTION_VALUE}>No basecoat</SelectItem>
+                      ) : null}
+                      {basecoatOptions.items.map(option => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -378,7 +457,9 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             </Button>
             <Button
               type='submit'
-              disabled={isSubmitting || Boolean(registrationDetailQuery.isFetching && registrationId)}
+              disabled={
+                isSubmitting || Boolean(registrationDetailQuery.isFetching && registrationId) || !selectedPaintPairId
+              }
             >
               {isSubmitting ? 'Creating...' : 'Create Claim'}
             </Button>

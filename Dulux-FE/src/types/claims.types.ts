@@ -122,8 +122,6 @@ export interface ApproveClaimPayload extends Record<string, unknown> {
 export interface SendToQualityPayload extends Record<string, unknown> {
   id: string;
   notes: string;
-  priority: ClaimPriority;
-  verificationPackSummary: string;
 }
 
 export interface RejectClaimPayload extends Record<string, unknown> {
