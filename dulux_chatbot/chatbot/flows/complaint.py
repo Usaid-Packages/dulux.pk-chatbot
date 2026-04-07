@@ -94,7 +94,11 @@ class ComplaintFlow(BaseFlow):
         )
         self._save_data("complaint_id", complaint.id)
         self.client.send_text(
-            self.session.phone_number, f"Complaint created successfully. Complaint id: {complaint.id}."
+            self.session.phone_number,
+            (
+                "Complaint created successfully. Customer Support Representative will contact you soon. "
+                "Please wait for a minute or two."
+            ),
         )
         self._advance_to("chat")
 
@@ -121,4 +125,3 @@ class ComplaintFlow(BaseFlow):
                 },
             },
         )
-        self.client.send_text(self.session.phone_number, "Your message has been shared with the support team.")
