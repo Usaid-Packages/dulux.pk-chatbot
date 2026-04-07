@@ -7,6 +7,7 @@ export interface ApiPaginationResponse<T> {
 
 export interface ApiClaimListItem {
   id: number;
+  customer_name?: string;
   registration_number?: string;
   registration_code?: string;
   topcoat_name?: string;

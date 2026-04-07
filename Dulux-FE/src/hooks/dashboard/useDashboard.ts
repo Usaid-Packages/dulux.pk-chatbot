@@ -1,5 +1,4 @@
-import { DASHBOARD_ANALYTICS_MOCK, DASHBOARD_SUMMARY_FALLBACK } from '#/constants';
-import { useDashboardSummaryQuery } from '#/data-layer/dashboard';
+import { useDashboardAnalyticsQuery, useDashboardSummaryQuery } from '#/data-layer/dashboard';
 import type { DashboardAnalyticsModel, DashboardFlowCardModel } from '#/types/dashboard.types';
 import { getApiErrorMessage } from '#/utils';
 import { mapDashboardCards } from './dashboardHelpers';
@@ -14,20 +13,31 @@ interface UseDashboardResult {
   refetchDashboard: () => void;
 }
 
-export const useDashboard = (): UseDashboardResult => {
-  const { data, isLoading, isError, isRefetching, error, refetch } = useDashboardSummaryQuery();
+const EMPTY_ANALYTICS: DashboardAnalyticsModel = {
+  trendSeries: [],
+  workloadSeries: [],
+};
 
-  const summary = data ?? DASHBOARD_SUMMARY_FALLBACK;
-  const flowCards = mapDashboardCards(summary);
-  const errorMessage = isError ? getApiErrorMessage(error) : '';
+export const useDashboard = (): UseDashboardResult => {
+  const summaryQuery = useDashboardSummaryQuery();
+  const analyticsQuery = useDashboardAnalyticsQuery();
+
+  const flowCards = summaryQuery.data ? mapDashboardCards(summaryQuery.data) : [];
+  const analytics = analyticsQuery.data ?? EMPTY_ANALYTICS;
+  const combinedError = summaryQuery.error ?? analyticsQuery.error;
+  const isError = summaryQuery.isError || analyticsQuery.isError;
+  const isLoading = summaryQuery.isLoading || analyticsQuery.isLoading;
+  const isRefetching = summaryQuery.isRefetching || analyticsQuery.isRefetching;
+  const errorMessage = combinedError ? getApiErrorMessage(combinedError) : '';
 
   const refetchDashboard = (): void => {
-    void refetch();
+    void summaryQuery.refetch();
+    void analyticsQuery.refetch();
   };
 
   return {
     flowCards,
-    analytics: DASHBOARD_ANALYTICS_MOCK,
+    analytics,
     isLoading,
     isError,
     isRefetching,

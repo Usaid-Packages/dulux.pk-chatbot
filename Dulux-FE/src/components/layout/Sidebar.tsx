@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
+import duluxLogo from '#/assets/images/dulux-logo.png';
 import { Button } from '#/components/ui/Button';
 import { SIDEBAR_NAV_ITEMS } from '#/constants';
 import { useAuthContext } from '#/context';
@@ -67,9 +68,7 @@ export const Sidebar = (): JSX.Element => {
   return (
     <aside className='flex w-[240px] shrink-0 flex-col overflow-y-auto border-r border-sidebar-borderColor bg-sidebar-bg'>
       <div className='flex items-center gap-[10px] border-b border-sidebar-borderColor px-5 pb-4 pt-5'>
-        <div className='flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white'>
-          D
-        </div>
+        <img src={duluxLogo} alt='Dulux logo' className='h-8 w-8 rounded-md object-cover' />
         <div className='flex min-w-0 flex-col'>
           <h1 className='truncate text-sm font-bold text-white'>Dulux CS</h1>
           <p className='text-[10px] text-text-faint'>Warranty Ops</p>

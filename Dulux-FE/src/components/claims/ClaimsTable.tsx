@@ -38,9 +38,9 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
               <TableCell>
                 <span className='chip-claim'>{claim.claimNumber}</span>
               </TableCell>
-              <TableCell>{claim.customerName}</TableCell>
+              <TableCell>{claim.customerName || 'N/A'}</TableCell>
               <TableCell>
-                <span className='chip-reg'>{claim.registrationId}</span>
+                <span className='chip-reg'>{claim.registrationId || 'N/A'}</span>
               </TableCell>
               <TableCell>{getClaimIssueTypeLabel(claim.issueType)}</TableCell>
               <TableCell>{formatDate(claim.submittedAt)}</TableCell>

@@ -27,12 +27,9 @@ export const DashboardTrendChart = ({ data }: DashboardTrendChartProps): JSX.Ele
 
   return (
     <section className='card'>
-      <div className='flex items-start justify-between gap-3'>
-        <div>
-          <h3 className='card-title'>Weekly Submissions Trend</h3>
-          <p className='mt-1 text-sm text-text-muted'>Registrations vs claims created in the last 7 days.</p>
-        </div>
-        <div className='rounded-md bg-surface-muted px-3 py-1 text-xs font-semibold text-text-muted'>Mock Data</div>
+      <div>
+        <h3 className='card-title'>Weekly Submissions Trend</h3>
+        <p className='mt-1 text-sm text-text-muted'>Registrations vs claims created in the last 7 days.</p>
       </div>
 
       <div className='mt-4 overflow-hidden rounded-lg border border-border bg-surface-subtle p-3'>
@@ -48,7 +45,7 @@ export const DashboardTrendChart = ({ data }: DashboardTrendChartProps): JSX.Ele
                 type='monotone'
                 dataKey='registrations'
                 name='Registrations'
-                stroke='var(--color-chart-1)'
+                stroke='var(--color-dashboard-trend-registrations)'
                 strokeWidth={3}
                 dot={{ r: 3 }}
                 activeDot={{ r: 5 }}
@@ -57,7 +54,7 @@ export const DashboardTrendChart = ({ data }: DashboardTrendChartProps): JSX.Ele
                 type='monotone'
                 dataKey='claims'
                 name='Claims'
-                stroke='var(--color-chart-2)'
+                stroke='var(--color-dashboard-trend-claims)'
                 strokeWidth={3}
                 dot={{ r: 3 }}
                 activeDot={{ r: 5 }}

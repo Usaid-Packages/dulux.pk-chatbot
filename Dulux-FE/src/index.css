@@ -131,6 +131,11 @@
   --color-border-light: var(--border-light);
   --color-border-muted: var(--border-muted);
   --color-border-strong: var(--border-strong);
+  --color-dashboard-trend-registrations: var(--dashboard-trend-registrations);
+  --color-dashboard-trend-claims: var(--dashboard-trend-claims);
+  --color-dashboard-workload-pending: var(--dashboard-workload-pending);
+  --color-dashboard-workload-inReview: var(--dashboard-workload-inReview);
+  --color-dashboard-workload-resolved: var(--dashboard-workload-resolved);
 
   --color-status-pending-bg: var(--status-pending-bg);
 
@@ -365,6 +370,11 @@
   --border-muted: #eeeeee;
 
   --border-strong: #dddddd;
+  --dashboard-trend-registrations: #1d5fae;
+  --dashboard-trend-claims: #4a90d9;
+  --dashboard-workload-pending: #97c0ef;
+  --dashboard-workload-inReview: #4a90d9;
+  --dashboard-workload-resolved: #1d5fae;
 
   --status-pending-bg: #fef3c7;
 
@@ -684,6 +694,11 @@
   --chip-reg-bg: #1e2f44;
 
   --chip-reg-text: #8ec0ff;
+  --dashboard-trend-registrations: #7fb4ee;
+  --dashboard-trend-claims: #4a90d9;
+  --dashboard-workload-pending: #7fb4ee;
+  --dashboard-workload-inReview: #4a90d9;
+  --dashboard-workload-resolved: #1d5fae;
 }
 
 /* ---break---

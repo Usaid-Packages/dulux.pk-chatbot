@@ -23,6 +23,8 @@ export interface DashboardSummaryResponse {
   flows: Record<DashboardFlowId, DashboardFlowStats>;
 }
 
+export type DashboardWindowDays = 7 | 14 | 30;
+
 export interface DashboardFlowConfig {
   id: DashboardFlowId;
   title: string;
@@ -58,4 +60,13 @@ export interface DashboardWorkloadPoint {
 export interface DashboardAnalyticsModel {
   trendSeries: DashboardTrendPoint[];
   workloadSeries: DashboardWorkloadPoint[];
+}
+
+export interface DashboardCardsQuery {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface DashboardAnalyticsQuery {
+  windowDays?: DashboardWindowDays;
 }

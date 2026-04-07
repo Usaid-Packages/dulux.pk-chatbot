@@ -34,9 +34,9 @@ export const queryKeys = {
     escalate: ['complaints', 'escalate'] as const,
   },
   dashboard: {
-    summary: 'dashboard-summary',
-    cards: 'dashboard-cards',
-    analytics: 'dashboard-analytics',
+    all: ['dashboard'] as const,
+    summary: ['dashboard', 'cards'] as const,
+    analytics: (windowDays: number) => ['dashboard', 'analytics', windowDays] as const,
   },
   registrations: {
     all: ['registrations'] as const,

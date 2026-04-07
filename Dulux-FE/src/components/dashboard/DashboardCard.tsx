@@ -47,8 +47,6 @@ export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
             <p className='mt-1 text-lg font-bold text-text-primary'>{stats[1].value}</p>
           </div>
         </div>
-
-        <p className='mt-4 text-sm font-semibold text-primary underline-offset-2 group-hover:underline'>Open module</p>
       </Link>
     </article>
   );

@@ -1,43 +1,36 @@
 import { apiEndpoints, GET } from '#/constants';
-import { DASHBOARD_SUMMARY_FALLBACK } from '#/constants/dashboardFlowConfigs';
-import { dashboardSummarySchema } from '#/schemas/dashboardSchemas';
-import type { DashboardSummaryResponse } from '#/types/dashboard.types';
-import value from '#env';
+import { dashboardAnalyticsSchema, dashboardSummarySchema } from '#/schemas/dashboardSchemas';
+import type {
+  DashboardAnalyticsModel,
+  DashboardAnalyticsQuery,
+  DashboardCardsQuery,
+  DashboardSummaryResponse,
+} from '#/types/dashboard.types';
 import { performRequest } from './apiClient';
 
-const NETWORK_ERROR_CODE = 'ERR_NETWORK';
+const DEFAULT_WINDOW_DAYS = 7;
 
-const shouldUseMockDashboard = (): boolean => {
-  const rawValue = value.VITE_DASHBOARD_MOCK_ENABLED;
-  return rawValue === undefined || String(rawValue).toLowerCase() === 'true';
-};
+export const getDashboardSummary = async (params?: DashboardCardsQuery): Promise<DashboardSummaryResponse> => {
+  const response = await performRequest<unknown, undefined, { date_from?: string; date_to?: string }>({
+    method: GET,
+    url: apiEndpoints.dashboard.cards,
+    params: {
+      date_from: params?.dateFrom,
+      date_to: params?.dateTo,
+    },
+  });
 
-const isNetworkError = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-
-  const typedError = error as { code?: string };
-  return typedError.code === NETWORK_ERROR_CODE;
-};
-
-const validateDashboardSummary = (response: unknown): DashboardSummaryResponse => {
   return dashboardSummarySchema.parse(response);
 };
 
-export const getDashboardSummary = async (): Promise<DashboardSummaryResponse> => {
-  try {
-    const response = await performRequest<unknown>({
-      method: GET,
-      url: apiEndpoints.dashboard.cards,
-    });
+export const getDashboardAnalytics = async (params?: DashboardAnalyticsQuery): Promise<DashboardAnalyticsModel> => {
+  const response = await performRequest<unknown, undefined, { window_days: number }>({
+    method: GET,
+    url: apiEndpoints.dashboard.analytics,
+    params: {
+      window_days: params?.windowDays ?? DEFAULT_WINDOW_DAYS,
+    },
+  });
 
-    return validateDashboardSummary(response);
-  } catch (error) {
-    if (shouldUseMockDashboard() && isNetworkError(error)) {
-      return DASHBOARD_SUMMARY_FALLBACK;
-    }
-
-    throw error;
-  }
+  return dashboardAnalyticsSchema.parse(response);
 };

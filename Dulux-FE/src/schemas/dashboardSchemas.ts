@@ -21,3 +21,21 @@ export const dashboardSummarySchema = z.object({
     productCatalog: dashboardFlowStatsSchema,
   }),
 });
+
+const dashboardTrendPointSchema = z.object({
+  day: z.string().min(1),
+  registrations: z.number().int().nonnegative(),
+  claims: z.number().int().nonnegative(),
+});
+
+const dashboardWorkloadPointSchema = z.object({
+  module: z.string().min(1),
+  pending: z.number().int().nonnegative(),
+  inReview: z.number().int().nonnegative(),
+  resolved: z.number().int().nonnegative(),
+});
+
+export const dashboardAnalyticsSchema = z.object({
+  trendSeries: dashboardTrendPointSchema.array(),
+  workloadSeries: dashboardWorkloadPointSchema.array(),
+});
