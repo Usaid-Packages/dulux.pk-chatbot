@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from dulux_chatbot.products.models import Product, ProductImage, ProductSurfaceMapping, SurfaceType
+from dulux_chatbot.products.models import Product, ProductBasecoat, ProductImage, ProductSurfaceMapping, SurfaceType
 
 
 @admin.action(description="Activate selected products")
@@ -19,6 +19,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ("product_type", "is_active")
     list_editable = ("is_active",)
     search_fields = ("name",)
+    raw_id_fields = ("basecoats",)
     actions = (activate_products, deactivate_products)
 
 
@@ -39,3 +40,9 @@ class SurfaceTypeAdmin(admin.ModelAdmin):
 class ProductSurfaceMappingAdmin(admin.ModelAdmin):
     list_display = ("id", "product", "surface_type", "created")
     raw_id_fields = ("product", "surface_type")
+
+
+@admin.register(ProductBasecoat)
+class ProductBasecoatAdmin(admin.ModelAdmin):
+    list_display = ("id", "topcoat", "basecoat", "created")
+    raw_id_fields = ("topcoat", "basecoat")

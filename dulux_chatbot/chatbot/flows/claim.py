@@ -1,12 +1,27 @@
 from django.db import transaction
 
 from dulux_chatbot.chatbot.flows.base import BaseFlow
-from dulux_chatbot.warranty.choices import IssueType, PhotoType, RegistrationState
+from dulux_chatbot.warranty.choices import ClaimState, IssueType, PhotoType, RegistrationState
 from dulux_chatbot.warranty.models import ClaimImage, RegistrationPaintPair, WarrantyClaim, WarrantyRegistration
 
 
 class ClaimFlow(BaseFlow):
     initial_step = "registration_lookup"
+    BLOCKING_CLAIM_STATES = (
+        ClaimState.SUBMITTED,
+        ClaimState.IN_REVIEW,
+        ClaimState.QA_REVIEW,
+        ClaimState.APPROVED,
+    )
+    ISSUE_TYPE_OPTIONS = [
+        ("1", IssueType.PEELING_CRACKING),
+        ("2", IssueType.COLOR_FADING),
+        ("3", IssueType.ALGAE_FUNGUS),
+        ("4", IssueType.WATER_INGRESS),
+        ("5", IssueType.COVERAGE_VARIANCE),
+        ("6", IssueType.NON_UNIFORM_FINISH),
+        ("7", IssueType.OTHERS),
+    ]
 
     def prompt_registration_lookup(self) -> None:
         self._send_step_prompt("Please share the registration code for the claim.")
@@ -14,8 +29,14 @@ class ClaimFlow(BaseFlow):
     def prompt_paint_pair_select(self) -> None:
         self._send_step_prompt("Please share the topcoat product name for the claim.")
 
-    def prompt_issue_type(self) -> None:
-        self._send_step_prompt("Please share the issue type.")
+    def prompt_issue_type(self, error_message: str = "") -> None:
+        lines = []
+        if error_message:
+            lines.append(error_message)
+            lines.append("")
+        lines.append("Please select the issue type:")
+        lines.extend(f"{option}. {issue_type.label}" for option, issue_type in self.ISSUE_TYPE_OPTIONS)
+        self._send_step_prompt("\n".join(lines))
 
     def prompt_affected_area(self) -> None:
         self._send_step_prompt("Please share the affected area in square feet.")
@@ -31,9 +52,12 @@ class ClaimFlow(BaseFlow):
 
     def handle_registration_lookup(self, message: dict) -> None:
         code = self._get_text(message)
+        if not code:
+            self._send_validation_error("Please share a valid registration code.")
+            return
         registration = WarrantyRegistration.objects.filter(registration_code=code).first()
         if registration is None or registration.state != RegistrationState.APPROVED:
-            self.client.send_text(self.session.phone_number, "Approved registration not found.")
+            self._send_validation_error("Approved registration not found.")
             return
         self._save_data("registration_id", registration.id)
         self.prompt_paint_pair_select()
@@ -43,7 +67,7 @@ class ClaimFlow(BaseFlow):
         product_name = self._get_text(message)
         registration_id = (self.session.session_data or {}).get("registration_id")
         if not product_name:
-            self.client.send_text(self.session.phone_number, "Please share a valid topcoat product name.")
+            self._send_validation_error("Please share a valid topcoat product name.")
             return
         paint_pair = (
             RegistrationPaintPair.objects.select_related("topcoat")
@@ -54,28 +78,37 @@ class ClaimFlow(BaseFlow):
             .first()
         )
         if paint_pair is None:
-            self.client.send_text(self.session.phone_number, "Topcoat product not found for the selected registration.")
+            self._send_validation_error("Topcoat product not found for the selected registration.")
+            return
+        if WarrantyClaim.objects.filter(
+            registration_id=registration_id,
+            paint_pair=paint_pair,
+            state__in=self.BLOCKING_CLAIM_STATES,
+        ).exists():
+            self._send_validation_error("A claim already exists for the selected paint pair.")
             return
         self._save_data("paint_pair_id", paint_pair.id)
         self.prompt_issue_type()
         self._advance_to("issue_type")
 
     def handle_issue_type(self, message: dict) -> None:
-        issue_type = self._get_text(message).upper()
+        issue_type_input = self._get_text(message).upper()
+        issue_type_map = {option: issue_type for option, issue_type in self.ISSUE_TYPE_OPTIONS}
+        issue_type = issue_type_map.get(issue_type_input, issue_type_input)
         if issue_type not in IssueType.values:
-            self.client.send_text(self.session.phone_number, "Please share a valid issue type.")
+            self.prompt_issue_type("Please select a valid issue type from the list below.")
             return
         self._save_data("issue_type", issue_type)
         self.prompt_affected_area()
         self._advance_to("affected_area")
 
     def handle_affected_area(self, message: dict) -> None:
-        affected_area = self._get_text(message)
+        affected_area = self._normalize_numeric_input(self._get_text(message))
         try:
             if float(affected_area) <= 0:
                 raise ValueError
         except ValueError:
-            self.client.send_text(self.session.phone_number, "Please share a valid positive area.")
+            self._send_validation_error("Please share a valid positive area.")
             return
         self._save_data("affected_area_sqft", affected_area)
         self.prompt_photo_long_shot()
@@ -99,8 +132,12 @@ class ClaimFlow(BaseFlow):
 
     def handle_photo_alternate_angle(self, message: dict) -> None:
         media_id = self._get_media_id(message)
+        message_type = str(message.get("type") or "").strip()
         if not media_id:
-            self.client.send_text(self.session.phone_number, "Please upload an image.")
+            self._send_validation_error("Please upload an image.")
+            return
+        if message_type and message_type != "image":
+            self._send_validation_error("File format not supported. Please upload an image.")
             return
         image = self._save_media_image(media_id, filename_prefix="claim")
         self._append_data("images", {"image_id": image.id, "photo_type": PhotoType.ALTERNATE_ANGLE})
@@ -108,8 +145,12 @@ class ClaimFlow(BaseFlow):
 
     def _handle_photo_step(self, message: dict, *, step: str, photo_type: str, prompt: str) -> None:
         media_id = self._get_media_id(message)
+        message_type = str(message.get("type") or "").strip()
         if not media_id:
-            self.client.send_text(self.session.phone_number, "Please upload an image.")
+            self._send_validation_error("Please upload an image.")
+            return
+        if message_type and message_type != "image":
+            self._send_validation_error("File format not supported. Please upload an image.")
             return
         image = self._save_media_image(media_id, filename_prefix="claim")
         self._append_data("images", {"image_id": image.id, "photo_type": photo_type})

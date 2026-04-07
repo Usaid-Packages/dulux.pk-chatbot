@@ -1,3 +1,5 @@
+import re
+
 from abc import ABC
 
 from django.core.files.base import ContentFile
@@ -7,9 +9,9 @@ from dulux_chatbot.core.models import Image
 
 class BaseFlow(ABC):
     initial_step = ""
-    BACK_COMMAND = "1"
-    RESTART_COMMAND = "2"
-    MAIN_MENU_COMMAND = "3"
+    BACK_COMMAND = "0"
+    RESTART_COMMAND = "00"
+    MAIN_MENU_COMMAND = "000"
     TEXT_BACK_COMMANDS = {"BACK"}
     TEXT_RESTART_COMMANDS = {"RESTART", "START OVER"}
     TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
@@ -91,7 +93,7 @@ class BaseFlow(ABC):
     def _send_step_prompt(self, text: str) -> None:
         self.client.send_text(
             self.session.phone_number,
-            f"{text}\n\n1. Go back\n2. Start over\n3. Main menu",
+            f"{text}\n\n0. Go back\n00. Start over\n000. Main menu",
         )
 
     def _get_text(self, message: dict) -> str:
@@ -139,5 +141,32 @@ class BaseFlow(ABC):
         self._reset()
         self.client.send_text(
             self.session.phone_number,
-            "Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
+            "How can I assist you? Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
         )
+
+    def _send_validation_error(self, text: str) -> None:
+        self._send_step_prompt(text)
+
+    def _is_plain_text_value(self, value: str) -> bool:
+        stripped = value.strip()
+        if not stripped:
+            return False
+        return any(character.isalpha() for character in stripped)
+
+    def _is_not_all_digits(self, value: str) -> bool:
+        normalized = re.sub(r"\s+", "", value)
+        return bool(normalized) and not normalized.isdigit()
+
+    def _normalize_numeric_input(self, value: str) -> str:
+        match = re.search(r"-?\d+(?:\.\d+)?", value)
+        return match.group(0) if match else ""
+
+    def _normalize_pakistan_phone_number(self, value: str) -> str:
+        normalized = re.sub(r"\D+", "", value)
+        if normalized.startswith("00"):
+            normalized = normalized[2:]
+        if normalized.startswith("0"):
+            normalized = f"92{normalized[1:]}"
+        if len(normalized) == 12 and normalized.startswith("92") and normalized[2] == "3":
+            return normalized
+        return ""

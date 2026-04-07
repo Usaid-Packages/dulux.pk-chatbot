@@ -2,6 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from dulux_chatbot.warranty.choices import InvoiceType, PhotoType, RegistrationState
+from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 from dulux_chatbot.warranty.tests.factories import (
     create_claim,
     create_claim_image,
@@ -31,6 +32,15 @@ class WarrantyRegistrationModelTests(TestCase):
         second_registration = create_registration(phone_number="923001111111")
 
         self.assertEqual(second_registration.phone_number, "923001111111")
+
+    def test_generate_warranty_certificate_returns_pdf_content(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        create_paint_pair(registration=registration)
+
+        content = generate_warranty_certificate(registration)
+
+        self.assertTrue(content.name.endswith(".pdf"))
+        self.assertTrue(content.read().startswith(b"%PDF"))
 
 
 class InvoiceModelTests(TestCase):

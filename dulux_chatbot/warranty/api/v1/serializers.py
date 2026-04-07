@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
+from dulux_chatbot.core.validators import validate_pakistan_phone_number
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationState
@@ -176,6 +177,9 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Purchase date is outside the allowed registration window.")
         return value
 
+    def validate_phone_number(self, value: str) -> str:
+        return validate_pakistan_phone_number(value)
+
     def validate_paint_pairs(self, value):
         if not value:
             raise serializers.ValidationError("At least one paint pair is required.")
@@ -252,6 +256,9 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         if (date.today() - value).days > config.REGISTRATION_PURCHASE_DAYS_LIMIT:
             raise serializers.ValidationError("Purchase date is outside the allowed registration window.")
         return value
+
+    def validate_phone_number(self, value: str) -> str:
+        return validate_pakistan_phone_number(value)
 
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
@@ -413,6 +420,12 @@ class ClaimImageWriteSerializer(serializers.Serializer):
 
 
 class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
+    BLOCKING_CLAIM_STATES = (
+        ClaimState.SUBMITTED,
+        ClaimState.IN_REVIEW,
+        ClaimState.QA_REVIEW,
+        ClaimState.APPROVED,
+    )
     images = ClaimImageWriteSerializer(many=True)
 
     class Meta:
@@ -440,6 +453,12 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         paint_pair = attrs["paint_pair"]
         if paint_pair.registration_id != registration.id:
             raise serializers.ValidationError({"paint_pair": "Paint pair must belong to the selected registration."})
+        if WarrantyClaim.objects.filter(
+            registration=registration,
+            paint_pair=paint_pair,
+            state__in=self.BLOCKING_CLAIM_STATES,
+        ).exists():
+            raise serializers.ValidationError({"paint_pair": "A claim already exists for the selected paint pair."})
         return attrs
 
     @transaction.atomic

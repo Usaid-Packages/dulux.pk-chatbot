@@ -1,3 +1,5 @@
+import os
+
 from unittest.mock import Mock, patch
 
 import requests
@@ -29,3 +31,21 @@ class WhatsAppClientTests(SimpleTestCase):
 
         with self.assertRaises(WhatsAppAPIError):
             client.send_text("923001234567", "Hello")
+
+    @patch("dulux_chatbot.chatbot.services.whatsapp_client.requests.post")
+    def test_send_document_uses_absolute_media_url(self, post_mock):
+        response = Mock()
+        response.json.return_value = {"messages": []}
+        response.raise_for_status.return_value = None
+        post_mock.return_value = response
+
+        self.addCleanup(lambda: os.environ.pop("NGROK_URL", None))
+        os.environ["NGROK_URL"] = "https://example-ngrok.ngrok-free.app"
+        client = WhatsAppClient()
+        client.send_document("923001234567", "/django-media/certificates/sample.pdf", "sample.pdf")
+
+        payload = post_mock.call_args.kwargs["json"]
+        self.assertEqual(
+            payload["document"]["link"],
+            "https://example-ngrok.ngrok-free.app/django-media/certificates/sample.pdf",
+        )

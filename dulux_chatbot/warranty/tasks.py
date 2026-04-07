@@ -10,6 +10,8 @@ def generate_and_send_certificate(registration_id: int) -> None:
         pk=registration_id
     )
     content = generate_warranty_certificate(registration)
+    if registration.warranty_certificate:
+        registration.warranty_certificate.delete(save=False)
     registration.warranty_certificate.save(content.name, content, save=True)
 
 

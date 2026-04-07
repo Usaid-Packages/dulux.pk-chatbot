@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.core.files.base import ContentFile
 from django.test import TestCase
+from django.utils import timezone
 
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
@@ -15,7 +16,7 @@ from dulux_chatbot.products.tests.factories import (
 )
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, IssueType, RegistrationState
 from dulux_chatbot.warranty.models import PaintPairInvoice, WarrantyClaim, WarrantyRegistration
-from dulux_chatbot.warranty.tests.factories import create_paint_pair, create_registration
+from dulux_chatbot.warranty.tests.factories import create_claim, create_paint_pair, create_registration
 
 
 class DummyClient:
@@ -165,6 +166,55 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "invoice_upload")
         self.assertIn("At least one invoice image is required", self.client.text_messages[-1]["text"])
 
+    def test_registration_rejects_invalid_topcoat_quantity_immediately(self):
+        create_product(name="Flow Topcoat")
+
+        self.dispatch_text("1")
+        self.dispatch_text("YES")
+        self.dispatch_text("Customer Name")
+        self.dispatch_text("customer@example.com")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Sindh")
+        self.dispatch_text("123 Street")
+        self.dispatch_text(str(date.today() - timedelta(days=1)))
+        self.dispatch_text("Dealer")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Dealer Address")
+        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("Ah")
+
+        self.assertEqual(self.session.current_step, "topcoat_quantity")
+        self.assertIn(
+            "Please provide topcoat quantity in liters as a valid number.",
+            self.client.text_messages[-1]["text"],
+        )
+
+    def test_registration_rejects_invalid_basecoat_quantity_immediately(self):
+        create_product(name="Flow Topcoat")
+        create_product(name="Flow Basecoat", product_type="BASECOAT", warranty_years=3)
+
+        self.dispatch_text("1")
+        self.dispatch_text("YES")
+        self.dispatch_text("Customer Name")
+        self.dispatch_text("customer@example.com")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Sindh")
+        self.dispatch_text("123 Street")
+        self.dispatch_text(str(date.today() - timedelta(days=1)))
+        self.dispatch_text("Dealer")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Dealer Address")
+        self.dispatch_text("Flow Topcoat")
+        self.dispatch_text("10")
+        self.dispatch_text("Flow Basecoat")
+        self.dispatch_text("Ah")
+
+        self.assertEqual(self.session.current_step, "basecoat_quantity")
+        self.assertIn(
+            "Please provide basecoat quantity in liters as a valid number.",
+            self.client.text_messages[-1]["text"],
+        )
+
     def test_registration_rejects_invalid_email_before_advancing(self):
         self.dispatch_text("1")
         self.dispatch_text("YES")
@@ -213,7 +263,7 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
         self.assertEqual(self.session.current_step, "consent")
 
-        self.dispatch_text("1")
+        self.dispatch_text("0")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
@@ -223,7 +273,7 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
         self.assertEqual(self.session.current_step, "consent")
 
-        self.dispatch_text("2")
+        self.dispatch_text("00")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
@@ -240,7 +290,7 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.current_step, "purchase_date")
 
-        self.dispatch_text("2")
+        self.dispatch_text("00")
 
         self.assertEqual(self.session.flow, "REGISTRATION")
         self.assertEqual(self.session.current_step, "consent")
@@ -250,7 +300,7 @@ class FlowTests(TestCase):
         self.dispatch_text("2")
         self.assertEqual(self.session.current_step, "registration_lookup")
 
-        self.dispatch_text("3")
+        self.dispatch_text("000")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
@@ -266,7 +316,8 @@ class FlowTests(TestCase):
 
         self.dispatch_text(registration.registration_code)
         self.dispatch_text(paint_pair.topcoat.name)
-        self.dispatch_text(IssueType.PEELING_CRACKING)
+        self.assertIn("1. Peeling Or Cracking", self.client.text_messages[-1]["text"])
+        self.dispatch_text("1")
         self.dispatch_text("100")
         self.dispatch_image("claim-media-1")
         self.dispatch_image("claim-media-2")
@@ -278,6 +329,33 @@ class FlowTests(TestCase):
         self.assertEqual(claim.images.count(), 3)
         self.assertIsNone(self.session.flow)
 
+    def test_claim_flow_rejects_already_claimed_paint_pair(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=paint_pair)
+
+        self.dispatch_text("2")
+        self.dispatch_text(registration.registration_code)
+        self.dispatch_text(paint_pair.topcoat.name)
+
+        self.assertEqual(self.session.current_step, "paint_pair_select")
+        self.assertIn(
+            "A claim already exists for the selected paint pair.",
+            self.client.text_messages[-1]["text"],
+        )
+
+    def test_claim_flow_allows_new_claim_when_previous_claim_was_rejected(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.REJECTED)
+
+        self.dispatch_text("2")
+        self.dispatch_text(registration.registration_code)
+        self.dispatch_text(paint_pair.topcoat.name)
+
+        self.assertEqual(self.session.current_step, "issue_type")
+        self.assertIn("Please select the issue type:", self.client.text_messages[-1]["text"])
+
     def test_claim_flow_rejects_invalid_issue_type(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)
@@ -288,7 +366,8 @@ class FlowTests(TestCase):
         self.dispatch_text("INVALID_ISSUE")
 
         self.assertEqual(self.session.current_step, "issue_type")
-        self.assertIn("valid issue type", self.client.text_messages[-1]["text"])
+        self.assertIn("Please select a valid issue type from the list below.", self.client.text_messages[-1]["text"])
+        self.assertIn("1. Peeling Or Cracking", self.client.text_messages[-1]["text"])
 
     def test_claim_flow_rejects_invalid_affected_area(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
@@ -312,9 +391,9 @@ class FlowTests(TestCase):
         self.dispatch_text("3")
         self.assertEqual(self.session.current_step, "interior_exterior_select")
 
-        self.dispatch_text("EXTERIOR")
-        self.assertIn("4. ", self.client.text_messages[-1]["text"])
-        self.dispatch_text("4")
+        self.dispatch_text("2")
+        self.assertIn("1. ", self.client.text_messages[-1]["text"])
+        self.dispatch_text("1")
 
         self.assertIsNone(self.session.flow)
         self.assertTrue(any(product.name in item["text"] for item in self.client.text_messages))
@@ -354,6 +433,101 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.documents), 1)
         self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
+        self.assertIn(
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+        )
+
+    def test_reissuance_flow_generates_and_sends_certificate_when_missing(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        create_paint_pair(registration=registration)
+
+        self.dispatch_text("5")
+        self.dispatch_text(self.phone_number)
+
+        registration.refresh_from_db()
+        self.assertTrue(bool(registration.warranty_certificate))
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(len(self.client.documents), 1)
+        self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
+        self.assertIn(
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+        )
+
+    def test_reissuance_flow_normalizes_local_phone_number_to_ninety_two_format(self):
+        registration = create_registration(phone_number="923001234567", state=RegistrationState.APPROVED)
+        registration.warranty_certificate.save(
+            "certificate.txt",
+            ContentFile(b"certificate-content", name="certificate.txt"),
+            save=True,
+        )
+
+        self.dispatch_text("5")
+        self.dispatch_text("03001234567")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(len(self.client.documents), 1)
+        self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
+
+    def test_reissuance_flow_rejects_invalid_phone_number_format(self):
+        self.dispatch_text("5")
+        self.dispatch_text("12345")
+
+        self.assertEqual(self.session.flow, "REISSUANCE")
+        self.assertEqual(self.session.current_step, "phone_lookup")
+        self.assertIn(
+            "Please provide a valid phone number in 92XXXXXXXXXX format.",
+            self.client.text_messages[-1]["text"],
+        )
+
+    def test_reissuance_flow_prompts_for_selection_when_multiple_registrations_exist(self):
+        first_registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        second_registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+
+        self.dispatch_text("5")
+        self.dispatch_text(self.phone_number)
+
+        self.assertEqual(self.session.flow, "REISSUANCE")
+        self.assertEqual(self.session.current_step, "registration_select")
+        self.assertIn(first_registration.registration_code, self.client.text_messages[-1]["text"])
+        self.assertIn(second_registration.registration_code, self.client.text_messages[-1]["text"])
+        self.assertIn(first_registration.purchase_date.strftime("%d/%m/%Y"), self.client.text_messages[-1]["text"])
+
+    def test_reissuance_flow_sends_selected_certificate_when_multiple_registrations_exist(self):
+        older_registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        older_registration.warranty_certificate.save(
+            "older_certificate.pdf",
+            ContentFile(b"older-certificate", name="older_certificate.pdf"),
+            save=True,
+        )
+        newer_registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        newer_registration.warranty_certificate.save(
+            "newer_certificate.pdf",
+            ContentFile(b"newer-certificate", name="newer_certificate.pdf"),
+            save=True,
+        )
+
+        self.dispatch_text("5")
+        self.dispatch_text(self.phone_number)
+        self.dispatch_text("2")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(len(self.client.documents), 1)
+        self.assertIn("older_certificate", self.client.documents[0]["document_url"])
+        self.assertIn(
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+        )
+
+    def test_reissuance_flow_rejects_invalid_registration_selection(self):
+        create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+
+        self.dispatch_text("5")
+        self.dispatch_text(self.phone_number)
+        self.dispatch_text("9")
+
+        self.assertEqual(self.session.flow, "REISSUANCE")
+        self.assertEqual(self.session.current_step, "registration_select")
+        self.assertIn("Please select a valid registration option.", self.client.text_messages[-1]["text"])
 
     def test_back_command_moves_to_previous_step(self):
         self.dispatch_text("1")
@@ -362,7 +536,7 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.current_step, "email")
 
-        self.dispatch_text("1")
+        self.dispatch_text("0")
 
         self.assertEqual(self.session.current_step, "name")
 
@@ -371,7 +545,7 @@ class FlowTests(TestCase):
         self.dispatch_text("YES")
         self.dispatch_text("Customer Name")
 
-        self.dispatch_text("2")
+        self.dispatch_text("00")
 
         self.assertEqual(self.session.flow, "REGISTRATION")
         self.assertEqual(self.session.current_step, "consent")
@@ -381,7 +555,24 @@ class FlowTests(TestCase):
         self.dispatch_text("4")
         self.dispatch_text("Paint damaged")
 
-        self.dispatch_text("3")
+        self.dispatch_text("000")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(self.session.session_data, {})
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+
+    def test_expired_session_returns_to_main_menu(self):
+        self.dispatch_text("1")
+        self.dispatch_text("YES")
+
+        self.assertEqual(self.session.flow, "REGISTRATION")
+        self.assertEqual(self.session.current_step, "name")
+
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(last_activity=timezone.now() - timedelta(minutes=6))
+        self.session.refresh_from_db()
+
+        self.dispatch_text("Customer Name")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")

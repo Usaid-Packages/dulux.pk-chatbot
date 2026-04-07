@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.products.choices import Environment, ProductType
-from dulux_chatbot.products.models import Product, ProductImage, ProductSurfaceMapping, SurfaceType
+from dulux_chatbot.products.models import Product, ProductBasecoat, ProductImage, ProductSurfaceMapping, SurfaceType
 from dulux_chatbot.users.choices import UserRole
 
 
@@ -48,6 +48,10 @@ def create_surface_type(
 
 def create_product_surface_mapping(*, product: Product, surface_type: SurfaceType) -> ProductSurfaceMapping:
     return ProductSurfaceMapping.objects.create(product=product, surface_type=surface_type)
+
+
+def create_product_basecoat(*, topcoat: Product, basecoat: Product) -> ProductBasecoat:
+    return ProductBasecoat.objects.create(topcoat=topcoat, basecoat=basecoat)
 
 
 def create_image(*, image_name: str = "products/test.jpg") -> Image:

@@ -39,6 +39,28 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_create_complaint_with_invalid_phone_number_returns_400(self):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "phone_number": "3001234567",
+                "customer_name": "Complaint Customer",
+                "subject": "Damaged paint",
+                "description": "Description",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["phone_number"][0],
+            "Phone number must start with 92 and include 10 digits after it.",
+        )
+
     def test_update_complaint_status(self):
         complaint = create_complaint()
         assigned_user = create_user(email="assigned@example.com")

@@ -6,7 +6,7 @@ class FindProductFlow(BaseFlow):
     initial_step = "interior_exterior_select"
 
     def prompt_interior_exterior_select(self) -> None:
-        self._send_step_prompt("Please reply with INTERIOR or EXTERIOR.")
+        self._send_step_prompt("Please reply with 1 for INTERIOR or 2 for EXTERIOR.")
 
     def prompt_surface_type_select(self) -> None:
         environment = (self.session.session_data or {}).get("environment")
@@ -16,15 +16,13 @@ class FindProductFlow(BaseFlow):
 
         surface_types = list(SurfaceType.objects.filter(environment=environment).order_by("name"))
         if not surface_types:
-            self.client.send_text(
-                self.session.phone_number, "No surface types are configured for the selected environment."
-            )
+            self._send_validation_error("No surface types are configured for the selected environment.")
             self._reset()
             return
 
         option_map = {}
         option_lines = ["Please select a surface type:"]
-        for index, surface_type in enumerate(surface_types, start=4):
+        for index, surface_type in enumerate(surface_types, start=1):
             option_key = str(index)
             option_map[option_key] = surface_type.id
             option_lines.append(f"{option_key}. {surface_type.name}")
@@ -33,9 +31,16 @@ class FindProductFlow(BaseFlow):
         self._send_step_prompt("\n".join(option_lines))
 
     def handle_interior_exterior_select(self, message: dict) -> None:
-        environment = self._get_text(message).upper()
+        environment_value = self._get_text(message)
+        environment_map = {
+            "1": "INTERIOR",
+            "2": "EXTERIOR",
+            "INTERIOR": "INTERIOR",
+            "EXTERIOR": "EXTERIOR",
+        }
+        environment = environment_map.get(environment_value.upper(), environment_map.get(environment_value))
         if environment not in {"INTERIOR", "EXTERIOR"}:
-            self.prompt_interior_exterior_select()
+            self._send_validation_error("Please select 1 for INTERIOR or 2 for EXTERIOR.")
             return
         self._save_data("environment", environment)
         self.prompt_surface_type_select()
@@ -48,17 +53,17 @@ class FindProductFlow(BaseFlow):
         selected_option = self._get_text(message)
 
         if not selected_option:
-            self.client.send_text(self.session.phone_number, "Please select a valid surface type option.")
+            self._send_validation_error("Please select a valid surface type option.")
             return
 
         surface_type_id = option_map.get(selected_option)
         if surface_type_id is None:
-            self.client.send_text(self.session.phone_number, "Please select a valid surface type option.")
+            self._send_validation_error("Please select a valid surface type option.")
             return
 
         surface_type = SurfaceType.objects.filter(pk=surface_type_id, environment=environment).first()
         if surface_type is None:
-            self.client.send_text(self.session.phone_number, "Surface type not found for the selected environment.")
+            self._send_validation_error("Surface type not found for the selected environment.")
             return
         self._save_data("surface_type_id", surface_type.id)
         self.handle_result(message)

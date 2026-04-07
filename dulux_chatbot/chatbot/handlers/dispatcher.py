@@ -1,3 +1,8 @@
+from datetime import timedelta
+
+from constance import config
+from django.utils import timezone
+
 from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
 from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
@@ -32,6 +37,19 @@ FLOW_INITIAL_STEPS = {
 
 
 def dispatch(session, message: dict, client) -> None:
+    now = timezone.now()
+    if _session_expired(session=session, now=now):
+        session.flow = None
+        session.current_step = "menu"
+        session.session_data = {}
+        session.last_activity = now
+        session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])
+        _send_main_menu(session.phone_number, client)
+        return
+
+    session.last_activity = now
+    session.save(update_fields=["last_activity", "modified"])
+
     if session.flow is None:
         selected_flow = MENU_OPTIONS.get((message.get("interactive_id") or message.get("text") or "").strip())
         if selected_flow is None:
@@ -59,5 +77,14 @@ def dispatch(session, message: dict, client) -> None:
 def _send_main_menu(phone_number: str, client) -> None:
     client.send_text(
         phone_number,
-        "Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
+        "How can I assist you? Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
     )
+
+
+def _session_expired(*, session, now) -> bool:
+    if session.flow is None:
+        return False
+    last_activity = session.last_activity
+    if last_activity is None:
+        return False
+    return now - last_activity > timedelta(minutes=config.WHATSAPP_SESSION_TIMEOUT_MINUTES)

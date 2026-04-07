@@ -128,6 +128,42 @@ class WarrantyRegistrationAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_registration_with_invalid_phone_number_returns_400(self):
+        topcoat = create_product(name="Invalid Phone Topcoat")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "channel": RegistrationChannel.WEB,
+                "customer_name": "Customer Name",
+                "phone_number": "03001010101",
+                "email": "customer@example.com",
+                "city": "Karachi",
+                "province": "Sindh",
+                "site_address": "123 Street",
+                "purchase_date": str(date.today() - timedelta(days=1)),
+                "purchase_dealer": "Dealer",
+                "purchase_dealer_city": "Karachi",
+                "purchase_dealer_address": "Dealer Address",
+                "postal_code": "75000",
+                "notes": "",
+                "paint_pairs": [
+                    {
+                        "topcoat": topcoat.id,
+                        "topcoat_quantity": "10.00",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["phone_number"][0],
+            "Phone number must start with 92 and include 10 digits after it.",
+        )
+
     @patch("dulux_chatbot.warranty.api.v1.serializers.generate_and_send_certificate.delay")
     def test_registration_transition_approve(self, delay_mock):
         registration = create_registration()
@@ -208,6 +244,59 @@ class WarrantyClaimAPITests(TestCase):
         paint_pair = create_paint_pair(registration=registration)
         self.client.force_authenticate(user=self.cs_user)
         images = [create_image(image_name=f"warranty/{index}.jpg") for index in range(3)]
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_cannot_create_claim_for_already_claimed_paint_pair(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=paint_pair)
+        self.client.force_authenticate(user=self.cs_user)
+        images = [create_image(image_name=f"warranty/duplicate-{index}.jpg") for index in range(3)]
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["paint_pair"][0], "A claim already exists for the selected paint pair.")
+
+    def test_can_create_claim_again_when_previous_claim_was_rejected(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.REJECTED)
+        self.client.force_authenticate(user=self.cs_user)
+        images = [create_image(image_name=f"warranty/retry-{index}.jpg") for index in range(3)]
 
         response = self.client.post(
             self.list_url,

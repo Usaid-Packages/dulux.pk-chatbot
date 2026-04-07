@@ -26,7 +26,13 @@ class ComplaintFlow(BaseFlow):
     def handle_subject(self, message: dict) -> None:
         subject = self._get_text(message)
         if not subject:
-            self.prompt_subject()
+            self._send_validation_error("Please share the complaint subject.")
+            return
+        if len(subject) > 255:
+            self._send_validation_error("Please provide a short complaint subject under 255 characters.")
+            return
+        if not self._is_plain_text_value(subject) or not self._is_not_all_digits(subject):
+            self._send_validation_error("Please provide a valid complaint subject.")
             return
         self._save_data("subject", subject)
         self.prompt_description()
@@ -35,7 +41,10 @@ class ComplaintFlow(BaseFlow):
     def handle_description(self, message: dict) -> None:
         description = self._get_text(message)
         if not description:
-            self.prompt_description()
+            self._send_validation_error("Please describe the complaint.")
+            return
+        if not self._is_plain_text_value(description) or not self._is_not_all_digits(description):
+            self._send_validation_error("Please provide a valid complaint description.")
             return
         self._save_data("description", description)
         self.prompt_image_upload()
@@ -47,8 +56,12 @@ class ComplaintFlow(BaseFlow):
             self.handle_complete(message)
             return
         media_id = self._get_media_id(message)
+        message_type = str(message.get("type") or "").strip()
         if not media_id:
-            self.client.send_text(self.session.phone_number, "Please upload an image or reply DONE.")
+            self._send_validation_error("Please upload an image or reply DONE.")
+            return
+        if message_type and message_type != "image":
+            self._send_validation_error("File format not supported. Please upload an image.")
             return
         images = list((self.session.session_data or {}).get("image_ids", []))
         if len(images) >= 3:

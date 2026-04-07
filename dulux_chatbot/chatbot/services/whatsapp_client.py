@@ -1,8 +1,11 @@
 import logging
 
+from urllib.parse import urljoin
+
 import requests
 
 from constance import config
+from decouple import config as env_config
 from django.conf import settings
 
 
@@ -53,11 +56,12 @@ class WhatsAppClient:
         return self._post("messages", payload)
 
     def send_document(self, to: str, document_url: str, filename: str, caption: str = "") -> dict:
+        absolute_document_url = self._build_absolute_media_url(document_url)
         payload = {
             "messaging_product": "whatsapp",
             "to": to,
             "type": "document",
-            "document": {"link": document_url, "filename": filename, "caption": caption},
+            "document": {"link": absolute_document_url, "filename": filename, "caption": caption},
         }
         return self._post("messages", payload)
 
@@ -103,3 +107,11 @@ class WhatsAppClient:
             raise WhatsAppAPIError("WhatsApp API request failed.") from exc
 
         return response.json()
+
+    def _build_absolute_media_url(self, document_url: str) -> str:
+        if document_url.startswith(("http://", "https://")):
+            return document_url
+        base_url = env_config("NGROK_URL", default="").strip() or env_config("BASE_URL", default="").strip()
+        if not base_url:
+            return document_url
+        return urljoin(f"{base_url.rstrip('/')}/", document_url.lstrip("/"))

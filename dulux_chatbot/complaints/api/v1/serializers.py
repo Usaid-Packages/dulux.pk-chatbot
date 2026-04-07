@@ -6,6 +6,7 @@ from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
+from dulux_chatbot.core.validators import validate_pakistan_phone_number
 from dulux_chatbot.warranty.models import WarrantyRegistration
 
 
@@ -94,6 +95,9 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
             "images",
         )
 
+    def validate_phone_number(self, value: str) -> str:
+        return validate_pakistan_phone_number(value)
+
     def validate_registration(self, value: WarrantyRegistration | None):
         if value is None:
             return value
@@ -135,6 +139,9 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
             "images",
         )
         read_only_fields = ("id", "status", "closed_at")
+
+    def validate_phone_number(self, value: str) -> str:
+        return validate_pakistan_phone_number(value)
 
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
