@@ -75,6 +75,7 @@ export const ProductsListPage = (): JSX.Element => {
   const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>('ALL');
   const [productStatusFilter, setProductStatusFilter] = useState<ProductStatusFilter>('ALL');
   const [productOrdering, setProductOrdering] = useState<ProductOrdering>('-created');
+  const [productPageSize, setProductPageSize] = useState<number>(10);
   const [productPage, setProductPage] = useState<number>(FIRST_PAGE);
 
   const [surfaceSearch, setSurfaceSearch] = useState<string>('');
@@ -92,7 +93,7 @@ export const ProductsListPage = (): JSX.Element => {
     product_type: productTypeFilter === 'ALL' ? undefined : productTypeFilter,
     is_active: productStatusFilter === 'ALL' ? undefined : productStatusFilter === 'ACTIVE',
     ordering: productOrdering,
-    page_size: 10,
+    page_size: productPageSize,
     page: productPage,
   });
 
@@ -174,6 +175,15 @@ export const ProductsListPage = (): JSX.Element => {
 
   const handleProductOrderingChange = (value: string): void => {
     setProductOrdering(value as ProductOrdering);
+    setProductPage(FIRST_PAGE);
+  };
+
+  const handleProductPageSizeChange = (value: string): void => {
+    const nextPageSize = Number.parseInt(value, 10);
+    if (Number.isNaN(nextPageSize)) {
+      return;
+    }
+    setProductPageSize(nextPageSize);
     setProductPage(FIRST_PAGE);
   };
 
@@ -308,17 +318,17 @@ export const ProductsListPage = (): JSX.Element => {
 
   return (
     <section className='space-y-4'>
-      <header className='space-y-1 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4'>
+      <header className='space-y-1'>
         <h2 className='text-2xl font-semibold text-text-primary'>Product Catalog</h2>
         <p className='text-sm text-text-muted'>Manage products and surface types from one catalog view.</p>
       </header>
 
-      <section className='wf-tabs-panel wf-tabs-panel-contrast'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           <Button
             type='button'
             variant='ghost'
-            className={activeTab === 'products' ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
+            className={activeTab === 'products' ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
             onClick={() => setTab('products')}
           >
             Products ({productQuery.data?.count ?? 0})
@@ -326,7 +336,7 @@ export const ProductsListPage = (): JSX.Element => {
           <Button
             type='button'
             variant='ghost'
-            className={activeTab === 'surface-types' ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
+            className={activeTab === 'surface-types' ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
             onClick={() => setTab('surface-types')}
           >
             Surface Types ({surfaceTypesQuery.data?.count ?? 0})
@@ -336,8 +346,8 @@ export const ProductsListPage = (): JSX.Element => {
 
       {activeTab === 'products' ? (
         <>
-          <section className='wf-toolbar-panel wf-toolbar-panel-contrast'>
-            <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,auto]'>
+          <section className='wf-toolbar-panel'>
+            <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,1fr,auto]'>
               <Input
                 type='search'
                 value={productSearch}
@@ -374,6 +384,16 @@ export const ProductsListPage = (): JSX.Element => {
                   <SelectItem value='created'>Oldest first</SelectItem>
                   <SelectItem value='name'>Name (A-Z)</SelectItem>
                   <SelectItem value='-name'>Name (Z-A)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={String(productPageSize)} onValueChange={handleProductPageSizeChange}>
+                <SelectTrigger aria-label='Products per page'>
+                  <SelectValue placeholder='Page Size' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='10'>10 / page</SelectItem>
+                  <SelectItem value='25'>25 / page</SelectItem>
+                  <SelectItem value='50'>50 / page</SelectItem>
                 </SelectContent>
               </Select>
               <div className='flex items-center justify-end gap-2'>
@@ -447,7 +467,7 @@ export const ProductsListPage = (): JSX.Element => {
         </>
       ) : (
         <>
-          <section className='wf-toolbar-panel wf-toolbar-panel-contrast'>
+          <section className='wf-toolbar-panel'>
             <div className='grid gap-3 md:grid-cols-[2fr,1fr,auto]'>
               <Input
                 type='search'

@@ -72,13 +72,6 @@ export const ClaimsListPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <header className='rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4'>
-        <h2 className='text-2xl font-semibold text-text-primary'>Claims</h2>
-        <p className='text-sm text-text-muted'>
-          Review incoming claims, route workflows, and resolve with full traceability.
-        </p>
-      </header>
-
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total Claims', value: claimsData?.stats.totalClaims ?? 0 },
@@ -93,7 +86,7 @@ export const ClaimsListPage = (): JSX.Element => {
         ))}
       </section>
 
-      <section className='wf-tabs-panel wf-tabs-panel-contrast'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div className='flex flex-wrap gap-2'>
             {CLAIM_STATUS_TABS.map(tab => {
@@ -105,7 +98,7 @@ export const ClaimsListPage = (): JSX.Element => {
                   key={tab.value}
                   type='button'
                   variant='ghost'
-                  className={isActive ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
+                  className={isActive ? 'wf-pill-tab wf-pill-tab-active' : 'wf-pill-tab'}
                   onClick={handleTabClick}
                 >
                   {tab.label}
@@ -119,7 +112,7 @@ export const ClaimsListPage = (): JSX.Element => {
         </div>
       </section>
 
-      <section className='wf-toolbar-panel wf-toolbar-panel-contrast'>
+      <section className='wf-toolbar-panel'>
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='space-y-1'>
             <label htmlFor='claim-search' className='text-xs font-medium text-text-muted'>

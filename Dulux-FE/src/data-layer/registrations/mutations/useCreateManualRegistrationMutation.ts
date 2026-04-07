@@ -6,7 +6,6 @@ import { performRequest } from '#/services';
 import type {
   ManualRegistrationApiResponse,
   ManualRegistrationFormValues,
-  ManualRegistrationPaintPairInput,
   ManualRegistrationSubmissionResult,
 } from '#/types/manualRegistration';
 import type { ProductListResponse } from '#/types/products';
@@ -36,7 +35,7 @@ interface RegistrationCreatePayload {
   purchaseDealer: string;
   purchaseDealerCity: string;
   purchaseDealerAddress: string;
-  postalCode?: string;
+  postalCode: string;
   notes: string;
   paintPairs: RegistrationCreatePaintPair[];
   paintPairInvoices: RegistrationCreateInvoice[];
@@ -90,72 +89,53 @@ const uploadRegistrationImage = async (image: File): Promise<number> => {
 const buildCreateRegistrationPayload = async (
   values: ManualRegistrationFormValues
 ): Promise<RegistrationCreatePayload> => {
+  if (!values.topcoatInvoice) {
+    throw new Error('Topcoat invoice is required before submitting registration.');
+  }
+
+  const topcoatId = Number.parseInt(values.topcoatProductId, 10);
+  if (!Number.isFinite(topcoatId) || topcoatId <= 0) {
+    throw new Error('A valid topcoat product is required before submitting registration.');
+  }
+
+  const basecoatId = values.basecoatProductId ? Number.parseInt(values.basecoatProductId, 10) : undefined;
+  if (values.basecoatProductId && (!Number.isFinite(basecoatId) || (basecoatId ?? 0) <= 0)) {
+    throw new Error('A valid basecoat product is required when basecoat is selected.');
+  }
+
+  await assertLinkedBasecoatForTopcoat(topcoatId, basecoatId);
+
   const normalizedPhoneNumber = normalizePakistanPhoneNumber(values.phoneNumber);
   if (!PAKISTAN_PHONE_REGEX.test(normalizedPhoneNumber)) {
     throw new Error('Phone number must start with 92 and include 10 digits after it.');
   }
-  const allPaintPairValues: ManualRegistrationPaintPairInput[] = [
-    {
-      topcoatProductId: values.topcoatProductId,
-      topcoatQuantity: values.topcoatQuantity,
-      basecoatProductId: values.basecoatProductId,
-      basecoatQuantity: values.basecoatQuantity,
-      topcoatInvoice: values.topcoatInvoice,
-      basecoatInvoice: values.basecoatInvoice,
-    },
-    ...(values.additionalPaintPairs ?? []),
-  ];
 
-  const paintPairs: RegistrationCreatePaintPair[] = [];
-  const paintPairInvoices: RegistrationCreateInvoice[] = [];
+  const topcoatInvoiceId = await uploadRegistrationImage(values.topcoatInvoice);
+  const basecoatInvoiceId = values.basecoatInvoice ? await uploadRegistrationImage(values.basecoatInvoice) : undefined;
 
-  for (const pairValues of allPaintPairValues) {
-    if (!pairValues.topcoatInvoice) {
-      throw new Error('Topcoat invoice is required before submitting registration.');
-    }
+  const paintPair: RegistrationCreatePaintPair = {
+    topcoat: topcoatId,
+    topcoatQuantity: values.topcoatQuantity,
+  };
 
-    const topcoatId = Number.parseInt(pairValues.topcoatProductId, 10);
-    if (!Number.isFinite(topcoatId) || topcoatId <= 0) {
-      throw new Error('A valid topcoat product is required before submitting registration.');
-    }
-
-    const basecoatId = pairValues.basecoatProductId ? Number.parseInt(pairValues.basecoatProductId, 10) : undefined;
-    if (pairValues.basecoatProductId && (!Number.isFinite(basecoatId) || (basecoatId ?? 0) <= 0)) {
-      throw new Error('A valid basecoat product is required when basecoat is selected.');
-    }
-
-    await assertLinkedBasecoatForTopcoat(topcoatId, basecoatId);
-
-    const topcoatInvoiceId = await uploadRegistrationImage(pairValues.topcoatInvoice);
-    const basecoatInvoiceId = pairValues.basecoatInvoice
-      ? await uploadRegistrationImage(pairValues.basecoatInvoice)
-      : undefined;
-
-    const paintPair: RegistrationCreatePaintPair = {
-      topcoat: topcoatId,
-      topcoatQuantity: pairValues.topcoatQuantity,
-    };
-
-    if (basecoatId !== undefined && pairValues.basecoatQuantity) {
-      paintPair.basecoat = basecoatId;
-      paintPair.basecoatQuantity = pairValues.basecoatQuantity;
-    }
-
-    paintPairs.push(paintPair);
-    paintPairInvoices.push({
-      imageId: topcoatInvoiceId,
-      invoiceType: REGISTRATION_INVOICE_TYPES.TOPCOAT,
-    });
-
-    if (basecoatInvoiceId) {
-      paintPairInvoices.push({
-        imageId: basecoatInvoiceId,
-        invoiceType: REGISTRATION_INVOICE_TYPES.BASECOAT,
-      });
-    }
+  if (basecoatId !== undefined && values.basecoatQuantity) {
+    paintPair.basecoat = basecoatId;
+    paintPair.basecoatQuantity = values.basecoatQuantity;
   }
 
-  const normalizedPostalCode = values.postalCode.trim();
+  const paintPairInvoices: RegistrationCreateInvoice[] = [
+    {
+      imageId: topcoatInvoiceId,
+      invoiceType: REGISTRATION_INVOICE_TYPES.TOPCOAT,
+    },
+  ];
+
+  if (basecoatInvoiceId) {
+    paintPairInvoices.push({
+      imageId: basecoatInvoiceId,
+      invoiceType: REGISTRATION_INVOICE_TYPES.BASECOAT,
+    });
+  }
 
   return {
     channel: 'WEBFORM',
@@ -169,9 +149,9 @@ const buildCreateRegistrationPayload = async (
     purchaseDealer: values.purchaseDealer.trim(),
     purchaseDealerCity: values.purchaseDealerCity.trim(),
     purchaseDealerAddress: values.purchaseDealerAddress.trim(),
-    ...(normalizedPostalCode ? { postalCode: normalizedPostalCode } : {}),
+    postalCode: values.postalCode.trim(),
     notes: values.notes.trim(),
-    paintPairs,
+    paintPairs: [paintPair],
     paintPairInvoices,
   };
 };

@@ -18,7 +18,7 @@ export const MANUAL_REGISTRATION_STEPS: ManualRegistrationStep[] = [
 
 export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = {
   customerName: '',
-  phoneNumber: '92',
+  phoneNumber: '',
   email: '',
   city: '',
   province: '',
@@ -35,7 +35,6 @@ export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = 
   basecoatQuantity: '',
   topcoatInvoice: null,
   basecoatInvoice: null,
-  additionalPaintPairs: [],
 };
 
 export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
@@ -44,7 +43,7 @@ export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
 > = {
   1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress', 'postalCode'],
   2: ['purchaseDate', 'purchaseDealer', 'purchaseDealerCity', 'purchaseDealerAddress', 'notes'],
-  3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity', 'additionalPaintPairs'],
-  4: ['topcoatInvoice', 'basecoatInvoice', 'basecoatProductId', 'additionalPaintPairs'],
+  3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity'],
+  4: ['topcoatInvoice', 'basecoatInvoice', 'basecoatProductId'],
   5: [],
 };

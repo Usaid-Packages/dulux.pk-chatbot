@@ -62,9 +62,9 @@ export const ConversationListPanel = ({
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
   return (
-    <section className='flex h-[calc(100vh-16rem)] flex-col rounded-lg border border-border bg-chat-panelBg p-4'>
+    <section className='rounded-lg border border-border bg-chat-panelBg p-4'>
       <div className='space-y-3'>
-        <div className='space-y-2 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-3'>
+        <div className='space-y-2'>
           <Input
             value={search}
             onChange={event => onSearchChange(event.target.value)}
@@ -88,7 +88,7 @@ export const ConversationListPanel = ({
           </div>
         </div>
 
-        <div className='flex-1 space-y-2 overflow-y-auto pr-1'>
+        <div className='space-y-2'>
           {isLoading ? (
             <>
               <Skeleton className='h-20 w-full rounded-lg' />

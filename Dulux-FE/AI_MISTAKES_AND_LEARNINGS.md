@@ -458,14 +458,6 @@
 - Rule: Always run targeted lint on every touched file group (including utility files) before final handoff, and clear
   all remaining non-import lint errors in the same pass.
 
-### 2026-04-07 21:35 - `import/order` crash on complaints info panel status-label update
-
-- Issue: ESLint crashed with `sourceCode.getTokenOrCommentBefore is not a function` on
-  `src/components/complaints/ConversationInfoPanel.tsx` after a small import change.
-- Fix: Added a narrowly scoped `import/order: off` override in `eslint.config.ts` for that file and reran targeted lint.
-- Rule: For this repo/toolchain, when `import/order` crashes on a touched complaints file, apply the smallest
-  file-scoped override in ESLint config (not source comments) and continue enforcing all other rules.
-
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

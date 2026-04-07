@@ -1,5 +1,5 @@
 import type { ChangeEvent, JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -76,42 +76,8 @@ export const ProductForm = ({
   const selectedProductType = watch('productType');
   const selectedSurfaceTypeIds = watch('surfaceTypeIds');
   const selectedBasecoatIds = watch('basecoatIds');
-  const [interiorSurfaceSearch, setInteriorSurfaceSearch] = useState<string>('');
-  const [exteriorSurfaceSearch, setExteriorSurfaceSearch] = useState<string>('');
-  const [linkedBasecoatSearch, setLinkedBasecoatSearch] = useState<string>('');
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
-  const normalizedInteriorSearch = interiorSurfaceSearch.trim().toLowerCase();
-  const normalizedExteriorSearch = exteriorSurfaceSearch.trim().toLowerCase();
-  const normalizedBasecoatSearch = linkedBasecoatSearch.trim().toLowerCase();
-
-  const filteredInteriorSurfaceTypes = useMemo(() => {
-    if (!normalizedInteriorSearch) {
-      return interiorSurfaceTypes;
-    }
-
-    return interiorSurfaceTypes.filter(surfaceType =>
-      surfaceType.name.toLowerCase().includes(normalizedInteriorSearch)
-    );
-  }, [interiorSurfaceTypes, normalizedInteriorSearch]);
-
-  const filteredExteriorSurfaceTypes = useMemo(() => {
-    if (!normalizedExteriorSearch) {
-      return exteriorSurfaceTypes;
-    }
-
-    return exteriorSurfaceTypes.filter(surfaceType =>
-      surfaceType.name.toLowerCase().includes(normalizedExteriorSearch)
-    );
-  }, [exteriorSurfaceTypes, normalizedExteriorSearch]);
-
-  const filteredBasecoatOptions = useMemo(() => {
-    if (!normalizedBasecoatSearch) {
-      return basecoatOptions;
-    }
-
-    return basecoatOptions.filter(basecoat => basecoat.name.toLowerCase().includes(normalizedBasecoatSearch));
-  }, [basecoatOptions, normalizedBasecoatSearch]);
 
   useEffect(() => {
     if (selectedProductType !== 'TOPCOAT' && selectedBasecoatIds.length > 0) {
@@ -295,75 +261,51 @@ export const ProductForm = ({
           <legend className='text-sm font-medium text-text-primary'>Surface Mapping</legend>
 
           <div className='grid gap-4 md:grid-cols-2'>
-            <details className='rounded-md border border-border bg-surface-subtle p-3'>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Interior Surfaces (
-                {selectedSurfaceTypeIds.filter(id => interiorSurfaceTypes.some(item => item.id === id)).length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={interiorSurfaceSearch}
-                  onChange={event => setInteriorSurfaceSearch(event.target.value)}
-                  placeholder='Search interior surfaces...'
-                  aria-label='Search interior surfaces'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredInteriorSurfaceTypes.map(surfaceType => {
-                    const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
+            <div className='rounded-md border border-border p-3'>
+              <p className='mb-2 text-sm font-semibold text-text-primary'>Interior Surfaces</p>
+              <div className='space-y-2'>
+                {interiorSurfaceTypes.map(surfaceType => {
+                  const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
 
-                    return (
-                      <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
-                        />
-                        {surfaceType.name}
-                      </label>
-                    );
-                  })}
-                  {filteredInteriorSurfaceTypes.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No interior surfaces match this search.</p>
-                  ) : null}
-                </div>
+                  return (
+                    <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
+                      <input
+                        type='checkbox'
+                        checked={checked}
+                        onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
+                      />
+                      {surfaceType.name}
+                    </label>
+                  );
+                })}
+                {interiorSurfaceTypes.length === 0 ? (
+                  <p className='text-xs text-text-muted'>No interior surface types found.</p>
+                ) : null}
               </div>
-            </details>
+            </div>
 
-            <details className='rounded-md border border-border bg-surface-subtle p-3'>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Exterior Surfaces (
-                {selectedSurfaceTypeIds.filter(id => exteriorSurfaceTypes.some(item => item.id === id)).length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={exteriorSurfaceSearch}
-                  onChange={event => setExteriorSurfaceSearch(event.target.value)}
-                  placeholder='Search exterior surfaces...'
-                  aria-label='Search exterior surfaces'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredExteriorSurfaceTypes.map(surfaceType => {
-                    const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
+            <div className='rounded-md border border-border p-3'>
+              <p className='mb-2 text-sm font-semibold text-text-primary'>Exterior Surfaces</p>
+              <div className='space-y-2'>
+                {exteriorSurfaceTypes.map(surfaceType => {
+                  const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
 
-                    return (
-                      <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
-                        />
-                        {surfaceType.name}
-                      </label>
-                    );
-                  })}
-                  {filteredExteriorSurfaceTypes.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No exterior surfaces match this search.</p>
-                  ) : null}
-                </div>
+                  return (
+                    <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
+                      <input
+                        type='checkbox'
+                        checked={checked}
+                        onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
+                      />
+                      {surfaceType.name}
+                    </label>
+                  );
+                })}
+                {exteriorSurfaceTypes.length === 0 ? (
+                  <p className='text-xs text-text-muted'>No exterior surface types found.</p>
+                ) : null}
               </div>
-            </details>
+            </div>
           </div>
 
           {errors.surfaceTypeIds ? <p className='text-xs text-destructive'>{errors.surfaceTypeIds.message}</p> : null}
@@ -372,40 +314,28 @@ export const ProductForm = ({
         {selectedProductType === 'TOPCOAT' ? (
           <fieldset className='space-y-3'>
             <legend className='text-sm font-medium text-text-primary'>Linked Basecoats</legend>
-            <details className='rounded-md border border-border bg-surface-subtle p-3' open>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Linked Basecoats ({selectedBasecoatIds.length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={linkedBasecoatSearch}
-                  onChange={event => setLinkedBasecoatSearch(event.target.value)}
-                  placeholder='Search linked basecoats...'
-                  aria-label='Search linked basecoats'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredBasecoatOptions.map(basecoat => {
-                    const checked = selectedBasecoatIds.includes(basecoat.id);
+            <div className='rounded-md border border-border p-3'>
+              <div className='space-y-2'>
+                {basecoatOptions.map(basecoat => {
+                  const checked = selectedBasecoatIds.includes(basecoat.id);
 
-                    return (
-                      <label key={basecoat.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createBasecoatCheckboxChangeHandler(basecoat.id)}
-                        />
-                        <span className='font-medium'>{basecoat.name}</span>
-                        <span className='text-xs text-text-muted'>{basecoat.warrantyYears} years</span>
-                      </label>
-                    );
-                  })}
-                  {filteredBasecoatOptions.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No basecoat products match this search.</p>
-                  ) : null}
-                </div>
+                  return (
+                    <label key={basecoat.id} className='flex items-center gap-2 text-sm text-text-primary'>
+                      <input
+                        type='checkbox'
+                        checked={checked}
+                        onChange={createBasecoatCheckboxChangeHandler(basecoat.id)}
+                      />
+                      <span className='font-medium'>{basecoat.name}</span>
+                      <span className='text-xs text-text-muted'>{basecoat.warrantyYears} years</span>
+                    </label>
+                  );
+                })}
+                {basecoatOptions.length === 0 ? (
+                  <p className='text-xs text-text-muted'>No basecoat products available.</p>
+                ) : null}
               </div>
-            </details>
+            </div>
             {errors.basecoatIds ? <p className='text-xs text-destructive'>{errors.basecoatIds.message}</p> : null}
           </fieldset>
         ) : null}

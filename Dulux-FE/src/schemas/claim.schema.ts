@@ -100,6 +100,8 @@ export const createClaimSchema = z.object({
 
 export const forwardToQualitySchema = z.object({
   notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
+  priority: claimPrioritySchema,
+  verificationPackSummary: z.string().trim().min(5, 'Verification summary is required.'),
 });
 
 export const rejectClaimSchema = z.object({

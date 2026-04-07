@@ -12,9 +12,5 @@ interface PageWrapperProps {
  * @returns Wrapped page content.
  */
 export const PageWrapper = ({ children }: PageWrapperProps): JSX.Element => {
-  return (
-    <main className='flex-1 overflow-y-auto bg-page-body p-6'>
-      <div className='mx-auto w-full max-w-[1440px]'>{children}</div>
-    </main>
-  );
+  return <main className='flex-1 overflow-y-auto bg-page-body p-6'>{children}</main>;
 };

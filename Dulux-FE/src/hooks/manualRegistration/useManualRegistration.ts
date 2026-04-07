@@ -85,25 +85,7 @@ export const useManualRegistration = (): UseManualRegistrationResult => {
   };
 
   const goToNextStep = async (): Promise<void> => {
-    const fields = [...MANUAL_REGISTRATION_STEP_FIELDS[currentStep]];
-    const additionalPairs = form.getValues('additionalPaintPairs');
-
-    if (currentStep === 3 && additionalPairs.length > 0) {
-      additionalPairs.forEach((_, index) => {
-        fields.push(`additionalPaintPairs.${index}.topcoatProductId` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.topcoatQuantity` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatProductId` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatQuantity` as keyof ManualRegistrationFormValues);
-      });
-    }
-
-    if (currentStep === 4 && additionalPairs.length > 0) {
-      additionalPairs.forEach((_, index) => {
-        fields.push(`additionalPaintPairs.${index}.topcoatInvoice` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatInvoice` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatProductId` as keyof ManualRegistrationFormValues);
-      });
-    }
+    const fields = MANUAL_REGISTRATION_STEP_FIELDS[currentStep];
 
     const isStepValid = await form.trigger([...fields], { shouldFocus: true });
     if (!isStepValid) {

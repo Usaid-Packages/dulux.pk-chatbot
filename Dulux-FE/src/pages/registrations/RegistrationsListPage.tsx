@@ -19,6 +19,7 @@ export const RegistrationsListPage = (): JSX.Element => {
   const {
     activeTab,
     searchValue,
+    statusValue,
     currentPage,
     registrations,
     stats,
@@ -28,6 +29,7 @@ export const RegistrationsListPage = (): JSX.Element => {
     hasNextPage,
     hasPreviousPage,
     setSearchValue,
+    setStatusValue,
     setActiveTab,
     goToNextPage,
     goToPreviousPage,
@@ -55,16 +57,6 @@ export const RegistrationsListPage = (): JSX.Element => {
 
   return (
     <section className='wf-list-shell'>
-      <header className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4'>
-        <div>
-          <h2 className='text-2xl font-semibold text-text-primary'>Registrations</h2>
-          <p className='text-sm text-text-muted'>Review approvals, check sources, and manage manual entries.</p>
-        </div>
-        <Button type='button' onClick={handleAddManualRegistration}>
-          Add Manual Registration
-        </Button>
-      </header>
-
       <div className='wf-stat-grid-3'>
         <article className='wf-stat-card'>
           <p className='text-sm text-text-muted'>Total Registrations</p>
@@ -80,7 +72,7 @@ export const RegistrationsListPage = (): JSX.Element => {
         </article>
       </div>
 
-      <section className='wf-tabs-panel wf-tabs-panel-contrast'>
+      <section className='wf-tabs-panel'>
         <div className='flex flex-wrap gap-2'>
           {registrationFilterTabs.map(tab => (
             <button
@@ -88,7 +80,7 @@ export const RegistrationsListPage = (): JSX.Element => {
               type='button'
               data-tab={tab}
               onClick={handleTabClick}
-              className={cn('wf-filter-tab', tab === activeTab ? 'wf-filter-tab-active' : '')}
+              className={cn('wf-pill-tab', tab === activeTab ? 'wf-pill-tab-active' : '')}
             >
               {tab}
             </button>
@@ -96,7 +88,13 @@ export const RegistrationsListPage = (): JSX.Element => {
         </div>
       </section>
 
-      <RegistrationFilters searchValue={searchValue} onSearchChange={setSearchValue} />
+      <RegistrationFilters
+        searchValue={searchValue}
+        statusValue={statusValue}
+        onSearchChange={setSearchValue}
+        onStatusChange={setStatusValue}
+        onAddManualRegistration={handleAddManualRegistration}
+      />
 
       {isError ? (
         <section className='rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive'>

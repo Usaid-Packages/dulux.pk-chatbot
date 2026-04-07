@@ -1,6 +1,6 @@
 import type { ChangeEvent, JSX } from 'react';
 
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Input } from '#/components/ui';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
@@ -21,15 +21,10 @@ export const InvoicesStep = (): JSX.Element => {
     formState: { errors },
     control,
   } = useFormContext<ManualRegistrationFormValues>();
-  const { fields } = useFieldArray({
-    control,
-    name: 'additionalPaintPairs',
-  });
 
   const topcoatInvoice = useWatch({ control, name: 'topcoatInvoice' });
   const basecoatInvoice = useWatch({ control, name: 'basecoatInvoice' });
   const selectedBasecoat = useWatch({ control, name: 'basecoatProductId' });
-  const additionalPaintPairs = useWatch({ control, name: 'additionalPaintPairs' });
   const hasBasecoat = Boolean(selectedBasecoat);
 
   const handleTopcoatFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -39,26 +34,6 @@ export const InvoicesStep = (): JSX.Element => {
   const handleBasecoatFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setValue('basecoatInvoice', getSelectedFile(event), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
-
-  const createAdditionalTopcoatFileChangeHandler =
-    (index: number) =>
-    (event: ChangeEvent<HTMLInputElement>): void => {
-      setValue(`additionalPaintPairs.${index}.topcoatInvoice`, getSelectedFile(event), {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    };
-
-  const createAdditionalBasecoatFileChangeHandler =
-    (index: number) =>
-    (event: ChangeEvent<HTMLInputElement>): void => {
-      setValue(`additionalPaintPairs.${index}.basecoatInvoice`, getSelectedFile(event), {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    };
 
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
@@ -89,57 +64,6 @@ export const InvoicesStep = (): JSX.Element => {
           {errors.basecoatInvoice ? <p className='text-xs text-destructive'>{errors.basecoatInvoice.message}</p> : null}
         </label>
       </div>
-
-      {fields.length > 0 ? (
-        <div className='space-y-4'>
-          {fields.map((field, index) => {
-            const pairValues = additionalPaintPairs?.[index];
-            const pairErrors = errors.additionalPaintPairs?.[index];
-            const hasPairBasecoat = Boolean(pairValues?.basecoatProductId);
-
-            return (
-              <article key={field.id} className='space-y-4 rounded-md border border-border p-4'>
-                <h4 className='text-sm font-semibold text-text-primary'>Paint Pair {index + 2} Invoices</h4>
-
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <label className='space-y-2'>
-                    <span className='text-sm font-medium text-text-primary'>Topcoat Invoice</span>
-                    <Input
-                      type='file'
-                      accept='.jpg,.jpeg,.png,.pdf'
-                      onChange={createAdditionalTopcoatFileChangeHandler(index)}
-                    />
-                    {pairValues?.topcoatInvoice ? (
-                      <p className='text-xs text-text-muted'>Selected: {pairValues.topcoatInvoice.name}</p>
-                    ) : null}
-                    {pairErrors?.topcoatInvoice ? (
-                      <p className='text-xs text-destructive'>{pairErrors.topcoatInvoice.message}</p>
-                    ) : null}
-                  </label>
-
-                  <label className='space-y-2'>
-                    <span className='text-sm font-medium text-text-primary'>
-                      Basecoat Invoice {hasPairBasecoat ? '' : '(optional)'}
-                    </span>
-                    <Input
-                      type='file'
-                      accept='.jpg,.jpeg,.png,.pdf'
-                      disabled={!hasPairBasecoat}
-                      onChange={createAdditionalBasecoatFileChangeHandler(index)}
-                    />
-                    {pairValues?.basecoatInvoice ? (
-                      <p className='text-xs text-text-muted'>Selected: {pairValues.basecoatInvoice.name}</p>
-                    ) : null}
-                    {pairErrors?.basecoatInvoice ? (
-                      <p className='text-xs text-destructive'>{pairErrors.basecoatInvoice.message}</p>
-                    ) : null}
-                  </label>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : null}
     </section>
   );
 };

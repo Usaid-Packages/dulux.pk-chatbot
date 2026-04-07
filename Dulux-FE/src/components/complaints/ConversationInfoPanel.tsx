@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 
-import { CONVERSATION_STATUS_LABELS } from '#/components/complaints/constants';
 import { Button } from '#/components/ui';
 import type { ConversationThread } from '#/types/complaints';
 
@@ -45,14 +44,14 @@ const getInitials = (name: string): string => {
 export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPanelProps): JSX.Element => {
   if (!thread) {
     return (
-      <aside className='flex h-[calc(100vh-16rem)] flex-col wf-card wf-card-p4 text-sm text-text-muted'>
+      <aside className='wf-card wf-card-p4 text-sm text-text-muted'>
         Customer details appear here after selecting a conversation.
       </aside>
     );
   }
 
   return (
-    <aside className='flex h-[calc(100vh-16rem)] flex-col gap-4 wf-card wf-card-p4'>
+    <aside className='space-y-4 wf-card wf-card-p4'>
       <section className='text-center'>
         <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
           {getInitials(thread.customerName)}
@@ -75,7 +74,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           <span className='text-text-muted'>Registration</span>
           <span className='font-medium text-text-primary'>{thread.registrationId || '--'}</span>
           <span className='text-text-muted'>Status</span>
-          <span className='font-medium text-text-primary'>{CONVERSATION_STATUS_LABELS[thread.apiStatus]}</span>
+          <span className='font-medium text-text-primary'>{thread.apiStatus}</span>
           <span className='text-text-muted'>Closure Note</span>
           <span className='font-medium text-text-primary'>{thread.closureNote || '--'}</span>
           <span className='text-text-muted'>Closed At</span>
@@ -83,7 +82,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
         </div>
       </section>
 
-      <section className='flex-1 space-y-2 overflow-y-auto rounded-md border border-border p-3'>
+      <section className='space-y-2 rounded-md border border-border p-3'>
         <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
         {thread.complaintImages.length === 0 ? (
           <p className='text-xs text-text-muted'>No images</p>

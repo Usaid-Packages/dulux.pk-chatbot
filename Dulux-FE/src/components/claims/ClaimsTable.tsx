@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimListItem } from '#/types/claims.types';
 import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
@@ -48,9 +48,9 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
                 <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>
               </TableCell>
               <TableCell>
-                <Button asChild type='button' variant='outline' size='sm'>
-                  <Link to={ROUTES.CLAIM_DETAIL(claim.id)}>View Detail</Link>
-                </Button>
+                <Link className='wf-table-link' to={ROUTES.CLAIM_DETAIL(claim.id)}>
+                  View detail
+                </Link>
               </TableCell>
             </TableRow>
           ))}

@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 
-import { ArrowLeft } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,11 +80,6 @@ export const ManualStepPage = (): JSX.Element => {
 
   return (
     <section className='space-y-4'>
-      <Button type='button' variant='outline' onClick={() => navigate(ROUTES.REGISTRATIONS)}>
-        <ArrowLeft className='h-4 w-4' />
-        Back
-      </Button>
-
       <Stepper steps={steps} currentStep={currentStep} completedSteps={completedSteps} />
 
       <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit, handleFormInvalidSubmit)}>

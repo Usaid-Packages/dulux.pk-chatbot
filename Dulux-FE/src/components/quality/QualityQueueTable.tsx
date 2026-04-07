@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { QualityQueueItem } from '#/types/quality.types';
 import {
@@ -62,9 +62,12 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
                 <Badge variant={getQualityStatusVariant(item.status)}>{getQualityStatusLabel(item.status)}</Badge>
               </TableCell>
               <TableCell>
-                <Button asChild type='button' variant='outline' size='sm'>
-                  <Link to={ROUTES.QUALITY_DETAIL(item.id)}>View Detail</Link>
-                </Button>
+                <Link
+                  to={ROUTES.QUALITY_DETAIL(item.id)}
+                  className='wf-table-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                >
+                  Open
+                </Link>
               </TableCell>
             </TableRow>
           ))}

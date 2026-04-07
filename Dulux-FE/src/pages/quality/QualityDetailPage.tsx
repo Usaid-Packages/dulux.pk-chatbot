@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
 
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ClaimTimeline, ClaimWorkflowCard, LinkedRegistrationCard } from '#/components/claims';
@@ -102,8 +101,7 @@ export const QualityDetailPage = (): JSX.Element => {
             <EmptyDescription>{qualityDetailQuery.error?.message ?? 'Claim not found.'}</EmptyDescription>
           </EmptyHeader>
           <Button type='button' variant='outline' onClick={handleBackClick}>
-            <ArrowLeft className='h-4 w-4' />
-            Back
+            Back To Quality Queue
           </Button>
         </EmptyContent>
       </Empty>
@@ -111,13 +109,11 @@ export const QualityDetailPage = (): JSX.Element => {
   }
 
   const claim = qualityDetailQuery.data;
-  const isApproveDisabled = claim.status === 'approved' || claim.workflowState === 'APPROVED';
 
   return (
     <main className='space-y-4'>
       <Button type='button' variant='outline' onClick={handleBackClick}>
-        <ArrowLeft className='h-4 w-4' />
-        Back
+        Back To Quality Queue
       </Button>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
@@ -162,7 +158,6 @@ export const QualityDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <QualityDecisionPanel
             isActionPending={isActionPending}
-            isApproveDisabled={isApproveDisabled}
             onOpenApproveModal={openApproveModal}
             onOpenRequestInfoModal={openRequestInfoModal}
             onOpenRejectModal={openRejectModal}
