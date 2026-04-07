@@ -2,6 +2,7 @@ from datetime import date
 
 from constance import config
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -136,6 +137,9 @@ class RegistrationPaintPairWriteSerializer(serializers.Serializer):
 
         if basecoat is not None and (basecoat.product_type != ProductType.BASECOAT or not basecoat.is_active):
             raise serializers.ValidationError({"basecoat": "Basecoat must be an active BASECOAT product."})
+
+        if basecoat is not None and not topcoat.basecoats.filter(pk=basecoat.pk).exists():
+            raise serializers.ValidationError({"basecoat": "Basecoat must be linked to the selected topcoat product."})
 
         if basecoat is None and basecoat_quantity is not None:
             raise serializers.ValidationError({"basecoat_quantity": "Basecoat quantity requires a basecoat."})
@@ -329,7 +333,17 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         instance: WarrantyRegistration,
         paint_pairs: list[dict],
     ) -> None:
-        instance.paint_pairs.all().delete()
+        try:
+            instance.paint_pairs.all().delete()
+        except ProtectedError as exc:
+            raise serializers.ValidationError(
+                {
+                    "paint_pairs": (
+                        "Paint pairs cannot be replaced because one or more existing paint pairs are already linked "
+                        "to claims."
+                    )
+                }
+            ) from exc
         for paint_pair_data in paint_pairs:
             RegistrationPaintPair.objects.create(registration=instance, **paint_pair_data)
 
@@ -369,6 +383,7 @@ class ClaimImageSerializer(serializers.ModelSerializer):
 
 class WarrantyClaimListSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
+    customer_name = serializers.CharField(source="registration.customer_name", read_only=True)
     topcoat_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -376,6 +391,7 @@ class WarrantyClaimListSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "registration_number",
+            "customer_name",
             "topcoat_name",
             "issue_type",
             "affected_area_sqft",

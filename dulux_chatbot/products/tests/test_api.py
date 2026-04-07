@@ -40,8 +40,8 @@ class ProductAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("results", response.data)
-        self.assertEqual(response.data["count"], 1)
-        result = response.data["results"][0]
+        self.assertEqual(response.data["count"], 2)
+        result = next(item for item in response.data["results"] if item["id"] == product.id)
         self.assertEqual(result["name"], "Dulux Velvet Touch")
         self.assertEqual(len(result["images"]), 1)
         self.assertIn("image", result["images"][0])
@@ -162,7 +162,7 @@ class ProductAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["basecoats"][0], "Basecoats can only be assigned to TOPCOAT products.")
+        self.assertEqual(response.data["basecoats"], "Basecoats can only be assigned to TOPCOAT products.")
 
     def test_admin_cannot_create_product_without_required_fields(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -203,6 +203,32 @@ class ProductAPITests(TestCase):
         self.assertEqual(len(response.data["basecoats"]), 1)
         self.assertEqual(response.data["basecoats"][0]["id"], basecoat.id)
 
+    def test_can_list_basecoats_for_topcoat(self):
+        topcoat = create_product(name="Linked Topcoat", product_type=ProductType.TOPCOAT, warranty_years=5)
+        basecoat_one = create_product(name="Basecoat One", product_type=ProductType.BASECOAT, warranty_years=3)
+        basecoat_two = create_product(name="Basecoat Two", product_type=ProductType.BASECOAT, warranty_years=3)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat_one)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat_two)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(reverse("product_basecoat_list", kwargs={"pk": topcoat.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(
+            [item["name"] for item in response.data["results"]],
+            ["Basecoat One", "Basecoat Two"],
+        )
+
+    def test_basecoat_list_rejects_non_topcoat_product(self):
+        basecoat = create_product(name="Standalone Basecoat", product_type=ProductType.BASECOAT, warranty_years=3)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(reverse("product_basecoat_list", kwargs={"pk": basecoat.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Basecoat list is only available for TOPCOAT products.")
+
     def test_admin_can_delete_product(self):
         product = create_product(name="Delete Me", warranty_years=5)
         self.client.force_authenticate(user=self.admin_user)
@@ -210,3 +236,19 @@ class ProductAPITests(TestCase):
         response = self.client.delete(reverse("product_detail", kwargs={"pk": product.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_admin_cannot_delete_product_when_it_is_in_use(self):
+        from dulux_chatbot.warranty.tests.factories import create_paint_pair, create_registration
+
+        product = create_product(name="Used Product", warranty_years=5)
+        registration = create_registration()
+        create_paint_pair(registration=registration, topcoat=product)
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.delete(reverse("product_detail", kwargs={"pk": product.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Product cannot be deleted because it is linked to existing warranty registrations, claims, or product mappings.",
+        )
