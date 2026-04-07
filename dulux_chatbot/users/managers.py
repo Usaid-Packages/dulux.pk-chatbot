@@ -12,6 +12,8 @@ class UserManager(DjangoUserManager):
         """
         if not email:
             raise ValueError("The given email must be set")
+        if not extra_fields.get("role"):
+            raise ValueError("User role must be set.")
 
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)

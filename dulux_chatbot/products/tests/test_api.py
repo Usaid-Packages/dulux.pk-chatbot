@@ -9,6 +9,7 @@ from dulux_chatbot.products.tests.factories import (
     create_admin_user,
     create_cs_user,
     create_product,
+    create_product_basecoat,
     create_product_surface_mapping,
     create_surface_type,
 )
@@ -28,8 +29,10 @@ class ProductAPITests(TestCase):
 
     def test_authenticated_get_returns_paginated_products_with_images(self):
         product = create_product(name="Dulux Velvet Touch")
+        basecoat = create_product(name="Dulux Primer Coat", product_type=ProductType.BASECOAT, warranty_years=3)
         surface_type = create_surface_type()
         create_product_surface_mapping(product=product, surface_type=surface_type)
+        create_product_basecoat(topcoat=product, basecoat=basecoat)
         attach_product_image(product=product)
         self.client.force_authenticate(user=self.cs_user)
 
@@ -45,6 +48,8 @@ class ProductAPITests(TestCase):
         self.assertIn("url", result["images"][0]["image"])
         self.assertEqual(len(result["surface_types"]), 1)
         self.assertEqual(result["surface_types"][0]["id"], surface_type.id)
+        self.assertEqual(len(result["basecoats"]), 1)
+        self.assertEqual(result["basecoats"][0]["id"], basecoat.id)
 
     def test_filter_by_product_type_and_active_state(self):
         create_product(name="Active Topcoat", product_type=ProductType.TOPCOAT, warranty_years=6, is_active=True)
@@ -88,6 +93,7 @@ class ProductAPITests(TestCase):
 
     def test_admin_can_create_topcoat(self):
         surface_type = create_surface_type()
+        basecoat = create_product(name="Dulux Linked Basecoat", product_type=ProductType.BASECOAT, warranty_years=3)
         self.client.force_authenticate(user=self.admin_user)
 
         response = self.client.post(
@@ -100,6 +106,7 @@ class ProductAPITests(TestCase):
                 "coverage_details": "100 sqft per liter",
                 "webpage_url": "https://example.com/products/topcoat",
                 "surface_types": [surface_type.id],
+                "basecoats": [basecoat.id],
             },
             format="json",
         )
@@ -108,6 +115,7 @@ class ProductAPITests(TestCase):
         self.assertEqual(response.data["product_type"], ProductType.TOPCOAT)
         self.assertEqual(response.data["warranty_years"], 5)
         self.assertEqual(response.data["surface_types"][0]["id"], surface_type.id)
+        self.assertEqual(response.data["basecoats"][0]["id"], basecoat.id)
 
     def test_admin_can_create_basecoat(self):
         surface_type = create_surface_type(name="Brick")
@@ -131,6 +139,30 @@ class ProductAPITests(TestCase):
         self.assertEqual(response.data["product_type"], ProductType.BASECOAT)
         self.assertEqual(response.data["warranty_years"], 3)
         self.assertEqual(response.data["surface_types"][0]["id"], surface_type.id)
+        self.assertEqual(response.data["basecoats"], [])
+
+    def test_admin_cannot_assign_basecoats_to_non_topcoat_product(self):
+        surface_type = create_surface_type(name="Brick")
+        basecoat = create_product(name="Linked Basecoat", product_type=ProductType.BASECOAT, warranty_years=3)
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "name": "Invalid Basecoat Product",
+                "product_type": ProductType.BASECOAT,
+                "warranty_years": 3,
+                "features": "Base preparation coat",
+                "coverage_details": "90 sqft per liter",
+                "webpage_url": "https://example.com/products/basecoat-invalid",
+                "surface_types": [surface_type.id],
+                "basecoats": [basecoat.id],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["basecoats"][0], "Basecoats can only be assigned to TOPCOAT products.")
 
     def test_admin_cannot_create_product_without_required_fields(self):
         self.client.force_authenticate(user=self.admin_user)
@@ -152,6 +184,7 @@ class ProductAPITests(TestCase):
 
     def test_admin_can_patch_product(self):
         product = create_product(name="Patch Me", warranty_years=5)
+        basecoat = create_product(name="Patch Basecoat", product_type=ProductType.BASECOAT, warranty_years=3)
         old_surface_type = create_surface_type(name="Wood")
         new_surface_type = create_surface_type(name="Metal")
         create_product_surface_mapping(product=product, surface_type=old_surface_type)
@@ -159,7 +192,7 @@ class ProductAPITests(TestCase):
 
         response = self.client.patch(
             reverse("product_detail", kwargs={"pk": product.pk}),
-            {"is_active": False, "surface_types": [new_surface_type.id]},
+            {"is_active": False, "surface_types": [new_surface_type.id], "basecoats": [basecoat.id]},
             format="json",
         )
 
@@ -167,6 +200,8 @@ class ProductAPITests(TestCase):
         self.assertFalse(response.data["is_active"])
         self.assertEqual(len(response.data["surface_types"]), 1)
         self.assertEqual(response.data["surface_types"][0]["id"], new_surface_type.id)
+        self.assertEqual(len(response.data["basecoats"]), 1)
+        self.assertEqual(response.data["basecoats"][0]["id"], basecoat.id)
 
     def test_admin_can_delete_product(self):
         product = create_product(name="Delete Me", warranty_years=5)

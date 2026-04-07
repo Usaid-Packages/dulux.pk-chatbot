@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
-from dulux_chatbot.products.models import Product, ProductImage, ProductSurfaceMapping, SurfaceType
+from dulux_chatbot.products.choices import ProductType
+from dulux_chatbot.products.models import Product, ProductBasecoat, ProductImage, ProductSurfaceMapping, SurfaceType
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -35,9 +36,16 @@ class SurfaceTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created", "modified")
 
 
+class ProductBasecoatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ("id", "name", "product_type", "warranty_years", "is_active", "created", "modified")
+        read_only_fields = fields
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """
-    Requires `prefetch_related("images__image", "surface_mappings__surface_type")`
+    Requires `prefetch_related("images__image", "surface_mappings__surface_type", "basecoat_mappings__basecoat")`
     on the product queryset. If those relations are not prefetched before
     serialization, this serializer will trigger N+1 queries.
     """
@@ -49,6 +57,12 @@ class ProductSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty=True,
         allow_null=True,
+    )
+    basecoats = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.filter(product_type=ProductType.BASECOAT),
+        many=True,
+        required=False,
+        allow_empty=True,
     )
 
     class Meta:
@@ -63,6 +77,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "webpage_url",
             "is_active",
             "surface_types",
+            "basecoats",
             "images",
             "created",
             "modified",
@@ -72,28 +87,55 @@ class ProductSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data: dict) -> Product:
         surface_types = validated_data.pop("surface_types", [])
+        basecoats = validated_data.pop("basecoats", [])
+        self._validate_basecoats(product_type=validated_data.get("product_type"), basecoats=basecoats)
         product = super().create(validated_data)
         self._sync_surface_types(product=product, surface_types=surface_types)
+        self._sync_basecoats(product=product, basecoats=basecoats)
         return product
 
     @transaction.atomic
     def update(self, instance: Product, validated_data: dict) -> Product:
         surface_types = validated_data.pop("surface_types", None)
+        basecoats = validated_data.pop("basecoats", None)
+        product_type = validated_data.get("product_type", instance.product_type)
+        if basecoats is not None:
+            self._validate_basecoats(product_type=product_type, basecoats=basecoats)
         product = super().update(instance, validated_data)
         if surface_types is not None:
             self._sync_surface_types(product=product, surface_types=surface_types)
+        if basecoats is not None:
+            self._sync_basecoats(product=product, basecoats=basecoats)
+        elif product.product_type != ProductType.TOPCOAT:
+            self._sync_basecoats(product=product, basecoats=[])
         return product
 
     def to_representation(self, instance: Product) -> dict:
         data = super().to_representation(instance)
         mappings = instance.surface_mappings.all()
         surface_types = [mapping.surface_type for mapping in mappings]
+        basecoat_mappings = instance.basecoat_mappings.all()
+        basecoats = [mapping.basecoat for mapping in basecoat_mappings]
         data["surface_types"] = SurfaceTypeSerializer(
             surface_types,
             many=True,
             context=self.context,
         ).data
+        data["basecoats"] = ProductBasecoatSerializer(
+            basecoats,
+            many=True,
+            context=self.context,
+        ).data
         return data
+
+    def _validate_basecoats(self, *, product_type: str | None, basecoats: list[Product]) -> None:
+        if not basecoats:
+            return
+        if product_type != ProductType.TOPCOAT:
+            raise serializers.ValidationError({"basecoats": "Basecoats can only be assigned to TOPCOAT products."})
+        invalid_basecoats = [basecoat.id for basecoat in basecoats if basecoat.product_type != ProductType.BASECOAT]
+        if invalid_basecoats:
+            raise serializers.ValidationError({"basecoats": "All selected basecoats must be BASECOAT products."})
 
     def _sync_surface_types(self, *, product: Product, surface_types: list[SurfaceType]) -> None:
         surface_type_ids = {surface_type.id for surface_type in surface_types}
@@ -112,5 +154,25 @@ class ProductSerializer(serializers.ModelSerializer):
                 ProductSurfaceMapping(product=product, surface_type=surface_type)
                 for surface_type in surface_types
                 if surface_type.id not in existing_ids
+            ]
+        )
+
+    def _sync_basecoats(self, *, product: Product, basecoats: list[Product]) -> None:
+        basecoat_ids = {basecoat.id for basecoat in basecoats}
+
+        ProductBasecoat.objects.filter(topcoat=product).exclude(basecoat_id__in=basecoat_ids).delete()
+
+        existing_ids = set(
+            ProductBasecoat.objects.filter(topcoat=product, basecoat_id__in=basecoat_ids).values_list(
+                "basecoat_id",
+                flat=True,
+            )
+        )
+
+        ProductBasecoat.objects.bulk_create(
+            [
+                ProductBasecoat(topcoat=product, basecoat=basecoat)
+                for basecoat in basecoats
+                if basecoat.id not in existing_ids
             ]
         )

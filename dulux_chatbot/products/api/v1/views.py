@@ -11,7 +11,9 @@ from dulux_chatbot.products.models import Product, ProductImage, SurfaceType
 
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Product.objects.prefetch_related("images__image", "surface_mappings__surface_type").all()
+    queryset = Product.objects.prefetch_related(
+        "images__image", "surface_mappings__surface_type", "basecoat_mappings__basecoat"
+    ).all()
     serializer_class = ProductSerializer
     filterset_fields = ["product_type", "is_active"]
     search_fields = ["name"]
@@ -25,7 +27,9 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
 
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Product.objects.prefetch_related("images__image", "surface_mappings__surface_type").all()
+    queryset = Product.objects.prefetch_related(
+        "images__image", "surface_mappings__surface_type", "basecoat_mappings__basecoat"
+    ).all()
     serializer_class = ProductSerializer
 
     def get_permissions(self):

@@ -7,6 +7,8 @@ from dj_rest_auth.views import (
 from django.urls import path
 from rest_framework_simplejwt.views import TokenVerifyView
 
+from dulux_chatbot.users.api.v1.views import DashboardAnalyticsAPIView, DashboardCardsAPIView
+
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="rest_login"),
@@ -18,4 +20,6 @@ urlpatterns = [
     ),
     path("token/refresh/", get_refresh_view().as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("cards/", DashboardCardsAPIView.as_view(), name="dashboard_cards"),
+    path("analytics/", DashboardAnalyticsAPIView.as_view(), name="dashboard_analytics"),
 ]

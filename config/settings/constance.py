@@ -8,5 +8,9 @@ CONSTANCE_CONFIG = {
     "MAX_IMAGE_FILE_SIZE_MB": (10, "Maximum uploaded image size in MB"),
     "MIN_CLAIM_PHOTOS": (3, "Minimum photos required per warranty claim"),
     "OTP_EXPIRY_MINUTES": (5, "Minutes before a WhatsApp OTP expires"),
+    "WHATSAPP_SESSION_TIMEOUT_MINUTES": (
+        5,
+        "Minutes before an inactive WhatsApp chatbot session resets to the main menu",
+    ),
     "REGISTRATION_PURCHASE_DAYS_LIMIT": (60, "Max days prior to registration that purchase date is accepted"),
 }

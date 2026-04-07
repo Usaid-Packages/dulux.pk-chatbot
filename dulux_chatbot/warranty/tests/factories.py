@@ -22,6 +22,7 @@ from dulux_chatbot.warranty.models import (
     WarrantyClaim,
     WarrantyRegistration,
 )
+from dulux_chatbot.warranty.utils import generate_registration_code
 
 
 User = get_user_model()
@@ -54,6 +55,7 @@ def create_registration(
     channel: str = RegistrationChannel.WHATSAPP,
 ) -> WarrantyRegistration:
     return WarrantyRegistration.objects.create(
+        registration_code=generate_registration_code(),
         channel=channel,
         state=state,
         customer_name="Customer Name",

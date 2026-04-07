@@ -12,6 +12,13 @@ class Product(TimeStampedModel):
     coverage_details = models.TextField()
     webpage_url = models.URLField()
     is_active = models.BooleanField(default=True)
+    basecoats = models.ManyToManyField(
+        "self",
+        through="ProductBasecoat",
+        symmetrical=False,
+        related_name="topcoat_products",
+        through_fields=("topcoat", "basecoat"),
+    )
 
     class Meta:
         unique_together = [("name", "product_type")]
@@ -29,6 +36,17 @@ class ProductImage(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.product} image {self.image_id}"
+
+
+class ProductBasecoat(TimeStampedModel):
+    topcoat = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="basecoat_mappings")
+    basecoat = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="topcoat_mappings")
+
+    class Meta:
+        unique_together = [("topcoat", "basecoat")]
+
+    def __str__(self) -> str:
+        return f"{self.topcoat} -> {self.basecoat}"
 
 
 class SurfaceType(TimeStampedModel):
