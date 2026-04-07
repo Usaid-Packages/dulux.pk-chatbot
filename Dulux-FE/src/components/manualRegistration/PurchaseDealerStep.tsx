@@ -15,6 +15,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
     register,
     formState: { errors },
   } = useFormContext<ManualRegistrationFormValues>();
+  const todayDate = new Date().toISOString().split('T')[0];
 
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
@@ -26,7 +27,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
       <div className='grid gap-4 md:grid-cols-2'>
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Purchase Date</span>
-          <Input type='date' {...register('purchaseDate')} />
+          <Input type='date' max={todayDate} {...register('purchaseDate')} />
           {errors.purchaseDate ? <p className='text-xs text-destructive'>{errors.purchaseDate.message}</p> : null}
         </label>
 

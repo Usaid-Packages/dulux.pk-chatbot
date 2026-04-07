@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import {
   Button,
@@ -11,16 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '#/components/ui';
 import { forwardToQualitySchema, type ForwardToQualityFormValues } from '#/schemas/claim.schema';
-import type { ClaimPriority } from '#/types/claims.types';
 
 interface ForwardToQualityModalProps {
   isOpen: boolean;
@@ -29,13 +22,8 @@ interface ForwardToQualityModalProps {
   onSubmit: (values: ForwardToQualityFormValues) => void;
 }
 
-const PRIORITY_OPTIONS: ReadonlyArray<{ value: ClaimPriority; label: string }> = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'high', label: 'High' },
-];
-
 /**
- * ForwardToQualityModal gathers CS notes and priority before forwarding the claim.
+ * ForwardToQualityModal gathers CS notes before forwarding the claim.
  *
  * @param props - Modal state and submit callback.
  * @returns Forward modal.
@@ -49,15 +37,12 @@ export const ForwardToQualityModal = ({
   const {
     handleSubmit,
     register,
-    control,
     reset,
     formState: { errors },
   } = useForm<ForwardToQualityFormValues>({
     resolver: zodResolver(forwardToQualitySchema),
     defaultValues: {
       notes: '',
-      priority: 'normal',
-      verificationPackSummary: '',
     },
   });
 
@@ -77,7 +62,7 @@ export const ForwardToQualityModal = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Forward Claim To Quality</DialogTitle>
-          <DialogDescription>Add CS notes and assign priority for quality review.</DialogDescription>
+          <DialogDescription>Add CS notes for quality review.</DialogDescription>
         </DialogHeader>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
@@ -87,45 +72,6 @@ export const ForwardToQualityModal = ({
             </label>
             <Textarea id='forward-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='forward-priority' className='text-sm font-medium text-text-primary'>
-              Priority
-            </label>
-            <Controller
-              control={control}
-              name='priority'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='forward-priority'>
-                    <SelectValue placeholder='Select priority' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITY_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.priority ? <p className='text-xs text-destructive'>{errors.priority.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='verification-pack' className='text-sm font-medium text-text-primary'>
-              Verification Pack Summary
-            </label>
-            <Input
-              id='verification-pack'
-              {...register('verificationPackSummary')}
-              aria-invalid={Boolean(errors.verificationPackSummary)}
-            />
-            {errors.verificationPackSummary ? (
-              <p className='text-xs text-destructive'>{errors.verificationPackSummary.message}</p>
-            ) : null}
           </div>
 
           <DialogFooter>

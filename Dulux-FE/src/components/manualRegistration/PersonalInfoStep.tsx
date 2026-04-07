@@ -1,4 +1,5 @@
-import type { ChangeEvent, JSX } from 'react';
+import type { ChangeEvent, FocusEvent, JSX } from 'react';
+import { useEffect } from 'react';
 
 import { useFormContext } from 'react-hook-form';
 
@@ -12,19 +13,34 @@ import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
  */
 export const PersonalInfoStep = (): JSX.Element => {
   const {
+    getValues,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<ManualRegistrationFormValues>();
+
+  useEffect(() => {
+    const currentPhone = getValues('phoneNumber');
+    if (!currentPhone) {
+      setValue('phoneNumber', '92', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    }
+  }, [getValues, setValue]);
 
   const handlePostalCodeChange = (event: ChangeEvent<HTMLInputElement>): void => {
     event.currentTarget.value = event.currentTarget.value.replace(/[^a-zA-Z0-9-]/g, '');
   };
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const sanitized = event.currentTarget.value.replace(/[^\d+]/g, '');
-    const hasLeadingPlus = sanitized.startsWith('+');
-    const numericPart = sanitized.replace(/\D/g, '').slice(0, 12);
-    event.currentTarget.value = hasLeadingPlus ? `+${numericPart}` : numericPart;
+    const digitsOnly = event.currentTarget.value.replace(/\D/g, '');
+    const withoutPrefix = digitsOnly.startsWith('92') ? digitsOnly.slice(2) : digitsOnly;
+    const limitedLocalPart = withoutPrefix.slice(0, 10);
+    event.currentTarget.value = `92${limitedLocalPart}`;
+  };
+
+  const handlePhoneNumberFocus = (event: FocusEvent<HTMLInputElement>): void => {
+    if (!event.currentTarget.value) {
+      event.currentTarget.value = '92';
+    }
   };
 
   return (
@@ -43,7 +59,12 @@ export const PersonalInfoStep = (): JSX.Element => {
 
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Phone Number</span>
-          <Input placeholder='e.g. 923001234567' {...register('phoneNumber')} onChange={handlePhoneNumberChange} />
+          <Input
+            placeholder='92XXXXXXXXXX'
+            {...register('phoneNumber')}
+            onChange={handlePhoneNumberChange}
+            onFocus={handlePhoneNumberFocus}
+          />
           {errors.phoneNumber ? <p className='text-xs text-destructive'>{errors.phoneNumber.message}</p> : null}
         </label>
 
@@ -66,7 +87,7 @@ export const PersonalInfoStep = (): JSX.Element => {
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Postal Code</span>
+          <span className='text-sm font-medium text-text-primary'>Postal Code (optional)</span>
           <Input placeholder='e.g. 54000' {...register('postalCode')} onChange={handlePostalCodeChange} />
           {errors.postalCode ? <p className='text-xs text-destructive'>{errors.postalCode.message}</p> : null}
         </label>

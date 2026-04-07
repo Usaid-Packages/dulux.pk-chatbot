@@ -12,6 +12,15 @@ export interface ManualRegistrationProductOption {
   label: string;
 }
 
+export interface ManualRegistrationPaintPairInput {
+  topcoatProductId: string;
+  topcoatQuantity: string;
+  basecoatProductId: string;
+  basecoatQuantity: string;
+  topcoatInvoice: File | null;
+  basecoatInvoice: File | null;
+}
+
 export interface ManualRegistrationFormValues {
   customerName: string;
   phoneNumber: string;
@@ -31,6 +40,7 @@ export interface ManualRegistrationFormValues {
   basecoatQuantity: string;
   topcoatInvoice: File | null;
   basecoatInvoice: File | null;
+  additionalPaintPairs: ManualRegistrationPaintPairInput[];
 }
 
 export interface ManualRegistrationSubmissionResult {

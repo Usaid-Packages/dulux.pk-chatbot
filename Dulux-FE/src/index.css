@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 /* ---break---
  */
 @custom-variant dark (&:is(.dark *));
@@ -25,7 +25,6 @@
  */
 
 @theme inline {
-
   --radius-sm: calc(var(--radius) - 4px);
 
   --radius-md: calc(var(--radius) - 2px);
@@ -257,7 +256,6 @@
  */
 
 :root {
-
   --radius: 0.625rem;
 
   --background: oklch(1 0 0);
@@ -578,7 +576,6 @@
  */
 
 .dark {
-
   --background: oklch(0.145 0 0);
 
   --foreground: oklch(0.985 0 0);
@@ -770,8 +767,16 @@
     @apply rounded-lg border border-border bg-surface p-4;
   }
 
+  .wf-toolbar-panel-contrast {
+    @apply border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent;
+  }
+
   .wf-tabs-panel {
     @apply rounded-lg border border-border bg-surface p-2;
+  }
+
+  .wf-tabs-panel-contrast {
+    @apply border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent;
   }
 
   .wf-pagination-panel {
@@ -804,6 +809,14 @@
 
   .wf-pill-tab-active {
     @apply border-text-primary bg-text-primary text-white;
+  }
+
+  .wf-filter-tab {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white/80 px-4 py-2 text-xs font-semibold text-primary transition-all hover:border-primary/45 hover:bg-primary/10;
+  }
+
+  .wf-filter-tab-active {
+    @apply border-primary bg-primary text-white shadow-[0_6px_16px_rgba(35,95,198,0.25)];
   }
 
   .wf-chip-surface {

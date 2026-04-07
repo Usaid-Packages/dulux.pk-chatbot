@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
 
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
@@ -94,7 +95,8 @@ export const ClaimDetailPage = (): JSX.Element => {
             <EmptyDescription>{claimQuery.error?.message ?? 'Claim not found.'}</EmptyDescription>
           </EmptyHeader>
           <Button type='button' variant='outline' onClick={handleBackClick}>
-            Back To Claims
+            <ArrowLeft className='h-4 w-4' />
+            Back
           </Button>
         </EmptyContent>
       </Empty>
@@ -102,11 +104,18 @@ export const ClaimDetailPage = (): JSX.Element => {
   }
 
   const claim = claimQuery.data;
+  const isSendToQualityDisabled =
+    claim.workflowState === 'QA_REVIEW' ||
+    claim.workflowState === 'APPROVED' ||
+    claim.workflowState === 'REJECTED' ||
+    claim.workflowState === 'RESUBMIT' ||
+    claim.workflowState === 'RESOLVED';
 
   return (
     <main className='space-y-4'>
       <Button type='button' variant='outline' onClick={handleBackClick}>
-        Back To Claims
+        <ArrowLeft className='h-4 w-4' />
+        Back
       </Button>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
@@ -123,6 +132,7 @@ export const ClaimDetailPage = (): JSX.Element => {
             onOpenRequestInfoModal={openRequestInfoModal}
             onOpenRejectModal={openRejectModal}
             isActionPending={isActionPending}
+            isSendToQualityDisabled={isSendToQualityDisabled}
           />
           <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
         </div>

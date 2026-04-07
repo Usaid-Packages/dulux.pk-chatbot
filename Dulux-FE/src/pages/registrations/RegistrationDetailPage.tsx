@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
 
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { RegistrationDetailPanel, RejectRegistrationModal, ResubmissionModal } from '#/components/registrations';
@@ -75,7 +76,8 @@ export const RegistrationDetailPage = (): JSX.Element => {
     return (
       <section className='space-y-3'>
         <Button type='button' variant='outline' onClick={handleBackToList}>
-          Back to Registrations
+          <ArrowLeft className='h-4 w-4' />
+          Back
         </Button>
         <article className='rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive'>
           Invalid registration id.
@@ -103,7 +105,8 @@ export const RegistrationDetailPage = (): JSX.Element => {
             <EmptyDescription>{errorMessage || 'Registration not found.'}</EmptyDescription>
           </EmptyHeader>
           <Button type='button' variant='outline' onClick={handleBackToList}>
-            Back to Registrations
+            <ArrowLeft className='h-4 w-4' />
+            Back
           </Button>
         </EmptyContent>
       </Empty>
@@ -119,7 +122,8 @@ export const RegistrationDetailPage = (): JSX.Element => {
   return (
     <main className='space-y-4'>
       <Button type='button' variant='outline' onClick={handleBackToList}>
-        Back to Registrations
+        <ArrowLeft className='h-4 w-4' />
+        Back
       </Button>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
@@ -185,6 +189,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
           <RegistrationDetailPanel
             registration={registration}
             isApprovePending={isApprovePending}
+            isApproveDisabled={registration.state === 'APPROVED'}
             onApprove={approveRegistration}
             onOpenResubmitModal={openResubmissionModal}
             onOpenRejectModal={openRejectModal}
