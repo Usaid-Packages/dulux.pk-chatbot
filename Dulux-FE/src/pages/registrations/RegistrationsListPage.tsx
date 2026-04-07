@@ -68,7 +68,7 @@ export const RegistrationsListPage = (): JSX.Element => {
           </div>
           <Button
             type='button'
-            className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] hover:bg-[#08182e]'
+            className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
             onClick={handleAddManualRegistration}
           >
             Add Manual Registration

@@ -20,24 +20,24 @@ export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardP
   const canOpenRegistration = registration.registrationRecordId !== 'N/A';
 
   return (
-    <section className='wf-card wf-card-p4'>
+    <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
       <h2 className='text-md font-semibold text-text-primary'>Linked Registration</h2>
       <dl className='mt-3 grid gap-2 text-sm'>
-        <div className='flex justify-between gap-2'>
+        <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
           <dt className='text-text-muted'>Registration ID</dt>
           <dd>
             <span className='chip-reg'>{registration.registrationId}</span>
           </dd>
         </div>
-        <div className='flex justify-between gap-2'>
+        <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
           <dt className='text-text-muted'>Customer</dt>
           <dd className='font-medium text-text-primary'>{registration.customerName}</dd>
         </div>
-        <div className='flex justify-between gap-2'>
+        <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
           <dt className='text-text-muted'>Purchase Date</dt>
           <dd className='font-medium text-text-primary'>{formatDate(registration.purchaseDate)}</dd>
         </div>
-        <div className='flex justify-between gap-2'>
+        <div className='flex justify-between gap-3'>
           <dt className='text-text-muted'>Dealer</dt>
           <dd className='font-medium text-text-primary'>{registration.dealerName}</dd>
         </div>

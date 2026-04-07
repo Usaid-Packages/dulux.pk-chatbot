@@ -59,7 +59,7 @@ export const ForwardToQualityModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Forward Claim To Quality</DialogTitle>
           <DialogDescription>Add CS notes for quality review.</DialogDescription>
@@ -70,7 +70,12 @@ export const ForwardToQualityModal = ({
             <label htmlFor='forward-notes' className='text-sm font-medium text-text-primary'>
               CS Notes
             </label>
-            <Textarea id='forward-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
+            <Textarea
+              id='forward-notes'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('notes')}
+              aria-invalid={Boolean(errors.notes)}
+            />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
@@ -78,7 +83,11 @@ export const ForwardToQualityModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Forwarding...' : 'Forward'}
             </Button>
           </DialogFooter>

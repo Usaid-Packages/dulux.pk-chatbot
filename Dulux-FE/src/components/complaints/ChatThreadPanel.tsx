@@ -57,7 +57,7 @@ export const ChatThreadPanel = ({
 
   if (isLoading) {
     return (
-      <section className='wf-card wf-card-p4'>
+      <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
         <Skeleton className='h-8 w-1/2' />
         <div className='mt-4 space-y-3'>
           <Skeleton className='h-16 w-2/3' />
@@ -95,8 +95,8 @@ export const ChatThreadPanel = ({
   }
 
   return (
-    <section className='flex h-[calc(100vh-16rem)] flex-col wf-card'>
-      <header className='space-y-2 border-b border-border px-4 py-3'>
+    <section className='flex h-[calc(100vh-16rem)] flex-col rounded-2xl border border-primary/15 bg-white shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <header className='space-y-2 border-b border-primary/15 bg-[linear-gradient(180deg,#ffffff_0%,#f3f8ff_100%)] px-4 py-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div>
             <h2 className='text-base font-semibold text-text-primary'>{thread.customerName}</h2>
@@ -114,7 +114,10 @@ export const ChatThreadPanel = ({
         </div>
       </header>
 
-      <div ref={messageListRef} className='flex-1 space-y-3 overflow-y-auto bg-chat-panelBg px-4 py-4'>
+      <div
+        ref={messageListRef}
+        className='flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_18%_8%,rgba(31,111,210,0.08),transparent_42%),linear-gradient(180deg,#f9fcff_0%,#f2f7ff_100%)] px-4 py-4'
+      >
         {thread.messages.map(message => {
           const isCustomerMessage = message.kind === 'customer';
           const isSystemMessage = message.kind === 'system';
@@ -125,10 +128,10 @@ export const ChatThreadPanel = ({
               className={cn(
                 'max-w-[80%] rounded-xl px-3 py-2 text-sm',
                 isSystemMessage
-                  ? 'mx-auto max-w-[90%] bg-chat-systemBg text-chat-systemText'
+                  ? 'mx-auto max-w-[90%] border border-primary/20 bg-chat-systemBg text-chat-systemText'
                   : isCustomerMessage
-                    ? 'mr-auto bg-chat-customerBubble text-text-primary'
-                    : 'ml-auto bg-chat-agentBubble text-chat-agentText'
+                    ? 'mr-auto border border-primary/10 bg-chat-customerBubble text-text-primary shadow-sm'
+                    : 'ml-auto bg-chat-agentBubble text-chat-agentText shadow-[0_10px_22px_rgba(20,87,167,0.22)]'
               )}
             >
               <p>{message.text}</p>
@@ -141,7 +144,9 @@ export const ChatThreadPanel = ({
       </div>
 
       {thread.apiStatus === COMPLAINT_API_STATUSES.RESOLVED || thread.apiStatus === COMPLAINT_API_STATUSES.CLOSED ? (
-        <div className='border-t border-border bg-surface p-3 text-xs text-text-muted'>Conversation is resolved.</div>
+        <div className='border-t border-primary/15 bg-surface p-3 text-xs text-text-muted'>
+          Conversation is resolved.
+        </div>
       ) : (
         <MessageComposer isSubmitting={isSending} onSubmit={onSendMessage} />
       )}

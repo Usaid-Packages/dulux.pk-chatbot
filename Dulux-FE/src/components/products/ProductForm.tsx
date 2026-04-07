@@ -160,9 +160,10 @@ export const ProductForm = ({
     };
 
   return (
-    <section className='wf-card wf-card-p6'>
+    <section className='wf-card wf-card-p6 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
       <header className='mb-5 space-y-1'>
-        <h2 className='text-xl font-semibold text-text-primary'>{title}</h2>
+        <p className='text-xs font-semibold uppercase tracking-[2px] text-primary'>Product Editor</p>
+        <h2 className='text-xl font-extrabold tracking-tight text-text-primary'>{title}</h2>
         <p className='text-sm text-text-muted'>{description}</p>
       </header>
 
@@ -174,6 +175,7 @@ export const ProductForm = ({
             </label>
             <Input
               id='product-name'
+              className='rounded-xl border-primary/20 bg-white'
               placeholder='Enter product name'
               {...register('name')}
               aria-invalid={Boolean(errors.name)}
@@ -214,6 +216,7 @@ export const ProductForm = ({
               id='product-warranty'
               type='number'
               min={1}
+              className='rounded-xl border-primary/20 bg-white'
               placeholder='Enter warranty years'
               {...register('warrantyYears')}
               aria-invalid={Boolean(errors.warrantyYears)}
@@ -256,6 +259,7 @@ export const ProductForm = ({
           <Input
             id='product-url'
             type='url'
+            className='rounded-xl border-primary/20 bg-white'
             placeholder='https://example.com/product'
             {...register('webpageUrl')}
             aria-invalid={Boolean(errors.webpageUrl)}
@@ -270,6 +274,7 @@ export const ProductForm = ({
           <Textarea
             id='product-coverage'
             rows={3}
+            className='rounded-xl border-primary/20 bg-white'
             placeholder='e.g. 100 sq ft per liter on smooth plaster'
             {...register('coverageDetails')}
             aria-invalid={Boolean(errors.coverageDetails)}
@@ -284,6 +289,7 @@ export const ProductForm = ({
           <Textarea
             id='product-features'
             rows={4}
+            className='rounded-xl border-primary/20 bg-white'
             placeholder='Describe key features and customer value'
             {...register('features')}
             aria-invalid={Boolean(errors.features)}
@@ -295,7 +301,7 @@ export const ProductForm = ({
           <legend className='text-sm font-medium text-text-primary'>Surface Mapping</legend>
 
           <div className='grid gap-4 md:grid-cols-2'>
-            <details className='rounded-md border border-border bg-surface-subtle p-3'>
+            <details className='rounded-xl border border-primary/20 bg-white/80 p-3'>
               <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
                 Interior Surfaces (
                 {selectedSurfaceTypeIds.filter(id => interiorSurfaceTypes.some(item => item.id === id)).length})
@@ -305,6 +311,7 @@ export const ProductForm = ({
                   type='search'
                   value={interiorSurfaceSearch}
                   onChange={event => setInteriorSurfaceSearch(event.target.value)}
+                  className='rounded-xl border-primary/20 bg-white'
                   placeholder='Search interior surfaces...'
                   aria-label='Search interior surfaces'
                 />
@@ -330,7 +337,7 @@ export const ProductForm = ({
               </div>
             </details>
 
-            <details className='rounded-md border border-border bg-surface-subtle p-3'>
+            <details className='rounded-xl border border-primary/20 bg-white/80 p-3'>
               <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
                 Exterior Surfaces (
                 {selectedSurfaceTypeIds.filter(id => exteriorSurfaceTypes.some(item => item.id === id)).length})
@@ -340,6 +347,7 @@ export const ProductForm = ({
                   type='search'
                   value={exteriorSurfaceSearch}
                   onChange={event => setExteriorSurfaceSearch(event.target.value)}
+                  className='rounded-xl border-primary/20 bg-white'
                   placeholder='Search exterior surfaces...'
                   aria-label='Search exterior surfaces'
                 />
@@ -372,7 +380,7 @@ export const ProductForm = ({
         {selectedProductType === 'TOPCOAT' ? (
           <fieldset className='space-y-3'>
             <legend className='text-sm font-medium text-text-primary'>Linked Basecoats</legend>
-            <details className='rounded-md border border-border bg-surface-subtle p-3' open>
+            <details className='rounded-xl border border-primary/20 bg-white/80 p-3' open>
               <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
                 Linked Basecoats ({selectedBasecoatIds.length})
               </summary>
@@ -381,6 +389,7 @@ export const ProductForm = ({
                   type='search'
                   value={linkedBasecoatSearch}
                   onChange={event => setLinkedBasecoatSearch(event.target.value)}
+                  className='rounded-xl border-primary/20 bg-white'
                   placeholder='Search linked basecoats...'
                   aria-label='Search linked basecoats'
                 />
@@ -414,7 +423,11 @@ export const ProductForm = ({
           <Button type='button' variant='outline' onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type='submit' disabled={isSubmitting}>
+          <Button
+            type='submit'
+            className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Saving...' : submitLabel}
           </Button>
         </div>

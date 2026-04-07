@@ -248,7 +248,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Add New Claim</DialogTitle>
           <DialogDescription>
@@ -406,6 +406,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
               type='number'
               step='0.01'
               inputMode='decimal'
+              className='rounded-xl border-primary/20 bg-white'
               {...register('affectedAreaSqft')}
               aria-invalid={Boolean(errors.affectedAreaSqft)}
             />
@@ -418,21 +419,36 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             <label htmlFor='claim-notes' className='text-sm font-medium text-text-primary'>
               Notes
             </label>
-            <Textarea id='claim-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
+            <Textarea
+              id='claim-notes'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('notes')}
+              aria-invalid={Boolean(errors.notes)}
+            />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
           <div className='grid gap-4 md:grid-cols-3'>
             <label className='space-y-2'>
               <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Long Shot</span>
-              <Input type='file' accept='.jpg,.jpeg,.png,.webp' onChange={handleLongShotChange} />
+              <Input
+                type='file'
+                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
+                accept='.jpg,.jpeg,.png,.webp'
+                onChange={handleLongShotChange}
+              />
               {longShotPhoto ? <p className='text-xs text-text-muted'>Selected: {longShotPhoto.name}</p> : null}
               {errors.longShotPhoto ? <p className='text-xs text-destructive'>{errors.longShotPhoto.message}</p> : null}
             </label>
 
             <label className='space-y-2'>
               <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Close Shot</span>
-              <Input type='file' accept='.jpg,.jpeg,.png,.webp' onChange={handleCloseShotChange} />
+              <Input
+                type='file'
+                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
+                accept='.jpg,.jpeg,.png,.webp'
+                onChange={handleCloseShotChange}
+              />
               {closeShotPhoto ? <p className='text-xs text-text-muted'>Selected: {closeShotPhoto.name}</p> : null}
               {errors.closeShotPhoto ? (
                 <p className='text-xs text-destructive'>{errors.closeShotPhoto.message}</p>
@@ -441,7 +457,12 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
             <label className='space-y-2'>
               <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Alternate Angle</span>
-              <Input type='file' accept='.jpg,.jpeg,.png,.webp' onChange={handleAlternateAngleChange} />
+              <Input
+                type='file'
+                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
+                accept='.jpg,.jpeg,.png,.webp'
+                onChange={handleAlternateAngleChange}
+              />
               {alternateAnglePhoto ? (
                 <p className='text-xs text-text-muted'>Selected: {alternateAnglePhoto.name}</p>
               ) : null}
@@ -457,6 +478,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             </Button>
             <Button
               type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
               disabled={
                 isSubmitting || Boolean(registrationDetailQuery.isFetching && registrationId) || !selectedPaintPairId
               }

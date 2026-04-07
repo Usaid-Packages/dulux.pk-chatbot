@@ -17,8 +17,8 @@ export const SurfaceTypeTable = ({
   onDelete,
 }: SurfaceTypeTableProps): JSX.Element => {
   return (
-    <div className='wf-card'>
-      <Table>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+      <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
             <TableHead>Surface Name</TableHead>
@@ -48,7 +48,7 @@ export const SurfaceTypeTable = ({
                     <Button
                       type='button'
                       variant='link'
-                      className='h-auto p-0 text-destructive'
+                      className='h-auto p-0 text-destructive hover:text-destructive'
                       onClick={handleDeleteClick}
                     >
                       Delete

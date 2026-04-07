@@ -44,6 +44,14 @@
   populate newly required fields (for example `workflowState`) before parse.
 - Do not hardcode dashboard chart colors in TSX components; define theme tokens in `src/index.css` and consume via CSS
   variables.
+- During multi-page UI redesigns, keep module structure consistent: gradient hero + primary action placement, matching
+  toolbar/filter density, and shared card/button visual hierarchy.
+- Primary "Add" actions for list pages should stay in the hero header (not duplicated/moved inconsistently in tabs or
+  toolbars) unless the user explicitly asks otherwise.
+- For data tables in long list pages, prefer table-internal scroll with sticky table header; avoid page-level scrolling
+  side effects.
+- When the user requests one module to match another module's filter style, align layout density and control treatment
+  (for example remove extra labels/wrappers) instead of only recoloring controls.
 
 ## Mistake Log (Short)
 
@@ -277,6 +285,22 @@
 - Rule: Endpoint-level upload operations should have a dedicated mutation hook when part of feature workflows.
 
 ### 2026-04-06 10:57 - Normalization logic was embedded in query files
+
+### 2026-04-07 21:10 - Cross-module UI consistency drifted during iterative redesign
+
+- Issue: As pages were redesigned one-by-one, primary action placement and filter layout drifted between modules (for
+  example `Add Claim` placement and claim filter density did not initially match registration patterns).
+- Fix: Standardized primary CTA placement in hero headers, unified hover interaction treatment for dark CTA buttons,
+  and aligned claims filter structure with registration filter style.
+- Rule: In staged redesign work, re-check new page changes against already-updated modules before finalizing to prevent
+  UI drift.
+
+### 2026-04-07 21:20 - Table scroll behavior was inconsistent across list modules
+
+- Issue: Some list pages scrolled at page level instead of within table containers, causing inconsistent UX and lost
+  header visibility.
+- Fix: Unified list-table behavior by using internal table scroll containers and sticky table headers.
+- Rule: Default list modules to internal table scroll + sticky headers unless explicit requirements say otherwise.
 
 - Issue: Registration response normalization lived inline in query files instead of reusable helpers.
 - Fix: Moved reusable normalization functions to `src/utils/helperFunctions.ts` and consumed them from hooks.

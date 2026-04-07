@@ -19,8 +19,8 @@ interface ClaimsTableProps {
  */
 export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
   return (
-    <div className='wf-card'>
-      <Table>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+      <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
             <TableHead>Claim ID</TableHead>
@@ -48,7 +48,13 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
                 <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>
               </TableCell>
               <TableCell>
-                <Button asChild type='button' variant='outline' size='sm'>
+                <Button
+                  asChild
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='rounded-lg border-primary/25 bg-white text-primary hover:bg-primary/10'
+                >
                   <Link to={ROUTES.CLAIM_DETAIL(claim.id)}>View Detail</Link>
                 </Button>
               </TableCell>

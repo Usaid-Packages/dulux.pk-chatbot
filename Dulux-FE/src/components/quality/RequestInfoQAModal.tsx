@@ -74,7 +74,7 @@ export const RequestInfoQAModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Request More Info (Quality)</DialogTitle>
           <DialogDescription>Select missing evidence and who should provide it.</DialogDescription>
@@ -87,7 +87,7 @@ export const RequestInfoQAModal = ({
               control={control}
               name='items'
               render={({ field }) => (
-                <div className='space-y-2 rounded-md border border-border p-3'>
+                <div className='space-y-2 rounded-xl border border-primary/15 bg-white/85 p-3'>
                   {QUALITY_REQUEST_INFO_ITEMS.map(item => {
                     const checkboxId = `qa-request-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
                     const checked = field.value.includes(item);
@@ -151,7 +151,12 @@ export const RequestInfoQAModal = ({
             <label htmlFor='qa-request-notes' className='text-sm font-medium text-text-primary'>
               Notes (Optional)
             </label>
-            <Textarea id='qa-request-notes' {...register('notes')} aria-invalid={Boolean(errors.notes)} />
+            <Textarea
+              id='qa-request-notes'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('notes')}
+              aria-invalid={Boolean(errors.notes)}
+            />
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
@@ -159,7 +164,11 @@ export const RequestInfoQAModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Sending...' : 'Request Info'}
             </Button>
           </DialogFooter>

@@ -15,11 +15,11 @@ interface ClaimTimelineProps {
  */
 export const ClaimTimeline = ({ timeline }: ClaimTimelineProps): JSX.Element => {
   return (
-    <section className='wf-card wf-card-p4'>
+    <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
       <h2 className='text-md font-semibold text-text-primary'>Claim Timeline</h2>
       <ul className='mt-4 space-y-3'>
         {timeline.map(item => (
-          <li key={item.id} className='rounded-md border border-border p-3'>
+          <li key={item.id} className='rounded-xl border border-primary/15 bg-primary/5 p-3'>
             <div className='flex flex-wrap items-start justify-between gap-2'>
               <p className='text-sm font-semibold text-text-primary'>{item.event}</p>
               <p className='text-xs text-text-muted'>{formatDateTime(item.createdAt)}</p>

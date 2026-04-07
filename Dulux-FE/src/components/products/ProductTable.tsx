@@ -19,8 +19,8 @@ const getTypeBadgeClassName = (type: Product['productType']): string => {
 
 export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Element => {
   return (
-    <div className='wf-card'>
-      <Table>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+      <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
             <TableHead className='w-16'>Image</TableHead>
@@ -45,10 +45,10 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                     <img
                       src={imageUrl}
                       alt={`${product.name} preview`}
-                      className='h-10 w-10 rounded-md border border-border object-cover'
+                      className='h-10 w-10 rounded-lg border border-primary/15 object-cover'
                     />
                   ) : (
-                    <span className='inline-flex h-10 w-10 items-center justify-center rounded-md border border-dashed border-border text-xs text-text-muted'>
+                    <span className='inline-flex h-10 w-10 items-center justify-center rounded-lg border border-dashed border-primary/20 text-xs text-text-muted'>
                       N/A
                     </span>
                   )}
@@ -108,7 +108,7 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                     <Button
                       type='button'
                       variant='link'
-                      className='h-auto p-0 text-destructive'
+                      className='h-auto p-0 text-destructive hover:text-destructive'
                       onClick={handleDeleteClick}
                     >
                       Delete
