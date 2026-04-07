@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { Navigate } from 'react-router-dom';
 
-import { AuthCard, LoginForm } from '#/components/auth';
+import { AuthCard, AuthShell, LoginForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useLogin } from '#/hooks';
@@ -21,13 +21,13 @@ export const LoginPage = (): JSX.Element => {
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-linear-to-b from-background to-muted/40 px-4 py-12'>
+    <AuthShell>
       <AuthCard
-        title='Welcome to Dulux Customer Service'
-        subtitle='Sign in to continue managing the Dulux Customer Service workflows.'
+        title='Welcome Back'
+        subtitle='Sign in to continue managing claims, registrations, and support workflows.'
       >
         <LoginForm isSubmitting={isLoginPending} onSubmit={handleLogin} />
       </AuthCard>
-    </main>
+    </AuthShell>
   );
 };

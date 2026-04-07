@@ -121,10 +121,28 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <Button type='button' variant='outline' onClick={handleBackToList}>
-        <ArrowLeft className='h-4 w-4' />
-        Back
-      </Button>
+      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.3),transparent_42%)]'
+        />
+        <div className='relative space-y-4'>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] hover:bg-[#08182e] hover:text-white'
+            onClick={handleBackToList}
+          >
+            <ArrowLeft className='h-4 w-4' />
+            Back
+          </Button>
+          <div>
+            <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Registration Review</p>
+            <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>{registration.customerName}</h1>
+            <p className='text-sm text-blue-50/90'>Validate proofs, inspect product pairing, and decide next step.</p>
+          </div>
+        </div>
+      </section>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
@@ -136,7 +154,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
             fallbackModalTitle='Invoice'
           />
 
-          <article className='wf-card wf-card-p4'>
+          <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
             <h2 className='text-md font-semibold text-text-primary'>Products</h2>
             <div className='mt-3 overflow-x-auto'>
               <table className='min-w-full text-sm'>
@@ -162,7 +180,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
             </div>
           </article>
 
-          <article className='wf-card wf-card-p4'>
+          <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
             <h2 className='text-md font-semibold text-text-primary'>Purchase Information</h2>
             <dl className='mt-3 grid gap-3 text-sm md:grid-cols-2'>
               <div>

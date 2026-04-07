@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { Navigate } from 'react-router-dom';
 
-import { AuthCard, ResetPasswordForm } from '#/components/auth';
+import { AuthCard, AuthShell, ResetPasswordForm } from '#/components/auth';
 import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useResetPassword } from '#/hooks';
@@ -21,14 +21,14 @@ export const ResetPasswordPage = (): JSX.Element => {
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-linear-to-b from-background to-muted/40 px-4 py-12'>
-      <AuthCard title='Reset your password' subtitle='Create a new password to continue.'>
+    <AuthShell>
+      <AuthCard title='Reset Password' subtitle='Create a new password to continue with secure access.'>
         <ResetPasswordForm
           isSubmitting={isResetPasswordPending}
           errorMessage={resetPasswordErrorMessage}
           onSubmit={handleResetPassword}
         />
       </AuthCard>
-    </main>
+    </AuthShell>
   );
 };

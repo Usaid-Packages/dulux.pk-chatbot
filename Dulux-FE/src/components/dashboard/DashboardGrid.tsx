@@ -24,7 +24,7 @@ export const DashboardGrid = ({ flows, isLoading }: DashboardGridProps): JSX.Ele
     return (
       <section
         aria-live='polite'
-        className='rounded-lg border border-dashed border-border bg-surface px-5 py-10 text-center text-text-muted'
+        className='rounded-2xl border border-dashed border-primary/30 bg-primary/5 px-5 py-10 text-center text-text-muted'
       >
         No modules available yet.
       </section>

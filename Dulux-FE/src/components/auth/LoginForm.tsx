@@ -55,11 +55,18 @@ export const LoginForm = ({ isSubmitting, onSubmit }: LoginFormProps): JSX.Eleme
         />
       </div>
       <div className='flex items-center justify-end'>
-        <Link className='text-sm text-primary underline-offset-2 hover:underline' to={ROUTES.FORGOT_PASSWORD}>
+        <Link
+          className='text-sm font-semibold text-primary underline-offset-2 hover:underline'
+          to={ROUTES.FORGOT_PASSWORD}
+        >
           Forgot password?
         </Link>
       </div>
-      <Button className='w-full' type='submit' disabled={isSubmitting}>
+      <Button
+        className='h-11 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_28px_rgba(24,102,198,0.35)] hover:brightness-105'
+        type='submit'
+        disabled={isSubmitting}
+      >
         {isSubmitting ? 'Signing in...' : 'Sign in'}
       </Button>
     </form>
