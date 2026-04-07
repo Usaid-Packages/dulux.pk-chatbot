@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -98,3 +100,14 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(list_response.status_code, status.HTTP_200_OK)
         self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_sends_text_to_whatsapp(self, send_text_mock):
+        complaint = create_complaint(phone_number="923214840043")
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.post(url, {"text": "Need an update"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
