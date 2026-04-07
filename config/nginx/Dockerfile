@@ -1,6 +1,6 @@
 FROM node:20-bookworm as builder
 WORKDIR /app
-COPY ./frontend/ ./
+COPY ./Dulux-FE/ ./
 RUN yarn install && yarn build
 
 FROM nginx:1.20.1
