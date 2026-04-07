@@ -1,13 +1,15 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
 import { ROUTES } from '#/constants';
-import { useAuth } from '#/context';
+import { useAuthContext } from '#/context';
 import type { PrivateRouteProps } from '#/types/routes.types';
 
 export function PrivateRoute({ children }: PrivateRouteProps) {
-  const { token } = useAuth();
+  const { token } = useAuthContext();
 
-  if (token) return children;
+  if (!token) {
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
 
-  return <Navigate to={ROUTES.UN_AUTHORIZED} replace />;
+  return children ?? <Outlet />;
 }

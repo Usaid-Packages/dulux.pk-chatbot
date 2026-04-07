@@ -174,3 +174,4 @@ dist-ssr
 
 # Git Hooks
 prepare-commit-msg
+API_REFERENCE.md

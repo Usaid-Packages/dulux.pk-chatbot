@@ -29,7 +29,7 @@
 - **Single Responsibility:** Each component should do one thing well.
 - **Composition Over Props:** Prefer component composition over complex prop configurations.
 - **Prop Types:** Define explicit TypeScript interfaces for all component props.
-
+- **DRY PRINCIPLE:** Do not repeat yourself. 
 ### Hooks
 
 - **Hook Dependencies:** Always include all dependencies in useEffect/useCallback/useMemo deps arrays.
@@ -208,7 +208,7 @@ Projects missing these files are non-compliant.
 - **`/src/schemas`:** Zod schemas for form/API validation.
 - **`/src/types`:** Shared and API type definitions.
 - **`/src/utils`:** Pure helpers only. No DOM/React dependencies.
-- **`/src/data`:** Data-access layer for React Query (query keys, query/mutation functions, and schema-based
+- **`/src/data-layer`:** Data-access layer for React Query (query keys, query/mutation functions, and schema-based
   validation).
 
 ---

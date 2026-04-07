@@ -60,8 +60,9 @@ After successful login, redirect to:
  │   ├── new
  │   └── :id/edit
  │
- ├── manual-registration
- │   └── step/:stepId
+ ├── manual-registration          ← sub-flow of Registrations (no sidebar nav item)
+ │   ├── step/:stepId
+ │   └── success
  │
  ├── import
  │
@@ -70,16 +71,16 @@ After successful login, redirect to:
 
 ### 1.4 Screen-to-Route Mapping
 
-- `A1` Login -> `/login`
-- `B1` Dashboard -> `/app/dashboard`
+- `A1` Login -> `/login` ⚠️ **No Login wireframe provided in Phase 1** — implement as standard email+password form; layout pending design approval
+- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
 - `B2/B3` Registrations list/detail -> `/app/registrations`, `/app/registrations/:id`
 - `B4/B5` Claims list/detail -> `/app/claims`, `/app/claims/:id`
 - `B6` Quality module -> `/app/quality`, `/app/quality/:id`
 - `B7` Complaints chat -> `/app/complaints`, `/app/complaints/:id`
 - `B8/B9` Product catalog + add/edit -> `/app/products`, `/app/products/new`, `/app/products/:id/edit`
-- `B10` Manual registration wizard -> `/app/manual-registration/step/:stepId`
-- `B11` Data import -> `/app/import`
-- `B12` Settings -> `/app/settings`
+- `B10` Manual registration wizard -> `/app/manual-registration/step/:stepId` (entered via "Add Manual Registration" button on Registrations list — Registrations nav item stays active; breadcrumb shows `Registrations / Manual Entry`)
+- `B11` Data import -> `/app/import` ⚠️ **No Data Import wireframe provided in Phase 1** — implement as placeholder route shell
+- `B12` Settings -> `/app/settings` ⚠️ **No Settings wireframe provided in Phase 1** — implement as placeholder route shell
 
 ### 1.5 Route Behavior Requirements
 
@@ -90,6 +91,7 @@ After successful login, redirect to:
   - `/app/manual-registration/step/1`
   - `/app/manual-registration/step/2`
   - ...
+- **Manual registration has NO sidebar nav item.** It is entered exclusively via the "Add Manual Registration" button on the Registrations list page. When inside the wizard, the `Registrations` nav item remains active in the sidebar and the breadcrumb reads `Registrations / Manual Entry`.
 
 ### 1.6 Role-Based Access Rules
 
@@ -207,7 +209,11 @@ export const routes = [
           {
             path: "manual-registration",
             element: <ManualRegistrationLayout />,
-            children: [{ path: "step/:stepId", element: <ManualStepPage /> }], // B10
+            children: [
+              { index: true, element: <Navigate to="step/1" replace /> },
+              { path: "step/:stepId", element: <ManualStepPage /> },       // B10 wizard
+              { path: "success", element: <ManualRegistrationSuccessPage /> }, // B10 post-submit
+            ],
           },
           {
             element: <ProtectedRoute roles={[ROLES.QUALITY]} />,
@@ -256,6 +262,13 @@ function useAuth() {
 - `step/:stepId` must enforce step-completion guard.
 - `/app/settings` is `ADMIN` only.
 - Add in-app `/app/*` not-found handling.
+- **Dashboard** implements the Wireframe Hub view with module flow cards and exactly two lightweight analytics graphs:
+  - `Weekly Submissions Trend` (Registrations vs Claims, 7-day line graph)
+  - `Queue Workload Split` (Pending/In Review/Resolved stacked distribution by module)
+- Do not add `RecentActivity` feed or `LatestTicketsTable` in this phase.
+- **Login has no wireframe** — implement as standard email+password form; layout pending design approval.
+- **Data Import and Settings have no wireframes** — implement as empty placeholder route shells only (`<PlaceholderPage title="Coming Soon" />`). Do not implement CSV upload or settings management logic.
+- Manual Registration has **no sidebar nav item** — do not add it to `Sidebar.tsx` nav config.
 
 
 
@@ -366,7 +379,7 @@ Use feature naming namespaces inside current folders:
 
 #### Auth
 
-- `src/components/auth/LoginForm.tsx`
+- `src/components/auth/LoginForm.tsx`   ⚠️ No Login wireframe provided — implement standard email+password form; exact layout pending design approval
 - `src/context/AuthContext.tsx`
 - `src/hooks/auth/useAuth.ts`
 - `src/data/auth/mutations/login.ts`
@@ -374,11 +387,9 @@ Use feature naming namespaces inside current folders:
 
 #### Dashboard
 
-- `src/components/dashboard/StatsCards.tsx`
-- `src/components/dashboard/ActivityList.tsx`
-- `src/components/dashboard/TicketsTable.tsx`
-- `src/data/dashboard/queries/getDashboardStats.ts`
-- `src/pages/DashboardPage.tsx`
+- `src/components/dashboard/DashboardCard.tsx`         — clickable card per module (title, icon, screen count, module stats, description)
+- `src/components/dashboard/DashboardGrid.tsx`         — grid container for 6 module cards
+- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (6 module cards with navigation)
 
 #### Registrations (B2/B3)
 
@@ -433,12 +444,19 @@ Use feature naming namespaces inside current folders:
 
 #### Products (B8/B9)
 
-- `src/components/products/ProductGrid.tsx`
-- `src/components/products/ProductCard.tsx`
+- `src/components/products/ProductTable.tsx`        ← replaces ProductGrid.tsx (table view not grid)
+- `src/components/products/SurfaceTypeTable.tsx`    ← surface types tab table
+- `src/components/products/SurfaceTypeModal.tsx`    ← add/edit surface type modal
+- `src/components/products/DeleteConfirmModal.tsx`  ← shared delete confirmation modal
 - `src/components/products/ProductForm.tsx`
 - `src/data/products/queries/getProducts.ts`
+- `src/data/products/queries/getSurfaceTypes.ts`
 - `src/data/products/mutations/createProduct.ts`
 - `src/data/products/mutations/updateProduct.ts`
+- `src/data/products/mutations/deleteProduct.ts`
+- `src/data/products/mutations/createSurfaceType.ts`
+- `src/data/products/mutations/updateSurfaceType.ts`
+- `src/data/products/mutations/deleteSurfaceType.ts`
 - `src/pages/ProductsListPage.tsx`
 - `src/pages/ProductCreatePage.tsx`
 - `src/pages/ProductEditPage.tsx`
@@ -451,9 +469,11 @@ Use feature naming namespaces inside current folders:
 - `src/components/manualRegistration/ProductForm.tsx`
 - `src/components/manualRegistration/UploadForm.tsx`
 - `src/components/manualRegistration/ReviewStep.tsx`
+- `src/components/manualRegistration/SuccessScreen.tsx`
 - `src/hooks/manualRegistration/useManualRegistration.ts`
 - `src/pages/ManualRegistrationLayout.tsx`
 - `src/pages/ManualStepPage.tsx`
+- `src/pages/ManualRegistrationSuccessPage.tsx`   ← ADD: post-submit success screen (step 6)
 
 #### Import (B11)
 
@@ -562,43 +582,67 @@ src/components/layout/
 
 ### 3.3 Screen Trees
 
-#### B1 Dashboard
+#### B1 Dashboard (Wireframe Hub)
 
 ```tsx
 <DashboardPage>
-  <DashboardHeader />
-  <StatsCards>
-    <StatCard />
-    <StatCard />
-    <StatCard />
-    <StatCard />
-  </StatsCards>
-  <DashboardContent>
-    <TrendChart />
-    <RecentActivity />
-  </DashboardContent>
-  <LatestTicketsTable>
-    <Table />
-  </LatestTicketsTable>
+  <PageHeader title="Dulux CS Dashboard - Wireframe Hub" />
+  <DashboardGrid>
+    <DashboardCard title="Registration Approvals" icon="check" screens={4}
+      stats={{ pending: 42, approvedToday: 18 }} to="/app/registrations"
+      description="List, detail, resubmission & rejection modals" />
+    <DashboardCard title="Manual Registration" icon="edit" screens={6}
+      stats={{ draftCount: 7, submittedToday: 5 }} to="/app/manual-registration/step/1"
+      description="5-step form wizard with review & success states" />
+    <DashboardCard title="Claims Approvals" icon="alert" screens={5}
+      stats={{ pendingCsReview: 21, forwardedToQuality: 9 }} to="/app/claims"
+      description="List, detail, forward, reject & request info modals" />
+    <DashboardCard title="Quality Review" icon="inspect" screens={5}
+      stats={{ awaitingReview: 14, resolvedToday: 6 }} to="/app/quality"
+      description="Technical review, approve, reject & request info modals" />
+    <DashboardCard title="Live Chat" icon="chat" screens={6}
+      stats={{ unassigned: 12, active: 19 }} to="/app/complaints"
+      description="3-panel chat with resolve, transfer & escalate modals" />
+    <DashboardCard title="Product Catalog" icon="box" screens={5}
+      stats={{ products: 24, surfaceTypes: 8 }} to="/app/products"
+      description="Products, surfaces, add/edit forms & delete modal" />
+  </DashboardGrid>
+  <DashboardTrendChart data={weeklyTrendData} />
+  <DashboardWorkloadChart data={queueSplitData} />
 </DashboardPage>
 ```
 
-Data flow:
+Dashboard chart data source rules:
 
-- `DashboardPage` calls `useDashboardData`.
-- Passes KPI/activity/tickets data into presentational components.
+- Use mock data for charts until backend analytics endpoints are delivered.
+- Keep chart payload mapping in typed dashboard models (`src/types/dashboard.types.ts`).
+- Keep card summary endpoint as independent API from analytics endpoint for isolated cache invalidation.
 
 #### B2 Registrations List
 
 ```tsx
 <RegistrationsListPage>
+  <StatsRow>                          {/* 3 stat cards */}
+    <StatCard label="Total Registrations" />
+    <StatCard label="Pending Review" highlight />    {/* amber left border */}
+    <StatCard label="Approved" />
+  </StatsRow>
+  <StatusTabs>                        {/* All | Pending | Approved | Rejected | Resubmission */}
+    <StatusTab label="All" />
+    <StatusTab label="Pending" />
+    <StatusTab label="Approved" />
+    <StatusTab label="Rejected" />
+    <StatusTab label="Resubmission" />
+  </StatusTabs>
   <PageHeader />
   <RegistrationFilters>
     <SearchInput />
     <StatusFilter />
     <DateFilter />
+    <AddManualRegistrationButton />   {/* navigates to /app/manual-registration/step/1 */}
   </RegistrationFilters>
   <RegistrationTable>
+    {/* Columns: Reg. ID (chip-reg) | Customer | Phone | City | Source | Submitted | Status | Actions */}
     <Table>
       <RegistrationRow />
       <RegistrationRow />
@@ -606,6 +650,11 @@ Data flow:
   </RegistrationTable>
   <Pagination />
 </RegistrationsListPage>
+```
+
+Reference constant for filter tabs:
+```ts
+export const REGISTRATION_FILTER_TABS = ["All", "Pending", "Approved", "Rejected", "Resubmission"] as const;
 ```
 
 #### B3 Registration Detail
@@ -642,11 +691,30 @@ Important:
 
 ```tsx
 <ClaimsListPage>
+  <StatsRow>                          {/* 4 stat cards */}
+    <StatCard label="Total Claims" />
+    <StatCard label="Pending CS Review" highlight />   {/* amber left border */}
+    <StatCard label="Forwarded to Quality" />
+    <StatCard label="Resolved" />
+  </StatsRow>
+  <StatusTabs>                        {/* All | Pending | Forwarded | Approved | Rejected | Info Requested */}
+    <StatusTab label="All" />
+    <StatusTab label="Pending" />
+    <StatusTab label="Forwarded" />
+    <StatusTab label="Approved" />
+    <StatusTab label="Rejected" />
+    <StatusTab label="Info Requested" />
+  </StatusTabs>
   <PageHeader />
-  <ClaimsFilters />
+  <ClaimsFilters>
+    <DateRangeFilter />
+    <IssueTypeFilter />
+  </ClaimsFilters>
   <ClaimsTable>
+    {/* Columns: Claim ID (chip-claim) | Customer | Reg. ID (chip-reg, clickable) | Issue Type | Photos | Submitted | Status | Actions */}
     <ClaimRow />
   </ClaimsTable>
+  <Pagination />
 </ClaimsListPage>
 ```
 
@@ -672,8 +740,24 @@ Important:
 
 ```tsx
 <QualityPage>
+  <StatsRow>                              {/* 3 stat cards — NO Avg Review Time card */}
+    <StatCard label="Awaiting Review" highlight />   {/* amber left border */}
+    <StatCard label="Approved" />
+    <StatCard label="Rejected" />
+  </StatsRow>
+  <StatusTabs>                            {/* Awaiting Review | Approved | Rejected | More Info Needed */}
+    <StatusTab label="Awaiting Review" active />
+    <StatusTab label="Approved" />
+    <StatusTab label="Rejected" />
+    <StatusTab label="More Info Needed" />
+  </StatusTabs>
+  <Toolbar>
+    <FilterSelect label="Issue Type: All" />
+    <FilterSelect label="Priority: All" />
+  </Toolbar>
   <SplitLayout>
     <QualityQueue>
+      {/* Columns: Claim ID | Customer | Issue Type | Product | Forwarded By | Priority | Forwarded On | Actions */}
       <QueueTable />
     </QualityQueue>
     <QualityDetailPanel>
@@ -699,12 +783,27 @@ Important:
       <ConversationItem />
     </ConversationList>
     <ChatWindow>
-      <ChatHeader />
+      <ChatHeader>
+        <ChatHeaderAvatar />
+        <div>
+          <ChatHeaderName />
+          <OnlineStatus label="Online on WhatsApp" status="online" />  {/* green dot */}
+        </div>
+        <ChatHeaderActions>
+          <AssignButton />   {/* ⚙ gear icon */}
+          <MoreButton />     {/* ⋯ ellipsis icon */}
+        </ChatHeaderActions>
+      </ChatHeader>
       <MessageList>
         <MessageBubble />
         <MessageBubble />
       </MessageList>
-      <ChatInput />
+      <ChatInput>
+        <InputActionButton icon="attach" title="Attach Image" />
+        <InputActionButton icon="templates" title="Templates" />
+        <MessageTextField />
+        <SendButton />
+      </ChatInput>
     </ChatWindow>
   </ChatLayout>
 </ChatPage>
@@ -721,11 +820,16 @@ Critical data flow:
 ```tsx
 <ProductsListPage>
   <PageHeader />
+  <Tabs>
+    <Tab label="Products" />
+    <Tab label="Surface Types" />
+  </Tabs>
   <ProductFilters />
-  <ProductGrid>
-    <ProductCard />
-    <ProductCard />
-  </ProductGrid>
+  <ProductTable>      {/* table view — NOT grid */}
+    <ProductRow />
+    <ProductRow />
+  </ProductTable>
+  <Pagination />
 </ProductsListPage>
 ```
 
@@ -1161,6 +1265,29 @@ export const QUERY_KEYS = {
 
 ### 5.4 Services Layer (Use Provided Transport)
 
+### 5.3.1 Dashboard API Contract Additions (Backend Alignment)
+
+Required endpoints for dashboard UX:
+
+- `GET /dashboard/api/v1/cards/`
+  - Purpose: module card counts and KPI values (used in 6 dashboard cards).
+- `GET /dashboard/api/v1/analytics/`
+  - Purpose: chart payload for:
+    - weekly submissions trend (registrations vs claims)
+    - queue workload split (pending/in-review/resolved by module)
+
+Response ownership:
+
+- `cards` endpoint feeds `DashboardGrid` only.
+- `analytics` endpoint feeds `DashboardTrendChart` and `DashboardWorkloadChart` only.
+- Keep cards and analytics separate to avoid over-fetching and to support independent cache invalidation.
+
+Fallback policy:
+
+- If analytics endpoint is unavailable, frontend renders chart section using typed mock dataset.
+
+### 5.4 Services Layer (Use Provided Transport)
+
 `src/services/apiClient.ts` (canonical)
 ```ts
 import type { AxiosRequestConfig, Method } from "axios";
@@ -1529,12 +1656,17 @@ Schema baseline:
 import { z } from "zod";
 
 export const productSchema = z.object({
-  name: z.string().min(1),
-  type: z.string().min(1),
-  coverage: z.coerce.number().nonnegative(),
-  surfaces: z.array(z.string()).min(1),
+  name: z.string().min(1, "Product name is required"),
+  type: z.string().min(1, "Product type is required"),
+  coverage: z.coerce.number().nonnegative().optional(),
+  productUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  keyFeatures: z.string().optional(),
+  surfaces: z.array(z.string()).min(1, "Select at least one surface"),
+  status: z.enum(["active", "inactive"]).default("active"),
   image: z.any().optional(),
 });
+
+export type ProductFormValues = z.infer<typeof productSchema>;
 ```
 
 Component composition:
@@ -1681,7 +1813,22 @@ export const step2Schema = registrationSchema.pick({
 export const step3Schema = registrationSchema.pick({
   topcoat: true, topcoatQty: true, basecoat: true, basecoatQty: true,
 });
-export const step4Schema = fileSchema;
+export const step4Schema = z.object({
+  topcoatInvoice: z
+    .instanceof(File, { message: "Topcoat invoice is required" })
+    .refine((f) => f.size <= 5 * 1024 * 1024, "Max 5MB")
+    .refine(
+      (f) => ["image/jpeg", "image/png", "application/pdf"].includes(f.type),
+      "JPG, PNG or PDF only"
+    ),
+  basecoatInvoice: z
+    .instanceof(File, { message: "Basecoat invoice is required" })
+    .refine((f) => f.size <= 5 * 1024 * 1024, "Max 5MB")
+    .refine(
+      (f) => ["image/jpeg", "image/png", "application/pdf"].includes(f.type),
+      "JPG, PNG or PDF only"
+    ),
+});
 ```
 
 ---
@@ -1710,9 +1857,14 @@ src/
     complaints/
       queries/
         getConversations.ts
+        getConversationById.ts
         getMessages.ts
       mutations/
         sendMessage.ts
+        claimConversation.ts
+        resolveConversation.ts
+        transferConversation.ts
+        escalateConversation.ts
 
   hooks/
     complaints/
@@ -1724,7 +1876,17 @@ src/
       ChatWindow.tsx
       MessageBubble.tsx
       ChatInput.tsx
+      InputActionButton.tsx     ← NEW: Attach Image + Templates action buttons
+      OnlineStatus.tsx          ← NEW: "Online on WhatsApp" status indicator
       ConversationList.tsx
+      InfoPanel.tsx
+      ClaimBanner.tsx
+      ChatEmptyState.tsx
+      SystemMessage.tsx
+      DateDivider.tsx
+      ResolveModal.tsx
+      TransferModal.tsx
+      EscalateModal.tsx
 ```
 
 ### 7.4 WebSocket Layer (Low-Level Hook)
@@ -1902,22 +2064,25 @@ WebSocket reconnect/status is mandatory:
 type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 ```
 
-Conversation state domain:
-- `open`, `claimed`, `resolved`
-
-Required additional chat mutations:
-```text
-src/data/complaints/mutations/claimConversation.ts
-src/data/complaints/mutations/resolveConversation.ts
-```
+Conversation state domain (canonical — use these terms everywhere):
+- `unassigned` — new ticket, not yet claimed by any agent
+- `active` — claimed/assigned to an agent, conversation in progress
+- `resolved` — closed/resolved
 
 Required WS event contract:
 ```ts
 type WSEvent =
   | { type: "message"; payload: ChatMessage }
-  | { type: "conversation_status"; payload: { id: string; status: "open" | "claimed" | "resolved" } }
-  | { type: "agent_typing"; payload: { conversationId: string } };
+  | { type: "conversation_status"; payload: { id: string; status: "unassigned" | "active" | "resolved" } }
+  | { type: "conversation_claimed"; payload: { id: string; agentId: string; agentName: string } }
+  | { type: "conversation_transferred"; payload: { id: string; newAgentId: string } }
+  | { type: "conversation_escalated"; payload: { id: string; level: string } }
+  | { type: "agent_typing"; payload: { conversationId: string } }
+  | { type: "new_conversation"; payload: { conversation: Conversation } }
+  | { type: "unread_count"; payload: { count: number } };
 ```
+
+**Note:** "claimed" is an **action** (`claimConversation` mutation), but the resulting **status** is `"active"`. Never use `"open"` or `"claimed"` as status values — only `"unassigned" | "active" | "resolved"`.
 
 ---
 
@@ -1930,14 +2095,12 @@ src/components/ui/
   Input.tsx
   Select.tsx
   Badge.tsx
-  Modal.tsx
+  Dialogs.tsx
   Table.tsx
   Skeleton.tsx
   EmptyState.tsx
   Toast.tsx
   Pagination.tsx
-  FileUpload.tsx
-  Lightbox.tsx
 ```
 
 Rule:
@@ -2006,3 +2169,1795 @@ Use for conditional action rendering inside pages/components (beyond route-level
 - The plan now includes hardening for routing, state, API, forms, and chat.
 - Missing foundational layers (UI kit, env, toast, component RBAC) are now defined as explicit implementation steps.
 - Engineering standards are enforced by mandatory reference to `AGENTS_ENGINEERING_STANDARDS.md` throughout the project lifecycle.
+
+---
+
+## Step 13: Tailwind CSS Setup and Design System
+
+> This step defines the complete Tailwind CSS configuration, design tokens, and component theming derived directly from the approved wireframes (dulux-claims-approvals.html, dulux-live-chat.html, dulux-manual-registration.html, dulux-product-catalog-wireframes.html, dulux-quality-review.html, dulux-registration-approvals.html, dulux-wireframe-hub.html). Every color, spacing, radius, font, and semantic token is sourced from those files.
+
+### 13.1 Installation and Configuration
+
+Install Tailwind CSS v3 with the project's Vite setup:
+
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+Required packages alongside Tailwind:
+```bash
+npm install -D @tailwindcss/forms @tailwindcss/typography
+npm install clsx tailwind-merge
+```
+
+`clsx` + `tailwind-merge` are used together as `cn()` for conditional class composition throughout all components. Add to `src/utils/cn.ts`:
+```ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+```
+
+### 13.2 tailwind.config.ts — Full Project Config
+
+```ts
+import type { Config } from "tailwindcss";
+import forms from "@tailwindcss/forms";
+
+const config: Config = {
+  content: [
+    "./index.html",
+    "./src/**/*.{ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      // ─── Colors ─────────────────────────────────────────────
+      colors: {
+        // Primary brand blue — used for CTAs, active nav, send button, avatar
+        // Source: sidebar logo-box, nav-item.active border-left, btn-primary, avatar-circle, page-btn.active
+        primary: {
+          DEFAULT: "#4a90d9",
+          hover:   "#3a7bc8",
+          light:   "#f0f6ff",  // eff6ff / f0f6ff — used in info boxes, reg-id chip bg
+          border:  "#bfdbfe",  // info box border
+        },
+
+        // Sidebar shell
+        // Source: .sidebar background, .sidebar-logo border, .nav-item.active background
+        sidebar: {
+          bg:          "#1a1a2e",
+          activeBg:    "#22223a",
+          borderColor: "#2a2a4a",
+          navGroup:    "#666666",  // nav-group-label color
+          navText:     "#999999",  // inactive nav item text
+          badge:       {
+            bg:   "#2a4a6a",
+            text: "#6ab0ff",
+          },
+        },
+
+        // Page / layout backgrounds
+        // Source: .main background, .page-content background, .screen-frame bg
+        page: {
+          body:   "#f5f5f5",
+          canvas: "#f0f0f0",
+        },
+
+        // Surface (card / panel)
+        // Source: .stat-card, .detail-card, .form-card, .data-table, .action-card backgrounds
+        surface: {
+          DEFAULT: "#ffffff",
+          muted:   "#fafafa",
+          subtle:  "#fafbfc",
+        },
+
+        // Borders
+        // Source: .data-table thead border, .stat-card border, .detail-card border
+        border: {
+          DEFAULT: "#e0e0e0",
+          light:   "#f0f0f0",
+          muted:   "#eeeeee",
+          strong:  "#dddddd",
+        },
+
+        // Text
+        // Source: .page-title color, .stat-value color, .field-value color, .avatar-name color
+        text: {
+          primary:   "#222222",
+          secondary: "#444444",
+          muted:     "#888888",
+          hint:      "#aaaaaa",
+          faint:     "#bbbbbb",
+          label:     "#555555",
+          nav:       "#999999",
+          tableHead: "#888888",
+        },
+
+        // ─── Semantic Status Colors ─────────────────────────────
+        // Source: .status-pending, .status-approved, .status-rejected,
+        //         .status-forwarded, .status-info-req, .cs-resolved
+        status: {
+          pending: {
+            bg:   "#fef3c7",
+            text: "#b45309",
+          },
+          approved: {
+            bg:   "#e6f9e6",
+            text: "#2e7d32",
+          },
+          rejected: {
+            bg:   "#fef2f2",
+            text: "#dc2626",
+          },
+          forwarded: {
+            bg:   "#f3e8ff",
+            text: "#7c3aed",
+          },
+          infoReq: {
+            bg:   "#eff6ff",
+            text: "#2563eb",
+          },
+          resolved: {
+            bg:   "#f0f0f0",
+            text: "#888888",
+          },
+        },
+
+        // ─── Action Button Colors ────────────────────────────────
+        // Source: .btn-approve, .btn-reject, .btn-primary, .btn-outline
+        action: {
+          approve: {
+            bg:   "#16a34a",
+            text: "#ffffff",
+          },
+          reject: {
+            bg:      "#ffffff",
+            text:    "#dc2626",
+            border:  "#fca5a5",
+          },
+          rejectHover: {
+            bg: "#fef2f2",
+          },
+          deleteHover: {
+            bg:     "#fef2f2",
+            border: "#fca5a5",
+            text:   "#dc2626",
+          },
+        },
+
+        // ─── Semantic / Notification ──────────────────────────────
+        // Source: .header-notif .dot, .nav-item .badge background
+        danger: {
+          DEFAULT: "#e74c3c",
+          light:   "#fef2f2",
+        },
+
+        // ─── Claim / Issue Tags ──────────────────────────────────
+        // Source: .issue-tag
+        issue: {
+          bg:   "#fef2f2",
+          text: "#b91c1c",
+        },
+
+        // ─── Surface Type / Product Tags ────────────────────────
+        // Source: .surface-tag
+        surfaceTag: {
+          bg:   "#f0f4ff",
+          text: "#4a6fa5",
+        },
+
+        // ─── Product Type Badges ─────────────────────────────────
+        // Source: inline styles on product type cells in registration approvals
+        productType: {
+          topcoat: {
+            bg:   "#f0f4ff",
+            text: "#4a6fa5",
+          },
+          basecoat: {
+            bg:   "#f5f0ff",
+            text: "#7c5caa",
+          },
+        },
+
+        // ─── Monospace IDs (claim-id / reg-id chips) ─────────────
+        // Source: .claim-id, .reg-id
+        chipId: {
+          claim: {
+            bg:   "#fff3e0",
+            text: "#e65100",
+          },
+          reg: {
+            bg:   "#f0f6ff",
+            text: "#4a90d9",
+          },
+        },
+
+        // ─── Chat ────────────────────────────────────────────────
+        // Source: .msg-row.customer .msg-bubble, .msg-row.agent .msg-bubble
+        // .chat-panel background, .conv-item.active, .msg-system
+        chat: {
+          panelBg:         "#f8f9fa",
+          convActiveBg:    "#f0f6ff",
+          convActiveBorder:"#4a90d9",
+          customerBubble:  "#ffffff",
+          agentBubble:     "#4a90d9",
+          agentText:       "#ffffff",
+          agentTimeColor:  "rgba(255,255,255,0.6)",
+          systemBg:        "#eff6ff",
+          systemText:      "#2563eb",
+          unreadDot:       "#f59e0b",
+          unreadTime:      "#f59e0b",
+        },
+
+        // ─── Step Wizard ─────────────────────────────────────────
+        // Source: .step.active .step-circle, .step.done .step-circle
+        stepper: {
+          activeBg:     "#4a90d9",
+          activeBorder: "#4a90d9",
+          activeText:   "#ffffff",
+          doneBg:       "#16a34a",
+          doneBorder:   "#16a34a",
+          doneText:     "#ffffff",
+          doneLabel:    "#16a34a",
+          inactiveLine: "#dddddd",
+          doneLine:     "#16a34a",
+        },
+
+        // ─── Quality Team specifics ──────────────────────────────
+        // Source: .avatar-circle in quality-review (green avatar for QA role)
+        // .cs-notes background, .stat-card.highlight border-left in quality screen
+        quality: {
+          avatarBg:  "#16a34a",
+          notesBg:   "#faf5ff",
+          notesBorder: "#e9d5ff",
+          highlight:   "#7c3aed",
+        },
+
+        // ─── Info / notification boxes ───────────────────────────
+        // Source: .info-box in manual registration success state
+        info: {
+          bg:     "#eff6ff",
+          border: "#bfdbfe",
+          text:   "#1e40af",
+        },
+
+        // ─── Success state ────────────────────────────────────────
+        // Source: .success-icon background, .success-title color
+        success: {
+          iconBg:    "#dcfce7",
+          iconText:  "#16a34a",
+          regIdBg:   "#f0f6ff",
+          regIdText: "#4a90d9",
+        },
+
+        // ─── Amber / warning (unread badge, stat highlight border) ──
+        // Source: .stat-card.highlight border-left in claims/registrations
+        amber: {
+          DEFAULT:   "#f59e0b",
+          highlight: "#f59e0b",
+        },
+      },
+
+      // ─── Font Family ─────────────────────────────────────────────
+      // Source: body font-family from every wireframe HTML: Arial, Helvetica, sans-serif
+      // In production, replace with Inter or your brand font and keep Arial as fallback.
+      fontFamily: {
+        sans: ["Inter", "Arial", "Helvetica", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "Consolas", "monospace"],
+      },
+
+      // ─── Font Sizes ───────────────────────────────────────────────
+      // Source: all wireframe CSS font-size values mapped to Tailwind scale
+      // 10px nav-group-label, breadcrumb sub-texts
+      // 11px stat-label, table thead, badge text, field-label uppercase
+      // 12px form-label, filter-btn, conv-time, page-btn
+      // 13px nav-item, data-table td, btn-primary, form-input, chat bubble
+      // 14px sidebar-logo text, page-title (16px), detail-card-title
+      // 16px page-title
+      // 28px stat-value
+      fontSize: {
+        "2xs": ["10px", { lineHeight: "14px" }],
+        xs:    ["11px", { lineHeight: "16px" }],
+        sm:    ["12px", { lineHeight: "18px" }],
+        base:  ["13px", { lineHeight: "20px" }],
+        md:    ["14px", { lineHeight: "20px" }],
+        lg:    ["16px", { lineHeight: "24px" }],
+        xl:    ["18px", { lineHeight: "28px" }],
+        "2xl": ["20px", { lineHeight: "28px" }],
+        "3xl": ["28px", { lineHeight: "36px" }],
+      },
+
+      // ─── Border Radius ────────────────────────────────────────────
+      // Source: .stat-card border-radius: 8px, .data-table border-radius: 8px,
+      //         .status-badge border-radius: 12px, .sidebar-logo .logo-box: 6px
+      //         .nav-item .badge: 10px, .avatar-circle: 50%
+      borderRadius: {
+        none: "0px",
+        sm:   "4px",
+        DEFAULT: "6px",
+        md:   "6px",
+        lg:   "8px",
+        xl:   "10px",
+        "2xl":"12px",
+        full: "9999px",
+      },
+
+      // ─── Spacing / Layout ──────────────────────────────────────────
+      // Source: sidebar width 240px, header height 56px, conv-panel width 300px,
+      //         info-panel width 280px, detail sidebar width 340px,
+      //         page-content padding 24px, form-card padding 24px
+      spacing: {
+        sidebar: "240px",
+        header:  "56px",
+        convPanel: "300px",
+        infoPanel: "280px",
+        detailSide: "340px",
+      },
+
+      // ─── Box Shadow ────────────────────────────────────────────────
+      // Wireframes use no box shadows — keep flat, border-only design.
+      boxShadow: {
+        none: "none",
+      },
+    },
+  },
+  plugins: [forms],
+};
+
+export default config;
+```
+
+### 13.3 Global CSS Entry Point
+
+`src/index.css` — replace content with:
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Match wireframe body defaults exactly */
+  body {
+    @apply font-sans text-base text-[#333] bg-page-canvas;
+  }
+
+  /* Monospace reset for ID chips */
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+}
+
+@layer components {
+  /* ── Sidebar ─────────────────────────────────────── */
+  .nav-item {
+    @apply flex items-center gap-[10px] px-5 py-[10px] text-base
+           text-sidebar-navText cursor-pointer border-l-[3px]
+           border-transparent transition-all duration-150;
+  }
+  .nav-item-active {
+    @apply bg-sidebar-activeBg text-white border-l-primary;
+  }
+  .nav-group-label {
+    @apply text-[10px] font-bold tracking-[1.5px] uppercase
+           text-sidebar-navGroup px-5 pt-4 pb-1.5;
+  }
+
+  /* ── Status Badges ───────────────────────────────── */
+  .badge {
+    @apply inline-block px-[10px] py-[3px] rounded-2xl text-xs font-semibold;
+  }
+  .badge-pending   { @apply bg-status-pending-bg   text-status-pending-text; }
+  .badge-approved  { @apply bg-status-approved-bg  text-status-approved-text; }
+  .badge-rejected  { @apply bg-status-rejected-bg  text-status-rejected-text; }
+  .badge-forwarded { @apply bg-status-forwarded-bg text-status-forwarded-text; }
+  .badge-info-req  { @apply bg-status-infoReq-bg   text-status-infoReq-text; }
+  .badge-resolved  { @apply bg-status-resolved-bg  text-status-resolved-text; }
+
+  /* ── ID Chips (monospace) ────────────────────────── */
+  .chip-claim {
+    @apply font-mono text-base font-semibold
+           bg-chipId-claim-bg text-chipId-claim-text
+           px-2 py-0.5 rounded;
+  }
+  .chip-reg {
+    @apply font-mono text-sm
+           bg-chipId-reg-bg text-chipId-reg-text
+           px-1.5 py-0.5 rounded;
+  }
+
+  /* ── Buttons ─────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md px-[18px] py-[9px]
+           text-base font-semibold cursor-pointer transition-colors duration-150;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-white border-0 hover:bg-primary-hover;
+  }
+  .btn-outline {
+    @apply btn bg-surface text-text-label border border-border hover:bg-page-body;
+  }
+  .btn-approve {
+    @apply btn w-full justify-center bg-action-approve-bg text-white border-0
+           hover:brightness-95;
+  }
+  .btn-reject {
+    @apply btn w-full justify-center bg-action-reject-bg text-action-reject-text
+           border border-action-reject-border hover:bg-action-rejectHover-bg;
+  }
+  .btn-icon {
+    @apply w-[30px] h-[30px] border border-border rounded-[5px]
+           flex items-center justify-center cursor-pointer bg-surface
+           text-xs text-text-muted hover:border-border-strong;
+  }
+
+  /* ── Form Controls ───────────────────────────────── */
+  .form-input {
+    @apply border border-border-strong rounded-md px-3 py-[9px]
+           text-base text-text-hint bg-surface-muted
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
+           w-full;
+  }
+  .form-label {
+    @apply text-sm font-semibold text-text-label;
+  }
+  .form-label-required::after {
+    content: " *";
+    @apply text-danger;
+  }
+
+  /* ── Table ───────────────────────────────────────── */
+  .data-table {
+    @apply w-full border-collapse bg-surface border border-border rounded-lg overflow-hidden;
+  }
+  .data-table th {
+    @apply bg-surface-muted text-xs font-bold uppercase tracking-[0.5px]
+           text-text-tableHead px-[14px] py-3 text-left border-b border-border;
+  }
+  .data-table td {
+    @apply px-[14px] py-[13px] text-base text-text-secondary
+           border-b border-border-light align-middle;
+  }
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* ── Cards ───────────────────────────────────────── */
+  .card {
+    @apply bg-surface border border-border rounded-lg p-5;
+  }
+  .card-title {
+    @apply text-md font-bold text-text-primary;
+  }
+
+  /* ── Stat Card ───────────────────────────────────── */
+  .stat-card {
+    @apply bg-surface border border-border rounded-lg px-5 py-[18px];
+  }
+  .stat-card-highlight-amber {
+    @apply border-l-[3px] border-l-amber;
+  }
+  .stat-card-highlight-purple {
+    @apply border-l-[3px] border-l-quality-highlight;
+  }
+  .stat-label {
+    @apply text-xs font-semibold uppercase tracking-[0.5px] text-text-muted mb-1.5;
+  }
+  .stat-value {
+    @apply text-3xl font-bold text-text-primary;
+  }
+
+  /* ── Image Upload Zone ───────────────────────────── */
+  .upload-zone {
+    @apply border-2 border-dashed border-[#d0d0d0] rounded-lg
+           p-7 text-center bg-surface-muted;
+  }
+
+  /* ── Issue Tag ───────────────────────────────────── */
+  .issue-tag {
+    @apply inline-block px-2 py-0.5 rounded text-xs bg-issue-bg text-issue-text;
+  }
+
+  /* ── Surface Tag ─────────────────────────────────── */
+  .surface-tag {
+    @apply inline-block px-2 py-0.5 rounded text-xs
+           bg-surfaceTag-bg text-surfaceTag-text mx-0.5 my-px;
+  }
+}
+```
+
+### 13.4 Layout Dimensions (from Wireframes)
+
+These are exact pixel values extracted from the wireframe HTML and must be used consistently:
+
+| Element | Value | Source |
+|---|---|---|
+| Sidebar width | `240px` | `.sidebar { width: 240px }` |
+| Top header height | `56px` | `.top-header { height: 56px }` |
+| Conversation panel width | `300px` | `.conv-panel { width: 300px }` |
+| Info/right panel width | `280px` | `.info-panel { width: 280px }` |
+| Detail sidebar width | `340px` | `.detail-layout grid: 1fr 340px` |
+| Page content padding | `24px` | `.page-content { padding: 24px }` |
+| Form card padding | `24px` | `.form-card { padding: 24px }` |
+| Avatar size | `32px` | `.avatar-circle { width/height: 32px }` |
+| Logo box size | `32px` | `.logo-box { width/height: 32px }` |
+| Stat card value font | `28px` | `.stat-value { font-size: 28px }` |
+| Evidence preview height | `180px` (claims), `200px` (quality) | `.ev-preview` |
+| Screen min-height | `780px` (most), `820px` (manual reg) | `.screen-frame` |
+
+### 13.5 Tailwind Equivalents for Wireframe CSS Patterns
+
+These are direct mappings for developers — use these instead of inline styles:
+
+```
+.sidebar background #1a1a2e     → bg-sidebar-bg
+.nav-item.active bg #22223a     → bg-sidebar-activeBg
+.nav-item.active border #4a90d9 → border-l-primary
+.logo-box bg #4a90d9            → bg-primary
+.top-header bg #fff             → bg-surface
+.page-content bg #f5f5f5        → bg-page-body
+body bg #f0f0f0                 → bg-page-canvas
+.stat-card bg #fff              → bg-surface
+.data-table thead bg #fafafa    → bg-surface-muted
+.detail-field .field-label      → text-xs font-semibold uppercase tracking-[0.3px] text-text-muted
+.detail-field .field-value      → text-base text-text-secondary font-medium
+.btn-primary bg #4a90d9         → bg-primary
+.btn-approve bg #16a34a         → bg-action-approve-bg
+.btn-reject border #fca5a5      → border-action-reject-border
+.step.active bg #4a90d9         → bg-stepper-activeBg
+.step.done bg #16a34a           → bg-stepper-doneBg
+.conv-item.active bg #f0f6ff    → bg-chat-convActiveBg
+.msg-row.agent .msg-bubble      → bg-chat-agentBubble text-white
+.msg-row.customer .msg-bubble   → bg-surface border border-border
+```
+
+### 13.6 Status Badge Tailwind Components
+
+All status badges must use the pre-defined component classes. Never use arbitrary color values inline:
+
+```tsx
+// ✅ Correct
+<span className="badge badge-pending">Pending</span>
+<span className="badge badge-approved">Approved</span>
+<span className="badge badge-rejected">Rejected</span>
+<span className="badge badge-forwarded">Sent to Quality</span>
+<span className="badge badge-info-req">Info Requested</span>
+<span className="badge badge-resolved">Resolved</span>
+
+// ❌ Wrong — never do this
+<span style={{ background: '#fef3c7', color: '#b45309' }}>Pending</span>
+```
+
+Complete status-to-badge mapping for the system:
+
+| Registration Status | Badge Class |
+|---|---|
+| Pending | `badge-pending` |
+| Approved | `badge-approved` |
+| Rejected | `badge-rejected` |
+| Resubmission Requested | `badge-pending` |
+| Resubmitted | `badge-info-req` |
+
+| Claim Status | Badge Class |
+|---|---|
+| Pending Review | `badge-pending` |
+| Sent to Quality | `badge-forwarded` |
+| More Info Needed | `badge-info-req` |
+| Approved | `badge-approved` |
+| Rejected | `badge-rejected` |
+
+| Complaint Status | Badge Class |
+|---|---|
+| Open | `badge-pending` |
+| Claimed | `badge-info-req` |
+| Resolved | `badge-resolved` |
+
+### 13.7 Typography Rules (Derived from Wireframes)
+
+```
+Page title (top header)    → text-lg font-bold text-text-primary          (16px, #222)
+Section/card title         → text-md font-bold text-text-primary           (14px, #222)
+Table header               → text-xs font-bold uppercase tracking-[0.5px] text-text-tableHead
+Table cell                 → text-base text-text-secondary                 (13px, #444)
+Field label (detail view)  → text-xs font-semibold uppercase tracking-[0.3px] text-text-muted
+Field value (detail view)  → text-base font-medium text-text-secondary
+Form label                 → text-sm font-semibold text-text-label         (12px, #555)
+Form input placeholder     → text-base text-text-hint bg-surface-muted     (13px, #aaa)
+Nav item text              → text-base text-sidebar-navText                 (13px, #999)
+Nav group label            → text-[10px] font-bold uppercase tracking-[1.5px] text-sidebar-navGroup
+Stat label                 → text-xs font-semibold uppercase tracking-[0.5px] text-text-muted
+Stat value                 → text-3xl font-bold text-text-primary
+Breadcrumb                 → text-sm text-text-muted                       (12px, #999)
+Badge text                 → text-xs font-semibold                          (11px)
+Pagination info            → text-sm text-text-muted
+Avatar initials            → text-sm font-bold text-white
+```
+
+### 13.8 AppLayout Tailwind Structure
+
+Direct Tailwind translation of the wireframe layout shell:
+
+```tsx
+// AppLayout.tsx
+<div className="flex h-screen overflow-hidden">
+  {/* Sidebar: width 240px, dark bg */}
+  <aside className="w-[240px] flex-shrink-0 bg-sidebar-bg flex flex-col overflow-y-auto">
+    {/* Logo area */}
+    <div className="px-5 py-5 pb-4 border-b border-sidebar-borderColor flex items-center gap-[10px]">
+      <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center font-bold text-white text-sm">
+        DLX
+      </div>
+      <span className="text-md font-bold text-white">Dulux Assurance</span>
+    </div>
+    {/* Nav */}
+    <nav className="flex-1 py-0">
+      <p className="nav-group-label">Overview</p>
+      <NavItem to="/app/dashboard" label="Dashboard" />
+      {/* ... */}
+    </nav>
+  </aside>
+
+  {/* Main area */}
+  <div className="flex-1 flex flex-col overflow-hidden">
+    {/* Top header: height 56px, white bg */}
+    <header className="h-[56px] flex-shrink-0 bg-surface border-b border-border flex items-center px-6 gap-4">
+      <h1 className="text-lg font-bold text-text-primary">Page Title</h1>
+      {/* global search, notif, avatar */}
+    </header>
+
+    {/* Page content: gray bg, padded */}
+    <main className="flex-1 overflow-y-auto bg-page-body p-6">
+      <Outlet />
+    </main>
+  </div>
+</div>
+```
+
+### 13.9 Chat Layout Tailwind Structure
+
+```tsx
+// ChatPage.tsx — matches wireframe conv-panel + chat-panel + info-panel layout
+<div className="flex h-full bg-surface">
+  {/* Conversation list: 300px fixed width */}
+  <div className="w-[300px] flex-shrink-0 border-r border-border flex flex-col">
+    <ConversationList />
+  </div>
+
+  {/* Chat window: fills remaining space */}
+  <div className="flex-1 flex flex-col bg-chat-panelBg">
+    <ChatHeader />
+    <MessageList />
+    <ChatInput />
+  </div>
+
+  {/* Info panel: 280px fixed width */}
+  <div className="w-[280px] flex-shrink-0 border-l border-border overflow-y-auto">
+    <ContactInfo />
+  </div>
+</div>
+```
+
+### 13.10 Detail Page Tailwind Layout (Registrations / Claims / Quality)
+
+```tsx
+// DetailLayout.tsx — matches wireframe grid: 1fr 340px
+<div className="grid grid-cols-[1fr_340px] gap-6">
+  {/* Left: main content */}
+  <div>
+    <div className="card mb-5">...</div>
+    <div className="card mb-5">...</div>
+  </div>
+
+  {/* Right: action panel, 340px */}
+  <div>
+    <div className="card mb-4">...</div>
+  </div>
+</div>
+```
+
+### 13.11 Step Wizard Tailwind (Manual Registration)
+
+```tsx
+// Stepper.tsx — matches .step, .step.active, .step.done, .step-line
+<div className="flex items-center">
+  {steps.map((step, i) => (
+    <Fragment key={step.id}>
+      <div className="flex flex-col items-center gap-1">
+        <div className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 border-border-strong text-text-muted bg-surface",
+          isActive(i) && "bg-stepper-activeBg border-stepper-activeBorder text-white",
+          isDone(i)   && "bg-stepper-doneBg   border-stepper-doneBorder   text-white",
+        )}>
+          {isDone(i) ? "✓" : step.id}
+        </div>
+        <span className={cn(
+          "text-xs font-semibold text-text-muted whitespace-nowrap",
+          isActive(i) && "text-text-primary",
+          isDone(i)   && "text-stepper-doneLabel",
+        )}>
+          {step.label}
+        </span>
+      </div>
+      {i < steps.length - 1 && (
+        <div className={cn(
+          "w-10 h-0.5 mx-1.5 flex-shrink-0 bg-stepper-inactiveLine",
+          isDone(i) && "bg-stepper-doneLine",
+        )} />
+      )}
+    </Fragment>
+  ))}
+</div>
+```
+
+### 13.12 Shared UI Component Tailwind Reference
+
+#### Button
+```tsx
+// src/components/ui/Button.tsx
+type Variant = "primary" | "outline" | "approve" | "reject" | "icon";
+
+const variantClass: Record<Variant, string> = {
+  primary: "btn-primary",
+  outline: "btn-outline",
+  approve: "btn-approve",
+  reject:  "btn-reject",
+  icon:    "btn-icon",
+};
+```
+
+#### Badge
+```tsx
+// src/components/ui/Badge.tsx
+type StatusVariant = "pending" | "approved" | "rejected" | "forwarded" | "infoReq" | "resolved";
+
+const badgeClass: Record<StatusVariant, string> = {
+  pending:   "badge badge-pending",
+  approved:  "badge badge-approved",
+  rejected:  "badge badge-rejected",
+  forwarded: "badge badge-forwarded",
+  infoReq:   "badge badge-info-req",
+  resolved:  "badge badge-resolved",
+};
+```
+
+#### Input
+```tsx
+// src/components/ui/Input.tsx
+<input className="form-input" {...props} />
+```
+
+#### Table
+```tsx
+// src/components/ui/Table.tsx
+<table className="data-table">
+  <thead>...</thead>
+  <tbody>...</tbody>
+</table>
+```
+
+#### ID Chip
+```tsx
+// src/components/ui/IdChip.tsx
+type ChipType = "claim" | "reg";
+<span className={type === "claim" ? "chip-claim" : "chip-reg"}>{id}</span>
+```
+
+### 13.13 Wireframe-to-Tailwind Mapping Reference (Complete)
+
+| Wireframe CSS Pattern | Tailwind Class |
+|---|---|
+| `background: #1a1a2e` | `bg-sidebar-bg` |
+| `background: #22223a` | `bg-sidebar-activeBg` |
+| `border-left: 3px solid #4a90d9` | `border-l-[3px] border-l-primary` |
+| `background: #4a90d9` | `bg-primary` |
+| `background: #f5f5f5` | `bg-page-body` |
+| `background: #f0f0f0` | `bg-page-canvas` |
+| `background: #fff` | `bg-surface` |
+| `background: #fafafa` | `bg-surface-muted` |
+| `border: 1px solid #e0e0e0` | `border border-border` |
+| `border-bottom: 1px solid #f0f0f0` | `border-b border-border-light` |
+| `color: #222` | `text-text-primary` |
+| `color: #444` | `text-text-secondary` |
+| `color: #888` | `text-text-muted` |
+| `color: #aaa` | `text-text-hint` |
+| `color: #555` | `text-text-label` |
+| `font-size: 10px` | `text-2xs` |
+| `font-size: 11px` | `text-xs` |
+| `font-size: 12px` | `text-sm` |
+| `font-size: 13px` | `text-base` |
+| `font-size: 14px` | `text-md` |
+| `font-size: 16px` | `text-lg` |
+| `font-size: 28px` | `text-3xl` |
+| `border-radius: 4px` | `rounded-sm` |
+| `border-radius: 6px` | `rounded-md` |
+| `border-radius: 8px` | `rounded-lg` |
+| `border-radius: 10px` | `rounded-xl` |
+| `border-radius: 12px` | `rounded-2xl` |
+| `border-radius: 50%` | `rounded-full` |
+| `padding: 24px` | `p-6` |
+| `padding: 20px` | `p-5` |
+| `gap: 16px` | `gap-4` |
+| `gap: 24px` | `gap-6` |
+| `background: #fef3c7; color: #b45309` | `badge-pending` |
+| `background: #e6f9e6; color: #2e7d32` | `badge-approved` |
+| `background: #fef2f2; color: #dc2626` | `badge-rejected` |
+| `background: #f3e8ff; color: #7c3aed` | `badge-forwarded` |
+| `background: #eff6ff; color: #2563eb` | `badge-info-req` |
+| `background: #f0f0f0; color: #888` | `badge-resolved` |
+| `background: #fff3e0; color: #e65100` (monospace) | `chip-claim` |
+| `background: #f0f6ff; color: #4a90d9` (monospace) | `chip-reg` |
+| `background: #16a34a; color: #fff` | `btn-approve` |
+| `border: 1px solid #fca5a5; color: #dc2626` | `btn-reject` |
+| `background: #4a90d9; color: #fff` | `btn-primary` |
+
+### 13.14 Anti-Patterns to Avoid (Tailwind-Specific)
+
+- Never use inline `style={{ color: '#4a90d9' }}` — use `text-primary` from the config.
+- Never use Tailwind arbitrary values like `bg-[#4a90d9]` — every hex from the wireframes is tokenized in the config.
+- Never use `text-blue-500` or other default Tailwind palette colors — use only project tokens.
+- Never duplicate badge colors per-feature — always import from `src/components/ui/Badge.tsx`.
+- Never apply status colors directly in page components — always via the `badge-*` component classes.
+- Never use `font-weight: 600` or `font-weight: 700` for body/label text — wireframes use 600 only for specific UI labels; map to Tailwind `font-semibold` and `font-bold`.
+
+### 13.15 Output of Step 13
+
+- Tailwind config is complete and sourced from all 7 wireframe HTML files.
+- All colors, radii, font sizes, spacing, and layout dimensions are tokenized — no magic numbers in component files.
+- Global CSS layer defines reusable component classes aligned to wireframe patterns.
+- Status badge system is centralized and mapping is documented for all screen types.
+- Developer reference table maps every wireframe CSS pattern to its Tailwind equivalent.
+- UI component Tailwind reference is provided for Button, Badge, Input, Table, IdChip, AppLayout, ChatLayout, DetailLayout, and Stepper.
+
+---
+
+## Step 14: Wireframe Audit — Gap Analysis and Plan Updates
+
+> This step documents every structural, component, data-flow, routing, state, API, WebSocket, and design pattern discovered by reading all 7 updated wireframe files in full. Nothing is assumed — every update is sourced from a specific wireframe screen.
+
+---
+
+### 14.1 Summary of What Changed vs Previous Plan
+
+The updated wireframes introduce **31 screens across 6 flows** that are significantly more detailed than the previous plan assumed. The key changes are:
+
+| Area | Previous Plan | Wireframe Reality |
+|---|---|---|
+| Dialogs | Not specified | 13 distinct Dialogs types across all flows |
+| Registration list | Simple table | + Source column (WhatsApp / Manual) + Priority dot |
+| Registration statuses | 4 statuses | 5 statuses: Pending, Approved, Rejected, Resubmission (badge = `status-resubmission` = blue), also shown as tab |
+| Resubmission modal | Inline panel | Dedicated modal with 6 checkbox fields + note field |
+| Reject registration | Not specified | Dedicated modal: reason dropdown + notes textarea |
+| Claim list | Simple table | + 4-stat header row + 6 status tabs + "Info Requested" tab |
+| Claim detail | Basic | + Linked Registration summary card + Claim Workflow steps card |
+| Claims: forward modal | Brief mention | Full modal with CS notes field + priority dropdown + verification pack summary |
+| Claims: reject modal | Not specified | Reason dropdown + notes |
+| Claims: request info modal | Not specified | 6 checkbox items + "Other" free-text + note + priority |
+| Quality: list | Simple table | + Priority badge (High/Normal) + "Forwarded By" column + 4-stat header |
+| Quality: role banner | Not specified | Sticky `role-banner` bar above header |
+| Quality: detail | Basic | CS Agent Notes shown first, larger evidence photos (200px), "Click to enlarge" hint |
+| Quality: approve modal | Not specified | Technical assessment dropdown + notes + outcome summary box |
+| Quality: reject modal | Not specified | Technical rejection reason dropdown + mandatory technical notes |
+| Quality: request info modal | Not specified | Checkbox list + "Request From" dropdown (CS/Customer) |
+| Chat: 3 panels | 2 panels | Left (conv list) + Center (chat) + Right (info panel = 280px) |
+| Chat: conversation states | 3 states | + Unassigned (amber) + Active (green) + Resolved (gray) — visual distinctions |
+| Chat: Unassigned ticket | Not specified | `claim-banner` overlay + "Claim & Reply" button + disabled input |
+| Chat: empty state | Not specified | Full empty state screen when no conversation selected |
+| Chat: resolve modal | Not specified | Resolution type radio + summary textarea + notification checkbox |
+| Chat: transfer modal | Not specified | Transfer to (Agent/Queue) + agent select + reason + internal note + CC checkbox |
+| Chat: escalate modal | Not specified | Escalation level radio + reason dropdown + urgency radio + description |
+| Chat: info panel | Not specified | Avatar (56px) + phone + WA status + complaint details + images + customer history + action buttons |
+| Manual reg: wizard step labels | "Documents" | Steps: Personal Info → Purchase & Dealer → Products → **Invoices** → Review |
+| Manual reg: Step 5 | Review only | "Save as Draft" button added on review step |
+| Manual reg: Success screen | Not specified | Full success state with reg ID chip + info box + 3 action buttons |
+| Product catalog | Grid view | **Table view** (not grid) with checkbox column + image column + surface tags |
+| Product form | Basic | Interior/Exterior **grouped** surface checkboxes + URL field + Key Features textarea |
+| Surface types | Mentioned | Dedicated tab in Product Catalog with own CRUD table (Name, Category, Linked Products count) |
+| Surface type modal | Not specified | Add/Edit surface type in-page modal |
+| Delete confirmation | Not specified | Standard delete modal with warning icon |
+| Navigation labels | "Complaints Chat" | Sidebar shows "Live Chat" and "Complaints" as **two separate nav items** |
+
+---
+
+### 14.2 Routing Updates Required
+
+#### 14.2.1 Navigation — Two Separate Items
+
+The wireframe sidebar consistently shows **both** "Live Chat" and "Complaints" as separate nav items:
+
+```
+Support
+  ├── Live Chat      → /app/complaints/:id   (active chat interface)
+  └── Complaints     → /app/complaints       (list/landing — currently same route)
+```
+
+**Update to Step 1.3 route map:** The sidebar nav labels differ from route names. Implement as:
+- `Live Chat` nav item → navigates to `/app/complaints` (the 3-panel chat interface)
+- `Complaints` nav item → currently shown as a placeholder (disabled in hub, no screens built yet)
+
+For now, treat "Complaints" nav item as disabled/coming-soon. "Live Chat" is the active B7 route.
+
+#### 14.2.2 New Modal Routes — No Separate Routes Needed
+
+All 13 modals in the wireframes are **overlay modals on existing pages**, not separate routes. They are triggered by button clicks and managed with local `useState`. They do NOT require new route entries:
+
+```
+/app/registrations/:id  → hosts: ResubmissionModal, RejectModal
+/app/claims/:id         → hosts: ForwardToQualityModal, RejectClaimModal, RequestInfoModal
+/app/quality/:id        → hosts: ApproveClaimModal, RejectClaimModal (QA), RequestInfoModal (QA)
+/app/complaints/:id     → hosts: ResolveModal, TransferModal, EscalateModal
+/app/products           → hosts: DeleteConfirmModal
+/app/products/new       → dedicated page (not modal)
+/app/products/:id/edit  → dedicated page (not modal)
+/app/products (surface tab) → hosts: AddSurfaceTypeModal, DeleteConfirmModal
+```
+
+#### 14.2.3 Product Catalog — Tab-Based Sub-navigation
+
+The Product Catalog screen has **two tabs** (`Products` | `Surface Types`) within the same `/app/products` route. This is tab-driven UI state, not separate routes. The active tab is managed via local state or query param:
+
+```
+/app/products?tab=products        → Products table
+/app/products?tab=surface-types   → Surface Types table
+```
+
+Use `useSearchParams` to persist tab state and allow deep-linking.
+
+#### 14.2.4 Manual Registration — Step 4 is "Invoices" not "Documents"
+
+Update the route label in `src/constants/routes.ts`:
+```ts
+// Step labels (displayed in Stepper component)
+WIZARD_STEPS = [
+  { id: 1, label: "Personal Info" },
+  { id: 2, label: "Purchase & Dealer" },
+  { id: 3, label: "Products" },
+  { id: 4, label: "Invoices" },   // ← was "Documents" in previous plan
+  { id: 5, label: "Review" },
+]
+```
+
+---
+
+### 14.3 Component Tree Updates
+
+#### 14.3.1 Registrations — New Components
+
+Add to `src/components/registrations/`:
+
+```
+SourceTag.tsx              ← "WhatsApp" (green) / "Manual" (blue) badge
+ResubmissionModal.tsx      ← checkbox list modal (6 fields + note)
+RejectRegistrationModal.tsx ← reason dropdown + notes modal
+```
+
+Updated B3 component tree:
+```tsx
+<RegistrationDetailPage>
+  <BackLink />
+  <DetailLayout>           {/* grid: 1fr 340px */}
+    <div>                  {/* left column */}
+      <CustomerInfoCard />
+      <PurchaseInfoCard />
+      <ProductMiniTable />
+      <InvoiceGallery>
+        <InvoicePreview label="Topcoat Invoice" />   {/* Zoom In + Download + Open Full */}
+        <InvoicePreview label="Basecoat Invoice" />
+      </InvoiceGallery>
+    </div>
+    <div>                  {/* right column — 340px */}
+      <ActionCard>
+        <ApproveButton />
+        <ResubmitButton />   {/* opens ResubmissionModal */}
+        <RejectButton />     {/* opens RejectRegistrationModal */}
+      </ActionCard>
+      <QuickInfoCard />      {/* submitted, source, time in queue, assigned to */}
+    </div>
+  </DetailLayout>
+
+  {/* Modals */}
+  <ResubmissionModal isOpen={...} onClose={...} onSend={...} />
+  <RejectRegistrationModal isOpen={...} onClose={...} onReject={...} />
+</RegistrationDetailPage>
+```
+
+**ResubmissionModal checkbox fields (exact from wireframe):**
+```ts
+const RESUBMISSION_FIELDS = [
+  { id: "personal_info",    label: "Personal Information",  hint: "Name, Email, City, Address" },
+  { id: "purchase_date",    label: "Purchase Date",         hint: "Date of purchase" },
+  { id: "dealer_info",      label: "Dealer Information",    hint: "Dealer name & location" },
+  { id: "product_details",  label: "Product Details",       hint: "Topcoat/Basecoat & quantities" },
+  { id: "topcoat_invoice",  label: "Topcoat Invoice",       hint: "Invoice image" },
+  { id: "basecoat_invoice", label: "Basecoat Invoice",      hint: "Invoice image" },
+] as const;
+```
+
+This replaces the partial `ResubmissionField` type from Step 3.7. Add `personal_info` and `purchase_date` to the type — they were missing.
+
+Updated `ResubmissionField` type:
+```ts
+type ResubmissionField =
+  | "personal_info"
+  | "purchase_date"
+  | "dealer_info"
+  | "product_details"
+  | "topcoat_invoice"
+  | "basecoat_invoice";
+```
+
+#### 14.3.2 Claims — New Components
+
+Add to `src/components/claims/`:
+```
+ForwardToQualityModal.tsx      ← CS notes + priority + verification pack summary
+RejectClaimModal.tsx           ← reason dropdown + notes
+RequestMoreInfoModal.tsx       ← checkbox list (6 items + Other free-text) + note + priority
+LinkedRegistrationCard.tsx     ← summary card linking claim → registration
+ClaimWorkflowCard.tsx          ← 3-step workflow progress (CS → Quality → Resolution)
+```
+
+Updated B5 component tree:
+```tsx
+<ClaimDetailPage>
+  <BackLink />
+  <DetailLayout>           {/* grid: 1fr 340px */}
+    <div>                  {/* left column */}
+      <ClaimInfoCard />    {/* customer, phone, linked reg, topcoat, issue type, area */}
+      <EvidencePhotos>     {/* 3 photos, each with Zoom + Download buttons */}
+        <EvidenceItem label="Long Shot" />
+        <EvidenceItem label="Close Shot" />
+        <EvidenceItem label="Alternate Angle" />
+      </EvidencePhotos>
+      <LinkedRegistrationCard />   {/* ← NEW: linked reg summary */}
+    </div>
+    <div>                  {/* right column — 340px */}
+      <ActionCard>
+        <ForwardButton />   {/* opens ForwardToQualityModal */}
+        <RequestInfoButton /> {/* opens RequestMoreInfoModal */}
+        <RejectButton />    {/* opens RejectClaimModal */}
+      </ActionCard>
+      <ClaimWorkflowCard />  {/* ← NEW: 3-step workflow indicator */}
+      <QuickInfoCard />
+    </div>
+  </DetailLayout>
+
+  {/* Modals */}
+  <ForwardToQualityModal isOpen={...} />
+  <RejectClaimModal isOpen={...} />
+  <RequestMoreInfoModal isOpen={...} />
+</ClaimDetailPage>
+```
+
+**RequestMoreInfo checkbox items (exact from wireframe):**
+```ts
+const REQUEST_INFO_ITEMS = [
+  "Additional photos (different angles)",
+  "Proof of purchase / Invoice",
+  "Product batch number",
+  "Application details (method, coats, surface prep)",
+  "Timeline of issue occurrence",
+  "Other",  // free-text input shown when selected
+] as const;
+```
+
+#### 14.3.3 Quality — New Components + Role Banner
+
+Add to `src/components/quality/`:
+```
+RoleBanner.tsx             ← sticky purple banner: "Quality Team View" with dot
+ApproveClaimModal.tsx      ← technical assessment dropdown + notes + outcome summary
+RejectClaimQAModal.tsx     ← technical rejection reason (required) + technical notes (required)
+RequestInfoQAModal.tsx     ← checkbox list + "Request From" dropdown (CS/Customer) + notes
+ClaimWorkflowCard.tsx      ← same as claims, reused (step 1 done, step 2 current)
+```
+
+Updated B6 component tree:
+```tsx
+<QualityDetailPage>
+  <RoleBanner />           {/* ← NEW: sticky purple "Quality Team View" banner */}
+  <BackLink />
+  <DetailLayout>           {/* grid: 1fr 340px */}
+    <div>
+      <ClaimInfoCard />
+      <AgentNotesCard />   {/* CS agent notes shown FIRST before photos — important order */}
+      <EvidencePhotos enlarged />  {/* 200px height, "Click to enlarge" hint */}
+      <LinkedRegistrationCard />
+    </div>
+    <div>
+      <ActionCard title="Technical Assessment">
+        <ApproveButton />
+        <RequestInfoButton />
+        <RejectButton />
+      </ActionCard>
+      <ClaimWorkflowCard step={2} />
+      <QuickInfoCard />    {/* forwarded on, forwarded by, time in queue, priority */}
+    </div>
+  </DetailLayout>
+
+  {/* Modals */}
+  <ApproveClaimModal isOpen={...} />
+  <RejectClaimQAModal isOpen={...} />
+  <RequestInfoQAModal isOpen={...} />
+</QualityDetailPage>
+```
+
+**Key: CS Agent Notes are shown BEFORE evidence photos** in the Quality view. This is intentional — gives the QA reviewer context before inspecting photos.
+
+#### 14.3.4 Chat — New Components (Major Update)
+
+The chat is a **3-panel layout**, not 2-panel. Add right `InfoPanel` (280px).
+
+Add to `src/components/complaints/`:
+```
+InfoPanel.tsx              ← RIGHT panel: avatar + phone + WA status + complaint details + images + customer history + action buttons
+ClaimBanner.tsx            ← amber "Unassigned Ticket" bar with "Claim & Reply" CTA
+ChatEmptyState.tsx         ← shown when no conversation selected
+ResolveModal.tsx           ← resolution type + summary + notification checkbox
+TransferModal.tsx          ← to agent/queue + agent select + reason + internal note + CC checkbox
+EscalateModal.tsx          ← escalation level + reason + urgency + description
+SystemMessage.tsx          ← centered system event bubbles (e.g. "Ahmed started a conversation")
+DateDivider.tsx            ← "Today, 31 March 2026" divider between message groups
+```
+
+Updated B7 component tree:
+```tsx
+<ChatPage>
+  {/* 3-panel layout */}
+  <ConvPanel>              {/* 300px LEFT */}
+    <ConvHeader>
+      <ConvTitle />
+      <UnreadCount />
+    </ConvHeader>
+    <ConvSearch />
+    <ConvFilters>          {/* All | Unassigned | Mine | Resolved */}
+      <ConvFilter />
+    </ConvFilters>
+    <ConvList>
+      <ConvItem state="active" />     {/* blue left border, blue avatar */}
+      <ConvItem state="unread" />     {/* amber avatar, amber time, unread dot */}
+      <ConvItem state="default" />
+      <ConvItem state="resolved" />   {/* gray status badge */}
+    </ConvList>
+  </ConvPanel>
+
+  <ChatPanel>              {/* flex:1 CENTER */}
+    {!selectedConversation && <ChatEmptyState />}
+    {selectedConversation && (
+      <>
+        <ChatHeader>
+          <ChatHeaderAvatar />
+          <ChatHeaderInfo>
+            <ChatHeaderName />
+            <OnlineStatus />         {/* "Online on WhatsApp" with green dot */}
+          </ChatHeaderInfo>
+          <ChatHeaderActions>
+            <AssignButton />
+            <MoreButton />
+          </ChatHeaderActions>
+        </ChatHeader>
+
+        {isUnassigned && <ClaimBanner onClaim={handleClaim} />}
+
+        <ChatMessages>
+          <DateDivider />
+          <SystemMessage />          {/* "Ahmed started a complaint conversation" */}
+          <MessageBubble role="customer" />
+          <MessageBubble role="agent" />  {/* blue bubble, double tick */}
+        </ChatMessages>
+
+        <ChatInput disabled={isUnassigned} />
+      </>
+    )}
+  </ChatPanel>
+
+  <InfoPanel>              {/* 280px RIGHT */}
+    <InfoProfile>
+      <InfoAvatar size={56} />
+      <InfoName />
+      <InfoPhone />
+      <WhatsAppBadge />    {/* green "WhatsApp Connected" pill */}
+    </InfoProfile>
+    <InfoSection title="Complaint Details">
+      {/* Ticket ID (monospace #CMP-XXXX), submitted, status, assigned to, city */}
+    </InfoSection>
+    <InfoSection title="Attached Images">
+      <ImageGrid cols={3} />   {/* up to 3 image thumbs */}
+    </InfoSection>
+    <InfoSection title="Customer History">
+      {/* Registrations count + link, Claims count + link, Past Complaints count */}
+    </InfoSection>
+    <InfoActions>
+      <ResolveButton />    {/* opens ResolveModal */}
+      <TransferButton />   {/* opens TransferModal */}
+      <EscalateButton />   {/* opens EscalateModal */}
+    </InfoActions>
+  </InfoPanel>
+
+  {/* Modals */}
+  <ResolveModal isOpen={...} />
+  <TransferModal isOpen={...} />
+  <EscalateModal isOpen={...} />
+</ChatPage>
+```
+
+#### 14.3.5 Product Catalog — Table View, Not Grid (Major Correction)
+
+The wireframe shows products in a **data table**, not a card grid. Previous plan assumed grid. Correct this:
+
+```tsx
+<ProductsListPage>
+  <PageHeader title="Product Catalog" />
+  <Tabs active="products">
+    <Tab label="Products" count={24} />
+    <Tab label="Surface Types" count={8} />
+  </Tabs>
+
+  {activeTab === "products" && (
+    <>
+      <Toolbar>
+        <SearchInput />
+        <FilterButton label="Filters" />
+        <FilterSelect label="Type: All" />
+        <FilterSelect label="Status: All" />
+        <ExportButton />
+        <AddProductButton />   {/* navigates to /app/products/new */}
+      </Toolbar>
+      <DataTable checkboxColumn imageColumn>  {/* ← checkbox + image columns */}
+        {/* columns: checkbox, Image, Product Name, Type, Surface Types, Coverage, Status, Actions */}
+        <ProductRow />
+      </DataTable>
+      <Pagination />
+    </>
+  )}
+
+  {activeTab === "surface-types" && (
+    <>
+      <Toolbar>
+        <SearchInput />
+        <FilterSelect label="Category: All" />
+        <AddSurfaceTypeButton />   {/* opens AddSurfaceTypeModal */}
+      </Toolbar>
+      <DataTable>
+        {/* columns: Surface Name, Category, Linked Products count, Status, Actions */}
+        <SurfaceTypeRow />
+      </DataTable>
+      <AddSurfaceTypeModal isOpen={...} />
+      <DeleteConfirmModal isOpen={...} type="surface-type" />
+    </>
+  )}
+
+  <DeleteConfirmModal isOpen={...} type="product" />
+</ProductsListPage>
+```
+
+Remove `src/components/products/ProductGrid.tsx` and `ProductCard.tsx` from the file tree — replace with table-based rendering. Add:
+```
+src/components/products/ProductTable.tsx       ← replaces ProductGrid.tsx
+src/components/products/SurfaceTypeTable.tsx   ← new
+src/components/products/SurfaceTypeModal.tsx   ← add/edit surface type modal
+src/components/products/DeleteConfirmModal.tsx ← shared delete confirmation
+```
+
+Updated product form surface checkbox layout (Interior/Exterior grouped):
+```tsx
+<ProductForm>
+  {/* ... name, type, coverage, status, URL, key features ... */}
+  <SurfaceMappingSection>
+    <SurfaceGroup label="Interior Surfaces">
+      {["Wood", "Brick", "Metal", "Masonry", "Concrete", "Plaster"].map(s => (
+        <SurfaceCheckbox key={s} surface={s} category="interior" />
+      ))}
+    </SurfaceGroup>
+    <SurfaceGroup label="Exterior Surfaces">
+      {["Wood", "Brick", "Metal", "Masonry", "Concrete"].map(s => (
+        <SurfaceCheckbox key={s} surface={s} category="exterior" />
+      ))}
+    </SurfaceGroup>
+  </SurfaceMappingSection>
+</ProductForm>
+```
+
+#### 14.3.6 Manual Registration — Corrected Step 4 Label + Save as Draft + Success Screen
+
+Step 4 label fix: "Invoices" (not "Documents").
+
+Add `SaveAsDraftButton` to Step 5 form actions:
+```tsx
+{/* Step 5 form actions */}
+<FormActions>
+  <PreviousButton />
+  <div style={{ flex: 1 }} />
+  <SaveAsDraftButton />     {/* ← NEW: saves wizard state, navigates away */}
+  <SubmitButton />          {/* green, larger */}
+</FormActions>
+```
+
+Add success screen as Step 6 (post-submit):
+```tsx
+<SuccessScreen>
+  <SuccessIcon />           {/* green circle checkmark */}
+  <SuccessTitle>Registration Submitted Successfully</SuccessTitle>
+  <SuccessDesc />
+  <RegIdChip id="REG-0149" />   {/* monospace chip */}
+  <InfoBox>                 {/* blue info box with workflow note */}
+    This registration will now follow the standard approval workflow...
+  </InfoBox>
+  <SuccessActions>
+    <ViewRegistrationButton />   {/* navigates to /app/registrations/:newId */}
+    <CreateAnotherButton />      {/* resets wizard, navigates to /step/1 */}
+    <BackToListButton />         {/* navigates to /app/registrations */}
+  </SuccessActions>
+</SuccessScreen>
+```
+
+Route addition for success screen:
+```
+/app/manual-registration/success   ← new route, shown after submit
+```
+
+Add to `src/routes/createBrowserRouter.tsx`:
+```tsx
+{
+  path: "manual-registration",
+  element: <ManualRegistrationLayout />,
+  children: [
+    { index: true, element: <Navigate to="step/1" replace /> },
+    { path: "step/:stepId", element: <ManualStepPage /> },
+    { path: "success", element: <ManualRegistrationSuccessPage /> },  // ← NEW
+  ],
+}
+```
+
+---
+
+### 14.4 State Management Updates
+
+#### 14.4.1 Modal State — Local useState Only
+
+All 13 modals are managed with local `useState` in their parent page. Do NOT put modal open/close state in Zustand:
+
+```ts
+// In RegistrationDetailPage.tsx
+const [resubmitModalOpen, setResubmitModalOpen] = useState(false);
+const [rejectModalOpen, setRejectModalOpen] = useState(false);
+
+// In ClaimDetailPage.tsx
+const [forwardModalOpen, setForwardModalOpen] = useState(false);
+const [rejectModalOpen, setRejectModalOpen] = useState(false);
+const [requestInfoModalOpen, setRequestInfoModalOpen] = useState(false);
+```
+
+#### 14.4.2 Chat — Conversation Assignment State
+
+The wireframe introduces conversation assignment as a first-class state. Add to Zustand store:
+
+```ts
+// Add to AppStore (Step 4.10)
+conversationAssignmentMap: Record<string, "unassigned" | "mine" | "other">;
+setConversationAssignment: (id: string, state: "unassigned" | "mine" | "other") => void;
+```
+
+The "Claim & Reply" action on an unassigned ticket triggers `claimConversation` mutation AND updates Zustand `conversationAssignmentMap` to `"mine"`, which unlocks the `ChatInput`.
+
+#### 14.4.3 Chat — Active Tab Filter State
+
+Conversation list has 4 filter tabs (All / Unassigned / Mine / Resolved). This is local state:
+
+```ts
+// In ConversationList.tsx or ChatPage.tsx
+const [activeFilter, setActiveFilter] = useState<"all" | "unassigned" | "mine" | "resolved">("all");
+```
+
+Filter is applied client-side to the conversations React Query cache.
+
+#### 14.4.4 Product Catalog — Tab State
+
+```ts
+// In ProductsListPage.tsx
+const [searchParams, setSearchParams] = useSearchParams();
+const activeTab = searchParams.get("tab") ?? "products";
+```
+
+#### 14.4.5 Manual Registration — Save as Draft
+
+When agent clicks "Save as Draft":
+1. Current wizard form values are saved to Zustand `wizardDraft`
+2. Navigate away (to list page)
+3. On returning to `/app/manual-registration/step/1`, check `wizardDraft` in Zustand — if exists, offer "Resume draft?" prompt
+4. On submit or explicit cancel, call `clearWizardDraft()`
+
+---
+
+### 14.5 API Layer Updates
+
+#### 14.5.1 New Mutations Required
+
+Add to `src/data/`:
+
+```
+registrations/mutations/
+  rejectRegistration.ts         ← POST /registrations/:id/reject
+                                   payload: { reason: string, notes?: string }
+
+claims/mutations/
+  requestMoreInfoClaim.ts       ← POST /claims/:id/request-info
+                                   payload: { items: string[], note?: string, priority: string }
+
+quality/mutations/
+  approveClaim.ts               ← POST /quality/:id/approve
+                                   payload: { assessment: string, notes: string }
+  rejectClaim.ts                ← POST /quality/:id/reject
+                                   payload: { reason: string, technicalNotes: string }
+  requestMoreInfoQA.ts          ← POST /quality/:id/request-info
+                                   payload: { items: string[], notes: string, requestFrom: string }
+
+complaints/mutations/
+  claimConversation.ts          ← POST /complaints/:id/claim
+  resolveConversation.ts        ← POST /complaints/:id/resolve
+                                   payload: { resolutionType: string, summary: string, notifyCustomer: boolean }
+  transferConversation.ts       ← POST /complaints/:id/transfer
+                                   payload: { toType: "agent"|"queue", agentId?: string, reason: string, internalNote: string, keepCC: boolean }
+  escalateConversation.ts       ← POST /complaints/:id/escalate
+                                   payload: { level: string, reason: string, urgency: string, description: string }
+
+products/mutations/
+  deleteProduct.ts              ← DELETE /products/:id
+  createSurfaceType.ts          ← POST /products/surface-types
+  updateSurfaceType.ts          ← PUT /products/surface-types/:id
+  deleteSurfaceType.ts          ← DELETE /products/surface-types/:id
+
+manualRegistration/mutations/
+  createRegistration.ts         ← POST /registrations (manual source)
+```
+
+#### 14.5.2 New Queries Required
+
+```
+products/queries/
+  getSurfaceTypes.ts            ← GET /products/surface-types
+
+complaints/queries/
+  getConversationById.ts        ← GET /complaints/:id (full conversation with info panel data)
+```
+
+#### 14.5.3 Expanded API_ENDPOINTS
+
+Add to `src/constants/apiEndpoints.ts`:
+```ts
+export const API_ENDPOINTS = {
+  // ... existing ...
+  REGISTRATION_REJECT: (id: string) => `/registrations/${id}/reject`,
+
+  CLAIM_REQUEST_INFO: (id: string) => `/claims/${id}/request-info`,
+
+  QUALITY: "/quality",
+  QUALITY_APPROVE: (id: string) => `/quality/${id}/approve`,
+  QUALITY_REJECT: (id: string) => `/quality/${id}/reject`,
+  QUALITY_REQUEST_INFO: (id: string) => `/quality/${id}/request-info`,
+
+  SURFACE_TYPES: "/products/surface-types",
+  SURFACE_TYPE_BY_ID: (id: string) => `/products/surface-types/${id}`,
+
+  COMPLAINT_CLAIM: (id: string) => `/complaints/${id}/claim`,
+  COMPLAINT_RESOLVE: (id: string) => `/complaints/${id}/resolve`,
+  COMPLAINT_TRANSFER: (id: string) => `/complaints/${id}/transfer`,
+  COMPLAINT_ESCALATE: (id: string) => `/complaints/${id}/escalate`,
+} as const;
+```
+
+Add to `src/constants/queryKeys.ts`:
+```ts
+SURFACE_TYPES: ["surface-types"] as const,
+SURFACE_TYPE_DETAIL: (id: string) => ["surface-type", id] as const,
+QUALITY_QUEUE: ["quality-queue"] as const,
+QUALITY_DETAIL: (id: string) => ["quality", id] as const,
+```
+
+---
+
+### 14.6 WebSocket Updates
+
+#### 14.6.1 New WS Event Types from Chat Wireframe
+
+The wireframe introduces conversation states (unassigned/active/resolved) that update in real time. Expand `WSEvent`:
+
+```ts
+type WSEvent =
+  | { type: "message"; payload: ChatMessage }
+  | { type: "conversation_status"; payload: { id: string; status: "unassigned" | "active" | "resolved" } }
+  | { type: "conversation_claimed"; payload: { id: string; agentId: string; agentName: string } }
+  | { type: "conversation_transferred"; payload: { id: string; newAgentId: string } }
+  | { type: "conversation_escalated"; payload: { id: string; level: string } }
+  | { type: "agent_typing"; payload: { conversationId: string } }
+  | { type: "new_conversation"; payload: { conversation: Conversation } }   // ← new unassigned ticket arrives
+  | { type: "unread_count"; payload: { count: number } };                   // ← updates nav badge
+```
+
+The `new_conversation` event is critical — when a new WhatsApp complaint comes in, the left panel must update with the new unassigned conversation in real time without page refresh.
+
+#### 14.6.2 useChat Update for Conversation Claims
+
+`useChat` must handle the `conversation_claimed` event to update the local conversation's assignment state:
+
+```ts
+// In useChat.ts — add handler
+const handleClaim = useCallback(() => {
+  claimConversation({ id: conversationId });
+  // optimistically update local state so input unlocks immediately
+  setIsAssignedToMe(true);
+}, [conversationId]);
+```
+
+---
+
+### 14.7 Form Architecture Updates
+
+#### 14.7.1 New Schemas Required
+
+Add to `src/schemas/`:
+
+```ts
+// resubmission.schema.ts
+export const resubmissionSchema = z.object({
+  fields: z.array(z.enum([
+    "personal_info", "purchase_date", "dealer_info",
+    "product_details", "topcoat_invoice", "basecoat_invoice"
+  ])).min(1, "Select at least one field"),
+  note: z.string().optional(),
+});
+
+// reject.schema.ts (shared for reg + claim CS reject)
+export const rejectSchema = z.object({
+  reason: z.string().min(1, "Rejection reason is required"),
+  notes: z.string().optional(),
+});
+
+// forwardToQuality.schema.ts
+export const forwardToQualitySchema = z.object({
+  notes: z.string().optional(),
+  priority: z.enum(["normal", "high"]).default("normal"),
+});
+
+// requestMoreInfo.schema.ts
+export const requestMoreInfoSchema = z.object({
+  items: z.array(z.string()).min(1, "Select at least one item"),
+  otherText: z.string().optional(),
+  note: z.string().optional(),
+  priority: z.enum(["normal", "high"]).default("normal"),
+});
+
+// quality.schema.ts
+export const qualityApproveSchema = z.object({
+  assessment: z.string().min(1, "Technical assessment is required"),
+  notes: z.string().optional(),
+});
+export const qualityRejectSchema = z.object({
+  reason: z.string().min(1, "Rejection reason is required"),
+  technicalNotes: z.string().min(1, "Technical notes are required"),
+});
+export const qualityRequestInfoSchema = z.object({
+  items: z.array(z.string()).min(1),
+  notes: z.string().optional(),
+  requestFrom: z.enum(["cs_agent", "customer"]).default("cs_agent"),
+});
+
+// resolve.schema.ts
+export const resolveSchema = z.object({
+  resolutionType: z.enum(["issue_resolved", "customer_satisfied", "duplicate", "spam"]),
+  summary: z.string().optional(),
+  notifyCustomer: z.boolean().default(true),
+});
+
+// transfer.schema.ts
+export const transferSchema = z.object({
+  toType: z.enum(["agent", "queue"]),
+  agentId: z.string().optional(),
+  reason: z.string().min(1),
+  internalNote: z.string().optional(),
+  keepCC: z.boolean().default(true),
+});
+
+// escalate.schema.ts
+export const escalateSchema = z.object({
+  level: z.enum(["team_lead", "supervisor", "manager"]),
+  reason: z.string().min(1),
+  urgency: z.enum(["normal", "high", "critical"]),
+  description: z.string().min(1),
+});
+
+// surfaceType.schema.ts
+export const surfaceTypeSchema = z.object({
+  name: z.string().min(1),
+  category: z.enum(["interior", "exterior"]),
+  description: z.string().optional(),
+  status: z.enum(["active", "inactive"]).default("active"),
+});
+```
+
+---
+
+### 14.8 UI Component Library Updates (Step 8 additions)
+
+Add to `src/components/ui/`:
+
+```
+Modal.tsx                  ← base modal wrapper (overlay + box + header + body + footer)
+ModalIcon.tsx              ← icon with semantic variants: warning (amber), info (blue), success (green), purple
+RoleBanner.tsx             ← sticky role identity banner (purple for Quality team)
+SourceTag.tsx              ← WhatsApp (green) / Manual (blue) source indicator
+PriorityBadge.tsx          ← High (red bg) / Normal (gray bg)
+ConvStatusBadge.tsx        ← Unassigned (amber) / Active (green) / Resolved (gray)
+WorkflowSteps.tsx          ← 1-2-3 step progress indicator (done/current/pending)
+Tabs.tsx                   ← tab bar component with count badges
+SystemMessage.tsx          ← centered chat system event bubble
+DateDivider.tsx            ← date separator in chat message list
+InfoPanel.tsx              ← right chat panel layout component
+```
+
+#### Tailwind additions for Step 13 (new tokens from wireframe):
+
+```ts
+// Add to colors in tailwind.config.ts
+source: {
+  whatsapp: { bg: "#ecfdf5", text: "#16a34a" },
+  manual:   { bg: "#f0f4ff", text: "#4a6fa5" },
+},
+priority: {
+  high:   { bg: "#fef2f2", text: "#dc2626", dot: "#ef4444" },
+  normal: { bg: "#f0f0f0", text: "#666666", dot: "#22c55e" },
+  medium: { dot: "#f59e0b" },
+},
+convStatus: {
+  unassigned: { bg: "#fef3c7", text: "#b45309" },  // = cs-unassigned
+  active:     { bg: "#e6f9e6", text: "#2e7d32" },  // = cs-active
+  resolved:   { bg: "#f0f0f0", text: "#888888" },  // = cs-resolved
+},
+modal: {
+  warning: { bg: "#fef3c7", text: "#d97706" },
+  info:    { bg: "#dbeafe", text: "#2563eb" },
+  success: { bg: "#dcfce7", text: "#16a34a" },
+  purple:  { bg: "#f3e8ff", text: "#7c3aed" },
+},
+quality: {
+  roleBannerBg:     "#faf5ff",
+  roleBannerBorder: "#e9d5ff",
+  roleBannerText:   "#7c3aed",
+  roleBannerDot:    "#7c3aed",
+},
+```
+
+New Tailwind component classes for `src/index.css`:
+```css
+@layer components {
+  /* Source tags */
+  .source-whatsapp { @apply inline-block px-2 py-0.5 rounded text-xs bg-source-whatsapp-bg text-source-whatsapp-text; }
+  .source-manual   { @apply inline-block px-2 py-0.5 rounded text-xs bg-source-manual-bg   text-source-manual-text; }
+
+  /* Priority badges */
+  .priority-high   { @apply inline-block px-2 py-0.5 rounded text-xs font-semibold bg-priority-high-bg   text-priority-high-text; }
+  .priority-normal { @apply inline-block px-2 py-0.5 rounded text-xs font-semibold bg-priority-normal-bg text-priority-normal-text; }
+
+  /* Conversation status */
+  .conv-status-unassigned { @apply text-[10px] font-semibold px-1.5 py-px rounded bg-convStatus-unassigned-bg text-convStatus-unassigned-text; }
+  .conv-status-active     { @apply text-[10px] font-semibold px-1.5 py-px rounded bg-convStatus-active-bg     text-convStatus-active-text; }
+  .conv-status-resolved   { @apply text-[10px] font-semibold px-1.5 py-px rounded bg-convStatus-resolved-bg   text-convStatus-resolved-text; }
+
+  /* Role banner (Quality team) */
+  .role-banner {
+    @apply bg-quality-roleBannerBg border-b-2 border-quality-roleBannerBorder
+           px-6 py-2 flex items-center gap-2 text-sm text-quality-roleBannerText font-semibold;
+  }
+
+  /* Forward / Info Request / Purple action buttons */
+  .btn-forward {
+    @apply btn w-full justify-center bg-[#7c3aed] text-white border-0 hover:brightness-95;
+  }
+  .btn-info-req {
+    @apply btn w-full justify-center bg-surface text-[#2563eb]
+           border border-[#93c5fd] hover:bg-[#eff6ff];
+  }
+  .btn-resubmit {
+    @apply btn w-full justify-center bg-surface text-[#2563eb]
+           border border-[#93c5fd] hover:bg-[#eff6ff];
+  }
+  .btn-claim    { @apply btn bg-amber text-white border-0 hover:brightness-95; }
+  .btn-resolve  { @apply btn w-full justify-center bg-action-approve-bg text-white; }
+  .btn-transfer { @apply btn w-full justify-center bg-surface text-text-label border border-border; }
+  .btn-escalate { @apply btn w-full justify-center bg-surface text-action-reject-text border border-action-reject-border; }
+}
+```
+
+---
+
+### 14.9 RBAC / Permissions Updates (Step 11 additions)
+
+Update `usePermissions` to cover all new actions found in wireframes:
+
+```ts
+export const usePermissions = () => {
+  const { user } = useAuth();
+  const role = user?.role;
+  return {
+    // Registrations
+    canApproveRegistrations:    role === "admin" || role === "cs",
+    canRejectRegistrations:     role === "admin" || role === "cs",
+    canRequestResubmission:     role === "admin" || role === "cs",
+
+    // Claims (CS layer)
+    canForwardToQuality:        role === "admin" || role === "cs",
+    canRejectClaims:            role === "admin" || role === "cs",
+    canRequestMoreInfoCS:       role === "admin" || role === "cs",
+
+    // Quality (QA layer — separate from CS)
+    canSubmitQualityDecision:   role === "quality",
+    canApproveClaimQA:          role === "quality",
+    canRejectClaimQA:           role === "quality",
+    canRequestMoreInfoQA:       role === "quality",
+    canSeeRoleBanner:           role === "quality",
+
+    // Chat
+    canClaimConversation:       role === "admin" || role === "cs",
+    canResolveConversation:     role === "admin" || role === "cs",
+    canTransferConversation:    role === "admin" || role === "cs",
+    canEscalateConversation:    role === "admin" || role === "cs",
+
+    // Admin
+    canManageProducts:          role === "admin",
+    canManageSurfaceTypes:      role === "admin",
+    canImportData:              role === "admin",
+    canManualRegister:          role === "admin" || role === "cs",
+    // canManualRegister gates the "Add Manual Registration" button visibility
+    // on the Registrations list page only — it is NOT a separate route guard.
+  };
+};
+```
+
+---
+
+### 14.10 Navigation Labels — Exact Sidebar Text (from Wireframes)
+
+The sidebar navigation labels must match the wireframe exactly:
+
+```
+Main
+  Dashboard
+
+Warranty
+  Registrations    [badge: pending count — red (#e74c3c)]
+  Claims           [badge: pending count — red (#e74c3c)]
+  Quality Review   [NO badge — no count badge shown for Quality Review]
+
+Support
+  Live Chat        [badge: unassigned count — red (#e74c3c)]
+  Complaints       [disabled / coming soon in Phase 1]
+
+Admin
+  Product Catalog
+  Data Import
+  Settings
+```
+
+**"Complaints" is disabled in Phase 1.** The hub wireframe explicitly marks it with `disabled` class and `—` dash. Do not implement the Complaints list page in Phase 1. Show as disabled nav item.
+
+"Quality Review" has **no sidebar badge**. The route `/app/quality` is restricted to `QUALITY` role per Step 1.6. All sidebar badges that do appear use red (`#e74c3c`) background — matching `danger.DEFAULT` in the Tailwind config. The blue badge style (`#2a4a6a`/`#6ab0ff`) seen in the wireframe hub HTML is hub-only UI and must NOT be used in the real application sidebar.
+
+---
+
+### 14.11 Output of Step 14
+
+- All 31 wireframe screens across 6 flows reviewed in full.
+- 13 modal types identified and mapped to their parent pages.
+- Component trees updated for Registrations, Claims, Quality, Chat, Products, and Manual Registration.
+- `ResubmissionField` type expanded to 6 fields (was missing `personal_info` and `purchase_date`).
+- Product catalog corrected from grid to table; surface types management added as separate tab.
+- Chat updated to 3-panel layout with full `InfoPanel` component defined.
+- `ChatEmptyState`, `ClaimBanner`, `SystemMessage`, `DateDivider` identified as missing components.
+- Manual registration Step 4 label corrected to "Invoices"; success screen and `/success` route added.
+- 15 new API mutations and 2 new queries identified and mapped to data layer files.
+- All new `API_ENDPOINTS` and `QUERY_KEYS` defined.
+- `WSEvent` type expanded with 3 new event types from chat wireframe.
+- 12 new Zod schemas defined for all modal forms.
+- 10 new UI component primitives identified.
+- Tailwind config extended with source, priority, convStatus, modal, and quality token groups.
+- `usePermissions` hook expanded to cover all 17 action types across all roles.
+- "Complaints" nav item confirmed disabled in Phase 1.

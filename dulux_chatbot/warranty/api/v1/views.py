@@ -57,7 +57,6 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
     filterset_fields = ["state", "issue_type"]
     search_fields = ["registration__registration_code", "registration__phone_number"]
     ordering = ["-created"]
-    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -72,7 +71,6 @@ class WarrantyClaimRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         "paint_pair__basecoat",
         "approved_by",
     ).prefetch_related("images__image")
-    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method in {"PUT", "PATCH"}:

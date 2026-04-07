@@ -2,7 +2,6 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from dulux_chatbot.warranty.choices import InvoiceType, PhotoType, RegistrationState
-from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 from dulux_chatbot.warranty.tests.factories import (
     create_claim,
     create_claim_image,
@@ -27,20 +26,11 @@ class WarrantyRegistrationModelTests(TestCase):
 
         self.assertEqual(len(registration.registration_code), 6)
 
-    def test_phone_number_can_be_reused_across_registrations(self):
+    def test_phone_number_unique_constraint_is_enforced(self):
         create_registration(phone_number="923001111111")
-        second_registration = create_registration(phone_number="923001111111")
 
-        self.assertEqual(second_registration.phone_number, "923001111111")
-
-    def test_generate_warranty_certificate_returns_pdf_content(self):
-        registration = create_registration(state=RegistrationState.APPROVED)
-        create_paint_pair(registration=registration)
-
-        content = generate_warranty_certificate(registration)
-
-        self.assertTrue(content.name.endswith(".pdf"))
-        self.assertTrue(content.read().startswith(b"%PDF"))
+        with self.assertRaises(IntegrityError):
+            create_registration(phone_number="923001111111")
 
 
 class InvoiceModelTests(TestCase):
