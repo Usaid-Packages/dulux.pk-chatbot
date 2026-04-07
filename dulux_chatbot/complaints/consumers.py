@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 
@@ -38,6 +39,12 @@ class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
             return
 
         message = await self._create_message(sender=MessageSender.CS_AGENT, text=text)
+        phone_number = await self._get_complaint_phone_number()
+        try:
+            await sync_to_async(WhatsAppClient().send_text)(phone_number, text)
+        except WhatsAppAPIError:
+            await self.send_json({"error": "Message saved but could not be sent to WhatsApp.", "message": message})
+            return
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -71,6 +78,10 @@ class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def _complaint_exists(self) -> bool:
         return Complaint.objects.filter(pk=self.complaint_id).exists()
+
+    @database_sync_to_async
+    def _get_complaint_phone_number(self) -> str:
+        return str(Complaint.objects.only("phone_number").get(pk=self.complaint_id).phone_number)
 
     @database_sync_to_async
     def _create_message(self, *, sender: str, text: str) -> dict:
