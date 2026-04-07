@@ -38,7 +38,7 @@ import type {
   SurfaceTypeFormValues,
   SurfaceTypeQueryParams,
 } from '#/types/products';
-import { getApiErrorMessage } from '#/utils';
+import { cn, getApiErrorMessage } from '#/utils';
 
 const FIRST_PAGE = 1;
 const EMPTY_PRODUCTS: Product[] = [];
@@ -308,41 +308,47 @@ export const ProductsListPage = (): JSX.Element => {
 
   return (
     <section className='space-y-4'>
-      <header className='space-y-1 rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4'>
-        <h2 className='text-2xl font-semibold text-text-primary'>Product Catalog</h2>
-        <p className='text-sm text-text-muted'>Manage products and surface types from one catalog view.</p>
+      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
+        />
+        <div className='relative space-y-1'>
+          <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Catalog Operations</p>
+          <h2 className='text-2xl font-extrabold tracking-tight text-white'>Product Catalog</h2>
+          <p className='text-sm text-blue-50/90'>Manage products and surface types from one catalog view.</p>
+        </div>
       </header>
 
-      <section className='wf-tabs-panel wf-tabs-panel-contrast'>
+      <section className='wf-tabs-panel border-primary/15 bg-white/80 shadow-[0_10px_24px_rgba(19,87,167,0.08)] backdrop-blur'>
         <div className='flex flex-wrap gap-2'>
-          <Button
+          <button
             type='button'
-            variant='ghost'
-            className={activeTab === 'products' ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
+            className={cn('wf-filter-tab', activeTab === 'products' ? 'wf-filter-tab-active' : '')}
             onClick={() => setTab('products')}
           >
-            Products ({productQuery.data?.count ?? 0})
-          </Button>
-          <Button
+            Products
+          </button>
+          <button
             type='button'
-            variant='ghost'
-            className={activeTab === 'surface-types' ? 'wf-filter-tab wf-filter-tab-active' : 'wf-filter-tab'}
+            className={cn('wf-filter-tab', activeTab === 'surface-types' ? 'wf-filter-tab-active' : '')}
             onClick={() => setTab('surface-types')}
           >
-            Surface Types ({surfaceTypesQuery.data?.count ?? 0})
-          </Button>
+            Surface Types
+          </button>
         </div>
       </section>
 
       {activeTab === 'products' ? (
         <>
-          <section className='wf-toolbar-panel wf-toolbar-panel-contrast'>
-            <div className='grid gap-3 md:grid-cols-[2fr,1fr,1fr,1fr,auto]'>
+          <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]'>
               <Input
                 type='search'
                 value={productSearch}
                 onChange={event => handleProductSearchChange(event.target.value)}
                 placeholder='Search by product name'
+                className='h-11 rounded-xl border-primary/25 bg-white'
                 aria-label='Search products'
               />
               <Select value={productTypeFilter} onValueChange={handleProductTypeFilterChange}>
@@ -380,7 +386,11 @@ export const ProductsListPage = (): JSX.Element => {
                 <Button type='button' variant='outline' onClick={handleExportProducts}>
                   Export
                 </Button>
-                <Button type='button' onClick={handleGoToProductCreate}>
+                <Button
+                  type='button'
+                  className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
+                  onClick={handleGoToProductCreate}
+                >
                   Add Product
                 </Button>
               </div>
@@ -447,13 +457,14 @@ export const ProductsListPage = (): JSX.Element => {
         </>
       ) : (
         <>
-          <section className='wf-toolbar-panel wf-toolbar-panel-contrast'>
-            <div className='grid gap-3 md:grid-cols-[2fr,1fr,auto]'>
+          <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+            <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-[2fr_1fr_auto]'>
               <Input
                 type='search'
                 value={surfaceSearch}
                 onChange={event => handleSurfaceSearchChange(event.target.value)}
                 placeholder='Search by surface name'
+                className='h-11 rounded-xl border-primary/25 bg-white'
                 aria-label='Search surface types'
               />
               <Select value={surfaceEnvironmentFilter} onValueChange={handleSurfaceEnvironmentFilterChange}>
@@ -466,7 +477,11 @@ export const ProductsListPage = (): JSX.Element => {
                   <SelectItem value='EXTERIOR'>Exterior</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type='button' onClick={openCreateSurfaceTypeModal}>
+              <Button
+                type='button'
+                className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
+                onClick={openCreateSurfaceTypeModal}
+              >
                 Add Surface Type
               </Button>
             </div>

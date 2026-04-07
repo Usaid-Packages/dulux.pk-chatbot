@@ -115,16 +115,35 @@ export const QualityDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <Button type='button' variant='outline' onClick={handleBackClick}>
-        <ArrowLeft className='h-4 w-4' />
-        Back
-      </Button>
+      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.3),transparent_42%)]'
+        />
+        <div className='relative space-y-4'>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] hover:bg-[#08182e] hover:text-white'
+            onClick={handleBackClick}
+          >
+            <ArrowLeft className='h-4 w-4' />
+            Back
+          </Button>
+          <div>
+            <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Quality Assessment</p>
+            <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>{claim.customerName}</h1>
+            <p className='text-sm text-blue-50/90'>Conduct technical review and submit final quality decision.</p>
+          </div>
+        </div>
+      </section>
 
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
-          <section className='wf-card wf-card-p4'>
+          <section className='wf-card wf-card-p4 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
             <div className='flex items-start justify-between gap-2'>
               <div>
+                <p className='text-[11px] font-semibold uppercase tracking-[1.5px] text-primary'>Claim Profile</p>
                 <h1 className='text-lg font-bold text-text-primary'>{claim.customerName}</h1>
                 <p className='text-sm text-text-muted'>{claim.phone}</p>
               </div>
@@ -132,25 +151,27 @@ export const QualityDetailPage = (): JSX.Element => {
             </div>
 
             <dl className='mt-4 grid gap-2 text-sm'>
-              <div className='flex justify-between gap-2'>
+              <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
                 <dt className='text-text-muted'>Issue Type</dt>
                 <dd className='font-medium text-text-primary'>{getClaimIssueTypeLabel(claim.issueType)}</dd>
               </div>
-              <div className='flex justify-between gap-2'>
+              <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
                 <dt className='text-text-muted'>Area</dt>
                 <dd className='font-medium text-text-primary'>{claim.areaSqFt} sq ft</dd>
               </div>
-              <div className='flex justify-between gap-2'>
+              <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
                 <dt className='text-text-muted'>Topcoat</dt>
                 <dd className='font-medium text-text-primary'>{claim.topcoat}</dd>
               </div>
-              <div className='flex justify-between gap-2'>
+              <div className='flex justify-between gap-3'>
                 <dt className='text-text-muted'>Batch Number</dt>
                 <dd className='font-medium text-text-primary'>{claim.batchNumber}</dd>
               </div>
             </dl>
 
-            <p className='mt-4 rounded-md bg-surface-muted p-3 text-sm text-text-primary'>{claim.description}</p>
+            <p className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>
+              {claim.description}
+            </p>
           </section>
 
           <QualityAgentNotesCard notes={claim.csNotes} />

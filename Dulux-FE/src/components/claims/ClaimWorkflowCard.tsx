@@ -89,7 +89,7 @@ export const ClaimWorkflowCard = ({ status, workflowState }: ClaimWorkflowCardPr
   const stateLabel = stateValue.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
 
   return (
-    <section className='wf-card wf-card-p4 border-l-4 border-l-primary'>
+    <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
       <div className='flex items-center justify-between gap-3'>
         <h2 className='text-md font-semibold text-text-primary'>Claim Workflow</h2>
         <span
@@ -112,7 +112,10 @@ export const ClaimWorkflowCard = ({ status, workflowState }: ClaimWorkflowCardPr
           const stepLabelClass = isCurrent ? 'text-sm font-semibold text-text-primary' : 'text-sm text-text-muted';
 
           return (
-            <li key={step} className='flex items-center gap-3'>
+            <li
+              key={step}
+              className='flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 px-2.5 py-2'
+            >
               <span
                 className={[
                   'flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold',

@@ -81,7 +81,7 @@ export const RequestMoreInfoModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Request More Information</DialogTitle>
           <DialogDescription>Select missing items and add context for the customer.</DialogDescription>
@@ -94,7 +94,7 @@ export const RequestMoreInfoModal = ({
               control={control}
               name='items'
               render={({ field }) => (
-                <div className='space-y-2 rounded-md border border-border p-3'>
+                <div className='space-y-2 rounded-xl border border-primary/15 bg-white/85 p-3'>
                   {REQUEST_INFO_ITEMS.map(item => {
                     const checkboxId = `request-info-${item.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
                     const checked = field.value.includes(item);
@@ -136,6 +136,7 @@ export const RequestMoreInfoModal = ({
               </label>
               <Textarea
                 id='request-other-details'
+                className='rounded-xl border-primary/20 bg-white'
                 {...register('otherDetails')}
                 aria-invalid={Boolean(errors.otherDetails)}
               />
@@ -147,7 +148,12 @@ export const RequestMoreInfoModal = ({
             <label htmlFor='request-note' className='text-sm font-medium text-text-primary'>
               Note (Optional)
             </label>
-            <Textarea id='request-note' {...register('note')} aria-invalid={Boolean(errors.note)} />
+            <Textarea
+              id='request-note'
+              className='rounded-xl border-primary/20 bg-white'
+              {...register('note')}
+              aria-invalid={Boolean(errors.note)}
+            />
             {errors.note ? <p className='text-xs text-destructive'>{errors.note.message}</p> : null}
           </div>
 
@@ -180,7 +186,11 @@ export const RequestMoreInfoModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' disabled={isSubmitting}>
+            <Button
+              type='submit'
+              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Sending...' : 'Request Info'}
             </Button>
           </DialogFooter>

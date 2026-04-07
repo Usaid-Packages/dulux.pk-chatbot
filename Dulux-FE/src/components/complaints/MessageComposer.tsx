@@ -37,9 +37,10 @@ export const MessageComposer = ({ isSubmitting, onSubmit }: MessageComposerProps
   };
 
   return (
-    <form onSubmit={handleSubmit(submitHandler)} className='space-y-2 border-t border-border bg-surface p-3'>
+    <form onSubmit={handleSubmit(submitHandler)} className='space-y-2 border-t border-primary/15 bg-surface p-3'>
       <Textarea
         rows={3}
+        className='rounded-xl border-primary/20 bg-white'
         placeholder='Write message for customer...'
         aria-label='Message input'
         {...register('message')}
@@ -48,7 +49,11 @@ export const MessageComposer = ({ isSubmitting, onSubmit }: MessageComposerProps
       {errors.message ? <p className='text-xs text-destructive'>{errors.message.message}</p> : null}
 
       <div className='flex justify-end'>
-        <Button type='submit' disabled={isSubmitting}>
+        <Button
+          type='submit'
+          className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Sending...' : 'Send Message'}
         </Button>
       </div>

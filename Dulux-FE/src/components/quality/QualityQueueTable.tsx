@@ -25,8 +25,8 @@ interface QualityQueueTableProps {
  */
 export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Element => {
   return (
-    <div className='wf-card'>
-      <Table>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+      <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
             <TableHead>Claim ID</TableHead>
@@ -51,7 +51,7 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
               <TableCell>{item.city}</TableCell>
               <TableCell>
                 <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${getPriorityClass(item.priority)}`}
+                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${getPriorityClass(item.priority)}`}
                 >
                   {getPriorityLabel(item.priority)}
                 </span>
@@ -62,7 +62,13 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
                 <Badge variant={getQualityStatusVariant(item.status)}>{getQualityStatusLabel(item.status)}</Badge>
               </TableCell>
               <TableCell>
-                <Button asChild type='button' variant='outline' size='sm'>
+                <Button
+                  asChild
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='rounded-lg border-primary/25 bg-white text-primary hover:bg-primary/10'
+                >
                   <Link to={ROUTES.QUALITY_DETAIL(item.id)}>View Detail</Link>
                 </Button>
               </TableCell>

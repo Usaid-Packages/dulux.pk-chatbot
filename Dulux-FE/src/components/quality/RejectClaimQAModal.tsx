@@ -67,7 +67,7 @@ export const RejectClaimQAModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Reject Claim (Quality)</DialogTitle>
           <DialogDescription>Provide technical reason and notes before rejection.</DialogDescription>
@@ -105,6 +105,7 @@ export const RejectClaimQAModal = ({
             </label>
             <Textarea
               id='qa-technical-notes'
+              className='rounded-xl border-primary/20 bg-white'
               {...register('technicalNotes')}
               aria-invalid={Boolean(errors.technicalNotes)}
             />
@@ -115,7 +116,7 @@ export const RejectClaimQAModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type='submit' variant='destructive' disabled={isSubmitting}>
+            <Button type='submit' variant='destructive' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Reject Claim'}
             </Button>
           </DialogFooter>
