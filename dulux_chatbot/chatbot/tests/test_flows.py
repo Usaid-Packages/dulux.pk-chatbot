@@ -1,12 +1,15 @@
 from datetime import date, timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.utils import timezone
 
+from dulux_chatbot.chatbot.flows.claim import ClaimFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
+from dulux_chatbot.chatbot.services.whatsapp_flows import WarrantyRegistrationFlowService
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
@@ -17,6 +20,7 @@ from dulux_chatbot.products.tests.factories import (
 )
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, IssueType, RegistrationState
 from dulux_chatbot.warranty.models import PaintPairInvoice, WarrantyClaim, WarrantyRegistration
+from dulux_chatbot.warranty.tasks import send_registration_resubmit_notification
 from dulux_chatbot.warranty.tests.factories import create_claim, create_paint_pair, create_registration
 
 
@@ -143,6 +147,14 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "purchase_date")
         self.assertIn("Invalid date format", self.client.text_messages[-1]["text"])
 
+    def test_whatsapp_validation_message_uses_user_friendly_field_labels(self):
+        message = WarrantyRegistrationFlowService._build_validation_message(
+            {"customer_name": ["This field is required."], "paint_pairs": [{"topcoat": ["This field is required."]}]}
+        )
+
+        self.assertIn('"Full Name": ["This field is required."]', message)
+        self.assertNotIn("customer_name", message)
+
     def test_registration_requires_at_least_one_invoice_image(self):
         create_product(name="Flow Topcoat")
 
@@ -252,6 +264,89 @@ class FlowTests(TestCase):
         self.assertEqual(self.client.downloaded_media_ids, [])
         self.assertIn("Please upload an image file for the invoice.", self.client.text_messages[-1]["text"])
 
+    @patch("dulux_chatbot.warranty.tasks.EmailMultiAlternatives.send")
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient.send_text")
+    def test_registration_resubmit_notification_creates_active_session(self, send_text_mock, send_email_mock):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email", note="Please provide a valid email.")
+
+        send_registration_resubmit_notification(registration.id)
+
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.flow, "REGISTRATION")
+        self.assertEqual(self.session.current_step, "email")
+        self.assertEqual(self.session.session_data["resubmit_registration_id"], registration.id)
+        send_email_mock.assert_called_once()
+        self.assertGreaterEqual(send_text_mock.call_count, 1)
+
+    @patch("dulux_chatbot.warranty.tasks.EmailMultiAlternatives.send")
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient.send_text")
+    def test_registration_resubmit_notification_uses_human_readable_field_labels(self, send_text_mock, send_email_mock):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="paint_pairs", note="Please update the selected paint details.")
+        registration.rejection_fields.create(field_name="paint_pair_invoices", note="Please upload a clear invoice.")
+
+        send_registration_resubmit_notification(registration.id)
+
+        sent_messages = [call.args[1] for call in send_text_mock.call_args_list if len(call.args) >= 2]
+        combined_text = "\n".join(sent_messages)
+        self.assertIn("Paint Details", combined_text)
+        self.assertIn("Invoice Photos", combined_text)
+        self.assertNotIn("paint_pairs", combined_text)
+        self.assertNotIn("paint_pair_invoices", combined_text)
+        send_email_mock.assert_called_once()
+
+    def test_registration_resubmit_flow_updates_requested_fields_only(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email", note="Please provide a valid email.")
+        registration.rejection_fields.create(field_name="city", note="Please provide the correct city.")
+        self.session.flow = "REGISTRATION"
+        self.session.current_step = "email"
+        self.session.session_data = {
+            "customer_name": registration.customer_name,
+            "email": registration.email,
+            "city": registration.city,
+            "province": registration.province,
+            "site_address": registration.site_address,
+            "purchase_date": registration.purchase_date.isoformat(),
+            "purchase_dealer": registration.purchase_dealer,
+            "purchase_dealer_city": registration.purchase_dealer_city,
+            "purchase_dealer_address": registration.purchase_dealer_address,
+            "paint_pairs": [],
+            "paint_pair_invoices": [],
+            "resubmit_registration_id": registration.id,
+            "resubmit_steps": ["email", "city"],
+            "resubmit_step_index": 0,
+            "resubmit_notes": "Please update your details.",
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        self.dispatch_text("updated@example.com")
+        self.assertEqual(self.session.current_step, "city")
+
+        self.dispatch_text("Lahore")
+
+        registration.refresh_from_db()
+        self.assertEqual(registration.email, "updated@example.com")
+        self.assertEqual(registration.city, "Lahore")
+        self.assertEqual(registration.state, RegistrationState.SUBMITTED)
+        self.assertFalse(registration.rejection_fields.exists())
+        self.assertIsNone(self.session.flow)
+
+    def test_expired_resubmit_session_shows_fallback_message(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        self.session.flow = "REGISTRATION"
+        self.session.current_step = "email"
+        self.session.session_data = {"resubmit_registration_id": registration.id}
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(last_activity=timezone.now() - timedelta(minutes=6))
+        self.session.refresh_from_db()
+
+        self.dispatch_text("updated@example.com")
+
+        self.assertIn("raise a complaint and live chat", self.client.text_messages[-2]["text"].lower())
+
     def test_registration_consent_no_returns_to_main_menu(self):
         self.dispatch_text("1")
         self.assertEqual(self.session.current_step, "consent")
@@ -332,6 +427,40 @@ class FlowTests(TestCase):
         self.assertEqual(claim.state, ClaimState.SUBMITTED)
         self.assertEqual(claim.images.count(), 3)
         self.assertIsNone(self.session.flow)
+
+    def test_claim_flow_final_submit_is_idempotent_for_duplicate_completion(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+
+        self.session.flow = "CLAIM"
+        self.session.current_step = "photo_alternate_angle"
+        self.session.session_data = {
+            "registration_id": registration.id,
+            "paint_pair_id": paint_pair.id,
+            "issue_type": IssueType.PEELING_CRACKING,
+            "affected_area_sqft": "150",
+            "images": [],
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        ClaimFlow(session=self.session, client=self.client).handle_complete({})
+
+        self.session.refresh_from_db()
+        self.session.flow = "CLAIM"
+        self.session.current_step = "photo_alternate_angle"
+        self.session.session_data = {
+            "registration_id": registration.id,
+            "paint_pair_id": paint_pair.id,
+            "issue_type": IssueType.PEELING_CRACKING,
+            "affected_area_sqft": "150",
+            "images": [],
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        ClaimFlow(session=self.session, client=self.client).handle_complete({})
+
+        self.assertEqual(WarrantyClaim.objects.filter(registration=registration, paint_pair=paint_pair).count(), 1)
+        self.assertEqual(self.client.text_messages[-1]["text"], "A claim already exists for the selected paint pair.")
 
     def test_claim_flow_rejects_already_claimed_paint_pair(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
@@ -420,6 +549,10 @@ class FlowTests(TestCase):
 
         self.dispatch_text("Need an urgent update")
         self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
+
+        self.dispatch_image("complaint-chat-media-1")
+        complaint.refresh_from_db()
+        self.assertEqual(complaint.images.count(), 2)
 
     def test_reissuance_flow_end_to_end(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)

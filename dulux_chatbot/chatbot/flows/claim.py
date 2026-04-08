@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from dulux_chatbot.chatbot.flows.base import BaseFlow
+from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.warranty.choices import ClaimState, IssueType, PhotoType, RegistrationState
 from dulux_chatbot.warranty.models import ClaimImage, RegistrationPaintPair, WarrantyClaim, WarrantyRegistration
 
@@ -177,10 +178,36 @@ class ClaimFlow(BaseFlow):
 
     @transaction.atomic
     def handle_complete(self, _message: dict) -> None:
-        data = self.session.session_data or {}
+        locked_session = WhatsAppSession.objects.select_for_update().get(pk=self.session.pk)
+        data = locked_session.session_data or {}
+        if data.get("claim_submission_completed"):
+            return
+
+        registration_id = data.get("registration_id")
+        paint_pair_id = data.get("paint_pair_id")
+        if WarrantyClaim.objects.filter(
+            registration_id=registration_id,
+            paint_pair_id=paint_pair_id,
+            state__in=self.BLOCKING_CLAIM_STATES,
+        ).exists():
+            locked_session.flow = None
+            locked_session.current_step = "menu"
+            locked_session.session_data = {}
+            locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+            self.session.flow = None
+            self.session.current_step = "menu"
+            self.session.session_data = {}
+            self._send_validation_error("A claim already exists for the selected paint pair.")
+            return
+
+        data["claim_submission_completed"] = True
+        locked_session.session_data = data
+        locked_session.save(update_fields=["session_data", "modified"])
+        self.session.session_data = data
+
         claim = WarrantyClaim.objects.create(
-            registration_id=data.get("registration_id"),
-            paint_pair_id=data.get("paint_pair_id"),
+            registration_id=registration_id,
+            paint_pair_id=paint_pair_id,
             issue_type=data.get("issue_type", ""),
             affected_area_sqft=data.get("affected_area_sqft", "0"),
             notes="",
@@ -188,4 +215,10 @@ class ClaimFlow(BaseFlow):
         for image_data in data.get("images", []):
             ClaimImage.objects.create(claim=claim, image_id=image_data["image_id"], photo_type=image_data["photo_type"])
         self.client.send_text(self.session.phone_number, f"Claim submitted successfully. Claim id: {claim.id}.")
-        self._reset()
+        locked_session.flow = None
+        locked_session.current_step = "menu"
+        locked_session.session_data = {}
+        locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+        self.session.flow = None
+        self.session.current_step = "menu"
+        self.session.session_data = {}

@@ -9,6 +9,7 @@ from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
 from dulux_chatbot.chatbot.flows.find_product import FindProductFlow
 from dulux_chatbot.chatbot.flows.registration import RegistrationFlow
 from dulux_chatbot.chatbot.flows.reissuance import ReissuanceFlow
+from dulux_chatbot.warranty.resubmission import fallback_resubmit_message
 
 
 MENU_OPTIONS = {
@@ -39,11 +40,14 @@ FLOW_INITIAL_STEPS = {
 def dispatch(session, message: dict, client) -> None:
     now = timezone.now()
     if _session_expired(session=session, now=now):
+        expired_resubmit_session = bool((session.session_data or {}).get("resubmit_registration_id"))
         session.flow = None
         session.current_step = "menu"
         session.session_data = {}
         session.last_activity = now
         session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])
+        if expired_resubmit_session:
+            client.send_text(session.phone_number, fallback_resubmit_message())
         _send_main_menu(session.phone_number, client)
         return
 

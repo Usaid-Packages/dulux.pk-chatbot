@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from unittest.mock import patch
 
+from django.core import mail
+from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -8,6 +10,7 @@ from rest_framework.test import APIClient
 
 from dulux_chatbot.products.tests.factories import create_product, create_product_basecoat
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationChannel, RegistrationState
+from dulux_chatbot.warranty.tasks import send_registration_status_notification
 from dulux_chatbot.warranty.tests.factories import (
     create_claim,
     create_cs_user,
@@ -15,6 +18,10 @@ from dulux_chatbot.warranty.tests.factories import (
     create_paint_pair,
     create_registration,
 )
+
+
+def build_notification_template(*, title: str = "Warranty Update") -> str:
+    return f"<html><body><h1>{title}</h1><p>Hello Customer Name</p></body></html>"
 
 
 class WarrantyRegistrationAPITests(TestCase):
@@ -170,8 +177,45 @@ class WarrantyRegistrationAPITests(TestCase):
             "Basecoat must be linked to the selected topcoat product.",
         )
 
-    @patch("dulux_chatbot.warranty.api.v1.serializers.generate_and_send_certificate.delay")
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
     def test_registration_transition_approve(self, delay_mock):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"action": "APPROVE", "notification_template": build_notification_template(title="Approved")},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        delay_mock.assert_called_once_with(
+            registration.id,
+            notification_template=build_notification_template(title="Approved"),
+        )
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
+    def test_registration_transition_reject_triggers_status_notification(self, delay_mock):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "action": "REJECT",
+                "notes": "The uploaded documents do not match the registration details.",
+                "notification_template": build_notification_template(title="Rejected"),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        delay_mock.assert_called_once_with(
+            registration.id,
+            notification_template=build_notification_template(title="Rejected"),
+        )
+
+    def test_registration_transition_approve_requires_notification_template(self):
         registration = create_registration()
         self.client.force_authenticate(user=self.cs_user)
 
@@ -181,8 +225,8 @@ class WarrantyRegistrationAPITests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        delay_mock.assert_called_once_with(registration.id)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("notification_template", response.data)
 
     def test_registration_transition_reject_without_notes_returns_400(self):
         registration = create_registration()
@@ -195,6 +239,24 @@ class WarrantyRegistrationAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_resubmit_notification.delay")
+    def test_registration_transition_resubmit_triggers_notification_task(self, delay_mock):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "action": "RESUBMIT",
+                "notes": "Please update the highlighted fields.",
+                "rejection_fields": [{"field_name": "email", "note": "Please provide a valid email."}],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        delay_mock.assert_called_once_with(registration.id)
 
     def test_registration_update_rejects_replacing_claimed_paint_pairs(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -366,3 +428,60 @@ class WarrantyClaimAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["state"], ClaimState.QA_REVIEW)
+
+
+class WarrantyRegistrationNotificationTaskTests(TestCase):
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
+    @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
+    def test_send_registration_status_notification_for_approved_registration(self, certificate_mock, client_mock):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        certificate_mock.return_value = ContentFile(b"approved-pdf", name="approved_certificate.pdf")
+        notification_template = build_notification_template(title="Approved From UI")
+
+        send_registration_status_notification(registration.id, notification_template=notification_template)
+
+        registration.refresh_from_db()
+        self.assertTrue(bool(registration.warranty_certificate))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [registration.email])
+        self.assertEqual(mail.outbox[0].subject, "Your Dulux Assurance Warranty registration has been approved")
+        self.assertEqual(len(mail.outbox[0].attachments), 1)
+        self.assertEqual(mail.outbox[0].attachments[0][0], "warranty_certificate.pdf")
+        self.assertEqual(len(mail.outbox[0].alternatives), 1)
+        self.assertIn("Hello Customer Name", mail.outbox[0].alternatives[0][0])
+
+        whatsapp_client = client_mock.return_value
+        whatsapp_client.send_text.assert_called_once()
+        whatsapp_client.send_document.assert_called_once()
+        self.assertEqual(
+            whatsapp_client.send_text.call_args.args[1],
+            f"Your Warranty registration: {registration.registration_code} is approved.",
+        )
+        self.assertEqual(whatsapp_client.send_document.call_args.args[2], "warranty_certificate.pdf")
+
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
+    @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
+    def test_send_registration_status_notification_for_rejected_registration(self, certificate_mock, client_mock):
+        registration = create_registration(state=RegistrationState.REJECTED)
+        registration.notes = "The purchase invoice details could not be verified."
+        registration.save(update_fields=["notes", "modified"])
+        registration.warranty_certificate.save(
+            "existing_certificate.pdf",
+            ContentFile(b"existing-pdf", name="existing_certificate.pdf"),
+            save=True,
+        )
+        notification_template = build_notification_template(title="Rejected From UI")
+
+        send_registration_status_notification(registration.id, notification_template=notification_template)
+
+        certificate_mock.assert_not_called()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Your Dulux Assurance Warranty registration has been rejected")
+        self.assertIn("Rejected From UI", mail.outbox[0].body)
+        whatsapp_client = client_mock.return_value
+        whatsapp_client.send_text.assert_called_once()
+        whatsapp_client.send_document.assert_called_once()
+        self.assertEqual(
+            whatsapp_client.send_text.call_args.args[1],
+            f"Your Warranty registration: {registration.registration_code} is rejected.",
+        )
