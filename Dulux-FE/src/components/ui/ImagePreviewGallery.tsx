@@ -34,10 +34,18 @@ export const ImagePreviewGallery = ({
 }: ImagePreviewGalleryProps): JSX.Element => {
   const [activeImage, setActiveImage] = useState<ImagePreviewGalleryItem | null>(null);
   const [isModalImageLoading, setModalImageLoading] = useState(false);
+  const [loadedImageMap, setLoadedImageMap] = useState<Record<string, boolean>>({});
+
+  const toImageKey = (id: string | number): string => String(id);
 
   const openImageModal = (image: ImagePreviewGalleryItem): void => {
     setActiveImage(image);
     setModalImageLoading(true);
+  };
+
+  const markImageLoaded = (id: string | number): void => {
+    const imageKey = toImageKey(id);
+    setLoadedImageMap(previous => ({ ...previous, [imageKey]: true }));
   };
 
   const handleModalOpenChange = (open: boolean): void => {
@@ -67,11 +75,26 @@ export const ImagePreviewGallery = ({
                 onClick={() => openImageModal(image)}
               >
                 <div className='relative'>
+                  {!loadedImageMap[toImageKey(image.id)] ? (
+                    <div
+                      className='absolute inset-0 z-10 flex animate-pulse items-center justify-center rounded-md bg-surface-subtle text-xs font-semibold text-text-muted'
+                      aria-hidden='true'
+                    >
+                      Loading image...
+                    </div>
+                  ) : null}
                   <img
-                    className='h-44 w-full rounded-md object-cover'
+                    className={[
+                      'h-44 w-full rounded-md object-cover transition-all duration-500 ease-out',
+                      loadedImageMap[toImageKey(image.id)]
+                        ? 'scale-100 opacity-100 blur-0'
+                        : 'scale-[1.02] opacity-0 blur-[1px]',
+                    ].join(' ')}
                     src={image.url}
                     alt={image.label}
                     loading='lazy'
+                    onLoad={() => markImageLoaded(image.id)}
+                    onError={() => markImageLoaded(image.id)}
                   />
                   <span className='pointer-events-none absolute inset-x-2 bottom-2 rounded bg-black/55 px-2 py-1 text-xs font-medium text-white opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100'>
                     Open image
@@ -93,12 +116,12 @@ export const ImagePreviewGallery = ({
           {activeImage ? (
             <div className='relative h-[72vh] w-full rounded-md bg-surface-muted'>
               {isModalImageLoading ? (
-                <div className='absolute inset-0 animate-pulse rounded-md bg-surface-subtle' aria-hidden='true' />
+                <div className='absolute inset-0 z-10 animate-pulse rounded-md bg-surface-subtle' aria-hidden='true' />
               ) : null}
               <img
                 className={[
-                  'h-full w-full rounded-md object-contain transition-opacity duration-200',
-                  isModalImageLoading ? 'opacity-0' : 'opacity-100',
+                  'h-full w-full rounded-md object-contain transition-all duration-500 ease-out',
+                  isModalImageLoading ? 'scale-[0.985] opacity-0 blur-[1px]' : 'scale-100 opacity-100 blur-0',
                 ].join(' ')}
                 src={activeImage.url}
                 alt={activeImage.label}

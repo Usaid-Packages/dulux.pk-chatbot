@@ -30,7 +30,6 @@ export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
           <span className='dashboard-flow-icon'>
             <Icon aria-hidden='true' className='h-5 w-5' />
           </span>
-          <span className='dashboard-flow-screen-badge'>Workspace</span>
         </div>
 
         <div className='mt-4'>

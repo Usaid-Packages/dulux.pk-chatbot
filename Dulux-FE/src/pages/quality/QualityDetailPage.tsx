@@ -101,9 +101,14 @@ export const QualityDetailPage = (): JSX.Element => {
             <EmptyTitle>Unable to load quality claim detail</EmptyTitle>
             <EmptyDescription>{qualityDetailQuery.error?.message ?? 'Claim not found.'}</EmptyDescription>
           </EmptyHeader>
-          <Button type='button' variant='outline' onClick={handleBackClick}>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-10 w-10 rounded-xl p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+            onClick={handleBackClick}
+            aria-label='Back to quality queue'
+          >
             <ArrowLeft className='h-4 w-4' />
-            Back
           </Button>
         </EmptyContent>
       </Empty>
@@ -112,23 +117,26 @@ export const QualityDetailPage = (): JSX.Element => {
 
   const claim = qualityDetailQuery.data;
   const isApproveDisabled = claim.status === 'approved' || claim.workflowState === 'APPROVED';
+  const normalizedDescription = claim.description.trim();
+  const normalizedCsNotes = claim.csNotes?.trim();
+  const shouldShowDescription = Boolean(normalizedDescription) && normalizedDescription !== normalizedCsNotes;
 
   return (
     <main className='space-y-4'>
-      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
         <div
           aria-hidden='true'
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.3),transparent_42%)]'
         />
-        <div className='relative space-y-4'>
+        <div className='relative flex items-start gap-3'>
           <Button
             type='button'
             variant='outline'
-            className='h-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] hover:bg-[#08182e] hover:text-white'
+            className='h-10 w-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] p-0 text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:text-white hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
             onClick={handleBackClick}
+            aria-label='Back to quality queue'
           >
             <ArrowLeft className='h-4 w-4' />
-            Back
           </Button>
           <div>
             <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Quality Assessment</p>
@@ -169,9 +177,11 @@ export const QualityDetailPage = (): JSX.Element => {
               </div>
             </dl>
 
-            <p className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>
-              {claim.description}
-            </p>
+            {shouldShowDescription ? (
+              <p className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>
+                {claim.description}
+              </p>
+            ) : null}
           </section>
 
           <QualityAgentNotesCard notes={claim.csNotes} />

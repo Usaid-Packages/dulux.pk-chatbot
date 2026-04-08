@@ -55,7 +55,7 @@ export const RegistrationsListPage = (): JSX.Element => {
 
   return (
     <section className='wf-list-shell'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
         <div
           aria-hidden='true'
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
@@ -77,7 +77,7 @@ export const RegistrationsListPage = (): JSX.Element => {
       </header>
 
       <div className='wf-stat-grid-3'>
-        <article className='wf-stat-card border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]'>
+        <article className='wf-stat-card border-primary/15 bg-white'>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Registrations</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.total}</p>
         </article>
@@ -85,7 +85,7 @@ export const RegistrationsListPage = (): JSX.Element => {
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-amber-700'>Pending Review</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-amber-900'>{stats.pending}</p>
         </article>
-        <article className='wf-stat-card border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]'>
+        <article className='wf-stat-card border-primary/15 bg-white'>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Approved</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.approved}</p>
         </article>

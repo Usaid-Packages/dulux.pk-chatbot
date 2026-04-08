@@ -75,9 +75,14 @@ export const RegistrationDetailPage = (): JSX.Element => {
   if (!registrationId) {
     return (
       <section className='space-y-3'>
-        <Button type='button' variant='outline' onClick={handleBackToList}>
+        <Button
+          type='button'
+          variant='outline'
+          className='h-10 w-10 rounded-xl p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+          onClick={handleBackToList}
+          aria-label='Back to registrations'
+        >
           <ArrowLeft className='h-4 w-4' />
-          Back
         </Button>
         <article className='rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive'>
           Invalid registration id.
@@ -104,9 +109,14 @@ export const RegistrationDetailPage = (): JSX.Element => {
             <EmptyTitle>Unable to load registration detail</EmptyTitle>
             <EmptyDescription>{errorMessage || 'Registration not found.'}</EmptyDescription>
           </EmptyHeader>
-          <Button type='button' variant='outline' onClick={handleBackToList}>
+          <Button
+            type='button'
+            variant='outline'
+            className='h-10 w-10 rounded-xl p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+            onClick={handleBackToList}
+            aria-label='Back to registrations'
+          >
             <ArrowLeft className='h-4 w-4' />
-            Back
           </Button>
         </EmptyContent>
       </Empty>
@@ -121,20 +131,20 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
         <div
           aria-hidden='true'
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.3),transparent_42%)]'
         />
-        <div className='relative space-y-4'>
+        <div className='relative flex items-start gap-3'>
           <Button
             type='button'
             variant='outline'
-            className='h-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] hover:bg-[#08182e] hover:text-white'
+            className='h-10 w-10 rounded-xl border-[#0b1f3a] bg-[#0b1f3a] p-0 text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:text-white hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
             onClick={handleBackToList}
+            aria-label='Back to registrations'
           >
             <ArrowLeft className='h-4 w-4' />
-            Back
           </Button>
           <div>
             <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Registration Review</p>

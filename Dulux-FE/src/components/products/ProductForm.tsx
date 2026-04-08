@@ -2,6 +2,7 @@ import type { ChangeEvent, JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Check, ChevronDown } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 
 import {
@@ -50,6 +51,119 @@ const getSurfaceGroup = (surfaceTypes: SurfaceType[], environment: SurfaceType['
   return surfaceTypes.filter(surfaceType => surfaceType.environment === environment);
 };
 
+interface MultiSelectDropdownOption {
+  id: number;
+  label: string;
+  meta?: string;
+}
+
+interface MultiSelectDropdownProps {
+  label: string;
+  dropdownId: string;
+  isOpen: boolean;
+  selectedCount: number;
+  searchValue: string;
+  searchPlaceholder: string;
+  emptyMessage: string;
+  options: MultiSelectDropdownOption[];
+  selectedIds: number[];
+  onToggle: () => void;
+  onSearchChange: (value: string) => void;
+  onToggleOption: (optionId: number, checked: boolean) => void;
+}
+
+const MultiSelectDropdown = ({
+  label,
+  dropdownId,
+  isOpen,
+  selectedCount,
+  searchValue,
+  searchPlaceholder,
+  emptyMessage,
+  options,
+  selectedIds,
+  onToggle,
+  onSearchChange,
+  onToggleOption,
+}: MultiSelectDropdownProps): JSX.Element => {
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    onSearchChange(event.target.value);
+  };
+
+  const createCheckboxHandler = (optionId: number, isSelected: boolean) => (): void => {
+    onToggleOption(optionId, !isSelected);
+  };
+
+  return (
+    <div className='rounded-xl border border-primary/20 bg-white/85 p-3'>
+      <button
+        type='button'
+        className='flex w-full items-center justify-between rounded-lg text-sm font-semibold text-text-primary'
+        aria-expanded={isOpen}
+        aria-controls={dropdownId}
+        onClick={onToggle}
+      >
+        <span>
+          {label} ({selectedCount})
+        </span>
+        <ChevronDown
+          className={['h-4 w-4 text-text-muted transition-transform duration-200', isOpen ? 'rotate-180' : ''].join(
+            ' '
+          )}
+        />
+      </button>
+      {isOpen ? (
+        <div id={dropdownId} className='mt-3 space-y-3'>
+          <Input
+            type='search'
+            value={searchValue}
+            onChange={handleSearchChange}
+            className='rounded-xl border-primary/20 bg-white'
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+          />
+          <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
+            {options.map(option => {
+              const isSelected = selectedIds.includes(option.id);
+
+              return (
+                <button
+                  key={option.id}
+                  type='button'
+                  className={[
+                    'flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors',
+                    isSelected
+                      ? 'border-primary/35 bg-primary/10 text-text-primary'
+                      : 'border-primary/15 bg-white text-text-primary hover:border-primary/30 hover:bg-primary/5',
+                  ].join(' ')}
+                  onClick={createCheckboxHandler(option.id, isSelected)}
+                  aria-pressed={isSelected}
+                >
+                  <span className='flex min-w-0 items-center gap-2'>
+                    <span className='truncate font-medium'>{option.label}</span>
+                    {option.meta ? <span className='shrink-0 text-xs text-text-muted'>{option.meta}</span> : null}
+                  </span>
+                  <span
+                    className={[
+                      'inline-flex h-5 w-5 items-center justify-center rounded-full border',
+                      isSelected
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-primary/20 bg-white text-transparent',
+                    ].join(' ')}
+                  >
+                    <Check className='h-3 w-3' aria-hidden='true' />
+                  </span>
+                </button>
+              );
+            })}
+            {options.length === 0 ? <p className='text-xs text-text-muted'>{emptyMessage}</p> : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export const ProductForm = ({
   title,
   description,
@@ -79,6 +193,7 @@ export const ProductForm = ({
   const [interiorSurfaceSearch, setInteriorSurfaceSearch] = useState<string>('');
   const [exteriorSurfaceSearch, setExteriorSurfaceSearch] = useState<string>('');
   const [linkedBasecoatSearch, setLinkedBasecoatSearch] = useState<string>('');
+  const [activeDropdown, setActiveDropdown] = useState<'interior' | 'exterior' | 'basecoat' | null>(null);
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
   const normalizedInteriorSearch = interiorSurfaceSearch.trim().toLowerCase();
@@ -147,17 +262,32 @@ export const ProductForm = ({
     setValue('basecoatIds', Array.from(selectedIds), { shouldValidate: true });
   };
 
-  const createSurfaceCheckboxChangeHandler =
-    (surfaceTypeId: number) =>
-    (event: ChangeEvent<HTMLInputElement>): void => {
-      toggleSurfaceSelection(surfaceTypeId, event.target.checked);
-    };
+  const interiorSelectedCount = selectedSurfaceTypeIds.filter(id =>
+    interiorSurfaceTypes.some(item => item.id === id)
+  ).length;
+  const exteriorSelectedCount = selectedSurfaceTypeIds.filter(id =>
+    exteriorSurfaceTypes.some(item => item.id === id)
+  ).length;
 
-  const createBasecoatCheckboxChangeHandler =
-    (basecoatId: number) =>
-    (event: ChangeEvent<HTMLInputElement>): void => {
-      toggleBasecoatSelection(basecoatId, event.target.checked);
-    };
+  const interiorDropdownOptions: MultiSelectDropdownOption[] = filteredInteriorSurfaceTypes.map(surfaceType => ({
+    id: surfaceType.id,
+    label: surfaceType.name,
+  }));
+
+  const exteriorDropdownOptions: MultiSelectDropdownOption[] = filteredExteriorSurfaceTypes.map(surfaceType => ({
+    id: surfaceType.id,
+    label: surfaceType.name,
+  }));
+
+  const basecoatDropdownOptions: MultiSelectDropdownOption[] = filteredBasecoatOptions.map(basecoat => ({
+    id: basecoat.id,
+    label: basecoat.name,
+    meta: `${basecoat.warrantyYears} years`,
+  }));
+
+  const toggleDropdown = (dropdown: 'interior' | 'exterior' | 'basecoat'): void => {
+    setActiveDropdown(previous => (previous === dropdown ? null : dropdown));
+  };
 
   return (
     <section className='wf-card wf-card-p6 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
@@ -301,77 +431,35 @@ export const ProductForm = ({
           <legend className='text-sm font-medium text-text-primary'>Surface Mapping</legend>
 
           <div className='grid gap-4 md:grid-cols-2'>
-            <details className='rounded-xl border border-primary/20 bg-white/80 p-3'>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Interior Surfaces (
-                {selectedSurfaceTypeIds.filter(id => interiorSurfaceTypes.some(item => item.id === id)).length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={interiorSurfaceSearch}
-                  onChange={event => setInteriorSurfaceSearch(event.target.value)}
-                  className='rounded-xl border-primary/20 bg-white'
-                  placeholder='Search interior surfaces...'
-                  aria-label='Search interior surfaces'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredInteriorSurfaceTypes.map(surfaceType => {
-                    const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
+            <MultiSelectDropdown
+              label='Interior Surfaces'
+              dropdownId='interior-surfaces-dropdown'
+              isOpen={activeDropdown === 'interior'}
+              selectedCount={interiorSelectedCount}
+              searchValue={interiorSurfaceSearch}
+              searchPlaceholder='Search interior surfaces...'
+              emptyMessage='No interior surfaces match this search.'
+              options={interiorDropdownOptions}
+              selectedIds={selectedSurfaceTypeIds}
+              onToggle={() => toggleDropdown('interior')}
+              onSearchChange={setInteriorSurfaceSearch}
+              onToggleOption={toggleSurfaceSelection}
+            />
 
-                    return (
-                      <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
-                        />
-                        {surfaceType.name}
-                      </label>
-                    );
-                  })}
-                  {filteredInteriorSurfaceTypes.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No interior surfaces match this search.</p>
-                  ) : null}
-                </div>
-              </div>
-            </details>
-
-            <details className='rounded-xl border border-primary/20 bg-white/80 p-3'>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Exterior Surfaces (
-                {selectedSurfaceTypeIds.filter(id => exteriorSurfaceTypes.some(item => item.id === id)).length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={exteriorSurfaceSearch}
-                  onChange={event => setExteriorSurfaceSearch(event.target.value)}
-                  className='rounded-xl border-primary/20 bg-white'
-                  placeholder='Search exterior surfaces...'
-                  aria-label='Search exterior surfaces'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredExteriorSurfaceTypes.map(surfaceType => {
-                    const checked = selectedSurfaceTypeIds.includes(surfaceType.id);
-
-                    return (
-                      <label key={surfaceType.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createSurfaceCheckboxChangeHandler(surfaceType.id)}
-                        />
-                        {surfaceType.name}
-                      </label>
-                    );
-                  })}
-                  {filteredExteriorSurfaceTypes.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No exterior surfaces match this search.</p>
-                  ) : null}
-                </div>
-              </div>
-            </details>
+            <MultiSelectDropdown
+              label='Exterior Surfaces'
+              dropdownId='exterior-surfaces-dropdown'
+              isOpen={activeDropdown === 'exterior'}
+              selectedCount={exteriorSelectedCount}
+              searchValue={exteriorSurfaceSearch}
+              searchPlaceholder='Search exterior surfaces...'
+              emptyMessage='No exterior surfaces match this search.'
+              options={exteriorDropdownOptions}
+              selectedIds={selectedSurfaceTypeIds}
+              onToggle={() => toggleDropdown('exterior')}
+              onSearchChange={setExteriorSurfaceSearch}
+              onToggleOption={toggleSurfaceSelection}
+            />
           </div>
 
           {errors.surfaceTypeIds ? <p className='text-xs text-destructive'>{errors.surfaceTypeIds.message}</p> : null}
@@ -380,41 +468,20 @@ export const ProductForm = ({
         {selectedProductType === 'TOPCOAT' ? (
           <fieldset className='space-y-3'>
             <legend className='text-sm font-medium text-text-primary'>Linked Basecoats</legend>
-            <details className='rounded-xl border border-primary/20 bg-white/80 p-3' open>
-              <summary className='cursor-pointer list-none text-sm font-semibold text-text-primary'>
-                Linked Basecoats ({selectedBasecoatIds.length})
-              </summary>
-              <div className='mt-3 space-y-3'>
-                <Input
-                  type='search'
-                  value={linkedBasecoatSearch}
-                  onChange={event => setLinkedBasecoatSearch(event.target.value)}
-                  className='rounded-xl border-primary/20 bg-white'
-                  placeholder='Search linked basecoats...'
-                  aria-label='Search linked basecoats'
-                />
-                <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
-                  {filteredBasecoatOptions.map(basecoat => {
-                    const checked = selectedBasecoatIds.includes(basecoat.id);
-
-                    return (
-                      <label key={basecoat.id} className='flex items-center gap-2 text-sm text-text-primary'>
-                        <input
-                          type='checkbox'
-                          checked={checked}
-                          onChange={createBasecoatCheckboxChangeHandler(basecoat.id)}
-                        />
-                        <span className='font-medium'>{basecoat.name}</span>
-                        <span className='text-xs text-text-muted'>{basecoat.warrantyYears} years</span>
-                      </label>
-                    );
-                  })}
-                  {filteredBasecoatOptions.length === 0 ? (
-                    <p className='text-xs text-text-muted'>No basecoat products match this search.</p>
-                  ) : null}
-                </div>
-              </div>
-            </details>
+            <MultiSelectDropdown
+              label='Linked Basecoats'
+              dropdownId='linked-basecoats-dropdown'
+              isOpen={activeDropdown === 'basecoat'}
+              selectedCount={selectedBasecoatIds.length}
+              searchValue={linkedBasecoatSearch}
+              searchPlaceholder='Search linked basecoats...'
+              emptyMessage='No basecoat products match this search.'
+              options={basecoatDropdownOptions}
+              selectedIds={selectedBasecoatIds}
+              onToggle={() => toggleDropdown('basecoat')}
+              onSearchChange={setLinkedBasecoatSearch}
+              onToggleOption={toggleBasecoatSelection}
+            />
             {errors.basecoatIds ? <p className='text-xs text-destructive'>{errors.basecoatIds.message}</p> : null}
           </fieldset>
         ) : null}
