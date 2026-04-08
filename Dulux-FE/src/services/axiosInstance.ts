@@ -21,7 +21,10 @@ axiosInstance.interceptors.request.use(config => {
   const accessToken = getLocalStorageItem(ACCESS_TOKEN);
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
 
-  if (!(config?.data instanceof FormData)) {
+  if (config.data instanceof FormData) {
+    // Let the browser set multipart boundary automatically for file uploads.
+    delete config.headers['Content-Type'];
+  } else {
     const caseConvertedData = caseConverter.snakeKeys(config?.data, options);
     config.data = caseConvertedData;
   }

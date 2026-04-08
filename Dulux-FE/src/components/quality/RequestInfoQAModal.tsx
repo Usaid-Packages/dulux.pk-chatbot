@@ -11,15 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '#/components/ui';
 import { qualityRequestInfoSchema, type QualityRequestInfoFormValues } from '#/schemas/quality.schema';
-import type { QualityRequestFrom } from '#/types/quality.types';
 import { QUALITY_REQUEST_INFO_ITEMS } from './constants';
 
 interface RequestInfoQAModalProps {
@@ -28,11 +22,6 @@ interface RequestInfoQAModalProps {
   onClose: () => void;
   onSubmit: (values: QualityRequestInfoFormValues) => void;
 }
-
-const REQUEST_FROM_OPTIONS: ReadonlyArray<{ value: QualityRequestFrom; label: string }> = [
-  { value: 'cs_agent', label: 'CS Agent' },
-  { value: 'customer', label: 'Customer' },
-];
 
 /**
  * RequestInfoQAModal captures QA follow-up items and the request target.
@@ -51,15 +40,19 @@ export const RequestInfoQAModal = ({
     register,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<QualityRequestInfoFormValues>({
     resolver: zodResolver(qualityRequestInfoSchema),
     defaultValues: {
-      items: [],
+      requiredItems: [],
       notes: '',
-      requestFrom: 'cs_agent',
+      otherText: '',
     },
   });
+
+  const selectedRequiredItems = watch('requiredItems');
+  const isOtherSelected = selectedRequiredItems.includes('OTHER');
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -77,7 +70,7 @@ export const RequestInfoQAModal = ({
       <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
           <DialogTitle>Request More Info (Quality)</DialogTitle>
-          <DialogDescription>Select missing evidence and who should provide it.</DialogDescription>
+          <DialogDescription>Select missing evidence required for technical review.</DialogDescription>
         </DialogHeader>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
@@ -85,24 +78,24 @@ export const RequestInfoQAModal = ({
             <p className='text-sm font-medium text-text-primary'>Required items</p>
             <Controller
               control={control}
-              name='items'
+              name='requiredItems'
               render={({ field }) => (
                 <div className='space-y-2 rounded-xl border border-primary/15 bg-white/85 p-3'>
                   {QUALITY_REQUEST_INFO_ITEMS.map(item => {
-                    const checkboxId = `qa-request-item-${item.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-                    const checked = field.value.includes(item);
+                    const checkboxId = `qa-request-item-${item.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                    const checked = field.value.includes(item.value);
 
                     const handleCheckedChange = (): void => {
                       if (checked) {
-                        field.onChange(field.value.filter(value => value !== item));
+                        field.onChange(field.value.filter(value => value !== item.value));
                         return;
                       }
 
-                      field.onChange([...field.value, item]);
+                      field.onChange([...field.value, item.value]);
                     };
 
                     return (
-                      <div key={item} className='flex items-start gap-2'>
+                      <div key={item.value} className='flex items-start gap-2'>
                         <input
                           id={checkboxId}
                           type='checkbox'
@@ -111,7 +104,7 @@ export const RequestInfoQAModal = ({
                           className='mt-1 h-4 w-4 rounded border-border'
                         />
                         <label htmlFor={checkboxId} className='text-sm text-text-primary'>
-                          {item}
+                          {item.label}
                         </label>
                       </div>
                     );
@@ -119,33 +112,23 @@ export const RequestInfoQAModal = ({
                 </div>
               )}
             />
-            {errors.items ? <p className='text-xs text-destructive'>{errors.items.message}</p> : null}
+            {errors.requiredItems ? <p className='text-xs text-destructive'>{errors.requiredItems.message}</p> : null}
           </div>
 
-          <div className='space-y-2'>
-            <label htmlFor='qa-request-from' className='text-sm font-medium text-text-primary'>
-              Request From
-            </label>
-            <Controller
-              control={control}
-              name='requestFrom'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='qa-request-from'>
-                    <SelectValue placeholder='Select source' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REQUEST_FROM_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.requestFrom ? <p className='text-xs text-destructive'>{errors.requestFrom.message}</p> : null}
-          </div>
+          {isOtherSelected ? (
+            <div className='space-y-2'>
+              <label htmlFor='qa-request-other-text' className='text-sm font-medium text-text-primary'>
+                Other Details
+              </label>
+              <Textarea
+                id='qa-request-other-text'
+                className='rounded-xl border-primary/20 bg-white'
+                {...register('otherText')}
+                aria-invalid={Boolean(errors.otherText)}
+              />
+              {errors.otherText ? <p className='text-xs text-destructive'>{errors.otherText.message}</p> : null}
+            </div>
+          ) : null}
 
           <div className='space-y-2'>
             <label htmlFor='qa-request-notes' className='text-sm font-medium text-text-primary'>

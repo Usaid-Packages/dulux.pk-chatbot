@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { claimDetailSchema, claimPrioritySchema, claimStatusSchema } from '#/schemas/claim.schema';
-import { QUALITY_REQUEST_FROM_OPTIONS } from '#/types/quality.types';
+import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quality.types';
 
 export const qualityQueueItemSchema = z.object({
   id: z.string().min(1),
@@ -34,23 +34,52 @@ export const qualityQueueResponseSchema = z.object({
 export const qualityDetailSchema = claimDetailSchema.extend({
   forwardedBy: z.string().min(1),
   forwardedAt: z.string().min(1),
+  latestResubmission: z
+    .object({
+      id: z.string().min(1),
+      source: z.string().min(1),
+      notes: z.string(),
+      createdAt: z.string().min(1),
+      entries: z.array(
+        z.object({
+          id: z.string().min(1),
+          requiredItem: z.string().min(1),
+          responseText: z.string(),
+          imageUrl: z.string().url().optional(),
+          createdAt: z.string().min(1),
+        })
+      ),
+    })
+    .optional(),
 });
 
 export const qualityApproveSchema = z.object({
-  assessment: z.string().trim().min(1, 'Technical assessment is required.'),
-  notes: z.string().trim().max(300, 'Notes must be 300 characters or fewer.').optional(),
+  technicalNotes: z.string().trim().min(10, 'Technical notes must be at least 10 characters.'),
 });
 
 export const qualityRejectSchema = z.object({
-  reason: z.string().trim().min(1, 'Rejection reason is required.'),
-  technicalNotes: z.string().trim().min(1, 'Technical notes are required.').max(300),
+  technicalReason: z.enum(QUALITY_TECHNICAL_REASONS, {
+    message: 'Technical reason is required.',
+  }),
+  technicalNotes: z.string().trim().min(10, 'Technical notes must be at least 10 characters.'),
 });
 
-export const qualityRequestInfoSchema = z.object({
-  items: z.array(z.string().trim().min(1)).min(1, 'Select at least one item.'),
-  notes: z.string().trim().max(300, 'Notes must be 300 characters or fewer.').optional(),
-  requestFrom: z.enum(QUALITY_REQUEST_FROM_OPTIONS),
-});
+export const qualityRequestInfoSchema = z
+  .object({
+    requiredItems: z.array(z.enum(QUALITY_REQUIRED_ITEMS)).min(1, 'Select at least one required item.'),
+    otherText: z.string().trim().max(300, 'Other details must be 300 characters or fewer.').optional(),
+    notes: z.string().trim().max(300, 'Notes must be 300 characters or fewer.').optional(),
+  })
+  .superRefine((values, ctx) => {
+    const hasOtherItem = values.requiredItems.includes('OTHER');
+    if (hasOtherItem && !values.otherText) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['otherText'],
+        message: 'Other details are required when OTHER is selected.',
+      });
+    }
+  });
 
 export type QualityApproveFormValues = z.infer<typeof qualityApproveSchema>;
 export type QualityRejectFormValues = z.infer<typeof qualityRejectSchema>;

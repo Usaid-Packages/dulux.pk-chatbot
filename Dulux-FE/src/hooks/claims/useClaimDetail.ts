@@ -9,24 +9,16 @@ import {
   useApproveClaimMutation,
   useMarkClaimInReviewMutation,
   useRejectClaimMutation,
-  useRequestMoreInfoClaimMutation,
   useSendToQualityMutation,
 } from '#/data-layer/claims';
-import type {
-  ApproveClaimPayload,
-  ClaimDetail,
-  RejectClaimPayload,
-  RequestMoreInfoPayload,
-  SendToQualityPayload,
-} from '#/types/claims.types';
-import { getApiErrorMessage } from '#/utils';
+import type { ApproveClaimPayload, ClaimDetail, RejectClaimPayload, SendToQualityPayload } from '#/types/claims.types';
+import { createClaimApprovedTemplate, createClaimRejectedTemplate, getApiErrorMessage } from '#/utils';
 
 interface UseClaimDetailResult {
   claimQuery: UseQueryResult<ClaimDetail, Error>;
   handleApprove: (payload: ApproveClaimPayload) => void;
   handleReject: (payload: RejectClaimPayload) => void;
   handleSendToQuality: (payload: SendToQualityPayload) => void;
-  handleRequestMoreInfo: (payload: RequestMoreInfoPayload) => void;
   isActionPending: boolean;
 }
 
@@ -49,7 +41,6 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   const markInReviewMutation = useMarkClaimInReviewMutation();
   const rejectMutation = useRejectClaimMutation();
   const sendToQualityMutation = useSendToQualityMutation();
-  const requestMoreInfoMutation = useRequestMoreInfoClaimMutation();
 
   useEffect(() => {
     hasAttemptedAutoInReviewRef.current = false;
@@ -71,28 +62,6 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
     markInReviewMutation.mutate({ id });
   }, [claimQuery.data, id, markInReviewMutation]);
 
-  const handleApprove = (payload: ApproveClaimPayload): void => {
-    approveMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Claim approved successfully.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
-  };
-
-  const handleReject = (payload: RejectClaimPayload): void => {
-    rejectMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Claim rejected successfully.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
-  };
-
   const handleSendToQuality = (payload: SendToQualityPayload): void => {
     sendToQualityMutation.mutate(payload, {
       onSuccess: () => {
@@ -104,30 +73,59 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
     });
   };
 
-  const handleRequestMoreInfo = (payload: RequestMoreInfoPayload): void => {
-    requestMoreInfoMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('More information request sent.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
-  };
-
   const isActionPending =
     approveMutation.isPending ||
     markInReviewMutation.isPending ||
     rejectMutation.isPending ||
-    sendToQualityMutation.isPending ||
-    requestMoreInfoMutation.isPending;
+    sendToQualityMutation.isPending;
 
   return {
     claimQuery,
-    handleApprove,
-    handleReject,
+    handleApprove: payload => {
+      const claim = claimQuery.data;
+      if (!claim) {
+        toast.error('Claim detail is not available.');
+        return;
+      }
+
+      approveMutation.mutate(
+        {
+          ...payload,
+          notificationTemplate: createClaimApprovedTemplate(claim, payload.notes?.trim() || 'Claim approved.'),
+        },
+        {
+          onSuccess: () => {
+            toast.success('Claim finalized as approved.');
+          },
+          onError: error => {
+            toast.error(getApiErrorMessage(error));
+          },
+        }
+      );
+    },
+    handleReject: payload => {
+      const claim = claimQuery.data;
+      if (!claim) {
+        toast.error('Claim detail is not available.');
+        return;
+      }
+
+      rejectMutation.mutate(
+        {
+          ...payload,
+          notificationTemplate: createClaimRejectedTemplate(claim, payload.notes),
+        },
+        {
+          onSuccess: () => {
+            toast.success('Claim finalized as rejected.');
+          },
+          onError: error => {
+            toast.error(getApiErrorMessage(error));
+          },
+        }
+      );
+    },
     handleSendToQuality,
-    handleRequestMoreInfo,
     isActionPending,
   };
 };

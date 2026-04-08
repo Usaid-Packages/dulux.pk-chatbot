@@ -43,18 +43,51 @@ import type {
 import type { Paginated } from '#/types/services.types';
 import env from '#env';
 
+const readErrorString = (value: unknown): string | undefined => {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const firstStringValue = value.find(item => typeof item === 'string' && item.trim().length > 0);
+    return typeof firstStringValue === 'string' ? firstStringValue : undefined;
+  }
+
+  return undefined;
+};
+
 export const getApiErrorMessage = (error: unknown): string => {
   if (!error || typeof error !== 'object') {
     return DEFAULT_API_ERROR_MESSAGE;
   }
 
   const typedError = error as ApiErrorShape;
-  return (
-    typedError.response?.data?.message ??
-    typedError.response?.data?.detail ??
-    typedError.message ??
-    DEFAULT_API_ERROR_MESSAGE
-  );
+  const responseData = typedError.response?.data;
+  const canonicalMessage = readErrorString(responseData?.message) ?? readErrorString(responseData?.detail);
+
+  if (canonicalMessage) {
+    return canonicalMessage;
+  }
+
+  if (responseData && typeof responseData === 'object') {
+    const preferredKeys = ['nonFieldErrors', 'non_field_errors', 'paintPair', 'paint_pair', 'registration'] as const;
+
+    for (const key of preferredKeys) {
+      const extractedMessage = readErrorString(responseData[key]);
+      if (extractedMessage) {
+        return extractedMessage;
+      }
+    }
+
+    for (const value of Object.values(responseData)) {
+      const extractedMessage = readErrorString(value);
+      if (extractedMessage) {
+        return extractedMessage;
+      }
+    }
+  }
+
+  return readErrorString(typedError.message) ?? typedError.message ?? DEFAULT_API_ERROR_MESSAGE;
 };
 
 export function getNextPageParamHelper<TData>(lastPage: TData, allPages: TData[], limit: number): number | undefined {

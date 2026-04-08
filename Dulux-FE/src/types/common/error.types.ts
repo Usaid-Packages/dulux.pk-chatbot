@@ -9,7 +9,7 @@ export interface ApiErrorShape {
     data?: {
       message?: string;
       detail?: string;
-    };
+    } & Record<string, unknown>;
   };
   message?: string;
 }

@@ -92,6 +92,9 @@ export interface CreateClaimRequestPayload {
 
 export interface ApproveClaimRequestPayload {
   action: 'APPROVE';
+  notification_template: string;
+  notes?: string;
+  voucher: File;
 }
 
 export interface MarkClaimInReviewRequestPayload {
@@ -106,6 +109,7 @@ export interface SendToQualityRequestPayload {
 export interface RejectClaimRequestPayload {
   action: 'REJECT';
   notes: string;
+  notification_template: string;
 }
 
 export interface RequestMoreInfoClaimRequestPayload {

@@ -1,4 +1,5 @@
 import type { QualityQueueStatusFilter } from '#/types/quality.types';
+import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quality.types';
 
 export const QUALITY_STATUS_TABS: ReadonlyArray<{ value: QualityQueueStatusFilter; label: string }> = [
   { value: 'all', label: 'All' },
@@ -7,25 +8,25 @@ export const QUALITY_STATUS_TABS: ReadonlyArray<{ value: QualityQueueStatusFilte
   { value: 'resolved', label: 'Resolved' },
 ];
 
-export const QUALITY_ASSESSMENTS: readonly string[] = [
-  'Surface preparation issue identified',
-  'Moisture ingress confirmed',
-  'Application method issue',
-  'Batch quality concern',
-  'Approved under warranty policy',
-];
+const toLabel = (value: string): string =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map(token => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
 
-export const QUALITY_REJECTION_REASONS: readonly string[] = [
-  'Out of warranty scope',
-  'Insufficient technical evidence',
-  'Application conditions not compliant',
-  'Non-covered substrate condition',
-];
+export const QUALITY_REJECTION_REASONS: ReadonlyArray<{
+  value: (typeof QUALITY_TECHNICAL_REASONS)[number];
+  label: string;
+}> = QUALITY_TECHNICAL_REASONS.map(reason => ({
+  value: reason,
+  label: toLabel(reason),
+}));
 
-export const QUALITY_REQUEST_INFO_ITEMS: readonly string[] = [
-  'Additional photos (different angles)',
-  'Proof of purchase / Invoice',
-  'Product batch number',
-  'Application details (method, coats, surface prep)',
-  'Timeline of issue occurrence',
-];
+export const QUALITY_REQUEST_INFO_ITEMS: ReadonlyArray<{
+  value: (typeof QUALITY_REQUIRED_ITEMS)[number];
+  label: string;
+}> = QUALITY_REQUIRED_ITEMS.map(item => ({
+  value: item,
+  label: toLabel(item),
+}));

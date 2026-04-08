@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import {
   Button,
@@ -11,21 +11,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '#/components/ui';
-import { rejectClaimSchema, type RejectClaimFormValues } from '#/schemas/claim.schema';
-import { CLAIM_REJECTION_REASONS } from './constants';
+import { rejectClaimFinalSchema, type RejectClaimFinalFormValues } from '#/schemas/claim.schema';
+import type { ClaimDetail } from '#/types/claims.types';
+import { createClaimRejectedTemplate } from '#/utils';
 
 interface RejectClaimModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
+  claim: ClaimDetail;
   onClose: () => void;
-  onSubmit: (values: RejectClaimFormValues) => void;
+  onSubmit: (values: RejectClaimFinalFormValues) => void;
 }
 
 /**
@@ -34,20 +31,28 @@ interface RejectClaimModalProps {
  * @param props - Modal state and submit callback.
  * @returns Reject modal.
  */
-export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: RejectClaimModalProps): JSX.Element => {
+export const RejectClaimModal = ({
+  isOpen,
+  isSubmitting,
+  claim,
+  onClose,
+  onSubmit,
+}: RejectClaimModalProps): JSX.Element => {
   const {
     handleSubmit,
     register,
-    control,
     reset,
+    watch,
     formState: { errors },
-  } = useForm<RejectClaimFormValues>({
-    resolver: zodResolver(rejectClaimSchema),
+  } = useForm<RejectClaimFinalFormValues>({
+    resolver: zodResolver(rejectClaimFinalSchema),
     defaultValues: {
-      reason: '',
       notes: '',
     },
   });
+
+  const notes = watch('notes') ?? '';
+  const previewHtml = createClaimRejectedTemplate(claim, notes.trim() || 'Claim rejected after final review.');
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -56,7 +61,7 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
     }
   };
 
-  const handleFormSubmit = (values: RejectClaimFormValues): void => {
+  const handleFormSubmit = (values: RejectClaimFinalFormValues): void => {
     onSubmit(values);
   };
 
@@ -64,39 +69,14 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
         <DialogHeader>
-          <DialogTitle>Reject Claim</DialogTitle>
-          <DialogDescription>Provide a reason before rejecting this claim.</DialogDescription>
+          <DialogTitle>Final Reject Claim</DialogTitle>
+          <DialogDescription>Add final notes and review the customer email template.</DialogDescription>
         </DialogHeader>
 
-        <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className='space-y-2'>
-            <label htmlFor='reject-reason' className='text-sm font-medium text-text-primary'>
-              Reason
-            </label>
-            <Controller
-              control={control}
-              name='reason'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='reject-reason'>
-                    <SelectValue placeholder='Select reason' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CLAIM_REJECTION_REASONS.map(reason => (
-                      <SelectItem key={reason} value={reason}>
-                        {reason}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.reason ? <p className='text-xs text-destructive'>{errors.reason.message}</p> : null}
-          </div>
-
+        <form className='flex min-h-0 flex-1 flex-col space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
           <div className='space-y-2'>
             <label htmlFor='reject-notes' className='text-sm font-medium text-text-primary'>
-              Notes (Optional)
+              Final Rejection Notes
             </label>
             <Textarea
               id='reject-notes'
@@ -107,12 +87,20 @@ export const RejectClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: Re
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 
+          <div className='space-y-2'>
+            <p className='text-sm font-medium text-text-primary'>Email Preview</p>
+            <p className='text-xs text-text-muted'>This is the customer email template sent on final rejection.</p>
+            <div className='overflow-hidden rounded-xl border border-primary/15 bg-white'>
+              <iframe title='Claim rejection email preview' className='h-56 w-full' sandbox='' srcDoc={previewHtml} />
+            </div>
+          </div>
+
           <DialogFooter>
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type='submit' variant='destructive' className='rounded-xl' disabled={isSubmitting}>
-              {isSubmitting ? 'Rejecting...' : 'Reject Claim'}
+              {isSubmitting ? 'Submitting...' : 'Final Reject Claim'}
             </Button>
           </DialogFooter>
         </form>

@@ -4,6 +4,8 @@ export const CLAIM_WORKFLOW_STATES = [
   'SUBMITTED',
   'IN_REVIEW',
   'QA_REVIEW',
+  'QA_APPROVED',
+  'QA_REJECTED',
   'APPROVED',
   'REJECTED',
   'RESUBMIT',
@@ -117,6 +119,8 @@ export interface CreateClaimPayload extends Record<string, unknown> {
 export interface ApproveClaimPayload extends Record<string, unknown> {
   id: string;
   notes?: string;
+  notificationTemplate?: string;
+  voucher: File;
 }
 
 export interface SendToQualityPayload extends Record<string, unknown> {
@@ -126,8 +130,8 @@ export interface SendToQualityPayload extends Record<string, unknown> {
 
 export interface RejectClaimPayload extends Record<string, unknown> {
   id: string;
-  reason: string;
-  notes?: string;
+  notes: string;
+  notificationTemplate?: string;
 }
 
 export interface RequestMoreInfoPayload extends Record<string, unknown> {

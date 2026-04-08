@@ -23,9 +23,10 @@ export const apiEndpoints = {
   quality: {
     list: `${API_WARRANTY_V1}/claims/`,
     detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
-    approve: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
-    reject: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
-    requestInfo: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    approve: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/quality/approve/`,
+    reject: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/quality/reject/`,
+    requestInfo: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/quality/request-info/`,
+    csrResubmission: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/csr-resubmission/`,
   },
   dashboard: {
     cards: `${API_USERS_V1}/cards/`,

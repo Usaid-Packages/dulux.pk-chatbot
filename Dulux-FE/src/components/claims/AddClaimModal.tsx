@@ -74,6 +74,8 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     register,
     control,
     setValue,
+    setError,
+    clearErrors,
     handleSubmit,
     reset,
     formState: { errors },
@@ -154,15 +156,22 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     };
   }, [registrationPaintPairs, selectedTopcoatId]);
 
+  const isNoBasecoatFlow = basecoatOptions.hasNoBasecoat && basecoatOptions.items.length === 0;
+
   const selectedPaintPairId = useMemo(() => {
     if (!registrationDetailQuery.data) {
       return '';
     }
 
     const selectedTopcoatId = toNumericId(topcoatProductId);
-    const selectedBasecoatId = basecoatProductId === NO_BASECOAT_OPTION_VALUE ? null : toNumericId(basecoatProductId);
+    const normalizedBasecoatValue = basecoatProductId ?? NO_BASECOAT_OPTION_VALUE;
+    const selectedBasecoatId =
+      normalizedBasecoatValue === NO_BASECOAT_OPTION_VALUE ? null : toNumericId(normalizedBasecoatValue);
 
-    if (selectedTopcoatId === null || (basecoatProductId !== NO_BASECOAT_OPTION_VALUE && selectedBasecoatId === null)) {
+    if (
+      selectedTopcoatId === null ||
+      (normalizedBasecoatValue !== NO_BASECOAT_OPTION_VALUE && selectedBasecoatId === null)
+    ) {
       return '';
     }
 
@@ -201,6 +210,19 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
   }, [topcoatProductId, setValue]);
 
+  useEffect(() => {
+    if (!isNoBasecoatFlow) {
+      return;
+    }
+
+    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+    clearErrors('basecoatProductId');
+  }, [clearErrors, isNoBasecoatFlow, setValue]);
+
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
       reset();
@@ -226,11 +248,21 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
   const handleFormSubmit = (values: CreateClaimFormValues): void => {
     const registrationNumericId = toNumericId(values.registrationId);
-    const paintPairNumericId = toNumericId(values.paintPairId);
+    const paintPairNumericId = toNumericId(values.paintPairId) ?? toNumericId(selectedPaintPairId);
 
-    if (!registrationNumericId || !paintPairNumericId) {
+    if (!registrationNumericId) {
+      setError('registrationId', { type: 'manual', message: 'Registration is required.' });
       return;
     }
+
+    if (!paintPairNumericId) {
+      setError('paintPairId', {
+        type: 'manual',
+        message: 'Please reselect topcoat/basecoat. Matching paint pair was not resolved.',
+      });
+      return;
+    }
+    clearErrors('paintPairId');
 
     onSubmit({
       registration: registrationNumericId,
@@ -358,7 +390,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
                 name='basecoatProductId'
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-basecoat'>
+                    <SelectTrigger id='claim-basecoat' disabled={isNoBasecoatFlow}>
                       <SelectValue
                         placeholder={
                           topcoatProductId
@@ -384,6 +416,11 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
               />
               {errors.basecoatProductId ? (
                 <p className='text-xs text-destructive'>{errors.basecoatProductId.message}</p>
+              ) : null}
+              {isNoBasecoatFlow ? (
+                <p className='text-xs text-text-muted'>
+                  No basecoat is required for this selected topcoat in the approved registration.
+                </p>
               ) : null}
             </div>
           </div>
@@ -479,9 +516,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             <Button
               type='submit'
               className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-              disabled={
-                isSubmitting || Boolean(registrationDetailQuery.isFetching && registrationId) || !selectedPaintPairId
-              }
+              disabled={isSubmitting || !selectedPaintPairId}
             >
               {isSubmitting ? 'Creating...' : 'Create Claim'}
             </Button>

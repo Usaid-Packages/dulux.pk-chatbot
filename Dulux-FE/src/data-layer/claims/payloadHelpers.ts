@@ -1,10 +1,5 @@
 import type { CreateClaimRequestPayload } from '#/types/claims.api.types';
-import type {
-  CreateClaimPayload,
-  RejectClaimPayload,
-  RequestMoreInfoPayload,
-  SendToQualityPayload,
-} from '#/types/claims.types';
+import type { CreateClaimPayload, RequestMoreInfoPayload, SendToQualityPayload } from '#/types/claims.types';
 
 interface ClaimPhotoImageIds {
   longShotImageId: number;
@@ -38,13 +33,6 @@ export const toCreateClaimPayload = (
 });
 
 export const toSendToQualityNotes = (payload: SendToQualityPayload): string => payload.notes;
-
-export const toRejectNotes = (payload: RejectClaimPayload): string => {
-  if (payload.notes) {
-    return `${payload.reason}\n${payload.notes}`;
-  }
-  return payload.reason;
-};
 
 export const toRequestMoreInfoNotes = (payload: RequestMoreInfoPayload): string => {
   const formattedItems = payload.items.map(item => `- ${item}`).join('\n');
