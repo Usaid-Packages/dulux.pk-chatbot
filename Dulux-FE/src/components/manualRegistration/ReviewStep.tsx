@@ -39,41 +39,22 @@ export const ReviewStep = (): JSX.Element => {
     ? (allProducts.find(product => product.id === values.basecoatProductId)?.label ?? values.basecoatProductId)
     : '';
 
-  const allPaintPairs = [
-    {
-      topcoatProductId: values.topcoatProductId,
-      topcoatQuantity: values.topcoatQuantity,
-      basecoatProductId: values.basecoatProductId,
-      basecoatQuantity: values.basecoatQuantity,
-      topcoatInvoice: values.topcoatInvoice,
-      basecoatInvoice: values.basecoatInvoice,
-    },
-    ...(values.additionalPaintPairs ?? []),
-  ];
-
   const invoicePreviewItems = useMemo(() => {
     const items: Array<{ id: string; label: string; url: string }> = [];
+    const invoices = values.invoices ?? [];
 
-    allPaintPairs.forEach((pair, index) => {
-      if (pair.topcoatInvoice && pair.topcoatInvoice.type.startsWith('image/')) {
+    invoices.forEach((invoice, index) => {
+      if (invoice.type.startsWith('image/')) {
         items.push({
-          id: `pair-${index + 1}-topcoat`,
-          label: `Pair ${index + 1} Topcoat Invoice`,
-          url: URL.createObjectURL(pair.topcoatInvoice),
-        });
-      }
-
-      if (pair.basecoatInvoice && pair.basecoatInvoice.type.startsWith('image/')) {
-        items.push({
-          id: `pair-${index + 1}-basecoat`,
-          label: `Pair ${index + 1} Basecoat Invoice`,
-          url: URL.createObjectURL(pair.basecoatInvoice),
+          id: `invoice-${index + 1}`,
+          label: `Invoice ${index + 1}`,
+          url: URL.createObjectURL(invoice),
         });
       }
     });
 
     return items;
-  }, [allPaintPairs]);
+  }, [values.invoices]);
 
   useEffect(() => {
     return () => {
@@ -122,8 +103,13 @@ export const ReviewStep = (): JSX.Element => {
             {renderReviewRow('Topcoat Quantity', values.topcoatQuantity)}
             {renderReviewRow('Basecoat Product', basecoatProductLabel || '--')}
             {renderReviewRow('Basecoat Quantity', values.basecoatQuantity || '--')}
-            {renderReviewRow('Topcoat Invoice', values.topcoatInvoice?.name)}
-            {renderReviewRow('Basecoat Invoice', values.basecoatInvoice?.name)}
+            {renderReviewRow('Invoice Count', String(values.invoices?.length ?? 0))}
+            {renderReviewRow(
+              'Invoices',
+              values.invoices && values.invoices.length > 0
+                ? values.invoices.map(invoice => invoice.name).join(', ')
+                : '--'
+            )}
           </div>
 
           {(values.additionalPaintPairs ?? []).map((pair, index) => {
@@ -143,8 +129,6 @@ export const ReviewStep = (): JSX.Element => {
                   {renderReviewRow('Topcoat Quantity', pair.topcoatQuantity)}
                   {renderReviewRow('Basecoat Product', pairBasecoatLabel)}
                   {renderReviewRow('Basecoat Quantity', pair.basecoatQuantity || '--')}
-                  {renderReviewRow('Topcoat Invoice', pair.topcoatInvoice?.name)}
-                  {renderReviewRow('Basecoat Invoice', pair.basecoatInvoice?.name)}
                 </div>
               </div>
             );

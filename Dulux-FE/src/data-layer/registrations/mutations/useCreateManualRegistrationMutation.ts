@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, GET, POST, queryKeys, REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { apiEndpoints, POST, queryKeys, REGISTRATION_INVOICE_TYPES } from '#/constants';
 import { performRequest } from '#/services';
 import type {
   ManualRegistrationApiResponse,
@@ -9,7 +9,6 @@ import type {
   ManualRegistrationPaintPairInput,
   ManualRegistrationSubmissionResult,
 } from '#/types/manualRegistration';
-import type { ProductListResponse } from '#/types/products';
 import { normalizeManualRegistrationCreateResponse } from '#/utils';
 
 interface RegistrationCreatePaintPair {
@@ -53,22 +52,6 @@ const normalizePakistanPhoneNumber = (phoneNumber: string): string => {
   return digits;
 };
 
-const assertLinkedBasecoatForTopcoat = async (topcoatId: number, basecoatId?: number): Promise<void> => {
-  if (basecoatId === undefined) {
-    return;
-  }
-
-  const response = await performRequest<ProductListResponse>({
-    method: GET,
-    url: apiEndpoints.products.basecoats(topcoatId),
-  });
-
-  const linkedBasecoatIds = new Set(response.results.map(product => product.id));
-  if (!linkedBasecoatIds.has(basecoatId)) {
-    throw new Error('Basecoat must be linked to the selected topcoat product.');
-  }
-};
-
 const uploadRegistrationImage = async (image: File): Promise<number> => {
   const payload = new FormData();
   payload.append('image', image);
@@ -100,8 +83,6 @@ const buildCreateRegistrationPayload = async (
       topcoatQuantity: values.topcoatQuantity,
       basecoatProductId: values.basecoatProductId,
       basecoatQuantity: values.basecoatQuantity,
-      topcoatInvoice: values.topcoatInvoice,
-      basecoatInvoice: values.basecoatInvoice,
     },
     ...(values.additionalPaintPairs ?? []),
   ];
@@ -110,10 +91,6 @@ const buildCreateRegistrationPayload = async (
   const paintPairInvoices: RegistrationCreateInvoice[] = [];
 
   for (const pairValues of allPaintPairValues) {
-    if (!pairValues.topcoatInvoice) {
-      throw new Error('Topcoat invoice is required before submitting registration.');
-    }
-
     const topcoatId = Number.parseInt(pairValues.topcoatProductId, 10);
     if (!Number.isFinite(topcoatId) || topcoatId <= 0) {
       throw new Error('A valid topcoat product is required before submitting registration.');
@@ -123,13 +100,6 @@ const buildCreateRegistrationPayload = async (
     if (pairValues.basecoatProductId && (!Number.isFinite(basecoatId) || (basecoatId ?? 0) <= 0)) {
       throw new Error('A valid basecoat product is required when basecoat is selected.');
     }
-
-    await assertLinkedBasecoatForTopcoat(topcoatId, basecoatId);
-
-    const topcoatInvoiceId = await uploadRegistrationImage(pairValues.topcoatInvoice);
-    const basecoatInvoiceId = pairValues.basecoatInvoice
-      ? await uploadRegistrationImage(pairValues.basecoatInvoice)
-      : undefined;
 
     const paintPair: RegistrationCreatePaintPair = {
       topcoat: topcoatId,
@@ -142,17 +112,18 @@ const buildCreateRegistrationPayload = async (
     }
 
     paintPairs.push(paintPair);
+  }
+
+  if (!values.invoices || values.invoices.length === 0) {
+    throw new Error('At least one invoice is required before submitting registration.');
+  }
+
+  for (const invoice of values.invoices) {
+    const invoiceImageId = await uploadRegistrationImage(invoice);
     paintPairInvoices.push({
-      imageId: topcoatInvoiceId,
+      imageId: invoiceImageId,
       invoiceType: REGISTRATION_INVOICE_TYPES.TOPCOAT,
     });
-
-    if (basecoatInvoiceId) {
-      paintPairInvoices.push({
-        imageId: basecoatInvoiceId,
-        invoiceType: REGISTRATION_INVOICE_TYPES.BASECOAT,
-      });
-    }
   }
 
   const normalizedPostalCode = values.postalCode.trim();

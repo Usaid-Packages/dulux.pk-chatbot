@@ -908,7 +908,7 @@
   }
 
   .dashboard-flow-card {
-    @apply relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-primary/5 hover:shadow-[0_10px_20px_rgba(25,97,186,0.14)];
+    @apply relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-primary/5;
   }
 
   .dashboard-flow-icon {

@@ -122,7 +122,7 @@ const MultiSelectDropdown = ({
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
-          <div className='max-h-56 space-y-2 overflow-y-auto pr-1'>
+          <div className='max-h-[8.5rem] space-y-2 overflow-y-auto pr-1'>
             {options.map(option => {
               const isSelected = selectedIds.includes(option.id);
 
@@ -430,14 +430,14 @@ export const ProductForm = ({
         <fieldset className='space-y-3'>
           <legend className='text-sm font-medium text-text-primary'>Surface Mapping</legend>
 
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className='space-y-4'>
             <MultiSelectDropdown
               label='Interior Surfaces'
               dropdownId='interior-surfaces-dropdown'
               isOpen={activeDropdown === 'interior'}
               selectedCount={interiorSelectedCount}
               searchValue={interiorSurfaceSearch}
-              searchPlaceholder='Search interior surfaces...'
+              searchPlaceholder='Search more interior surfaces...'
               emptyMessage='No interior surfaces match this search.'
               options={interiorDropdownOptions}
               selectedIds={selectedSurfaceTypeIds}
@@ -452,7 +452,7 @@ export const ProductForm = ({
               isOpen={activeDropdown === 'exterior'}
               selectedCount={exteriorSelectedCount}
               searchValue={exteriorSurfaceSearch}
-              searchPlaceholder='Search exterior surfaces...'
+              searchPlaceholder='Search more exterior surfaces...'
               emptyMessage='No exterior surfaces match this search.'
               options={exteriorDropdownOptions}
               selectedIds={selectedSurfaceTypeIds}
@@ -474,7 +474,7 @@ export const ProductForm = ({
               isOpen={activeDropdown === 'basecoat'}
               selectedCount={selectedBasecoatIds.length}
               searchValue={linkedBasecoatSearch}
-              searchPlaceholder='Search linked basecoats...'
+              searchPlaceholder='Search more linked basecoats...'
               emptyMessage='No basecoat products match this search.'
               options={basecoatDropdownOptions}
               selectedIds={selectedBasecoatIds}
