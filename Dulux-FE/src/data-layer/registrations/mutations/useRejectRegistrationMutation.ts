@@ -7,8 +7,8 @@ import type { RegistrationActionPayload } from '#/types/registrations';
 
 interface RejectRegistrationVariables {
   id: string;
-  reason: string;
   notes: string;
+  notificationTemplate: string;
 }
 
 /**
@@ -20,16 +20,11 @@ export const useRejectRegistrationMutation = (): UseMutationResult<void, Error, 
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, RejectRegistrationVariables>({
-    mutationFn: async ({ id, reason, notes }: RejectRegistrationVariables): Promise<void> => {
+    mutationFn: async ({ id, notes, notificationTemplate }: RejectRegistrationVariables): Promise<void> => {
       const payload: RegistrationActionPayload = {
         action: REGISTRATION_ACTIONS.REJECT,
         notes,
-        rejectionFields: [
-          {
-            fieldName: reason,
-            note: notes,
-          },
-        ],
+        notificationTemplate,
       };
 
       await performRequest<void, RegistrationActionPayload>({

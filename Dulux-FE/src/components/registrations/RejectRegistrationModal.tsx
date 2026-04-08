@@ -1,17 +1,19 @@
 import type { JSX } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/Select';
-import { REJECT_REASONS } from '#/constants';
+import { Textarea } from '#/components/ui/Textarea';
 import { rejectSchema, type RejectFormValues } from '#/schemas/registrations';
+import type { RegistrationDetail } from '#/types/registrations';
+import { createRegistrationRejectedTemplate } from '#/utils';
 
 interface RejectRegistrationModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
+  registration: RegistrationDetail;
   onClose: () => void;
   onSubmit: (values: RejectFormValues) => void;
 }
@@ -25,22 +27,25 @@ interface RejectRegistrationModalProps {
 export const RejectRegistrationModal = ({
   isOpen,
   isSubmitting,
+  registration,
   onClose,
   onSubmit,
 }: RejectRegistrationModalProps): JSX.Element => {
   const {
-    control,
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<RejectFormValues>({
     resolver: zodResolver(rejectSchema),
     defaultValues: {
-      reason: '',
       notes: '',
     },
   });
+
+  const notes = watch('notes') ?? '';
+  const previewHtml = createRegistrationRejectedTemplate(registration, notes.trim() || 'Rejected after review.');
 
   const handleModalClose = (): void => {
     reset();
@@ -53,52 +58,43 @@ export const RejectRegistrationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[680px]'>
         <DialogHeader>
           <DialogTitle>Reject Registration</DialogTitle>
-          <DialogDescription>Provide a reason and notes so the customer understands what failed.</DialogDescription>
+          <DialogDescription>
+            Provide notes for the customer explaining why this registration was rejected.
+          </DialogDescription>
         </DialogHeader>
-        <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className='space-y-2'>
-            <label htmlFor='reject-reason' className='block text-sm font-medium text-text-primary'>
-              Rejection reason
-            </label>
-            <Controller
-              control={control}
-              name='reason'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='reject-reason' aria-label='Rejection reason'>
-                    <SelectValue placeholder='Select reason' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {REJECT_REASONS.map(reason => (
-                      <SelectItem key={reason} value={reason}>
-                        {reason}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.reason ? <p className='text-xs text-destructive'>{errors.reason.message}</p> : null}
+        <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
+          <div className='min-h-0 flex-1 space-y-4 overflow-y-auto pr-1'>
+            <div className='space-y-2'>
+              <label htmlFor='reject-notes' className='block text-sm font-medium text-text-primary'>
+                Notes
+              </label>
+              <Textarea
+                id='reject-notes'
+                rows={4}
+                placeholder='Describe what must be corrected...'
+                {...register('notes')}
+              />
+              {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
+            </div>
+
+            <div className='space-y-2'>
+              <p className='text-sm font-medium text-text-primary'>Email Preview</p>
+              <p className='text-xs text-text-muted'>This is the email template that will be sent to the customer.</p>
+              <div className='overflow-hidden rounded-xl border border-primary/15 bg-white'>
+                <iframe
+                  title='Rejection email template preview'
+                  className='h-60 w-full'
+                  sandbox=''
+                  srcDoc={previewHtml}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className='space-y-2'>
-            <label htmlFor='reject-notes' className='block text-sm font-medium text-text-primary'>
-              Notes
-            </label>
-            <textarea
-              id='reject-notes'
-              rows={4}
-              className='w-full rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm'
-              placeholder='Describe what must be corrected...'
-              {...register('notes')}
-            />
-            {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className='mt-3 border-t border-primary/10 pt-3'>
             <Button type='button' variant='outline' onClick={handleModalClose}>
               Cancel
             </Button>

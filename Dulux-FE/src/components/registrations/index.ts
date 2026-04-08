@@ -1,3 +1,4 @@
+export * from './ApproveRegistrationModal';
 export * from './RegistrationDetailPanel';
 export * from './RegistrationFilters';
 export * from './RegistrationTable';

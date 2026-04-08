@@ -43,19 +43,15 @@ export const REGISTRATION_CHANNEL_LABELS: Record<string, string> = {
 };
 
 export const RESUBMISSION_FIELDS = [
-  { id: 'personal_info', label: 'Personal Information', hint: 'Name, Email, City, Address' },
-  { id: 'purchase_date', label: 'Purchase Date', hint: 'Date of purchase' },
-  { id: 'dealer_info', label: 'Dealer Information', hint: 'Dealer name & location' },
-  { id: 'product_details', label: 'Product Details', hint: 'Topcoat/Basecoat & quantities' },
-  { id: 'topcoat_invoice', label: 'Topcoat Invoice', hint: 'Invoice image' },
-  { id: 'basecoat_invoice', label: 'Basecoat Invoice', hint: 'Invoice image' },
-] as const;
-
-export const REJECT_REASONS = [
-  'Incomplete customer profile',
-  'Purchase date is invalid',
-  'Dealer information mismatch',
-  'Product details mismatch',
-  'Invoice unreadable',
-  'Policy violation',
+  { id: 'customer_name', label: 'Full Name', hint: 'Customer full name' },
+  { id: 'email', label: 'Email', hint: 'Customer email address' },
+  { id: 'city', label: 'City', hint: 'Project city' },
+  { id: 'province', label: 'Province', hint: 'Project province' },
+  { id: 'site_address', label: 'Site Address', hint: 'Project site address' },
+  { id: 'purchase_date', label: 'Purchase Date', hint: 'Purchase invoice date' },
+  { id: 'purchase_dealer', label: 'Dealer Name', hint: 'Dealer name' },
+  { id: 'purchase_dealer_city', label: 'Dealer City', hint: 'Dealer city' },
+  { id: 'purchase_dealer_address', label: 'Dealer Address', hint: 'Dealer address' },
+  { id: 'paint_pairs', label: 'Paint Details', hint: 'Topcoat and basecoat details' },
+  { id: 'paint_pair_invoices', label: 'Invoice Photos', hint: 'Uploaded invoice images' },
 ] as const;

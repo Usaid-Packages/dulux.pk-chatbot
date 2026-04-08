@@ -1,17 +1,22 @@
 import { z } from 'zod';
 
 export const resubmissionFieldSchema = z.enum([
-  'personal_info',
+  'customer_name',
+  'email',
+  'city',
+  'province',
+  'site_address',
   'purchase_date',
-  'dealer_info',
-  'product_details',
-  'topcoat_invoice',
-  'basecoat_invoice',
+  'purchase_dealer',
+  'purchase_dealer_city',
+  'purchase_dealer_address',
+  'paint_pairs',
+  'paint_pair_invoices',
 ]);
 
 export const resubmissionSchema = z.object({
   fields: z.array(resubmissionFieldSchema).min(1, 'Select at least one field'),
-  note: z.string().max(500, 'Note must be 500 characters or less').optional(),
+  notes: z.string().min(1, 'Notes are required').max(500, 'Notes must be 500 characters or less'),
 });
 
 export type ResubmissionFormValues = z.infer<typeof resubmissionSchema>;

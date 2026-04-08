@@ -6,9 +6,9 @@ import {
   useRejectRegistrationMutation,
   useResubmitRegistrationMutation,
 } from '#/data-layer/registrations';
-import type { RejectFormValues, ResubmissionFormValues } from '#/schemas/registrations';
+import type { ApproveFormValues, RejectFormValues, ResubmissionFormValues } from '#/schemas/registrations';
 import type { RegistrationDetail } from '#/types/registrations';
-import { getApiErrorMessage } from '#/utils';
+import { createRegistrationApprovedTemplate, createRegistrationRejectedTemplate, getApiErrorMessage } from '#/utils';
 
 export interface UseRegistrationDetailResult {
   isLoading: boolean;
@@ -19,7 +19,7 @@ export interface UseRegistrationDetailResult {
   isResubmitPending: boolean;
   registrationId: string;
   registration?: RegistrationDetail;
-  approveRegistration: () => void;
+  approveRegistration: (values: ApproveFormValues, onSuccess?: () => void) => void;
   rejectRegistration: (values: RejectFormValues, onSuccess?: () => void) => void;
   resubmitRegistration: (values: ResubmissionFormValues, onSuccess?: () => void) => void;
 }
@@ -36,12 +36,25 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
   const rejectMutation = useRejectRegistrationMutation();
   const resubmitMutation = useResubmitRegistrationMutation();
 
-  const handleApproveRegistration = (): void => {
+  const handleApproveRegistration = (values: ApproveFormValues, onSuccess?: () => void): void => {
+    const registration = detailQuery.data;
+    if (!registration) {
+      toast.error('Registration detail is not available.');
+      return;
+    }
+
     approveMutation.mutate(
-      { id: registrationId },
+      {
+        id: registrationId,
+        notes: values.notes,
+        notificationTemplate: createRegistrationApprovedTemplate(registration, values.notes),
+      },
       {
         onSuccess: () => {
           toast.success('Registration approved successfully.');
+          if (onSuccess) {
+            onSuccess();
+          }
         },
         onError: error => {
           toast.error(getApiErrorMessage(error));
@@ -51,11 +64,17 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
   };
 
   const handleRejectRegistration = (values: RejectFormValues, onSuccess?: () => void): void => {
+    const registration = detailQuery.data;
+    if (!registration) {
+      toast.error('Registration detail is not available.');
+      return;
+    }
+
     rejectMutation.mutate(
       {
         id: registrationId,
-        reason: values.reason,
         notes: values.notes,
+        notificationTemplate: createRegistrationRejectedTemplate(registration, values.notes),
       },
       {
         onSuccess: () => {
@@ -76,7 +95,7 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
       {
         id: registrationId,
         fields: values.fields,
-        note: values.note,
+        notes: values.notes,
       },
       {
         onSuccess: () => {
