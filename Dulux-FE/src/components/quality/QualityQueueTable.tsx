@@ -32,7 +32,6 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
             <TableHead>Claim ID</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Issue</TableHead>
-            <TableHead>City</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead>Forwarded By</TableHead>
             <TableHead>Submitted</TableHead>
@@ -48,7 +47,6 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
               </TableCell>
               <TableCell>{item.customerName}</TableCell>
               <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
-              <TableCell>{item.city}</TableCell>
               <TableCell>
                 <span
                   className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${getPriorityClass(item.priority)}`}

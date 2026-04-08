@@ -41,7 +41,7 @@ export const QualityListPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white shadow-[0_18px_42px_rgba(18,79,165,0.33)] md:p-6'>
+      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
         <div
           aria-hidden='true'
           className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
@@ -62,10 +62,7 @@ export const QualityListPage = (): JSX.Element => {
           { label: 'Info Requested', value: queueData?.stats.infoRequested ?? 0 },
           { label: 'Resolved Today', value: queueData?.stats.resolvedToday ?? 0 },
         ].map((card, index) => (
-          <article
-            key={card.label}
-            className={`wf-stat-card border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)] ${STAT_CARD_STYLES[index]}`}
-          >
+          <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
             <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
             <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
           </article>

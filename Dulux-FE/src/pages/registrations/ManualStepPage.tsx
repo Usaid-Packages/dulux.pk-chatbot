@@ -81,7 +81,12 @@ export const ManualStepPage = (): JSX.Element => {
 
   return (
     <section className='space-y-4'>
-      <Button type='button' variant='outline' onClick={() => navigate(ROUTES.REGISTRATIONS)}>
+      <Button
+        type='button'
+        variant='outline'
+        className='transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md'
+        onClick={() => navigate(ROUTES.REGISTRATIONS)}
+      >
         <ArrowLeft className='h-4 w-4' />
         Back
       </Button>

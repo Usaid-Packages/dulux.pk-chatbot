@@ -1,4 +1,5 @@
 import type { JSX, ReactNode } from 'react';
+import { useEffect } from 'react';
 
 import duluxLogo from '#/assets/images/dulux-logo.png';
 
@@ -14,6 +15,11 @@ interface AuthShellProps {
  * @returns Auth shell layout.
  */
 export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = duluxLogo;
+  }, []);
+
   return (
     <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef4ff] px-4 py-10 md:px-8'>
       <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_8%,rgba(31,111,210,0.3),transparent_38%),radial-gradient(circle_at_85%_18%,rgba(17,82,175,0.24),transparent_42%),linear-gradient(165deg,#f6fbff_0%,#e6f2ff_52%,#f2f8ff_100%)]' />
@@ -28,7 +34,15 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
           <div className='pointer-events-none absolute -bottom-8 right-14 h-24 w-56 -rotate-12 rounded-full bg-[#0e4fa8]/15 blur-lg' />
 
           <div className='relative inline-flex rounded-[2.2rem] border border-blue-200/75 bg-white/90 p-6 shadow-[0_20px_55px_rgba(13,77,167,0.2)]'>
-            <img src={duluxLogo} alt='Dulux logo' className='h-40 w-40 object-contain' />
+            <img
+              src={duluxLogo}
+              alt='Dulux logo'
+              width={160}
+              height={160}
+              loading='eager'
+              fetchPriority='high'
+              className='h-40 w-40 object-contain'
+            />
           </div>
 
           <p className='mt-6 text-xs font-extrabold uppercase tracking-[2.4px] text-[#1f5ea7]'>Dulux Pakistan</p>
@@ -40,21 +54,20 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
           <p className='mt-5 max-w-[46ch] text-base leading-relaxed text-slate-600'>
             A premium service console for registrations, claims, and quality reviews with secure access for every role.
           </p>
-
-          <div className='mt-8 grid gap-3 text-sm font-semibold text-[#174b89] sm:grid-cols-2'>
-            <div className='rounded-2xl border border-blue-200/80 bg-white/70 px-4 py-3'>
-              Claims and Quality in one flow
-            </div>
-            <div className='rounded-2xl border border-blue-200/80 bg-white/70 px-4 py-3'>
-              Role-based protected access
-            </div>
-          </div>
         </div>
 
         <div className='mx-auto w-full max-w-md'>
           <div className='mb-5 flex items-center justify-center xl:hidden'>
             <div className='rounded-[1.7rem] border border-blue-200/80 bg-white/85 p-5 shadow-[0_18px_45px_rgba(19,79,164,0.2)] backdrop-blur'>
-              <img src={duluxLogo} alt='Dulux logo' className='h-24 w-24 object-contain sm:h-28 sm:w-28' />
+              <img
+                src={duluxLogo}
+                alt='Dulux logo'
+                width={112}
+                height={112}
+                loading='eager'
+                fetchPriority='high'
+                className='h-24 w-24 object-contain sm:h-28 sm:w-28'
+              />
             </div>
           </div>
           {children}

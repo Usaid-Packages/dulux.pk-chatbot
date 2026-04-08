@@ -7,8 +7,8 @@ interface ConversationStatsProps {
 }
 
 const STAT_CARD_STYLES = [
-  'border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]',
-  'border-primary/15 bg-[linear-gradient(140deg,#ffffff_0%,#eef6ff_100%)]',
+  'border-primary/15 bg-white',
+  'border-primary/15 bg-white',
   'border-slate-300/50 bg-[linear-gradient(140deg,#f8fafc_0%,#eef2f7_100%)]',
 ] as const;
 

@@ -21,7 +21,15 @@ export const AuthCard = ({ title, subtitle, children }: AuthCardProps): JSX.Elem
 
     <header className='relative mb-6 space-y-4 text-center'>
       <span className='mx-auto inline-flex rounded-[1.4rem] border border-blue-200/80 bg-white px-5 py-4 shadow-[0_14px_35px_rgba(18,78,163,0.16)]'>
-        <img src={duluxLogo} alt='Dulux logo' className='h-16 w-16 object-contain' />
+        <img
+          src={duluxLogo}
+          alt='Dulux logo'
+          width={64}
+          height={64}
+          loading='eager'
+          fetchPriority='high'
+          className='h-16 w-16 object-contain'
+        />
       </span>
       <div className='space-y-2'>
         <p className='text-[11px] font-extrabold uppercase tracking-[2.4px] text-blue-700'>Secure Access</p>

@@ -2,7 +2,6 @@ import type { JSX } from 'react';
 
 import dashboardVisual from '#/assets/images/dulux-logo.png';
 import { DashboardGrid, DashboardTrendChart, DashboardWorkloadChart } from '#/components/dashboard';
-import { Button } from '#/components/ui/Button';
 import { useDashboard } from '#/hooks';
 
 /**
@@ -11,7 +10,7 @@ import { useDashboard } from '#/hooks';
  * @returns Dashboard page component.
  */
 export const DashboardPage = (): JSX.Element => {
-  const { flowCards, analytics, isLoading, isError, isRefetching, errorMessage, refetchDashboard } = useDashboard();
+  const { flowCards, analytics, isLoading, isError, errorMessage } = useDashboard();
 
   return (
     <div className='mx-auto w-full max-w-[1320px] space-y-6'>
@@ -49,27 +48,19 @@ export const DashboardPage = (): JSX.Element => {
       {isError && (
         <section
           role='alert'
-          className='flex flex-col gap-3 rounded-2xl border border-status-rejected-text/30 bg-status-rejected-bg px-4 py-3 md:flex-row md:items-center md:justify-between'
+          className='rounded-2xl border border-status-rejected-text/30 bg-status-rejected-bg px-4 py-3'
         >
           <div>
             <p className='text-sm font-semibold text-status-rejected-text'>Dashboard data could not be refreshed.</p>
             <p className='text-sm text-status-rejected-text/80'>{errorMessage}</p>
           </div>
-          <Button variant='outline' onClick={refetchDashboard} disabled={isRefetching}>
-            {isRefetching ? 'Retrying...' : 'Retry'}
-          </Button>
         </section>
       )}
 
       <section className='space-y-1'>
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
-          <div className='space-y-1'>
-            <h2 className='card-title'>Operational Overview</h2>
-            <p className='text-sm text-text-muted'>Open a workflow area instantly and review its latest queue stats.</p>
-          </div>
-          <Button variant='outline' onClick={refetchDashboard} disabled={isRefetching}>
-            {isRefetching ? 'Refreshing...' : 'Refresh insights'}
-          </Button>
+        <div className='space-y-1'>
+          <h2 className='card-title'>Operational Overview</h2>
+          <p className='text-sm text-text-muted'>Open a workflow area instantly and review its latest queue stats.</p>
         </div>
       </section>
 
