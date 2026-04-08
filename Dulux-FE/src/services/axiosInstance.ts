@@ -9,6 +9,11 @@ import { handleUnauthorized } from './refreshTokenService';
 
 const options = { recursive: true, arrayRecursive: true };
 
+interface CaseTransformConfigFlags {
+  skipRequestCaseTransform?: boolean;
+  skipResponseCaseTransform?: boolean;
+}
+
 const axiosInstance = axios.create({
   baseURL: env.VITE_BACKEND_BASE_URL,
   headers: {
@@ -18,26 +23,31 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(config => {
+  const { skipRequestCaseTransform = false } = config as typeof config & CaseTransformConfigFlags;
   const accessToken = getLocalStorageItem(ACCESS_TOKEN);
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
 
   if (config.data instanceof FormData) {
     // Let the browser set multipart boundary automatically for file uploads.
     delete config.headers['Content-Type'];
-  } else {
+  } else if (!skipRequestCaseTransform && config.data && typeof config.data === 'object') {
     const caseConvertedData = caseConverter.snakeKeys(config?.data, options);
     config.data = caseConvertedData;
   }
 
-  const caseConvertedData = caseConverter.snakeKeys(config.params);
-  config.params = caseConvertedData;
+  if (!skipRequestCaseTransform && config.params && typeof config.params === 'object') {
+    const caseConvertedParams = caseConverter.snakeKeys(config.params, options);
+    config.params = caseConvertedParams;
+  }
 
   return config;
 });
 
 axiosInstance.interceptors.response.use(
   response => {
-    if (response.data && typeof response.data === 'object') {
+    const { skipResponseCaseTransform = false } = response.config as typeof response.config & CaseTransformConfigFlags;
+
+    if (!skipResponseCaseTransform && response.data && typeof response.data === 'object') {
       response.data = caseConverter.camelKeys(response.data, options);
     }
     return response;
@@ -51,7 +61,10 @@ axiosInstance.interceptors.response.use(
       return handleUnauthorized(error);
     }
 
-    if (data && typeof data === 'object' && error.response) {
+    const typedError = error as AxiosError & { config?: CaseTransformConfigFlags };
+    const shouldSkipResponseCaseTransform = typedError.config?.skipResponseCaseTransform ?? false;
+
+    if (!shouldSkipResponseCaseTransform && data && typeof data === 'object' && error.response) {
       error.response.data = caseConverter.camelKeys(data, options);
     }
 

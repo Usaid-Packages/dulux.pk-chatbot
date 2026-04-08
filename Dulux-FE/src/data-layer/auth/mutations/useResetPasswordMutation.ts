@@ -9,11 +9,12 @@ interface PasswordResetMessageApiResponse {
   detail: string;
 }
 
+/** Matches Django / dj-rest-auth `PasswordResetConfirmSerializer` field names on the wire. */
 interface ResetPasswordApiPayload {
   uid: string;
   token: string;
-  newPassword1: string;
-  newPassword2: string;
+  new_password1: string;
+  new_password2: string;
 }
 
 const toResetPasswordApiPayload = (payload: ResetPasswordPayload): ResetPasswordApiPayload => {
@@ -25,8 +26,8 @@ const toResetPasswordApiPayload = (payload: ResetPasswordPayload): ResetPassword
   return {
     uid,
     token,
-    newPassword1: password,
-    newPassword2: confirmPassword,
+    new_password1: password,
+    new_password2: confirmPassword,
   };
 };
 
@@ -39,6 +40,9 @@ export const useResetPasswordMutation = (): UseMutationResult<ResetPasswordRespo
         method: POST,
         url: apiEndpoints.auth.resetPassword,
         payload: resetPayload,
+        config: {
+          skipRequestCaseTransform: true,
+        },
       });
 
       return {

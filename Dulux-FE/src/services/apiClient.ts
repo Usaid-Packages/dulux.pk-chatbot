@@ -2,6 +2,11 @@ import type { AxiosRequestConfig, Method } from 'axios';
 
 import axiosInstance from './axiosInstance';
 
+export interface CaseTransformRequestConfig extends AxiosRequestConfig {
+  skipRequestCaseTransform?: boolean;
+  skipResponseCaseTransform?: boolean;
+}
+
 /**
  * Generic function to perform an API request using Axios.
  *
@@ -32,7 +37,7 @@ export const performRequest = async <
   url: string;
   payload?: TPayload;
   params?: TParams;
-  config?: AxiosRequestConfig;
+  config?: CaseTransformRequestConfig;
 }): Promise<TResponse> => {
   const res = await axiosInstance.request<TResponse>({
     method,
