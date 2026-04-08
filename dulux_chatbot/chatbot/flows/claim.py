@@ -12,6 +12,9 @@ class ClaimFlow(BaseFlow):
         ClaimState.SUBMITTED,
         ClaimState.IN_REVIEW,
         ClaimState.QA_REVIEW,
+        ClaimState.QA_APPROVED,
+        ClaimState.QA_REJECTED,
+        ClaimState.RESUBMIT,
         ClaimState.APPROVED,
     )
     ISSUE_TYPE_OPTIONS = [

@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
+from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
 from dulux_chatbot.chatbot.flows.find_product import FindProductFlow
 from dulux_chatbot.chatbot.flows.registration import RegistrationFlow
@@ -23,6 +24,7 @@ MENU_OPTIONS = {
 FLOW_CLASSES = {
     FlowType.REGISTRATION: RegistrationFlow,
     FlowType.CLAIM: ClaimFlow,
+    FlowType.CLAIM_RESUBMISSION: ClaimResubmissionFlow,
     FlowType.FIND_PRODUCT: FindProductFlow,
     FlowType.COMPLAINT: ComplaintFlow,
     FlowType.REISSUANCE: ReissuanceFlow,
@@ -31,6 +33,7 @@ FLOW_CLASSES = {
 FLOW_INITIAL_STEPS = {
     FlowType.REGISTRATION: "consent",
     FlowType.CLAIM: "registration_lookup",
+    FlowType.CLAIM_RESUBMISSION: "claim_resubmission_item",
     FlowType.FIND_PRODUCT: "interior_exterior_select",
     FlowType.COMPLAINT: "subject",
     FlowType.REISSUANCE: "phone_lookup",
@@ -41,6 +44,7 @@ def dispatch(session, message: dict, client) -> None:
     now = timezone.now()
     if _session_expired(session=session, now=now):
         expired_resubmit_session = bool((session.session_data or {}).get("resubmit_registration_id"))
+        expired_claim_resubmit_session = bool((session.session_data or {}).get("claim_resubmission_claim_id"))
         session.flow = None
         session.current_step = "menu"
         session.session_data = {}
@@ -48,6 +52,11 @@ def dispatch(session, message: dict, client) -> None:
         session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])
         if expired_resubmit_session:
             client.send_text(session.phone_number, fallback_resubmit_message())
+        elif expired_claim_resubmit_session:
+            client.send_text(
+                session.phone_number,
+                "Your claim resubmission session expired. Please wait for a fresh request or contact CSR for help.",
+            )
         _send_main_menu(session.phone_number, client)
         return
 

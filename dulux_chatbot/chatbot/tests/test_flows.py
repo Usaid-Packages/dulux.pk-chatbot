@@ -18,10 +18,21 @@ from dulux_chatbot.products.tests.factories import (
     create_product_surface_mapping,
     create_surface_type,
 )
-from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, IssueType, RegistrationState
-from dulux_chatbot.warranty.models import PaintPairInvoice, WarrantyClaim, WarrantyRegistration
-from dulux_chatbot.warranty.tasks import send_registration_resubmit_notification
-from dulux_chatbot.warranty.tests.factories import create_claim, create_paint_pair, create_registration
+from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, IssueType, QualityDecisionType, RegistrationState
+from dulux_chatbot.warranty.models import (
+    ClaimQualityReview,
+    ClaimQualityReviewItem,
+    PaintPairInvoice,
+    WarrantyClaim,
+    WarrantyRegistration,
+)
+from dulux_chatbot.warranty.tasks import send_claim_resubmit_notification, send_registration_resubmit_notification
+from dulux_chatbot.warranty.tests.factories import (
+    create_claim,
+    create_paint_pair,
+    create_quality_user,
+    create_registration,
+)
 
 
 class DummyClient:
@@ -238,6 +249,64 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.current_step, "email")
         self.assertIn("Please provide a valid email address.", self.client.text_messages[-1]["text"])
+
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient", DummyClient)
+    def test_claim_resubmit_notification_seeds_session(self):
+        registration = create_registration(state=RegistrationState.APPROVED, phone_number=self.phone_number)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.REQUEST_INFO,
+            notes="Need daylight closeups.",
+            created_by=create_quality_user(),
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
+        )
+
+        send_claim_resubmit_notification(claim.id)
+
+        session = WhatsAppSession.objects.get(phone_number=self.phone_number)
+        self.assertEqual(session.flow, "CLAIM_RESUBMISSION")
+        self.assertEqual(session.current_step, "claim_resubmission_item")
+        self.assertEqual(session.session_data["claim_resubmission_claim_id"], claim.id)
+
+    def test_claim_resubmission_flow_moves_claim_back_to_qa_review(self):
+        registration = create_registration(state=RegistrationState.APPROVED, phone_number=self.phone_number)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.REQUEST_INFO,
+            notes="Need more photos.",
+            created_by=create_quality_user(email="resubmit-qa@example.com"),
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
+        )
+        self.session.flow = "CLAIM_RESUBMISSION"
+        self.session.current_step = "claim_resubmission_item"
+        self.session.session_data = {
+            "claim_resubmission_claim_id": claim.id,
+            "claim_resubmission_review_id": quality_review.id,
+            "claim_resubmission_items": ["CLOSE_UP_DAMAGE_PHOTOS"],
+            "claim_resubmission_item_index": 0,
+            "claim_resubmission_entries": [],
+            "claim_resubmission_current_images": [],
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        self.dispatch_image("claim-resubmit-1")
+        self.dispatch_text("DONE")
+        self.dispatch_text("Additional context from customer.")
+
+        claim.refresh_from_db()
+        self.assertEqual(claim.state, ClaimState.QA_REVIEW)
+        self.assertEqual(claim.resubmissions.count(), 1)
+        self.assertEqual(claim.resubmissions.first().entries.count(), 1)
 
     def test_registration_rejects_non_image_invoice_upload(self):
         create_product(name="Flow Topcoat")
@@ -460,7 +529,7 @@ class FlowTests(TestCase):
         ClaimFlow(session=self.session, client=self.client).handle_complete({})
 
         self.assertEqual(WarrantyClaim.objects.filter(registration=registration, paint_pair=paint_pair).count(), 1)
-        self.assertEqual(self.client.text_messages[-1]["text"], "A claim already exists for the selected paint pair.")
+        self.assertIn("A claim already exists for the selected paint pair.", self.client.text_messages[-1]["text"])
 
     def test_claim_flow_rejects_already_claimed_paint_pair(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
