@@ -1,0 +1,15 @@
+Dear {{ registration.customer_name }},
+
+Your Dulux Assurance Warranty registration has been approved.
+
+Registration Number: {{ registration.registration_code }}
+Status: {{ status_label }}
+
+{{ summary }}
+
+{% if notes %}Remarks: {{ notes }}
+
+{% endif %}For any queries, please contact our helpline {{ helpline }}.
+
+Regards,
+Dulux Assurance Warranty Program

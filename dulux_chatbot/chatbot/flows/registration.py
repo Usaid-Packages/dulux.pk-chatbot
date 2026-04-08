@@ -9,7 +9,13 @@ from django.db import transaction
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
-from dulux_chatbot.warranty.api.v1.serializers import WarrantyRegistrationCreateSerializer
+from dulux_chatbot.warranty.api.v1.serializers import (
+    WarrantyRegistrationCreateSerializer,
+    WarrantyRegistrationUpdateSerializer,
+)
+from dulux_chatbot.warranty.choices import RegistrationState
+from dulux_chatbot.warranty.models import WarrantyRegistration
+from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
 
 
 class RegistrationFlow(BaseFlow):
@@ -106,6 +112,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid name.")
             return
         self._save_data("customer_name", name)
+        if self._advance_resubmit_after_current_step("name"):
+            return
         self.prompt_email()
         self._advance_to("email")
 
@@ -117,6 +125,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid email address.")
             return
         self._save_data("email", email)
+        if self._advance_resubmit_after_current_step("email"):
+            return
         self.prompt_city()
         self._advance_to("city")
 
@@ -129,6 +139,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid city.")
             return
         self._save_data("city", city)
+        if self._advance_resubmit_after_current_step("city"):
+            return
         self.prompt_province()
         self._advance_to("province")
 
@@ -141,6 +153,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid province.")
             return
         self._save_data("province", province)
+        if self._advance_resubmit_after_current_step("province"):
+            return
         self.prompt_site_address()
         self._advance_to("site_address")
 
@@ -153,6 +167,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid site address.")
             return
         self._save_data("site_address", site_address)
+        if self._advance_resubmit_after_current_step("site_address"):
+            return
         self.prompt_purchase_date()
         self._advance_to("purchase_date")
 
@@ -175,6 +191,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Purchase date is outside the allowed registration window.")
             return
         self._save_data("purchase_date", parsed_date.isoformat())
+        if self._advance_resubmit_after_current_step("purchase_date"):
+            return
         self.prompt_dealer_name()
         self._advance_to("dealer_name")
 
@@ -187,6 +205,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid dealer name.")
             return
         self._save_data("purchase_dealer", dealer_name)
+        if self._advance_resubmit_after_current_step("dealer_name"):
+            return
         self.prompt_dealer_city()
         self._advance_to("dealer_city")
 
@@ -199,6 +219,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid dealer city.")
             return
         self._save_data("purchase_dealer_city", dealer_city)
+        if self._advance_resubmit_after_current_step("dealer_city"):
+            return
         self.prompt_dealer_address()
         self._advance_to("dealer_address")
 
@@ -211,6 +233,8 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide a valid dealer address.")
             return
         self._save_data("purchase_dealer_address", dealer_address)
+        if self._advance_resubmit_after_current_step("dealer_address"):
+            return
         self.prompt_topcoat_select()
         self._advance_to("topcoat_select")
 
@@ -265,6 +289,8 @@ class RegistrationFlow(BaseFlow):
             self._advance_to("topcoat_select")
             return
         if text == "NO":
+            if self._advance_resubmit_after_current_step("topcoat_select"):
+                return
             self.prompt_invoice_upload()
             self._advance_to("invoice_upload")
             return
@@ -280,6 +306,8 @@ class RegistrationFlow(BaseFlow):
                     self.session.phone_number,
                     "At least one invoice image is required before submission.\n\n0. Go back\n00. Main menu",
                 )
+                return
+            if self._advance_resubmit_after_current_step("invoice_upload"):
                 return
             self.handle_complete(message)
             return
@@ -298,6 +326,9 @@ class RegistrationFlow(BaseFlow):
     @transaction.atomic
     def handle_complete(self, _message: dict) -> None:
         data = self.session.session_data or {}
+        if is_registration_resubmit_session(data):
+            self._handle_resubmit_complete(data)
+            return
         paint_pairs = []
         for pair_data in data.get("paint_pairs", []):
             paint_pair_payload = {
@@ -333,9 +364,81 @@ class RegistrationFlow(BaseFlow):
 
         self.client.send_text(
             self.session.phone_number,
-            f"Registration submitted successfully. Your registration code is {registration.registration_code}.",
+            (
+                "Thank you for registering with Dulux Assurance Warranty Program. "
+                "Our team is evaluating your submission and will get back to you within 14 working days. "
+                "If you have any queries, contact us on our helpline 0800-DULUX(38589). "
+                f"Registration number: {registration.registration_code}"
+            ),
         )
         self._reset()
+
+    def _advance_resubmit_after_current_step(self, current_step: str) -> bool:
+        session_data = self.session.session_data or {}
+        if not is_registration_resubmit_session(session_data):
+            return False
+        resubmit_steps = list(session_data.get("resubmit_steps", []))
+        step_index = int(session_data.get("resubmit_step_index", 0))
+        if step_index >= len(resubmit_steps) or resubmit_steps[step_index] != current_step:
+            return False
+        next_index = step_index + 1
+        session_data["resubmit_step_index"] = next_index
+        self.session.session_data = session_data
+        self.session.save(update_fields=["session_data", "modified"])
+        if next_index >= len(resubmit_steps):
+            self.handle_complete({})
+            return True
+        next_step = resubmit_steps[next_index]
+        self.send_prompt_for_resubmit(next_step)
+        self._advance_to(next_step)
+        return True
+
+    def send_prompt_for_resubmit(self, step: str) -> None:
+        prompt_handler = getattr(self, f"prompt_{step}", None)
+        if prompt_handler is not None:
+            prompt_handler()
+
+    def _handle_resubmit_complete(self, data: dict) -> None:
+        registration = WarrantyRegistration.objects.prefetch_related("rejection_fields").get(
+            pk=data["resubmit_registration_id"]
+        )
+        payload = {}
+        for step in data.get("resubmit_steps", []):
+            if step in STEP_TO_MODEL_FIELD:
+                payload[STEP_TO_MODEL_FIELD[step]] = data.get(STEP_TO_MODEL_FIELD[step], "")
+            elif step == "topcoat_select":
+                payload["paint_pairs"] = self._build_paint_pairs_payload(data)
+            elif step == "invoice_upload":
+                payload["paint_pair_invoices"] = data.get("paint_pair_invoices", [])
+
+        serializer = WarrantyRegistrationUpdateSerializer(
+            instance=registration,
+            data=payload,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        registration.state = RegistrationState.SUBMITTED
+        registration.rejection_fields.all().delete()
+        registration.save(update_fields=["state", "modified"])
+        self.client.send_text(
+            self.session.phone_number,
+            "Your updated warranty registration details have been submitted successfully.",
+        )
+        self._reset()
+
+    def _build_paint_pairs_payload(self, data: dict) -> list[dict]:
+        paint_pairs = []
+        for pair_data in data.get("paint_pairs", []):
+            paint_pair_payload = {
+                "topcoat": pair_data.get("topcoat_id"),
+                "topcoat_quantity": pair_data.get("topcoat_quantity"),
+            }
+            if pair_data.get("basecoat_id") is not None:
+                paint_pair_payload["basecoat"] = pair_data.get("basecoat_id")
+                paint_pair_payload["basecoat_quantity"] = pair_data.get("basecoat_quantity")
+            paint_pairs.append(paint_pair_payload)
+        return paint_pairs
 
     def _append_current_paint_pair(self) -> None:
         session_data = self.session.session_data or {}

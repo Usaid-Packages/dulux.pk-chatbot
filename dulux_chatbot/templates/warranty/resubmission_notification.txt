@@ -1,0 +1,11 @@
+Your warranty registration needs updated information before we can continue.
+
+Registration Code: {{ registration.registration_code }}
+
+Please resubmit the following:
+{% for item in rejection_fields %}
+- {{ item.display_name|default:item.field_name|default:"Field" }}{% if item.note %}: {{ item.note }}{% endif %}
+{% endfor %}
+
+Please reply in this chat with the requested updates.
+{{ fallback_message }}

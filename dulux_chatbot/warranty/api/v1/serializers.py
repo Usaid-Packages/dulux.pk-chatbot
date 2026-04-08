@@ -20,7 +20,11 @@ from dulux_chatbot.warranty.models import (
     WarrantyClaim,
     WarrantyRegistration,
 )
-from dulux_chatbot.warranty.tasks import generate_and_send_certificate, send_whatsapp_status_notification
+from dulux_chatbot.warranty.tasks import (
+    send_registration_resubmit_notification,
+    send_registration_status_notification,
+    send_whatsapp_status_notification,
+)
 from dulux_chatbot.warranty.utils import generate_registration_code
 
 
@@ -218,6 +222,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    notification_template = serializers.CharField(write_only=True, required=False, allow_blank=True)
     rejection_fields = RejectionFieldWriteSerializer(many=True, required=False)
     paint_pairs = RegistrationPaintPairWriteSerializer(many=True, required=False)
     paint_pair_invoices = PaintPairInvoiceWriteSerializer(many=True, required=False)
@@ -244,6 +249,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             "approved_by",
             "approved_at",
             "action",
+            "notification_template",
             "rejection_fields",
             "paint_pairs",
             "paint_pair_invoices",
@@ -263,6 +269,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
         action = attrs.get("action")
+        notification_template = attrs.get("notification_template")
         if action is not None:
             current_state = self.instance.state
 
@@ -281,11 +288,20 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             if action in {"REJECT", "RESUBMIT"} and not attrs.get("notes"):
                 raise serializers.ValidationError({"notes": "Notes are required for reject or resubmit."})
 
+            if action in {"APPROVE", "REJECT"}:
+                if not isinstance(notification_template, str) or not notification_template.strip():
+                    raise serializers.ValidationError(
+                        {
+                            "notification_template": "notification_template HTML string is required for approve or reject."
+                        }
+                    )
+
         return attrs
 
     @transaction.atomic
     def update(self, instance: WarrantyRegistration, validated_data: dict) -> WarrantyRegistration:
         action = validated_data.pop("action", None)
+        notification_template = validated_data.pop("notification_template", None)
         rejection_fields = validated_data.pop("rejection_fields", [])
         paint_pairs = validated_data.pop("paint_pairs", None)
         paint_pair_invoices = validated_data.pop("paint_pair_invoices", None)
@@ -321,9 +337,11 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             self._sync_rejection_fields(instance=instance, rejection_fields=rejection_fields)
 
             if action == "APPROVE":
-                generate_and_send_certificate.delay(instance.id)
-            elif action in {"REJECT", "RESUBMIT"} and notes:
-                send_whatsapp_status_notification.delay(instance.phone_number, notes)
+                send_registration_status_notification.delay(instance.id, notification_template=notification_template)
+            elif action == "RESUBMIT":
+                send_registration_resubmit_notification.delay(instance.id)
+            elif action == "REJECT":
+                send_registration_status_notification.delay(instance.id, notification_template=notification_template)
 
         return instance
 

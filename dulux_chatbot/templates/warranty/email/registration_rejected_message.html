@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7fb;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border-radius:18px;overflow:hidden;">
+            <tr>
+              <td style="background:#f36f21;padding:24px 28px;color:#ffffff;">
+                <div style="font-size:24px;font-weight:700;">Dulux Assurance Warranty Program</div>
+                <div style="margin-top:6px;font-size:14px;opacity:0.92;">Warranty registration update</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px;">
+                <div style="display:inline-block;padding:8px 14px;border-radius:999px;background:{{ badge_background }};color:{{ badge_color }};font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                  {{ status_label }}
+                </div>
+                <h1 style="margin:18px 0 10px;font-size:28px;line-height:1.2;color:#111827;">{{ headline }}</h1>
+                <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#4b5563;">Dear {{ registration.customer_name }},</p>
+                <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#4b5563;">{{ summary }}</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;">
+                  <tr>
+                    <td style="padding:18px 20px;">
+                      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Registration Number</p>
+                      <p style="margin:0 0 14px;font-size:18px;font-weight:700;color:#111827;">{{ registration.registration_code }}</p>
+                      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Email</p>
+                      <p style="margin:0 0 14px;font-size:15px;font-weight:600;color:#111827;">{{ registration.email }}</p>
+                      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Updated On</p>
+                      <p style="margin:0;font-size:15px;font-weight:600;color:#111827;">{{ approved_at|date:"F j, Y g:i A" }}</p>
+                    </td>
+                  </tr>
+                </table>
+                {% if notes %}
+                <div style="margin-top:20px;padding:18px 20px;border-radius:14px;background:#fef2f2;border:1px solid #fca5a5;">
+                  <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:0.04em;">Remarks</p>
+                  <p style="margin:0;font-size:15px;line-height:1.7;color:#7f1d1d;">{{ notes }}</p>
+                </div>
+                {% endif %}
+                <p style="margin:22px 0 0;font-size:15px;line-height:1.7;color:#4b5563;">For any queries, please contact our helpline <strong>{{ helpline }}</strong>.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

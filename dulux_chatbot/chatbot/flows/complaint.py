@@ -21,7 +21,7 @@ class ComplaintFlow(BaseFlow):
         self._send_step_prompt("Upload an image or reply DONE to finish.")
 
     def prompt_chat(self) -> None:
-        self._send_step_prompt("Please send a text message for the complaint chat.")
+        self._send_step_prompt("Please send a text message or upload an image for the complaint chat.")
 
     def handle_subject(self, message: dict) -> None:
         subject = self._get_text(message)
@@ -101,7 +101,33 @@ class ComplaintFlow(BaseFlow):
     def handle_chat(self, message: dict) -> None:
         complaint_id = (self.session.session_data or {}).get("complaint_id")
         text = self._get_text(message)
-        if not complaint_id or not text:
+        media_id = self._get_media_id(message)
+        message_type = str(message.get("type") or "").strip()
+        if not complaint_id:
+            self.prompt_chat()
+            return
+        if media_id:
+            if message_type and message_type != "image":
+                self._send_validation_error("File format not supported. Please upload an image.")
+                return
+            image = self._save_media_image(media_id, filename_prefix="complaint_chat")
+            complaint_image = ComplaintImage.objects.create(complaint_id=complaint_id, image=image)
+            async_to_sync(get_channel_layer().group_send)(
+                f"complaint_{complaint_id}",
+                {
+                    "type": "chat.message",
+                    "message": {
+                        "id": complaint_image.id,
+                        "sender": MessageSender.CUSTOMER,
+                        "image_id": image.id,
+                        "image_url": image.image.url,
+                        "message_type": "image",
+                        "created": complaint_image.created.isoformat(),
+                    },
+                },
+            )
+            return
+        if not text:
             self.prompt_chat()
             return
         chat_message = ChatMessage.objects.create(
@@ -117,6 +143,7 @@ class ComplaintFlow(BaseFlow):
                     "id": chat_message.id,
                     "sender": chat_message.sender,
                     "text": chat_message.text,
+                    "message_type": "text",
                     "created": chat_message.created.isoformat(),
                 },
             },
