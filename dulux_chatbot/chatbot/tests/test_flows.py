@@ -662,6 +662,29 @@ class FlowTests(TestCase):
             "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
         )
 
+    def test_claim_flow_success_message_uses_registration_number(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        topcoat = create_product(name="Claim Flow Topcoat")
+        paint_pair = create_paint_pair(registration=registration, topcoat=topcoat)
+
+        self.dispatch_text("2")
+        self.assertEqual(self.session.current_step, "registration_lookup")
+
+        self.dispatch_text(registration.registration_code)
+        self.dispatch_text("1")
+        self.dispatch_text("1")
+        self.dispatch_text("120")
+        self.dispatch_image("claim-long-shot")
+        self.dispatch_image("claim-close-shot")
+        self.dispatch_image("claim-alt-shot")
+
+        claim = WarrantyClaim.objects.get(registration=registration, paint_pair=paint_pair)
+        self.assertIn(
+            f"Claim submitted successfully. Registration number: {registration.registration_code}.",
+            self.client.text_messages[-1]["text"],
+        )
+        self.assertEqual(claim.registration.registration_code, registration.registration_code)
+
     def test_reissuance_flow_generates_and_sends_certificate_when_missing(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         create_paint_pair(registration=registration)

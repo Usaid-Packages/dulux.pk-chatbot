@@ -849,6 +849,7 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
             f"Your Warranty registration: {registration.registration_code} is approved.",
         )
         self.assertEqual(whatsapp_client.send_document.call_args.args[2], "warranty_certificate.pdf")
+        self.assertEqual(whatsapp_client.send_document.call_args.kwargs["caption"], "warranty_certificate.pdf")
 
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
@@ -896,6 +897,11 @@ class WarrantyClaimNotificationTaskTests(TestCase):
         whatsapp_client = client_mock.return_value
         whatsapp_client.send_text.assert_called_once()
         whatsapp_client.send_document.assert_called_once()
+        self.assertEqual(
+            whatsapp_client.send_text.call_args.args[1],
+            f"Your claim for registration: {registration.registration_code} is approved.",
+        )
+        self.assertEqual(whatsapp_client.send_document.call_args.kwargs["caption"], "claim_voucher.pdf")
 
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     def test_send_claim_status_notification_for_rejected_claim(self, client_mock):
@@ -911,3 +917,7 @@ class WarrantyClaimNotificationTaskTests(TestCase):
         whatsapp_client = client_mock.return_value
         whatsapp_client.send_text.assert_called_once()
         whatsapp_client.send_document.assert_not_called()
+        self.assertEqual(
+            whatsapp_client.send_text.call_args.args[1],
+            f"Your claim for registration: {registration.registration_code} is rejected.",
+        )

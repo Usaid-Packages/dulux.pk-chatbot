@@ -71,7 +71,7 @@ def _build_registration_status_whatsapp_message(*, registration: WarrantyRegistr
 
 def _build_claim_status_whatsapp_message(*, claim: WarrantyClaim) -> str:
     status_label = "approved" if claim.state == ClaimState.APPROVED else "rejected"
-    return f"Your claim #{claim.id} is {status_label}."
+    return f"Your claim for registration: {claim.registration.registration_code} is {status_label}."
 
 
 @shared_task
@@ -115,7 +115,7 @@ def send_registration_status_notification(registration_id: int, notification_tem
         registration.phone_number,
         registration.warranty_certificate.url,
         "warranty_certificate.pdf",
-        caption=whatsapp_message,
+        caption="warranty_certificate.pdf",
     )
 
 
@@ -165,7 +165,7 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
             claim.registration.phone_number,
             claim.voucher.url,
             "claim_voucher.pdf",
-            caption=whatsapp_message,
+            caption="claim_voucher.pdf",
         )
 
 
@@ -261,7 +261,7 @@ def send_claim_resubmit_notification(claim_id: int) -> None:
     requested_items = list(latest_quality_review.required_items.order_by("created", "id"))
     item_labels = [_get_quality_required_item_label(item.required_item) for item in requested_items]
     message_lines = [
-        f"Additional information is needed for your claim #{claim.id}.",
+        f"Additional information is needed for your claim for registration no: {claim.registration.registration_code}.",
         "Please reply in WhatsApp with the requested details below:",
     ]
     message_lines.extend(f"- {label}" for label in item_labels)

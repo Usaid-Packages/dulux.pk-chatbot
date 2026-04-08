@@ -217,7 +217,10 @@ class ClaimFlow(BaseFlow):
         )
         for image_data in data.get("images", []):
             ClaimImage.objects.create(claim=claim, image_id=image_data["image_id"], photo_type=image_data["photo_type"])
-        self.client.send_text(self.session.phone_number, f"Claim submitted successfully. Claim id: {claim.id}.")
+        self.client.send_text(
+            self.session.phone_number,
+            f"Claim submitted successfully for Registration number: {claim.registration.registration_code}",
+        )
         locked_session.flow = None
         locked_session.current_step = "menu"
         locked_session.session_data = {}
