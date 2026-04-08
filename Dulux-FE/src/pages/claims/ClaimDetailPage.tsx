@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
+  ApproveClaimModal,
   ClaimDetailPanel,
   ClaimImages,
   ClaimTimeline,
@@ -12,15 +13,14 @@ import {
   ForwardToQualityModal,
   LinkedRegistrationCard,
   RejectClaimModal,
-  RequestMoreInfoModal,
 } from '#/components/claims';
 import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import { useClaimDetail } from '#/hooks/claims';
 import type {
+  ApproveClaimFinalFormValues,
   ForwardToQualityFormValues,
-  RejectClaimFormValues,
-  RequestMoreInfoFormValues,
+  RejectClaimFinalFormValues,
 } from '#/schemas/claim.schema';
 
 /**
@@ -34,46 +34,37 @@ export const ClaimDetailPage = (): JSX.Element => {
 
   const navigate = useNavigate();
 
-  const { claimQuery, handleReject, handleRequestMoreInfo, handleSendToQuality, isActionPending } =
-    useClaimDetail(claimId);
+  const { claimQuery, handleApprove, handleReject, handleSendToQuality, isActionPending } = useClaimDetail(claimId);
 
+  const [isApproveModalOpen, setApproveModalOpen] = useState(false);
   const [isForwardModalOpen, setForwardModalOpen] = useState(false);
   const [isRejectModalOpen, setRejectModalOpen] = useState(false);
-  const [isRequestInfoModalOpen, setRequestInfoModalOpen] = useState(false);
 
   const handleBackClick = (): void => {
     navigate(ROUTES.CLAIMS);
   };
 
+  const openApproveModal = (): void => setApproveModalOpen(true);
   const openForwardModal = (): void => setForwardModalOpen(true);
   const openRejectModal = (): void => setRejectModalOpen(true);
-  const openRequestInfoModal = (): void => setRequestInfoModalOpen(true);
 
+  const closeApproveModal = (): void => setApproveModalOpen(false);
   const closeForwardModal = (): void => setForwardModalOpen(false);
   const closeRejectModal = (): void => setRejectModalOpen(false);
-  const closeRequestInfoModal = (): void => setRequestInfoModalOpen(false);
+
+  const submitApprove = (values: ApproveClaimFinalFormValues): void => {
+    handleApprove({ id: claimId, notes: values.notes, voucher: values.voucher });
+    closeApproveModal();
+  };
 
   const submitForward = (values: ForwardToQualityFormValues): void => {
     handleSendToQuality({ id: claimId, ...values });
     closeForwardModal();
   };
 
-  const submitReject = (values: RejectClaimFormValues): void => {
-    handleReject({ id: claimId, ...values });
+  const submitReject = (values: RejectClaimFinalFormValues): void => {
+    handleReject({ id: claimId, notes: values.notes });
     closeRejectModal();
-  };
-
-  const submitRequestInfo = (values: RequestMoreInfoFormValues): void => {
-    const selectedItems = values.items.filter(item => item !== 'Other');
-    const requestItems = values.otherDetails ? [...selectedItems, values.otherDetails] : selectedItems;
-
-    handleRequestMoreInfo({
-      id: claimId,
-      items: requestItems,
-      note: values.note,
-      priority: values.priority,
-    });
-    closeRequestInfoModal();
   };
 
   if (claimQuery.isLoading) {
@@ -109,12 +100,9 @@ export const ClaimDetailPage = (): JSX.Element => {
   }
 
   const claim = claimQuery.data;
-  const isSendToQualityDisabled =
-    claim.workflowState === 'QA_REVIEW' ||
-    claim.workflowState === 'APPROVED' ||
-    claim.workflowState === 'REJECTED' ||
-    claim.workflowState === 'RESUBMIT' ||
-    claim.workflowState === 'RESOLVED';
+  const canSendToQuality = claim.workflowState === 'IN_REVIEW';
+  const canFinalApprove = claim.workflowState === 'QA_APPROVED';
+  const canFinalReject = claim.workflowState === 'QA_REJECTED';
 
   return (
     <main className='space-y-4'>
@@ -151,15 +139,25 @@ export const ClaimDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <ClaimDetailPanel
             claim={claim}
+            onOpenApproveModal={openApproveModal}
             onOpenForwardModal={openForwardModal}
-            onOpenRequestInfoModal={openRequestInfoModal}
             onOpenRejectModal={openRejectModal}
             isActionPending={isActionPending}
-            isSendToQualityDisabled={isSendToQualityDisabled}
+            canSendToQuality={canSendToQuality}
+            canFinalApprove={canFinalApprove}
+            canFinalReject={canFinalReject}
           />
           <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
         </div>
       </section>
+
+      <ApproveClaimModal
+        isOpen={isApproveModalOpen}
+        isSubmitting={isActionPending}
+        claim={claim}
+        onClose={closeApproveModal}
+        onSubmit={submitApprove}
+      />
 
       <ForwardToQualityModal
         isOpen={isForwardModalOpen}
@@ -171,15 +169,9 @@ export const ClaimDetailPage = (): JSX.Element => {
       <RejectClaimModal
         isOpen={isRejectModalOpen}
         isSubmitting={isActionPending}
+        claim={claim}
         onClose={closeRejectModal}
         onSubmit={submitReject}
-      />
-
-      <RequestMoreInfoModal
-        isOpen={isRequestInfoModalOpen}
-        isSubmitting={isActionPending}
-        onClose={closeRequestInfoModal}
-        onSubmit={submitRequestInfo}
       />
     </main>
   );

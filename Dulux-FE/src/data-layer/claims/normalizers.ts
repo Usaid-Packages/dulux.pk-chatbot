@@ -90,6 +90,44 @@ const readRegistrationCode = (claim: ApiClaimDetail): string =>
   );
 const readRegistrationRecordId = (claim: ApiClaimDetail): string =>
   asIdString((claim.registration as { id?: number | string } | undefined)?.id);
+const readRegistrationCustomerName = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.registration as { customer_name?: string; customerName?: string } | undefined)?.customer_name ??
+      (claim.registration as { customerName?: string } | undefined)?.customerName
+  );
+const readRegistrationPhone = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.registration as { phone_number?: string; phoneNumber?: string } | undefined)?.phone_number ??
+      (claim.registration as { phoneNumber?: string } | undefined)?.phoneNumber
+  );
+const readRegistrationPurchaseDate = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.registration as { purchase_date?: string; purchaseDate?: string } | undefined)?.purchase_date ??
+      (claim.registration as { purchaseDate?: string } | undefined)?.purchaseDate,
+    FALLBACK_DATE
+  );
+const readRegistrationDealer = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.registration as { purchase_dealer?: string; purchaseDealer?: string } | undefined)?.purchase_dealer ??
+      (claim.registration as { purchaseDealer?: string } | undefined)?.purchaseDealer
+  );
+const readRegistrationState = (claim: ApiClaimDetail): string =>
+  asString((claim.registration as { state?: string } | undefined)?.state);
+const readCity = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.registration as { city?: string } | undefined)?.city ?? (claim as { city?: string }).city,
+    UNKNOWN_VALUE
+  );
+const readTopcoatName = (claim: ApiClaimDetail): string =>
+  asString(
+    (claim.paint_pair as { topcoat_name?: string; topcoatName?: string } | undefined)?.topcoat_name ??
+      (claim.paint_pair as { topcoatName?: string } | undefined)?.topcoatName ??
+      (claim as { paintPair?: { topcoatName?: string; topcoat_name?: string } }).paintPair?.topcoatName ??
+      (claim as { paintPair?: { topcoatName?: string; topcoat_name?: string } }).paintPair?.topcoat_name
+  );
+const readAffectedArea = (claim: ApiClaimDetail): unknown =>
+  (claim as { affected_area_sqft?: unknown; affectedAreaSqft?: unknown }).affected_area_sqft ??
+  (claim as { affectedAreaSqft?: unknown }).affectedAreaSqft;
 
 const toClaimListItem = (claim: ApiClaimListItem): ClaimListItem =>
   claimListItemSchema.parse({
@@ -132,18 +170,18 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
   claimDetailSchema.parse({
     id: String(claim.id),
     claimNumber: toClaimNumber(claim.id),
-    customerName: asString(claim.registration?.customer_name),
-    registrationId: asString(claim.registration?.registration_code),
+    customerName: readRegistrationCustomerName(claim),
+    registrationId: readRegistrationCode(claim),
     issueType: toUiClaimIssueType(readIssueType(claim)),
     photoCount: Array.isArray(claim.images) ? claim.images.length : 0,
     submittedAt: readSubmittedAt(claim),
     workflowState: toApiClaimWorkflowState(readState(claim)),
     status: toUiClaimStatus(readState(claim)),
     priority: 'normal',
-    phone: asString(claim.registration?.phone_number),
-    city: UNKNOWN_VALUE,
-    areaSqFt: asNumber(claim.affected_area_sqft),
-    topcoat: asString(claim.paint_pair?.topcoat_name),
+    phone: readRegistrationPhone(claim),
+    city: readCity(claim),
+    areaSqFt: asNumber(readAffectedArea(claim)),
+    topcoat: readTopcoatName(claim),
     batchNumber: UNKNOWN_VALUE,
     description: asString(claim.notes, 'No description provided.'),
     evidencePhotos: (claim.images ?? []).reduce<ClaimDetail['evidencePhotos']>((photos, image) => {
@@ -170,10 +208,10 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     linkedRegistration: {
       registrationId: readRegistrationCode(claim),
       registrationRecordId: readRegistrationRecordId(claim),
-      customerName: asString(claim.registration?.customer_name),
-      purchaseDate: asString(claim.registration?.purchase_date, FALLBACK_DATE),
-      dealerName: UNKNOWN_VALUE,
-      status: asString(claim.registration?.state),
+      customerName: readRegistrationCustomerName(claim),
+      purchaseDate: readRegistrationPurchaseDate(claim),
+      dealerName: readRegistrationDealer(claim),
+      status: readRegistrationState(claim),
     },
     csNotes: claim.notes || undefined,
     forwardedBy: claim.approved_by ?? undefined,

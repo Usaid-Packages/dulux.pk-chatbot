@@ -2,16 +2,20 @@ import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/r
 
 import { PATCH, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
-import type { ApiClaimDetail, ApproveClaimRequestPayload } from '#/types/claims.api.types';
+import type { ApiClaimDetail } from '#/types/claims.api.types';
 import type { ApproveClaimPayload, ClaimDetail } from '#/types/claims.types';
 import { normalizeClaimDetail } from '../normalizers';
 
 export const approveClaim = async (payload: ApproveClaimPayload): Promise<ClaimDetail> => {
-  const requestPayload: ApproveClaimRequestPayload = {
-    action: 'APPROVE',
-  };
+  const requestPayload = new FormData();
+  requestPayload.append('action', 'APPROVE');
+  requestPayload.append('notification_template', payload.notificationTemplate ?? '');
+  requestPayload.append('voucher', payload.voucher);
+  if (payload.notes) {
+    requestPayload.append('notes', payload.notes);
+  }
 
-  const response = await performRequest<ApiClaimDetail, ApproveClaimRequestPayload>({
+  const response = await performRequest<ApiClaimDetail, FormData>({
     method: PATCH,
     url: apiEndpoints.claims.detail(payload.id),
     payload: requestPayload,

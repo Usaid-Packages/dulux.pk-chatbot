@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import {
   Button,
@@ -11,19 +11,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '#/components/ui';
 import { qualityApproveSchema, type QualityApproveFormValues } from '#/schemas/quality.schema';
-import { QUALITY_ASSESSMENTS } from './constants';
+import type { QualityDetail } from '#/types/quality.types';
+import { createClaimApprovedTemplate } from '#/utils';
 
 interface ApproveClaimModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
+  claim: QualityDetail;
   onClose: () => void;
   onSubmit: (values: QualityApproveFormValues) => void;
 }
@@ -34,20 +31,30 @@ interface ApproveClaimModalProps {
  * @param props - Modal open state and submit handler.
  * @returns QA approve modal.
  */
-export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: ApproveClaimModalProps): JSX.Element => {
+export const ApproveClaimModal = ({
+  isOpen,
+  isSubmitting,
+  claim,
+  onClose,
+  onSubmit,
+}: ApproveClaimModalProps): JSX.Element => {
   const {
     handleSubmit,
     register,
-    control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<QualityApproveFormValues>({
     resolver: zodResolver(qualityApproveSchema),
     defaultValues: {
-      assessment: '',
-      notes: '',
+      technicalNotes: '',
     },
   });
+  const technicalNotes = watch('technicalNotes') ?? '';
+  const previewHtml = createClaimApprovedTemplate(
+    claim,
+    technicalNotes.trim() || 'Claim approved after quality review.'
+  );
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -62,59 +69,51 @@ export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>Approve Claim (Quality)</DialogTitle>
-          <DialogDescription>Select a technical assessment and optional notes.</DialogDescription>
+          <DialogDescription>Provide technical notes and review customer email before QA approval.</DialogDescription>
         </DialogHeader>
 
-        <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className='space-y-2'>
-            <label htmlFor='qa-assessment' className='text-sm font-medium text-text-primary'>
-              Technical Assessment
-            </label>
-            <Controller
-              control={control}
-              name='assessment'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='qa-assessment'>
-                    <SelectValue placeholder='Select assessment' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {QUALITY_ASSESSMENTS.map(assessment => (
-                      <SelectItem key={assessment} value={assessment}>
-                        {assessment}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.assessment ? <p className='text-xs text-destructive'>{errors.assessment.message}</p> : null}
+        <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
+          <div className='min-h-0 flex-1 space-y-4 overflow-y-auto pr-1'>
+            <div className='space-y-2'>
+              <label htmlFor='qa-approval-notes' className='text-sm font-medium text-text-primary'>
+                Technical Notes
+              </label>
+              <Textarea
+                id='qa-approval-notes'
+                className='rounded-xl border-primary/20 bg-white'
+                {...register('technicalNotes')}
+                aria-invalid={Boolean(errors.technicalNotes)}
+              />
+              {errors.technicalNotes ? (
+                <p className='text-xs text-destructive'>{errors.technicalNotes.message}</p>
+              ) : null}
+            </div>
+
+            <div className='rounded-xl border border-primary/20 bg-primary/5 p-3'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Outcome Summary</p>
+              <p className='mt-1 text-sm text-text-primary'>
+                This claim will move to approved state with QA decision history recorded.
+              </p>
+            </div>
+
+            <div className='space-y-2'>
+              <p className='text-sm font-medium text-text-primary'>Email Preview</p>
+              <p className='text-xs text-text-muted'>This is the customer email template sent on quality approval.</p>
+              <div className='overflow-hidden rounded-xl border border-primary/15 bg-white'>
+                <iframe
+                  title='Quality approval email preview'
+                  className='h-56 w-full'
+                  sandbox=''
+                  srcDoc={previewHtml}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className='space-y-2'>
-            <label htmlFor='qa-approval-notes' className='text-sm font-medium text-text-primary'>
-              Technical Notes (Optional)
-            </label>
-            <Textarea
-              id='qa-approval-notes'
-              className='rounded-xl border-primary/20 bg-white'
-              {...register('notes')}
-              aria-invalid={Boolean(errors.notes)}
-            />
-            {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
-          </div>
-
-          <div className='rounded-xl border border-primary/20 bg-primary/5 p-3'>
-            <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Outcome Summary</p>
-            <p className='mt-1 text-sm text-text-primary'>
-              This claim will move to approved state with QA decision history recorded.
-            </p>
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className='mt-3 border-t border-primary/10 pt-3'>
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>

@@ -1,30 +1,27 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { POST, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
 import type { QualityDetail, QualityRequestInfoPayload } from '#/types/quality.types';
-
 import type { WarrantyClaimApiResponse } from '../apiMappers';
 import { mapQualityClaimDetail } from '../apiMappers';
 
 export const requestMoreInfoQuality = async (payload: QualityRequestInfoPayload): Promise<QualityDetail> => {
-  const itemsList = payload.items.join(', ');
-  const notes = [
-    `Requested From: ${payload.requestFrom === 'cs_agent' ? 'CS Agent' : 'Customer'}`,
-    `Missing Items: ${itemsList}`,
-    payload.notes ? `Notes: ${payload.notes}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const response = await performRequest<WarrantyClaimApiResponse, { action: 'RESUBMIT'; notes: string }>({
-    method: 'patch',
+  const response = await performRequest<
+    WarrantyClaimApiResponse,
+    {
+      required_items: string[];
+      notes?: string;
+      other_text?: string;
+    }
+  >({
+    method: POST,
     url: apiEndpoints.quality.requestInfo(payload.id),
     payload: {
-      action: 'RESUBMIT',
-      notes,
+      required_items: payload.requiredItems,
+      notes: payload.notes,
+      other_text: payload.otherText,
     },
   });
 

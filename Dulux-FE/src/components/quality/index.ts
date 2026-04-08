@@ -4,6 +4,7 @@ export { QualityAgentNotesCard } from './QualityAgentNotesCard';
 export { QualityDecisionPanel } from './QualityDecisionPanel';
 export { QualityEvidencePhotos } from './QualityEvidencePhotos';
 export { QualityQueueTable } from './QualityQueueTable';
+export { QualityResubmissionCard } from './QualityResubmissionCard';
 export { QualityQuickInfoCard } from './QualityQuickInfoCard';
 export { RejectClaimQAModal } from './RejectClaimQAModal';
 export { RequestInfoQAModal } from './RequestInfoQAModal';

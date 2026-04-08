@@ -1,7 +1,6 @@
-/* eslint import/order: off */
 import { toApiClaimWorkflowState, toUiClaimIssueType } from '#/constants';
-import env from '#env';
 import { qualityDetailSchema, qualityQueueResponseSchema } from '#/schemas/quality.schema';
+import type { ClaimPriority, ClaimStatus, ClaimTimelineItem } from '#/types/claims.types';
 import type {
   QualityDetail,
   QualityQueueItem,
@@ -9,8 +8,7 @@ import type {
   QualityQueueResponse,
   QualityQueueStatusFilter,
 } from '#/types/quality.types';
-
-import type { ClaimPriority, ClaimStatus, ClaimTimelineItem } from '#/types/claims.types';
+import env from '#env';
 
 interface PaginatedApiResponse<T> {
   count?: number;
@@ -28,44 +26,88 @@ interface ClaimImageAssetApiResponse {
 interface ClaimImageApiResponse {
   id?: number;
   photoType?: string;
+  photo_type?: string;
   image?: ClaimImageAssetApiResponse;
+  created?: string;
+}
+
+interface ResubmissionImageApiResponse {
+  id?: number;
+  image?: string;
+  url?: string;
+  created?: string;
+}
+
+interface ResubmissionEntryApiResponse {
+  id?: number;
+  requiredItem?: string;
+  required_item?: string;
+  responseText?: string;
+  response_text?: string;
+  image?: ResubmissionImageApiResponse;
+  created?: string;
+}
+
+interface LatestResubmissionApiResponse {
+  id?: number;
+  source?: string;
+  notes?: string;
+  entries?: ResubmissionEntryApiResponse[];
   created?: string;
 }
 
 interface LinkedRegistrationApiResponse {
   id?: number;
   registrationCode?: string;
+  registration_code?: string;
   customerName?: string;
+  customer_name?: string;
   phoneNumber?: string;
+  phone_number?: string;
   state?: string;
   purchaseDate?: string;
+  purchase_date?: string;
   purchaseDealer?: string;
+  purchase_dealer?: string;
+  city?: string;
   created?: string;
 }
 
 interface ClaimPaintPairApiResponse {
   topcoatName?: string;
+  topcoat_name?: string;
 }
 
 interface WarrantyClaimApiResponse {
   id?: number;
   registrationNumber?: string;
+  registration_number?: string;
   claimNumber?: string;
+  claim_number?: string;
   issueType?: string;
+  issue_type?: string;
   state?: string;
   claimDate?: string;
+  claim_date?: string;
   created?: string;
   modified?: string;
   notes?: string;
   priority?: string;
   city?: string;
   customerName?: string;
+  customer_name?: string;
   forwardedBy?: string;
+  forwarded_by?: string;
   forwardedAt?: string;
+  forwarded_at?: string;
   affectedAreaSqft?: string;
+  affected_area_sqft?: string;
   registration?: LinkedRegistrationApiResponse;
   paintPair?: ClaimPaintPairApiResponse;
+  paint_pair?: ClaimPaintPairApiResponse;
   images?: ClaimImageApiResponse[];
+  latestResubmission?: LatestResubmissionApiResponse | null;
+  latest_resubmission?: LatestResubmissionApiResponse | null;
 }
 
 const QUALITY_RESOLVED_STATUSES: readonly ClaimStatus[] = ['approved', 'rejected', 'resolved'] as const;
@@ -135,6 +177,14 @@ const normalizeStatus = (apiState: string | undefined): ClaimStatus => {
     return 'rejected';
   }
 
+  if (normalizedState === 'QA_APPROVED') {
+    return 'approved';
+  }
+
+  if (normalizedState === 'QA_REJECTED') {
+    return 'rejected';
+  }
+
   if (normalizedState === 'RESOLVED') {
     return 'resolved';
   }
@@ -145,18 +195,28 @@ const normalizeStatus = (apiState: string | undefined): ClaimStatus => {
 const toQueueItem = (claim: WarrantyClaimApiResponse): QualityQueueItem => {
   const claimId = toId(claim.id);
   const linkedRegistration = claim.registration;
-  const submittedAt = claim.claimDate ?? claim.created ?? UNKNOWN_TIMESTAMP;
-  const forwardedAt = claim.forwardedAt ?? claim.modified ?? claim.created ?? submittedAt;
+  const submittedAt = claim.claimDate ?? claim.claim_date ?? claim.created ?? UNKNOWN_TIMESTAMP;
+  const forwardedAt = claim.forwardedAt ?? claim.forwarded_at ?? claim.modified ?? claim.created ?? submittedAt;
 
   return {
     id: claimId,
-    claimNumber: claim.claimNumber ?? claim.registrationNumber ?? `CLM-${claimId || '0'}`,
-    customerName: claim.customerName ?? linkedRegistration?.customerName ?? 'Unknown Customer',
-    issueType: normalizeIssueType(claim.issueType),
+    claimNumber:
+      claim.claimNumber ??
+      claim.claim_number ??
+      claim.registrationNumber ??
+      claim.registration_number ??
+      `CLM-${claimId || '0'}`,
+    customerName:
+      claim.customerName ??
+      claim.customer_name ??
+      linkedRegistration?.customerName ??
+      linkedRegistration?.customer_name ??
+      'Unknown Customer',
+    issueType: normalizeIssueType(claim.issueType ?? claim.issue_type),
     city: claim.city ?? '-',
     priority: normalizePriority(claim.priority),
     status: normalizeStatus(claim.state),
-    forwardedBy: claim.forwardedBy ?? 'CS Team',
+    forwardedBy: claim.forwardedBy ?? claim.forwarded_by ?? 'CS Team',
     forwardedAt,
     submittedAt,
   };
@@ -164,14 +224,14 @@ const toQueueItem = (claim: WarrantyClaimApiResponse): QualityQueueItem => {
 
 const toTimeline = (claim: WarrantyClaimApiResponse): ClaimTimelineItem[] => {
   const timeline: ClaimTimelineItem[] = [];
-  const createdAt = claim.created ?? claim.claimDate ?? '';
+  const createdAt = claim.created ?? claim.claimDate ?? claim.claim_date ?? '';
   const modifiedAt = claim.modified ?? '';
 
   if (createdAt) {
     timeline.push({
       id: `${toId(claim.id)}-created`,
       event: 'Claim Submitted',
-      actor: claim.registration?.customerName ?? 'Customer',
+      actor: claim.registration?.customerName ?? claim.registration?.customer_name ?? 'Customer',
       createdAt,
     });
   }
@@ -193,45 +253,75 @@ export const mapQualityClaimDetail = (claim: WarrantyClaimApiResponse): QualityD
   const claimId = toId(claim.id);
   const linkedRegistration = claim.registration;
   const registrationId = toId(linkedRegistration?.id);
-  const submittedAt = claim.claimDate ?? claim.created ?? UNKNOWN_TIMESTAMP;
-  const forwardedAt = claim.forwardedAt ?? claim.modified ?? claim.created ?? submittedAt;
+  const submittedAt = claim.claimDate ?? claim.claim_date ?? claim.created ?? UNKNOWN_TIMESTAMP;
+  const forwardedAt = claim.forwardedAt ?? claim.forwarded_at ?? claim.modified ?? claim.created ?? submittedAt;
+  const paintPair = claim.paintPair ?? claim.paint_pair;
+  const latestResubmission = claim.latestResubmission ?? claim.latest_resubmission;
   const normalizedClaim: QualityDetail = {
     id: claimId,
-    claimNumber: claim.claimNumber ?? claim.registrationNumber ?? `CLM-${claimId || '0'}`,
-    customerName: claim.customerName ?? linkedRegistration?.customerName ?? 'Unknown Customer',
-    registrationId: linkedRegistration?.registrationCode ?? (registrationId || UNKNOWN_VALUE),
-    issueType: normalizeIssueType(claim.issueType),
+    claimNumber:
+      claim.claimNumber ??
+      claim.claim_number ??
+      claim.registrationNumber ??
+      claim.registration_number ??
+      `CLM-${claimId || '0'}`,
+    customerName:
+      claim.customerName ??
+      claim.customer_name ??
+      linkedRegistration?.customerName ??
+      linkedRegistration?.customer_name ??
+      'Unknown Customer',
+    registrationId:
+      linkedRegistration?.registrationCode ??
+      linkedRegistration?.registration_code ??
+      (registrationId || UNKNOWN_VALUE),
+    issueType: normalizeIssueType(claim.issueType ?? claim.issue_type),
     photoCount: claim.images?.length ?? 0,
     submittedAt,
     workflowState: toApiClaimWorkflowState(claim.state ?? ''),
     status: normalizeStatus(claim.state),
     priority: normalizePriority(claim.priority),
-    phone: linkedRegistration?.phoneNumber ?? '-',
-    city: claim.city ?? '-',
-    areaSqFt: Number.parseFloat(claim.affectedAreaSqft ?? '1') || 1,
-    topcoat: claim.paintPair?.topcoatName ?? '-',
+    phone: linkedRegistration?.phoneNumber ?? linkedRegistration?.phone_number ?? '-',
+    city: claim.city ?? linkedRegistration?.city ?? '-',
+    areaSqFt: Number.parseFloat(claim.affectedAreaSqft ?? claim.affected_area_sqft ?? '1') || 1,
+    topcoat: paintPair?.topcoatName ?? paintPair?.topcoat_name ?? '-',
     batchNumber: '-',
     description: claim.notes ?? 'No additional description provided.',
     evidencePhotos: (claim.images ?? [])
       .map(image => ({
         id: toId(image.id),
-        label: formatEnumLabel(image.photoType),
+        label: formatEnumLabel(image.photoType ?? image.photo_type),
         url: toAbsoluteUrl(image.image?.url ?? image.image?.image),
       }))
       .filter((image): image is { id: string; label: string; url: string } => Boolean(image.url)),
     timeline: toTimeline(claim),
     linkedRegistration: {
-      registrationId: linkedRegistration?.registrationCode ?? UNKNOWN_VALUE,
+      registrationId: linkedRegistration?.registrationCode ?? linkedRegistration?.registration_code ?? UNKNOWN_VALUE,
       registrationRecordId: registrationId || UNKNOWN_VALUE,
-      customerName: linkedRegistration?.customerName ?? 'Unknown Customer',
-      purchaseDate: linkedRegistration?.purchaseDate ?? UNKNOWN_TIMESTAMP,
-      dealerName: linkedRegistration?.purchaseDealer ?? '-',
+      customerName: linkedRegistration?.customerName ?? linkedRegistration?.customer_name ?? 'Unknown Customer',
+      purchaseDate: linkedRegistration?.purchaseDate ?? linkedRegistration?.purchase_date ?? UNKNOWN_TIMESTAMP,
+      dealerName: linkedRegistration?.purchaseDealer ?? linkedRegistration?.purchase_dealer ?? '-',
       status: linkedRegistration?.state ?? '-',
     },
     csNotes: claim.notes,
     qualityNotes: claim.notes,
-    forwardedBy: claim.forwardedBy ?? 'CS Team',
+    forwardedBy: claim.forwardedBy ?? claim.forwarded_by ?? 'CS Team',
     forwardedAt,
+    latestResubmission: latestResubmission
+      ? {
+          id: toId(latestResubmission.id),
+          source: latestResubmission.source ?? 'UNKNOWN',
+          notes: latestResubmission.notes ?? '',
+          createdAt: latestResubmission.created ?? UNKNOWN_TIMESTAMP,
+          entries: (latestResubmission.entries ?? []).map(entry => ({
+            id: toId(entry.id),
+            requiredItem: entry.requiredItem ?? entry.required_item ?? 'UNKNOWN_ITEM',
+            responseText: entry.responseText ?? entry.response_text ?? '',
+            imageUrl: toAbsoluteUrl(entry.image?.url ?? entry.image?.image),
+            createdAt: entry.created ?? UNKNOWN_TIMESTAMP,
+          })),
+        }
+      : undefined,
   };
 
   return qualityDetailSchema.parse(normalizedClaim);
@@ -295,7 +385,7 @@ export const getQualityListQueryParams = (filters: QualityQueueRequestParams): R
   const state = buildStateFilter(filters.status);
   const params: Record<string, string | number> = {
     page: filters.page,
-    pageSize: filters.pageSize,
+    page_size: filters.pageSize,
   };
 
   if (state) {

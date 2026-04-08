@@ -7,11 +7,13 @@ import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
 
 interface ClaimDetailPanelProps {
   claim: ClaimDetail;
+  onOpenApproveModal: () => void;
   onOpenForwardModal: () => void;
-  onOpenRequestInfoModal: () => void;
   onOpenRejectModal: () => void;
   isActionPending: boolean;
-  isSendToQualityDisabled: boolean;
+  canSendToQuality: boolean;
+  canFinalApprove: boolean;
+  canFinalReject: boolean;
 }
 
 /**
@@ -22,11 +24,13 @@ interface ClaimDetailPanelProps {
  */
 export const ClaimDetailPanel = ({
   claim,
+  onOpenApproveModal,
   onOpenForwardModal,
-  onOpenRequestInfoModal,
   onOpenRejectModal,
   isActionPending,
-  isSendToQualityDisabled,
+  canSendToQuality,
+  canFinalApprove,
+  canFinalReject,
 }: ClaimDetailPanelProps): JSX.Element => {
   return (
     <section className='space-y-4'>
@@ -76,31 +80,41 @@ export const ClaimDetailPanel = ({
 
       <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
         <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
-        <p className='mt-1 text-sm text-text-muted'>Move claim to next workflow step.</p>
+        <p className='mt-1 text-sm text-text-muted'>Available actions depend on current workflow state.</p>
         <div className='mt-4 space-y-2'>
-          <Button
-            className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
-            onClick={onOpenForwardModal}
-            disabled={isActionPending || isSendToQualityDisabled}
-          >
-            {isSendToQualityDisabled ? 'Sent To Quality' : 'Send To Quality'}
-          </Button>
-          <Button
-            className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
-            variant='outline'
-            onClick={onOpenRequestInfoModal}
-            disabled={isActionPending}
-          >
-            Request More Info
-          </Button>
-          <Button
-            className='h-10 w-full rounded-xl'
-            variant='destructive'
-            onClick={onOpenRejectModal}
-            disabled={isActionPending}
-          >
-            Reject Claim
-          </Button>
+          {canFinalApprove ? (
+            <Button
+              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              onClick={onOpenApproveModal}
+              disabled={isActionPending}
+            >
+              Final Approve
+            </Button>
+          ) : null}
+          {canSendToQuality ? (
+            <Button
+              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              onClick={onOpenForwardModal}
+              disabled={isActionPending}
+            >
+              Send To Quality
+            </Button>
+          ) : null}
+          {canFinalReject ? (
+            <Button
+              className='h-10 w-full rounded-xl'
+              variant='destructive'
+              onClick={onOpenRejectModal}
+              disabled={isActionPending}
+            >
+              Final Reject
+            </Button>
+          ) : null}
+          {!canSendToQuality && !canFinalApprove && !canFinalReject ? (
+            <p className='rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs text-text-muted'>
+              No CS/Admin actions are available for the current claim state.
+            </p>
+          ) : null}
         </div>
       </article>
     </section>

@@ -11,6 +11,7 @@ import {
   QualityDecisionPanel,
   QualityEvidencePhotos,
   QualityQuickInfoCard,
+  QualityResubmissionCard,
   RejectClaimQAModal,
   RequestInfoQAModal,
 } from '#/components/quality';
@@ -116,7 +117,7 @@ export const QualityDetailPage = (): JSX.Element => {
   }
 
   const claim = qualityDetailQuery.data;
-  const isApproveDisabled = claim.status === 'approved' || claim.workflowState === 'APPROVED';
+  const canTakeDecision = claim.workflowState === 'QA_REVIEW';
   const normalizedDescription = claim.description.trim();
   const normalizedCsNotes = claim.csNotes?.trim();
   const shouldShowDescription = Boolean(normalizedDescription) && normalizedDescription !== normalizedCsNotes;
@@ -186,6 +187,7 @@ export const QualityDetailPage = (): JSX.Element => {
 
           <QualityAgentNotesCard notes={claim.csNotes} />
           <QualityEvidencePhotos photos={claim.evidencePhotos} />
+          <QualityResubmissionCard latestResubmission={claim.latestResubmission} />
           <LinkedRegistrationCard registration={claim.linkedRegistration} />
           <ClaimTimeline timeline={claim.timeline} />
         </div>
@@ -193,7 +195,7 @@ export const QualityDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <QualityDecisionPanel
             isActionPending={isActionPending}
-            isApproveDisabled={isApproveDisabled}
+            canTakeDecision={canTakeDecision}
             onOpenApproveModal={openApproveModal}
             onOpenRequestInfoModal={openRequestInfoModal}
             onOpenRejectModal={openRejectModal}
@@ -210,6 +212,7 @@ export const QualityDetailPage = (): JSX.Element => {
       <ApproveClaimModal
         isOpen={isApproveModalOpen}
         isSubmitting={isActionPending}
+        claim={claim}
         onClose={closeApproveModal}
         onSubmit={submitApprove}
       />
@@ -217,6 +220,7 @@ export const QualityDetailPage = (): JSX.Element => {
       <RejectClaimQAModal
         isOpen={isRejectModalOpen}
         isSubmitting={isActionPending}
+        claim={claim}
         onClose={closeRejectModal}
         onSubmit={submitReject}
       />

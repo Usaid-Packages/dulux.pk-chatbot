@@ -1,21 +1,23 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys } from '#/constants';
+import { POST, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
 import type { QualityDetail, QualityRejectPayload } from '#/types/quality.types';
-
 import type { WarrantyClaimApiResponse } from '../apiMappers';
 import { mapQualityClaimDetail } from '../apiMappers';
 
 export const rejectQualityClaim = async (payload: QualityRejectPayload): Promise<QualityDetail> => {
-  const response = await performRequest<WarrantyClaimApiResponse, { action: 'REJECT'; notes: string }>({
-    method: 'patch',
+  const response = await performRequest<
+    WarrantyClaimApiResponse,
+    { technical_reason: string; technical_notes: string; notification_template: string }
+  >({
+    method: POST,
     url: apiEndpoints.quality.reject(payload.id),
     payload: {
-      action: 'REJECT',
-      notes: `Reason: ${payload.reason}\n\nTechnical Notes: ${payload.technicalNotes}`,
+      technical_reason: payload.technicalReason,
+      technical_notes: payload.technicalNotes,
+      notification_template: payload.notificationTemplate,
     },
   });
 

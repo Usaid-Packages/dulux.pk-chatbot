@@ -87,9 +87,9 @@ const CLAIM_CREATE_ISSUE_TYPES = [
 
 export const createClaimSchema = z.object({
   registrationId: z.string().min(1, 'Registration is required.'),
-  paintPairId: z.string().min(1, 'Selected topcoat/basecoat combination is not valid for this registration.'),
+  paintPairId: z.string(),
   topcoatProductId: z.string().min(1, 'Topcoat product is required.'),
-  basecoatProductId: z.string().min(1, 'Basecoat selection is required.'),
+  basecoatProductId: z.string().optional(),
   issueType: z.enum(CLAIM_CREATE_ISSUE_TYPES),
   affectedAreaSqft: z.coerce.number().positive('Affected area must be greater than zero.'),
   notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
@@ -102,9 +102,13 @@ export const forwardToQualitySchema = z.object({
   notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
 });
 
-export const rejectClaimSchema = z.object({
-  reason: z.string().trim().min(1, 'Reason is required.'),
-  notes: z.string().trim().max(300, 'Notes must be 300 characters or fewer.').optional(),
+export const approveClaimFinalSchema = z.object({
+  notes: z.string().trim().max(500, 'Notes must be 500 characters or fewer.').optional(),
+  voucher: z.instanceof(File, { message: 'Voucher file is required.' }),
+});
+
+export const rejectClaimFinalSchema = z.object({
+  notes: z.string().trim().min(10, 'Final rejection notes are required.').max(500),
 });
 
 const OTHER_REQUEST_INFO_ITEM = 'Other';
@@ -129,5 +133,6 @@ export const requestMoreInfoSchema = z
 
 export type CreateClaimFormValues = z.infer<typeof createClaimSchema>;
 export type ForwardToQualityFormValues = z.infer<typeof forwardToQualitySchema>;
-export type RejectClaimFormValues = z.infer<typeof rejectClaimSchema>;
+export type ApproveClaimFinalFormValues = z.infer<typeof approveClaimFinalSchema>;
+export type RejectClaimFinalFormValues = z.infer<typeof rejectClaimFinalSchema>;
 export type RequestMoreInfoFormValues = z.infer<typeof requestMoreInfoSchema>;

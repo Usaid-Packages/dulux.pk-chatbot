@@ -5,12 +5,12 @@ import { performRequest } from '#/services/apiClient';
 import type { ApiClaimDetail, RejectClaimRequestPayload } from '#/types/claims.api.types';
 import type { ClaimDetail, RejectClaimPayload } from '#/types/claims.types';
 import { normalizeClaimDetail } from '../normalizers';
-import { toRejectNotes } from '../payloadHelpers';
 
 export const rejectClaim = async (payload: RejectClaimPayload): Promise<ClaimDetail> => {
   const requestPayload: RejectClaimRequestPayload = {
     action: 'REJECT',
-    notes: toRejectNotes(payload),
+    notes: payload.notes,
+    notification_template: payload.notificationTemplate ?? '',
   };
 
   const response = await performRequest<ApiClaimDetail, RejectClaimRequestPayload>({
