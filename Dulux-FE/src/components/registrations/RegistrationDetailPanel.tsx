@@ -9,7 +9,8 @@ interface RegistrationDetailPanelProps {
   registration: RegistrationDetail;
   isApprovePending: boolean;
   isApproveDisabled: boolean;
-  onApprove: () => void;
+  isReviewActionDisabled: boolean;
+  onOpenApproveModal: () => void;
   onOpenResubmitModal: () => void;
   onOpenRejectModal: () => void;
 }
@@ -40,7 +41,8 @@ export const RegistrationDetailPanel = ({
   registration,
   isApprovePending,
   isApproveDisabled,
-  onApprove,
+  isReviewActionDisabled,
+  onOpenApproveModal,
   onOpenResubmitModal,
   onOpenRejectModal,
 }: RegistrationDetailPanelProps): JSX.Element => {
@@ -102,7 +104,7 @@ export const RegistrationDetailPanel = ({
             type='button'
             className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
             disabled={isApprovePending || isApproveDisabled}
-            onClick={onApprove}
+            onClick={onOpenApproveModal}
           >
             {isApprovePending ? 'Approving...' : isApproveDisabled ? 'Approved' : 'Approve'}
           </Button>
@@ -110,11 +112,18 @@ export const RegistrationDetailPanel = ({
             type='button'
             variant='outline'
             className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
+            disabled={isReviewActionDisabled}
             onClick={onOpenResubmitModal}
           >
             Request Resubmission
           </Button>
-          <Button type='button' variant='destructive' className='h-10 w-full rounded-xl' onClick={onOpenRejectModal}>
+          <Button
+            type='button'
+            variant='destructive'
+            className='h-10 w-full rounded-xl'
+            disabled={isReviewActionDisabled}
+            onClick={onOpenRejectModal}
+          >
             Reject Registration
           </Button>
         </div>

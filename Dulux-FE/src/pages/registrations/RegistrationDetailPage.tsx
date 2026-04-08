@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { RegistrationDetailPanel, RejectRegistrationModal, ResubmissionModal } from '#/components/registrations';
+import {
+  ApproveRegistrationModal,
+  RegistrationDetailPanel,
+  RejectRegistrationModal,
+  ResubmissionModal,
+} from '#/components/registrations';
 import {
   Button,
   Empty,
@@ -28,6 +33,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
   const { id } = useParams();
 
   const registrationId = id ?? '';
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
   const [isResubmissionModalOpen, setIsResubmissionModalOpen] = useState<boolean>(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
 
@@ -62,6 +68,18 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   const closeRejectModal = (): void => {
     setIsRejectModalOpen(false);
+  };
+
+  const openApproveModal = (): void => {
+    setIsApproveModalOpen(true);
+  };
+
+  const closeApproveModal = (): void => {
+    setIsApproveModalOpen(false);
+  };
+
+  const handleApproveSubmit = (values: Parameters<typeof approveRegistration>[0]): void => {
+    approveRegistration(values, closeApproveModal);
   };
 
   const handleRejectSubmit = (values: Parameters<typeof rejectRegistration>[0]): void => {
@@ -218,12 +236,21 @@ export const RegistrationDetailPage = (): JSX.Element => {
             registration={registration}
             isApprovePending={isApprovePending}
             isApproveDisabled={registration.state === 'APPROVED'}
-            onApprove={approveRegistration}
+            isReviewActionDisabled={registration.state === 'APPROVED'}
+            onOpenApproveModal={openApproveModal}
             onOpenResubmitModal={openResubmissionModal}
             onOpenRejectModal={openRejectModal}
           />
         </div>
       </section>
+
+      <ApproveRegistrationModal
+        isOpen={isApproveModalOpen}
+        isSubmitting={isApprovePending}
+        registration={registration}
+        onClose={closeApproveModal}
+        onSubmit={handleApproveSubmit}
+      />
 
       <ResubmissionModal
         isOpen={isResubmissionModalOpen}
@@ -235,6 +262,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
       <RejectRegistrationModal
         isOpen={isRejectModalOpen}
         isSubmitting={isRejectPending}
+        registration={registration}
         onClose={closeRejectModal}
         onSubmit={handleRejectSubmit}
       />

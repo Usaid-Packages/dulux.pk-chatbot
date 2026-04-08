@@ -3,12 +3,12 @@ import type { UseMutationResult } from '@tanstack/react-query';
 
 import { apiEndpoints, queryKeys, REGISTRATION_ACTIONS, REGISTRATION_HTTP_METHODS } from '#/constants';
 import { performRequest } from '#/services';
-import type { RegistrationActionPayload } from '#/types/registrations';
+import type { RegistrationActionPayload, ResubmissionFieldName } from '#/types/registrations';
 
 interface ResubmitRegistrationVariables {
   id: string;
-  fields: string[];
-  note?: string;
+  fields: ResubmissionFieldName[];
+  notes: string;
 }
 
 /**
@@ -20,13 +20,13 @@ export const useResubmitRegistrationMutation = (): UseMutationResult<void, Error
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, ResubmitRegistrationVariables>({
-    mutationFn: async ({ id, fields, note }: ResubmitRegistrationVariables): Promise<void> => {
+    mutationFn: async ({ id, fields, notes }: ResubmitRegistrationVariables): Promise<void> => {
       const payload: RegistrationActionPayload = {
         action: REGISTRATION_ACTIONS.RESUBMIT,
-        notes: note,
+        notes,
         rejectionFields: fields.map(fieldName => ({
           fieldName,
-          note,
+          note: notes,
         })),
       };
 

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
+import { Textarea } from '#/components/ui/Textarea';
 import { RESUBMISSION_FIELDS } from '#/constants';
 import { resubmissionSchema, type ResubmissionFormValues } from '#/schemas/registrations';
 
@@ -31,7 +32,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
     resolver: zodResolver(resubmissionSchema),
     defaultValues: {
       fields: [],
-      note: '',
+      notes: '',
     },
   });
 
@@ -46,42 +47,47 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+      <DialogContent className='flex max-h-[62vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle>Request Resubmission</DialogTitle>
           <DialogDescription>Select the fields that need correction and add notes for the customer.</DialogDescription>
         </DialogHeader>
-        <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
-          <fieldset className='space-y-2'>
-            <legend className='text-sm font-semibold text-text-primary'>Fields to resubmit</legend>
-            {RESUBMISSION_FIELDS.map(field => (
-              <label
-                key={field.id}
-                className='flex cursor-pointer items-start gap-3 rounded-xl border border-primary/15 bg-white/85 p-2.5'
-              >
-                <input type='checkbox' className='mt-1' value={field.id} {...register('fields')} />
-                <span>
-                  <span className='block text-sm font-medium text-text-primary'>{field.label}</span>
-                  <span className='block text-xs text-text-muted'>{field.hint}</span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-          {errors.fields ? <p className='text-xs text-destructive'>{errors.fields.message}</p> : null}
-          <div className='space-y-2'>
-            <label htmlFor='resubmission-note' className='block text-sm font-medium text-text-primary'>
-              Note (optional)
-            </label>
-            <textarea
-              id='resubmission-note'
-              rows={4}
-              className='w-full rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm'
-              placeholder='Add context for the customer...'
-              {...register('note')}
-            />
-            {errors.note ? <p className='text-xs text-destructive'>{errors.note.message}</p> : null}
+        <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
+          <div className='min-h-0 flex-1 overflow-y-auto pr-1'>
+            <fieldset className='space-y-2'>
+              <legend className='text-sm font-semibold text-text-primary'>Fields to resubmit</legend>
+              {RESUBMISSION_FIELDS.map(field => (
+                <label
+                  key={field.id}
+                  className='flex cursor-pointer items-start gap-3 rounded-xl border border-primary/15 bg-white/85 p-2.5'
+                >
+                  <input type='checkbox' className='mt-1' value={field.id} {...register('fields')} />
+                  <span>
+                    <span className='block text-sm font-medium text-text-primary'>{field.label}</span>
+                    <span className='block text-xs text-text-muted'>{field.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            {errors.fields ? <p className='text-xs text-destructive'>{errors.fields.message}</p> : null}
           </div>
-          <DialogFooter>
+
+          <div className='mt-3 border-t border-primary/10 pt-3'>
+            <div className='space-y-2'>
+              <label htmlFor='resubmission-note' className='block text-sm font-medium text-text-primary'>
+                Notes
+              </label>
+              <Textarea
+                id='resubmission-note'
+                rows={3}
+                placeholder='Add context for the customer...'
+                {...register('notes')}
+              />
+              {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
+            </div>
+          </div>
+
+          <DialogFooter className='mt-3 border-t border-primary/10 pt-3'>
             <Button type='button' variant='outline' onClick={handleModalClose}>
               Cancel
             </Button>

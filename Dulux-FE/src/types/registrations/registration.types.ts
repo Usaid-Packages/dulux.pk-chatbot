@@ -89,13 +89,27 @@ export interface RegistrationsQueryParams extends Record<string, unknown> {
 }
 
 export interface ResubmissionFieldPayload {
-  field_name: string;
+  fieldName: ResubmissionFieldName;
   note?: string;
 }
+
+export type ResubmissionFieldName =
+  | 'customer_name'
+  | 'email'
+  | 'city'
+  | 'province'
+  | 'site_address'
+  | 'purchase_date'
+  | 'purchase_dealer'
+  | 'purchase_dealer_city'
+  | 'purchase_dealer_address'
+  | 'paint_pairs'
+  | 'paint_pair_invoices';
 
 export interface RegistrationActionPayload extends Record<string, unknown> {
   action: 'APPROVE' | 'REJECT' | 'RESUBMIT';
   notes?: string;
+  notificationTemplate?: string;
   rejectionFields?: ResubmissionFieldPayload[];
 }
 
