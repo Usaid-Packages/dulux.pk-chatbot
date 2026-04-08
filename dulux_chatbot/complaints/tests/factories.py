@@ -22,10 +22,11 @@ def create_complaint(
     status: str = ComplaintStatus.OPEN,
     registration=None,
     assigned_to=None,
+    phone_number: str = "923001234567",
 ) -> Complaint:
     return Complaint.objects.create(
         registration=registration,
-        phone_number="923001234567",
+        phone_number=phone_number,
         customer_name="Complaint Customer",
         subject="Damaged paint",
         description="Description",

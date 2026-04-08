@@ -10,27 +10,58 @@ from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 
 
-class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
+class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
+    group_name: str
+
     async def connect(self) -> None:
-        self.complaint_id = self.scope["url_route"]["kwargs"]["complaint_id"]
-        self.group_name = f"complaint_{self.complaint_id}"
         self.user = await self._get_user()
 
         if self.user is None:
             await self.close(code=4401)
             return
 
-        complaint_exists = await self._complaint_exists()
-        if not complaint_exists:
-            await self.close(code=4404)
+        is_valid = await self._connect_validated()
+        if not is_valid:
             return
-
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+
+    async def _connect_validated(self) -> bool:
+        return True
 
     async def disconnect(self, _close_code: int) -> None:
         if hasattr(self, "group_name"):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def _get_user(self):
+        query_string = self.scope.get("query_string", b"").decode()
+        token = parse_qs(query_string).get("token", [None])[0]
+        if not token:
+            return None
+
+        return await sync_to_async(self._authenticate_token)(token)
+
+    def _authenticate_token(self, token: str):
+        try:
+            jwt_authentication = JWTAuthentication()
+            validated_token = jwt_authentication.get_validated_token(token)
+            user = jwt_authentication.get_user(validated_token)
+        except Exception:
+            return None
+        if user is None or not user.is_authenticated:
+            return None
+        return user
+
+
+class ComplaintChatConsumer(AuthenticatedConsumer):
+    async def _connect_validated(self) -> bool:
+        self.complaint_id = self.scope["url_route"]["kwargs"]["complaint_id"]
+        self.group_name = f"complaint_{self.complaint_id}"
+        complaint_exists = await self._complaint_exists()
+        if not complaint_exists:
+            await self.close(code=4404)
+            return False
+        return True
 
     async def receive_json(self, content: dict, **_kwargs) -> None:
         text = str(content.get("text", "")).strip()
@@ -56,25 +87,6 @@ class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
     async def chat_message(self, event: dict) -> None:
         await self.send_json(event.get("message", {}))
 
-    async def _get_user(self):
-        query_string = self.scope.get("query_string", b"").decode()
-        token = parse_qs(query_string).get("token", [None])[0]
-        if not token:
-            return None
-
-        return await sync_to_async(self._authenticate_token)(token)
-
-    def _authenticate_token(self, token: str):
-        try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except Exception:
-            return None
-        if user is None or not user.is_authenticated:
-            return None
-        return user
-
     @database_sync_to_async
     def _complaint_exists(self) -> bool:
         return Complaint.objects.filter(pk=self.complaint_id).exists()
@@ -96,3 +108,17 @@ class ComplaintChatConsumer(AsyncJsonWebsocketConsumer):
             "text": message.text,
             "created": message.created.isoformat(),
         }
+
+
+class ComplaintQueueConsumer(AuthenticatedConsumer):
+    async def _connect_validated(self) -> bool:
+        self.group_name = "complaints"
+        return True
+
+    async def complaint_created(self, event: dict) -> None:
+        await self.send_json(
+            {
+                "event": "complaint.created",
+                "complaint": event.get("complaint", {}),
+            }
+        )

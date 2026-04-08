@@ -5,6 +5,7 @@ from django.db import transaction
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
+from dulux_chatbot.complaints.realtime import broadcast_complaint_created
 from dulux_chatbot.warranty.models import WarrantyRegistration
 
 
@@ -92,6 +93,7 @@ class ComplaintFlow(BaseFlow):
             sender=MessageSender.CUSTOMER,
             text=data.get("description", ""),
         )
+        broadcast_complaint_created(complaint=complaint)
         self._save_data("complaint_id", complaint.id)
         self.client.send_text(
             self.session.phone_number,

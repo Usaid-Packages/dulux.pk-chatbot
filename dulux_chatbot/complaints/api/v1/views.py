@@ -14,6 +14,7 @@ from dulux_chatbot.complaints.api.v1.serializers import (
     ComplaintUpdateSerializer,
 )
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
+from dulux_chatbot.complaints.realtime import broadcast_complaint_created
 
 
 class ComplaintListCreateAPIView(generics.ListCreateAPIView):
@@ -31,6 +32,14 @@ class ComplaintListCreateAPIView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return ComplaintCreateSerializer
         return ComplaintListSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        complaint = serializer.save()
+        broadcast_complaint_created(complaint=complaint)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ComplaintRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):

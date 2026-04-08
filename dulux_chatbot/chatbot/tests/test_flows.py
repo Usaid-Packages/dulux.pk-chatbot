@@ -308,6 +308,25 @@ class FlowTests(TestCase):
         self.assertEqual(claim.resubmissions.count(), 1)
         self.assertEqual(claim.resubmissions.first().entries.count(), 1)
 
+    @patch("dulux_chatbot.chatbot.flows.complaint.broadcast_complaint_created")
+    def test_whatsapp_complaint_flow_broadcasts_created_complaint(self, broadcast_mock):
+        self.dispatch_text("4")
+        self.assertEqual(self.session.flow, "COMPLAINT")
+        self.assertEqual(self.session.current_step, "subject")
+
+        self.dispatch_text("Wall damage")
+        self.assertEqual(self.session.current_step, "description")
+
+        self.dispatch_text("Paint is peeling after recent rain.")
+        self.assertEqual(self.session.current_step, "image_upload")
+
+        self.dispatch_text("DONE")
+
+        complaint = Complaint.objects.get(phone_number=self.phone_number)
+        broadcast_mock.assert_called_once_with(complaint=complaint)
+        self.assertEqual((self.session.session_data or {}).get("complaint_id"), complaint.id)
+        self.assertEqual(self.session.current_step, "chat")
+
     def test_registration_rejects_non_image_invoice_upload(self):
         create_product(name="Flow Topcoat")
 

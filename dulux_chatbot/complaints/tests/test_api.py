@@ -41,6 +41,31 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    @patch("dulux_chatbot.complaints.api.v1.views.broadcast_complaint_created")
+    def test_create_complaint_broadcasts_new_complaint_to_queue(self, broadcast_mock):
+        image = create_image()
+        registration = create_registration()
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "phone_number": registration.phone_number,
+                "customer_name": "Complaint Customer",
+                "subject": "Damaged paint",
+                "description": "Description",
+                "images": [{"image_id": image.id}],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        broadcast_mock.assert_called_once()
+        broadcasted_complaint = broadcast_mock.call_args.kwargs["complaint"]
+        self.assertEqual(broadcasted_complaint.customer_name, "Complaint Customer")
+        self.assertEqual(broadcasted_complaint.subject, "Damaged paint")
+
     def test_create_complaint_with_invalid_phone_number_returns_400(self):
         registration = create_registration()
         self.client.force_authenticate(user=self.user)
@@ -89,7 +114,8 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_list_and_create_messages(self):
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_list_and_create_messages(self, send_text_mock):
         complaint = create_complaint()
         create_chat_message(complaint=complaint)
         self.client.force_authenticate(user=self.user)
@@ -100,6 +126,7 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(list_response.status_code, status.HTTP_200_OK)
         self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+        send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
 
     @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
     def test_create_message_sends_text_to_whatsapp(self, send_text_mock):
