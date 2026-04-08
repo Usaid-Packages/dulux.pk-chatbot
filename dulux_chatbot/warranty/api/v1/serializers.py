@@ -11,9 +11,22 @@ from dulux_chatbot.core.models import Image
 from dulux_chatbot.core.validators import validate_pakistan_phone_number
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
-from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationState
+from dulux_chatbot.warranty.choices import (
+    ClaimResubmissionSource,
+    ClaimState,
+    InvoiceType,
+    PhotoType,
+    QualityDecisionType,
+    QualityRequiredItem,
+    QualityTechnicalReason,
+    RegistrationState,
+)
 from dulux_chatbot.warranty.models import (
     ClaimImage,
+    ClaimQualityReview,
+    ClaimQualityReviewItem,
+    ClaimResubmission,
+    ClaimResubmissionEntry,
     PaintPairInvoice,
     RegistrationPaintPair,
     RejectionField,
@@ -21,11 +34,28 @@ from dulux_chatbot.warranty.models import (
     WarrantyRegistration,
 )
 from dulux_chatbot.warranty.tasks import (
+    send_claim_resubmit_notification,
+    send_claim_status_notification,
     send_registration_resubmit_notification,
     send_registration_status_notification,
     send_whatsapp_status_notification,
 )
 from dulux_chatbot.warranty.utils import generate_registration_code
+
+
+QUALITY_IMAGE_REQUIRED_ITEMS = {
+    QualityRequiredItem.ADDITIONAL_PHOTOS_DIFFERENT_ANGLES,
+    QualityRequiredItem.CLOSE_UP_DAMAGE_PHOTOS,
+    QualityRequiredItem.PRODUCT_BATCH_NUMBER_PHOTO,
+    QualityRequiredItem.PROOF_OF_PURCHASE_INVOICE,
+}
+
+QUALITY_TEXT_REQUIRED_ITEMS = {
+    QualityRequiredItem.APPLICATION_DETAILS_METHOD_COATS_PREP,
+    QualityRequiredItem.ISSUE_TIMELINE_DETAILS,
+    QualityRequiredItem.SITE_CONDITIONS_INFO,
+    QualityRequiredItem.OTHER,
+}
 
 
 class PaintPairInvoiceSerializer(serializers.ModelSerializer):
@@ -399,10 +429,55 @@ class ClaimImageSerializer(serializers.ModelSerializer):
         fields = ("id", "photo_type", "image", "created")
 
 
+class ClaimQualityReviewItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClaimQualityReviewItem
+        fields = ("id", "required_item", "created")
+
+
+class ClaimQualityReviewSerializer(serializers.ModelSerializer):
+    created_by_email = serializers.SerializerMethodField()
+    required_items = ClaimQualityReviewItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ClaimQualityReview
+        fields = (
+            "id",
+            "decision_type",
+            "technical_reason",
+            "notes",
+            "other_text",
+            "created_by",
+            "created_by_email",
+            "required_items",
+            "created",
+        )
+
+    def get_created_by_email(self, obj: ClaimQualityReview) -> str | None:
+        return obj.created_by.email if obj.created_by else None
+
+
+class ClaimResubmissionEntrySerializer(serializers.ModelSerializer):
+    image = ImageSerializer(read_only=True)
+
+    class Meta:
+        model = ClaimResubmissionEntry
+        fields = ("id", "required_item", "response_text", "image", "created")
+
+
+class ClaimResubmissionSerializer(serializers.ModelSerializer):
+    entries = ClaimResubmissionEntrySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ClaimResubmission
+        fields = ("id", "source", "notes", "entries", "created")
+
+
 class WarrantyClaimListSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
     customer_name = serializers.CharField(source="registration.customer_name", read_only=True)
     topcoat_name = serializers.SerializerMethodField()
+    latest_quality_decision = serializers.SerializerMethodField()
 
     class Meta:
         model = WarrantyClaim
@@ -415,16 +490,23 @@ class WarrantyClaimListSerializer(serializers.ModelSerializer):
             "affected_area_sqft",
             "claim_date",
             "state",
+            "latest_quality_decision",
         )
 
     def get_topcoat_name(self, obj: WarrantyClaim) -> str:
         return obj.paint_pair.topcoat.name
+
+    def get_latest_quality_decision(self, obj: WarrantyClaim) -> str | None:
+        latest_review = obj.quality_reviews.order_by("-created", "-id").first()
+        return latest_review.decision_type if latest_review else None
 
 
 class WarrantyClaimDetailSerializer(serializers.ModelSerializer):
     registration = WarrantyRegistrationListSerializer(read_only=True)
     paint_pair = RegistrationPaintPairSerializer(read_only=True)
     images = ClaimImageSerializer(many=True, read_only=True)
+    latest_quality_review = serializers.SerializerMethodField()
+    latest_resubmission = serializers.SerializerMethodField()
 
     class Meta:
         model = WarrantyClaim
@@ -437,12 +519,27 @@ class WarrantyClaimDetailSerializer(serializers.ModelSerializer):
             "claim_date",
             "state",
             "notes",
+            "voucher",
             "approved_by",
             "approved_at",
             "images",
+            "latest_quality_review",
+            "latest_resubmission",
             "created",
             "modified",
         )
+
+    def get_latest_quality_review(self, obj: WarrantyClaim) -> dict | None:
+        latest_review = obj.quality_reviews.order_by("-created", "-id").first()
+        if latest_review is None:
+            return None
+        return ClaimQualityReviewSerializer(latest_review).data
+
+    def get_latest_resubmission(self, obj: WarrantyClaim) -> dict | None:
+        latest_resubmission = obj.resubmissions.order_by("-created", "-id").first()
+        if latest_resubmission is None:
+            return None
+        return ClaimResubmissionSerializer(latest_resubmission).data
 
 
 class ClaimImageWriteSerializer(serializers.Serializer):
@@ -455,6 +552,9 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         ClaimState.SUBMITTED,
         ClaimState.IN_REVIEW,
         ClaimState.QA_REVIEW,
+        ClaimState.QA_APPROVED,
+        ClaimState.QA_REJECTED,
+        ClaimState.RESUBMIT,
         ClaimState.APPROVED,
     )
     images = ClaimImageWriteSerializer(many=True)
@@ -504,10 +604,11 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
 class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
     action = serializers.ChoiceField(
-        choices=("APPROVE", "REJECT", "RESUBMIT", "IN_REVIEW", "QA_REVIEW"),
+        choices=("APPROVE", "REJECT", "IN_REVIEW", "QA_REVIEW"),
         write_only=True,
         required=False,
     )
+    notification_template = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = WarrantyClaim
@@ -518,24 +619,26 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
             "affected_area_sqft",
             "state",
             "notes",
+            "voucher",
             "approved_by",
             "approved_at",
             "action",
+            "notification_template",
         )
         read_only_fields = ("id", "registration_number", "state", "approved_by", "approved_at")
 
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
         action = attrs.get("action")
+        notification_template = attrs.get("notification_template")
         if action is not None:
             current_state = self.instance.state
 
             allowed_transitions = {
                 "IN_REVIEW": {ClaimState.SUBMITTED},
                 "QA_REVIEW": {ClaimState.IN_REVIEW},
-                "APPROVE": {ClaimState.IN_REVIEW, ClaimState.QA_REVIEW, ClaimState.RESUBMIT},
-                "REJECT": {ClaimState.IN_REVIEW, ClaimState.QA_REVIEW, ClaimState.RESUBMIT},
-                "RESUBMIT": {ClaimState.IN_REVIEW, ClaimState.QA_REVIEW},
+                "APPROVE": {ClaimState.QA_APPROVED},
+                "REJECT": {ClaimState.QA_REJECTED},
             }
 
             if current_state not in allowed_transitions[action]:
@@ -543,14 +646,24 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
                     {"action": f"Cannot transition claim from {current_state} using {action}."}
                 )
 
-            if action in {"REJECT", "RESUBMIT"} and not attrs.get("notes"):
-                raise serializers.ValidationError({"notes": "Notes are required for reject or resubmit."})
+            if action == "REJECT" and not attrs.get("notes"):
+                raise serializers.ValidationError({"notes": "Notes are required for reject."})
+            if action in {"APPROVE", "REJECT"}:
+                if not isinstance(notification_template, str) or not notification_template.strip():
+                    raise serializers.ValidationError(
+                        {
+                            "notification_template": "notification_template HTML string is required for approve or reject."
+                        }
+                    )
+            if action == "APPROVE" and not attrs.get("voucher"):
+                raise serializers.ValidationError({"voucher": "voucher file is required for approve."})
 
         return attrs
 
     @transaction.atomic
     def update(self, instance: WarrantyClaim, validated_data: dict) -> WarrantyClaim:
         action = validated_data.pop("action", None)
+        notification_template = validated_data.pop("notification_template", None)
         notes = validated_data.get("notes", "").strip()
         if "notes" in validated_data:
             validated_data["notes"] = notes
@@ -564,7 +677,6 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
                 "QA_REVIEW": ClaimState.QA_REVIEW,
                 "APPROVE": ClaimState.APPROVED,
                 "REJECT": ClaimState.REJECTED,
-                "RESUBMIT": ClaimState.RESUBMIT,
             }
             instance.state = state_map[action]
 
@@ -574,9 +686,266 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
 
-        if action == "APPROVE":
-            send_whatsapp_status_notification.delay(instance.registration.phone_number, "Claim approved.")
-        elif action in {"REJECT", "RESUBMIT"} and notes:
-            send_whatsapp_status_notification.delay(instance.registration.phone_number, notes)
+        if action in {"APPROVE", "REJECT"}:
+            send_claim_status_notification.delay(instance.id, notification_template=notification_template)
 
         return instance
+
+
+class ClaimQualityApproveSerializer(serializers.Serializer):
+    technical_notes = serializers.CharField(min_length=10, max_length=2000)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        claim = self.context["claim"]
+        if claim.state != ClaimState.QA_REVIEW:
+            raise serializers.ValidationError({"detail": "Only claims in QA_REVIEW can be qa-approved."})
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs) -> WarrantyClaim:
+        claim: WarrantyClaim = self.context["claim"]
+        notes = self.validated_data["technical_notes"].strip()
+        ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.QA_APPROVED,
+            notes=notes,
+            created_by=self.context["request"].user,
+        )
+        claim.state = ClaimState.QA_APPROVED
+        claim.notes = notes
+        claim.save(update_fields=["state", "notes", "modified"])
+        return claim
+
+
+class ClaimQualityRejectSerializer(serializers.Serializer):
+    technical_reason = serializers.ChoiceField(choices=QualityTechnicalReason.choices)
+    technical_notes = serializers.CharField(min_length=10, max_length=2000)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        claim = self.context["claim"]
+        if claim.state != ClaimState.QA_REVIEW:
+            raise serializers.ValidationError({"detail": "Only claims in QA_REVIEW can be qa-rejected."})
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs) -> WarrantyClaim:
+        claim: WarrantyClaim = self.context["claim"]
+        notes = self.validated_data["technical_notes"].strip()
+        ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.QA_REJECTED,
+            technical_reason=self.validated_data["technical_reason"],
+            notes=notes,
+            created_by=self.context["request"].user,
+        )
+        claim.state = ClaimState.QA_REJECTED
+        claim.notes = notes
+        claim.save(update_fields=["state", "notes", "modified"])
+        return claim
+
+
+class ClaimQualityRequestInfoSerializer(serializers.Serializer):
+    required_items = serializers.ListField(
+        child=serializers.ChoiceField(choices=QualityRequiredItem.choices),
+        allow_empty=False,
+    )
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+    other_text = serializers.CharField(required=False, allow_blank=True, max_length=500)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        claim = self.context["claim"]
+        if claim.state != ClaimState.QA_REVIEW:
+            raise serializers.ValidationError({"detail": "Only claims in QA_REVIEW can request more info."})
+        if QualityRequiredItem.OTHER in attrs["required_items"] and not attrs.get("other_text", "").strip():
+            raise serializers.ValidationError({"other_text": "other_text is required when OTHER is selected."})
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs) -> WarrantyClaim:
+        claim: WarrantyClaim = self.context["claim"]
+        notes = self.validated_data.get("notes", "").strip()
+        other_text = self.validated_data.get("other_text", "").strip()
+        required_items = self.validated_data["required_items"]
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.REQUEST_INFO,
+            notes=notes,
+            other_text=other_text,
+            created_by=self.context["request"].user,
+        )
+        for required_item in required_items:
+            ClaimQualityReviewItem.objects.create(quality_review=quality_review, required_item=required_item)
+        claim.state = ClaimState.RESUBMIT
+        if notes:
+            claim.notes = notes
+            claim.save(update_fields=["state", "notes", "modified"])
+        else:
+            claim.save(update_fields=["state", "modified"])
+        send_claim_resubmit_notification.delay(claim.id)
+        return claim
+
+
+class ClaimResubmissionEntryWriteSerializer(serializers.Serializer):
+    required_item = serializers.ChoiceField(choices=QualityRequiredItem.choices)
+    response_text = serializers.CharField(required=False, allow_blank=True)
+    image_id = serializers.PrimaryKeyRelatedField(queryset=Image.objects.all(), source="image", required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        has_text = bool(attrs.get("response_text", "").strip())
+        has_image = attrs.get("image") is not None
+        if not has_text and not has_image:
+            raise serializers.ValidationError("Either response_text or image_id is required.")
+        return attrs
+
+
+class ClaimRequestedItemSerializer(serializers.Serializer):
+    required_item = serializers.ChoiceField(choices=QualityRequiredItem.choices)
+    label = serializers.CharField(read_only=True)
+    input_type = serializers.ChoiceField(choices=("IMAGE", "TEXT"), read_only=True)
+    is_multiple = serializers.BooleanField(read_only=True)
+
+
+class ClaimResubmissionRequestSerializer(serializers.Serializer):
+    claim_id = serializers.IntegerField(read_only=True)
+    claim_state = serializers.ChoiceField(choices=ClaimState.choices, read_only=True)
+    quality_review_id = serializers.IntegerField(read_only=True)
+    quality_notes = serializers.CharField(read_only=True, allow_blank=True)
+    other_text = serializers.CharField(read_only=True, allow_blank=True)
+    requested_items = ClaimRequestedItemSerializer(many=True, read_only=True)
+    created = serializers.DateTimeField(read_only=True)
+
+    @staticmethod
+    def build_from_claim(claim: WarrantyClaim) -> dict:
+        if claim.state != ClaimState.RESUBMIT:
+            raise serializers.ValidationError({"detail": "Only claims in RESUBMIT can fetch resubmission fields."})
+
+        latest_quality_review = (
+            claim.quality_reviews.filter(decision_type=QualityDecisionType.REQUEST_INFO)
+            .prefetch_related("required_items")
+            .order_by("-created", "-id")
+            .first()
+        )
+        if latest_quality_review is None:
+            raise serializers.ValidationError({"detail": "No QA request-info record exists for this claim."})
+
+        requested_items = []
+        for required_item in latest_quality_review.required_items.order_by("id"):
+            item_value = required_item.required_item
+            requested_items.append(
+                {
+                    "required_item": item_value,
+                    "label": QualityRequiredItem(item_value).label,
+                    "input_type": "IMAGE" if item_value in QUALITY_IMAGE_REQUIRED_ITEMS else "TEXT",
+                    "is_multiple": item_value in QUALITY_IMAGE_REQUIRED_ITEMS,
+                }
+            )
+
+        return {
+            "claim_id": claim.id,
+            "claim_state": claim.state,
+            "quality_review_id": latest_quality_review.id,
+            "quality_notes": latest_quality_review.notes,
+            "other_text": latest_quality_review.other_text,
+            "requested_items": requested_items,
+            "created": latest_quality_review.created,
+        }
+
+
+class ClaimResubmissionCreateSerializer(serializers.Serializer):
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+    entries = ClaimResubmissionEntryWriteSerializer(many=True, required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        claim = self.context["claim"]
+        if claim.state != ClaimState.RESUBMIT:
+            raise serializers.ValidationError({"detail": "Only claims in RESUBMIT can accept resubmission details."})
+        if not attrs.get("entries") and not attrs.get("notes", "").strip():
+            raise serializers.ValidationError({"detail": "At least one resubmission detail is required."})
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs) -> WarrantyClaim:
+        claim: WarrantyClaim = self.context["claim"]
+        notes = self.validated_data.get("notes", "").strip()
+        resubmission = ClaimResubmission.objects.create(
+            claim=claim,
+            source=ClaimResubmissionSource.WHATSAPP,
+            notes=notes,
+        )
+        for entry in self.validated_data.get("entries", []):
+            ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
+        claim.state = ClaimState.QA_REVIEW
+        if notes:
+            claim.notes = notes
+            claim.save(update_fields=["state", "notes", "modified"])
+        else:
+            claim.save(update_fields=["state", "modified"])
+        return claim
+
+
+class ClaimCSRResubmissionCreateSerializer(serializers.Serializer):
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+    entries = ClaimResubmissionEntryWriteSerializer(many=True, required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        claim = self.context["claim"]
+        if claim.state != ClaimState.RESUBMIT:
+            raise serializers.ValidationError({"detail": "Only claims in RESUBMIT can accept resubmission details."})
+
+        latest_quality_review = (
+            claim.quality_reviews.filter(decision_type=QualityDecisionType.REQUEST_INFO)
+            .prefetch_related("required_items")
+            .order_by("-created", "-id")
+            .first()
+        )
+        if latest_quality_review is None:
+            raise serializers.ValidationError({"detail": "No QA request-info record exists for this claim."})
+
+        entries = attrs.get("entries", [])
+        if not entries and not attrs.get("notes", "").strip():
+            raise serializers.ValidationError({"detail": "At least one resubmission detail is required."})
+
+        requested_item_values = {
+            item.required_item for item in latest_quality_review.required_items.all() if item.required_item
+        }
+        submitted_item_values = {entry["required_item"] for entry in entries}
+
+        unexpected_items = submitted_item_values - requested_item_values
+        if unexpected_items:
+            raise serializers.ValidationError(
+                {"entries": [f"Unexpected required_item values: {', '.join(sorted(unexpected_items))}."]}
+            )
+
+        missing_items = requested_item_values - submitted_item_values
+        if missing_items:
+            raise serializers.ValidationError(
+                {"entries": [f"Missing required_item values: {', '.join(sorted(missing_items))}."]}
+            )
+
+        attrs["latest_quality_review"] = latest_quality_review
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs) -> WarrantyClaim:
+        claim: WarrantyClaim = self.context["claim"]
+        notes = self.validated_data.get("notes", "").strip()
+        resubmission = ClaimResubmission.objects.create(
+            claim=claim,
+            source=ClaimResubmissionSource.COMPLAINT,
+            notes=notes,
+        )
+        for entry in self.validated_data.get("entries", []):
+            ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
+        claim.state = ClaimState.QA_REVIEW
+        if notes:
+            claim.notes = notes
+            claim.save(update_fields=["state", "notes", "modified"])
+        else:
+            claim.save(update_fields=["state", "modified"])
+        return claim

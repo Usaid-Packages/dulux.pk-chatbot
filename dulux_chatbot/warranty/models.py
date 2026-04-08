@@ -4,10 +4,14 @@ from django_extensions.db.models import TimeStampedModel
 
 from dulux_chatbot.products.models import Product
 from dulux_chatbot.warranty.choices import (
+    ClaimResubmissionSource,
     ClaimState,
     InvoiceType,
     IssueType,
     PhotoType,
+    QualityDecisionType,
+    QualityRequiredItem,
+    QualityTechnicalReason,
     RegistrationChannel,
     RegistrationState,
 )
@@ -77,6 +81,7 @@ class WarrantyClaim(TimeStampedModel):
     claim_date = models.DateField(auto_now_add=True)
     state = models.CharField(max_length=20, choices=ClaimState.choices, default=ClaimState.SUBMITTED)
     notes = models.TextField(blank=True)
+    voucher = models.FileField(upload_to="claim-vouchers/%Y/%m/", null=True, blank=True)
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -88,6 +93,70 @@ class WarrantyClaim(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Claim {self.id}"
+
+
+class ClaimQualityReview(TimeStampedModel):
+    claim = models.ForeignKey(WarrantyClaim, on_delete=models.CASCADE, related_name="quality_reviews")
+    decision_type = models.CharField(max_length=20, choices=QualityDecisionType.choices)
+    technical_reason = models.CharField(
+        max_length=30,
+        choices=QualityTechnicalReason.choices,
+        null=True,
+        blank=True,
+    )
+    notes = models.TextField()
+    other_text = models.CharField(max_length=500, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="claim_quality_reviews",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.claim_id} - {self.decision_type}"
+
+
+class ClaimQualityReviewItem(TimeStampedModel):
+    quality_review = models.ForeignKey(
+        ClaimQualityReview,
+        on_delete=models.CASCADE,
+        related_name="required_items",
+    )
+    required_item = models.CharField(max_length=50, choices=QualityRequiredItem.choices)
+
+    def __str__(self) -> str:
+        return f"{self.quality_review_id} - {self.required_item}"
+
+
+class ClaimResubmission(TimeStampedModel):
+    claim = models.ForeignKey(WarrantyClaim, on_delete=models.CASCADE, related_name="resubmissions")
+    source = models.CharField(max_length=20, choices=ClaimResubmissionSource.choices)
+    notes = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.claim_id} - {self.source}"
+
+
+class ClaimResubmissionEntry(TimeStampedModel):
+    resubmission = models.ForeignKey(
+        ClaimResubmission,
+        on_delete=models.CASCADE,
+        related_name="entries",
+    )
+    required_item = models.CharField(max_length=50, choices=QualityRequiredItem.choices)
+    response_text = models.TextField(blank=True)
+    image = models.ForeignKey(
+        "core.Image",
+        on_delete=models.PROTECT,
+        related_name="claim_resubmission_entries",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self) -> str:
+        return f"{self.resubmission_id} - {self.required_item}"
 
 
 class ClaimImage(TimeStampedModel):
