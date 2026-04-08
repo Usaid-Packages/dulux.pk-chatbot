@@ -10,6 +10,7 @@ export interface ManualRegistrationStep {
 export interface ManualRegistrationProductOption {
   id: string;
   label: string;
+  linkedBasecoats?: ManualRegistrationProductOption[];
 }
 
 export interface ManualRegistrationPaintPairInput {
@@ -17,8 +18,6 @@ export interface ManualRegistrationPaintPairInput {
   topcoatQuantity: string;
   basecoatProductId: string;
   basecoatQuantity: string;
-  topcoatInvoice: File | null;
-  basecoatInvoice: File | null;
 }
 
 export interface ManualRegistrationFormValues {
@@ -38,8 +37,7 @@ export interface ManualRegistrationFormValues {
   topcoatQuantity: string;
   basecoatProductId: string;
   basecoatQuantity: string;
-  topcoatInvoice: File | null;
-  basecoatInvoice: File | null;
+  invoices: File[];
   additionalPaintPairs: ManualRegistrationPaintPairInput[];
 }
 

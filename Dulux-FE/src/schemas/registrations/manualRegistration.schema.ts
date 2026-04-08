@@ -25,8 +25,6 @@ const paintPairSchema = z.object({
     .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
   basecoatProductId: z.string().trim(),
   basecoatQuantity: z.string().trim(),
-  topcoatInvoice: fileSchema,
-  basecoatInvoice: fileSchema.nullable(),
 });
 
 const manualRegistrationBaseSchema = z.object({
@@ -60,8 +58,7 @@ const manualRegistrationBaseSchema = z.object({
     .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
   basecoatProductId: z.string().trim(),
   basecoatQuantity: z.string().trim(),
-  topcoatInvoice: fileSchema,
-  basecoatInvoice: fileSchema.nullable(),
+  invoices: z.array(fileSchema).min(1, 'At least one invoice is required.'),
   additionalPaintPairs: z.array(paintPairSchema).default([]),
 });
 
@@ -72,8 +69,6 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
       topcoatQuantity: values.topcoatQuantity,
       basecoatProductId: values.basecoatProductId,
       basecoatQuantity: values.basecoatQuantity,
-      topcoatInvoice: values.topcoatInvoice,
-      basecoatInvoice: values.basecoatInvoice,
       rootPath: [] as Array<string | number>,
     },
     ...values.additionalPaintPairs.map((pair, index) => ({
@@ -106,14 +101,6 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
         message: 'Enter a valid quantity (e.g., 5 or 5.5).',
       });
     }
-
-    if (pair.basecoatProductId && !pair.basecoatInvoice) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [...pair.rootPath, 'basecoatInvoice'],
-        message: 'Basecoat invoice is required when basecoat is selected.',
-      });
-    }
   });
 });
 
@@ -144,10 +131,7 @@ export const manualRegistrationStep3Schema = manualRegistrationBaseSchema.pick({
 });
 
 export const manualRegistrationStep4Schema = manualRegistrationBaseSchema.pick({
-  topcoatInvoice: true,
-  basecoatInvoice: true,
-  basecoatProductId: true,
-  additionalPaintPairs: true,
+  invoices: true,
 });
 
 export type ManualRegistrationSchemaValues = z.infer<typeof manualRegistrationSchema>;

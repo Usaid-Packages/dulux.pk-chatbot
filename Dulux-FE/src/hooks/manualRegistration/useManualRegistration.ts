@@ -97,14 +97,6 @@ export const useManualRegistration = (): UseManualRegistrationResult => {
       });
     }
 
-    if (currentStep === 4 && additionalPairs.length > 0) {
-      additionalPairs.forEach((_, index) => {
-        fields.push(`additionalPaintPairs.${index}.topcoatInvoice` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatInvoice` as keyof ManualRegistrationFormValues);
-        fields.push(`additionalPaintPairs.${index}.basecoatProductId` as keyof ManualRegistrationFormValues);
-      });
-    }
-
     const isStepValid = await form.trigger([...fields], { shouldFocus: true });
     if (!isStepValid) {
       return;

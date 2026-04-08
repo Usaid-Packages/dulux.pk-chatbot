@@ -9,6 +9,7 @@ import type { ProductType } from '#/types/products';
 interface ManualRegistrationProductApiItem {
   id?: number;
   name?: string;
+  basecoats?: ManualRegistrationProductApiItem[];
 }
 
 interface ManualRegistrationProductsApiResponse {
@@ -26,7 +27,7 @@ export interface ManualRegistrationProductsResult {
   basecoatProducts: ManualRegistrationProductOption[];
 }
 
-const STALE_TIME_FIVE_MINUTES = 5 * 60 * 1000;
+const MANUAL_PRODUCTS_STALE_TIME_MS = 0;
 
 const toManualProductOptions = (
   response: ManualRegistrationProductsApiResponse | undefined
@@ -36,6 +37,15 @@ const toManualProductOptions = (
     .map(product => ({
       id: String(product.id),
       label: product.name ?? '',
+      linkedBasecoats: (product.basecoats ?? [])
+        .filter(
+          basecoat =>
+            typeof basecoat.id === 'number' && typeof basecoat.name === 'string' && basecoat.name.trim() !== ''
+        )
+        .map(basecoat => ({
+          id: String(basecoat.id),
+          label: basecoat.name ?? '',
+        })),
     }));
 };
 
@@ -74,6 +84,6 @@ export const useGetManualRegistrationProductsQuery = (): UseQueryResult<ManualRe
         basecoatProducts: toManualProductOptions(basecoatResponse),
       };
     },
-    staleTime: STALE_TIME_FIVE_MINUTES,
+    staleTime: MANUAL_PRODUCTS_STALE_TIME_MS,
   });
 };

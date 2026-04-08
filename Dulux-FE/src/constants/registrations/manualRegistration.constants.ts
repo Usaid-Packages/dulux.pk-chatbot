@@ -33,8 +33,7 @@ export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = 
   topcoatQuantity: '',
   basecoatProductId: '',
   basecoatQuantity: '',
-  topcoatInvoice: null,
-  basecoatInvoice: null,
+  invoices: [],
   additionalPaintPairs: [],
 };
 
@@ -45,6 +44,6 @@ export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
   1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress', 'postalCode'],
   2: ['purchaseDate', 'purchaseDealer', 'purchaseDealerCity', 'purchaseDealerAddress', 'notes'],
   3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity', 'additionalPaintPairs'],
-  4: ['topcoatInvoice', 'basecoatInvoice', 'basecoatProductId', 'additionalPaintPairs'],
+  4: ['invoices'],
   5: [],
 };

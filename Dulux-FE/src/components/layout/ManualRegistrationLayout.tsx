@@ -78,10 +78,17 @@ export const ManualRegistrationLayout = (): JSX.Element => {
     >
       <FormProvider {...form}>
         <div className='space-y-4 p-6'>
-          <section className='wf-card px-4 py-3'>
-            <p className='text-sm font-medium text-text-secondary'>Registrations / Manual Entry</p>
-            <h2 className='mt-1 text-xl font-semibold text-text-primary'>Manual Registration Wizard</h2>
-          </section>
+          <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
+            <div
+              aria-hidden='true'
+              className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
+            />
+            <div className='relative'>
+              <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Registration Operations</p>
+              <h2 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>Manual Registration Wizard</h2>
+              <p className='text-sm text-blue-50/90'>Registrations / Manual Entry</p>
+            </div>
+          </header>
           <Outlet />
         </div>
       </FormProvider>
