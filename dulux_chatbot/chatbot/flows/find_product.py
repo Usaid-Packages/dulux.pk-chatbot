@@ -5,6 +5,15 @@ from dulux_chatbot.products.models import Product, SurfaceType
 class FindProductFlow(BaseFlow):
     initial_step = "interior_exterior_select"
 
+    @staticmethod
+    def _format_product_message(*, product: Product) -> str:
+        return (
+            f"Name: {product.name}\n"
+            f"Features: {product.features}\n"
+            f"Coverage details: {product.coverage_details}\n"
+            f"URL: {product.webpage_url}"
+        )
+
     def prompt_interior_exterior_select(self) -> None:
         self._send_step_prompt("Please reply with 1 for INTERIOR or 2 for EXTERIOR.")
 
@@ -78,15 +87,14 @@ class FindProductFlow(BaseFlow):
             self._reset()
             return
         for product in products:
-            self.client.send_text(
-                self.session.phone_number,
-                f"{product.name}\n{product.features}\n{product.coverage_details}\n{product.webpage_url}",
-            )
-            for product_image in product.images.all():
-                self.client.send_document(
+            product_message = self._format_product_message(product=product)
+            product_image = product.images.first()
+            if product_image is not None:
+                self.client.send_image(
                     self.session.phone_number,
                     product_image.image.image.url,
-                    f"{product.name}.jpg",
-                    product.name,
+                    product_message,
                 )
+            else:
+                self.client.send_text(self.session.phone_number, product_message)
         self._reset()

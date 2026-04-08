@@ -39,6 +39,7 @@ class DummyClient:
     def __init__(self):
         self.text_messages = []
         self.documents = []
+        self.images = []
         self.downloaded_media_ids = []
 
     def send_text(self, to: str, text: str) -> None:
@@ -50,6 +51,15 @@ class DummyClient:
                 "to": to,
                 "document_url": document_url,
                 "filename": filename,
+                "caption": caption,
+            }
+        )
+
+    def send_image(self, to: str, image_url: str, caption: str = "") -> None:
+        self.images.append(
+            {
+                "to": to,
+                "image_url": image_url,
                 "caption": caption,
             }
         )
@@ -617,8 +627,11 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
 
         self.assertIsNone(self.session.flow)
-        self.assertTrue(any(product.name in item["text"] for item in self.client.text_messages))
-        self.assertEqual(len(self.client.documents), 1)
+        self.assertEqual(len(self.client.images), 1)
+        self.assertIn("Name: Flow Product", self.client.images[0]["caption"])
+        self.assertIn("Features: Durable finish", self.client.images[0]["caption"])
+        self.assertIn("Coverage details: 100 sqft per liter", self.client.images[0]["caption"])
+        self.assertIn("URL: https://example.com/products/test", self.client.images[0]["caption"])
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")

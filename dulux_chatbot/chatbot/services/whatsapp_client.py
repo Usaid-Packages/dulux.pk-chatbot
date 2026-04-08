@@ -65,6 +65,16 @@ class WhatsAppClient:
         }
         return self._post("messages", payload)
 
+    def send_image(self, to: str, image_url: str, caption: str = "") -> dict:
+        absolute_image_url = self._build_absolute_media_url(image_url)
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": to,
+            "type": "image",
+            "image": {"link": absolute_image_url, "caption": caption},
+        }
+        return self._post("messages", payload)
+
     def download_media(self, media_id: str) -> bytes:
         metadata = self._get(media_id)
         media_url = metadata.get("url")
@@ -108,10 +118,10 @@ class WhatsAppClient:
 
         return response.json()
 
-    def _build_absolute_media_url(self, document_url: str) -> str:
-        if document_url.startswith(("http://", "https://")):
-            return document_url
+    def _build_absolute_media_url(self, media_url: str) -> str:
+        if media_url.startswith(("http://", "https://")):
+            return media_url
         base_url = env_config("CERTIFICATE_MEDIA_URL", default="").strip() or env_config("BASE_URL", default="").strip()
         if not base_url:
-            return document_url
-        return urljoin(f"{base_url.rstrip('/')}/", document_url.lstrip("/"))
+            return media_url
+        return urljoin(f"{base_url.rstrip('/')}/", media_url.lstrip("/"))
