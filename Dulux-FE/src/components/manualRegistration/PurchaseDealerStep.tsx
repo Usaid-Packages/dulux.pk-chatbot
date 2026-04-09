@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -10,6 +10,10 @@ import { Calendar } from '#/components/ui/Calendar';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const DATE_FORMAT = 'yyyy-MM-dd';
+const PURCHASE_DATE_RANGE_DAYS = 60;
+const DEALER_NAME_MAX_LENGTH = 120;
+const DEALER_CITY_MAX_LENGTH = 80;
+const DEALER_ADDRESS_MAX_LENGTH = 180;
 
 const parsePurchaseDate = (value: string): Date | undefined => {
   if (!value) {
@@ -43,6 +47,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
   const calendarWrapperRef = useRef<HTMLDivElement | null>(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const earliestAllowedDate = subDays(today, PURCHASE_DATE_RANGE_DAYS - 1);
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -83,6 +88,9 @@ export const PurchaseDealerStep = (): JSX.Element => {
               const handleOpenCalendar = (): void => {
                 setIsCalendarOpen(true);
               };
+              const handleToggleCalendar = (): void => {
+                setIsCalendarOpen(previous => !previous);
+              };
               const handleSelectDate = (date: Date | undefined): void => {
                 field.onChange(formatPurchaseDate(date));
                 setIsCalendarOpen(false);
@@ -101,35 +109,46 @@ export const PurchaseDealerStep = (): JSX.Element => {
                       onFocus={handleOpenCalendar}
                       onBlur={field.onBlur}
                     />
-                    <CalendarDays
-                      aria-hidden='true'
-                      className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted'
-                    />
+                    <button
+                      type='button'
+                      aria-label='Toggle purchase date calendar'
+                      onClick={handleToggleCalendar}
+                      className='absolute right-2.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md border border-border-strong bg-white text-text-muted shadow-sm transition-colors hover:bg-surface-subtle hover:text-text-primary'
+                    >
+                      <CalendarDays aria-hidden='true' className='h-4 w-4' />
+                    </button>
                   </div>
                   {isCalendarOpen ? (
                     <div
                       role='dialog'
                       aria-label='Purchase date calendar'
-                      className='absolute left-0 z-20 mt-2 rounded-xl border border-border-strong bg-white p-2 shadow-[0_12px_24px_rgba(15,23,42,0.16)]'
+                      className='absolute right-0 z-20 mt-2 rounded-2xl border border-primary/25 bg-white p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.2)] ring-1 ring-primary/10'
                     >
                       <Calendar
                         mode='single'
                         selected={selectedDate}
                         onSelect={handleSelectDate}
-                        disabled={date => date > today}
-                        className='rounded-lg bg-white p-3 [--cell-size:2.45rem]'
+                        disabled={date => date > today || date < earliestAllowedDate}
+                        className='rounded-xl bg-white p-3 [--cell-size:2.75rem]'
                         classNames={{
-                          nav: 'absolute inset-x-0 top-0 flex w-full items-center justify-between px-2',
+                          nav: 'absolute inset-x-0 top-0 flex w-full items-center justify-between px-3 pt-1.5',
+                          button_previous:
+                            'h-[--cell-size] w-[--cell-size] rounded-lg border border-border-strong bg-white p-0 text-primary shadow-sm hover:bg-primary/5',
+                          button_next:
+                            'h-[--cell-size] w-[--cell-size] rounded-lg border border-border-strong bg-white p-0 text-primary shadow-sm hover:bg-primary/5',
                           month_caption:
-                            'flex h-[--cell-size] w-full items-center justify-center px-[--cell-size] pb-2',
-                          weekdays: 'mb-3 flex gap-2.5',
+                            'flex h-[--cell-size] w-full items-center justify-center px-[calc(var(--cell-size)+0.8rem)] pb-2 text-sm font-bold text-text-primary',
+                          weekdays: 'mb-2.5 flex gap-2.5',
                           week: 'mt-2.5 flex w-full gap-2.5',
-                          weekday: 'flex-1 text-center text-[0.75rem] font-medium text-blue-700/80',
+                          weekday:
+                            'flex-1 text-center text-[0.75rem] font-semibold uppercase tracking-[0.02em] text-text-muted',
                           day: 'relative flex-1 aspect-square h-full w-full select-none p-0 text-center',
+                          day_button:
+                            'h-full w-full rounded-lg text-sm font-medium text-text-primary hover:bg-primary/10 data-[selected-single=true]:bg-primary data-[selected-single=true]:text-white',
                           outside: 'text-slate-400 opacity-70',
                           disabled: 'text-slate-300 opacity-50',
                           today:
-                            'rounded-md border border-blue-300 bg-blue-50 text-blue-700 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white',
+                            'rounded-lg border border-primary/45 bg-primary/10 text-primary data-[selected-single=true]:border-primary data-[selected-single=true]:bg-primary data-[selected-single=true]:text-white',
                         }}
                       />
                     </div>
@@ -143,13 +162,17 @@ export const PurchaseDealerStep = (): JSX.Element => {
 
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Dealer Name</span>
-          <Input placeholder='e.g. Color World Traders' {...register('purchaseDealer')} />
+          <Input
+            placeholder='e.g. Color World Traders'
+            maxLength={DEALER_NAME_MAX_LENGTH}
+            {...register('purchaseDealer')}
+          />
           {errors.purchaseDealer ? <p className='text-xs text-destructive'>{errors.purchaseDealer.message}</p> : null}
         </label>
 
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Dealer City</span>
-          <Input placeholder='e.g. Karachi' {...register('purchaseDealerCity')} />
+          <Input placeholder='e.g. Karachi' maxLength={DEALER_CITY_MAX_LENGTH} {...register('purchaseDealerCity')} />
           {errors.purchaseDealerCity ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerCity.message}</p>
           ) : null}
@@ -157,7 +180,11 @@ export const PurchaseDealerStep = (): JSX.Element => {
 
         <label className='space-y-2'>
           <span className='text-sm font-medium text-text-primary'>Dealer Address</span>
-          <Input placeholder='Street, area, city' {...register('purchaseDealerAddress')} />
+          <Input
+            placeholder='Street, area, city'
+            maxLength={DEALER_ADDRESS_MAX_LENGTH}
+            {...register('purchaseDealerAddress')}
+          />
           {errors.purchaseDealerAddress ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerAddress.message}</p>
           ) : null}

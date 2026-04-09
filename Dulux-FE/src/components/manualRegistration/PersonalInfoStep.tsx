@@ -33,7 +33,8 @@ export const PersonalInfoStep = (): JSX.Element => {
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const digitsOnly = event.currentTarget.value.replace(/\D/g, '');
     const withoutPrefix = digitsOnly.startsWith('92') ? digitsOnly.slice(2) : digitsOnly;
-    const limitedLocalPart = withoutPrefix.slice(0, 10);
+    const normalizedLocalPart = withoutPrefix.startsWith('3') ? withoutPrefix : `3${withoutPrefix}`;
+    const limitedLocalPart = normalizedLocalPart.slice(0, 10);
     event.currentTarget.value = `92${limitedLocalPart}`;
   };
 

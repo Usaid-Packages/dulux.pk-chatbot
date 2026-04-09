@@ -63,12 +63,12 @@ export const InvoicesStep = (): JSX.Element => {
     <section className='space-y-4 wf-card wf-card-p5'>
       <header>
         <h3 className='text-lg font-semibold text-text-primary'>Invoices</h3>
-        <p className='text-sm text-text-muted'>Upload one or more clear invoice images or PDFs for verification.</p>
+        <p className='text-sm text-text-muted'>Upload one or more clear invoice images for verification.</p>
       </header>
 
       <label className='space-y-2'>
         <span className='text-sm font-medium text-text-primary'>Invoice Files</span>
-        <Input type='file' accept='.jpg,.jpeg,.png,.pdf' multiple onChange={handleInvoicesChange} />
+        <Input type='file' accept='.jpg,.jpeg,.png' multiple onChange={handleInvoicesChange} />
         <p className='text-xs text-text-muted'>You can select multiple invoices in one go.</p>
       </label>
 
@@ -83,7 +83,7 @@ export const InvoicesStep = (): JSX.Element => {
           <ul className='space-y-2'>
             {invoiceItems.map((item, index) => (
               <li key={item.key} className='flex items-center justify-between gap-3'>
-                <p className='text-xs text-text-muted'>{item.invoice.name}</p>
+                <p className='min-w-0 flex-1 break-all text-xs text-text-muted'>{item.invoice.name}</p>
                 <Button type='button' variant='outline' className='h-8 px-3' onClick={() => handleRemoveInvoice(index)}>
                   Remove
                 </Button>

@@ -29,6 +29,16 @@ const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | '
   return 'pending';
 };
 
+const CUSTOMER_NAME_TRUNCATE_LENGTH = 35;
+
+const truncateCustomerName = (value: string): string => {
+  if (value.length <= CUSTOMER_NAME_TRUNCATE_LENGTH) {
+    return value;
+  }
+
+  return `${value.slice(0, CUSTOMER_NAME_TRUNCATE_LENGTH)}...`;
+};
+
 /**
  * RegistrationTable renders the registrations listing table with actions.
  *
@@ -92,7 +102,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
                   {registration.registrationCode}
                 </span>
               </TableCell>
-              <TableCell>{registration.customerName}</TableCell>
+              <TableCell title={registration.customerName}>{truncateCustomerName(registration.customerName)}</TableCell>
               <TableCell>{registration.phoneNumber}</TableCell>
               <TableCell>
                 <SourceTag source={registration.channel} />
