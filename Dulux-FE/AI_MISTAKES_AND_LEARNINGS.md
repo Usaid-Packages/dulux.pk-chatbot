@@ -59,6 +59,8 @@
 - For audit/detail UIs with potentially large text payloads (for example notes/prompts), do not render raw JSON as the
   primary view; use field-based comparison cards with truncation, `Show more/Show less`, and bounded scroll containers
   so long content does not break layout.
+- Keep reusable domain constants in `src/constants/**` (not inside page/component files). Components should consume
+  exported constants and avoid local constant duplication for shared config.
 
 ## Mistake Log (Short)
 
@@ -512,6 +514,14 @@
   containers; removed raw JSON from primary presentation.
 - Rule: In detail/audit inspection views, always design for long-content resilience (truncate + expand + scroll) and do
   not use raw JSON as the primary UI representation.
+
+### 2026-04-09 18:40 - Shared product-form constants were kept inside component file
+
+- Issue: `ProductForm` still declared reusable status options locally, creating constant ownership drift from
+  `src/constants/**`.
+- Fix: Moved `PRODUCT_STATUS_OPTIONS` into `src/constants/products/productForm.constants.ts` and consumed via
+  `#/constants`.
+- Rule: Keep shared/reusable constants in `src/constants/**`; do not declare these constants inside feature components.
 
 ## Final Check (Before Submit)
 

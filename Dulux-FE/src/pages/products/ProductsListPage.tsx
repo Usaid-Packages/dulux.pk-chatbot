@@ -23,7 +23,6 @@ import {
 import { ROUTES } from '#/constants';
 import {
   useCreateSurfaceTypeMutation,
-  useDeleteProductMutation,
   useDeleteSurfaceTypeMutation,
   useGetProductsQuery,
   useGetSurfaceTypesQuery,
@@ -122,7 +121,6 @@ export const ProductsListPage = (): JSX.Element => {
     parsePageFromSearchParam(searchParams.get('surfacePage'))
   );
 
-  const [productDeleteTarget, setProductDeleteTarget] = useState<Product | null>(null);
   const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
 
   const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = useState<boolean>(false);
@@ -148,7 +146,6 @@ export const ProductsListPage = (): JSX.Element => {
 
   const createSurfaceTypeMutation = useCreateSurfaceTypeMutation();
   const updateSurfaceTypeMutation = useUpdateSurfaceTypeMutation();
-  const deleteProductMutation = useDeleteProductMutation();
   const deleteSurfaceTypeMutation = useDeleteSurfaceTypeMutation();
 
   const products = productQuery.data?.results ?? EMPTY_PRODUCTS;
@@ -239,30 +236,6 @@ export const ProductsListPage = (): JSX.Element => {
   const handleProductOrderingChange = (value: string): void => {
     setProductOrdering(value as ProductOrdering);
     setProductPage(FIRST_PAGE);
-  };
-
-  const requestProductDelete = (product: Product): void => {
-    setProductDeleteTarget(product);
-  };
-
-  const closeProductDeleteModal = (): void => {
-    setProductDeleteTarget(null);
-  };
-
-  const confirmDeleteProduct = (): void => {
-    if (!productDeleteTarget) {
-      return;
-    }
-
-    deleteProductMutation.mutate(String(productDeleteTarget.id), {
-      onSuccess: () => {
-        toast.success('Product deleted successfully.');
-        closeProductDeleteModal();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
   };
 
   const openCreateSurfaceTypeModal = (): void => {
@@ -490,7 +463,7 @@ export const ProductsListPage = (): JSX.Element => {
 
           {!productQuery.isLoading && !productQuery.isError && products.length > 0 ? (
             <>
-              <ProductTable products={products} onDelete={requestProductDelete} />
+              <ProductTable products={products} />
 
               <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>
@@ -637,19 +610,6 @@ export const ProductsListPage = (): JSX.Element => {
         submitLabel={surfaceTypeEditTarget ? 'Save Changes' : 'Add Surface Type'}
         onClose={closeSurfaceTypeModal}
         onSubmit={submitSurfaceType}
-      />
-
-      <DeleteConfirmModal
-        isOpen={Boolean(productDeleteTarget)}
-        isSubmitting={deleteProductMutation.isPending}
-        title='Delete Product'
-        description={
-          productDeleteTarget
-            ? `Are you sure you want to delete "${productDeleteTarget.name}"? This action cannot be undone.`
-            : 'Are you sure you want to delete this product?'
-        }
-        onClose={closeProductDeleteModal}
-        onConfirm={confirmDeleteProduct}
       />
 
       <DeleteConfirmModal

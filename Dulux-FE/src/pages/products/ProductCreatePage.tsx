@@ -6,9 +6,15 @@ import { toast } from 'react-toastify';
 import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { ROUTES } from '#/constants';
-import { useCreateProductMutation, useGetProductsQuery, useGetSurfaceTypesQuery } from '#/data-layer/products';
+import {
+  useAttachProductImageMutation,
+  useCreateProductMutation,
+  useGetProductsQuery,
+  useGetSurfaceTypesQuery,
+  useUploadProductImageMutation,
+} from '#/data-layer/products';
 import { mapProductFormValuesToPayload } from '#/hooks/products';
-import type { LinkedBasecoat, ProductFormValues, SurfaceType } from '#/types/products';
+import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
 
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
@@ -24,16 +30,38 @@ export const ProductCreatePage = (): JSX.Element => {
     page_size: 100,
   });
   const createProductMutation = useCreateProductMutation();
+  const uploadProductImageMutation = useUploadProductImageMutation();
+  const attachProductImageMutation = useAttachProductImageMutation();
 
   const handleCancel = (): void => {
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const handleSubmit = (values: ProductFormValues): void => {
+  const uploadAndAttachImages = async (productId: string, imageFiles: File[]): Promise<void> => {
+    for (const imageFile of imageFiles) {
+      const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
+      await attachProductImageMutation.mutateAsync({
+        productId,
+        payload: {
+          image_id: imageId,
+        },
+      });
+    }
+  };
+
+  const handleSubmit = ({ values, imageFiles }: ProductFormSubmission): void => {
     createProductMutation.mutate(mapProductFormValuesToPayload(values), {
-      onSuccess: () => {
-        toast.success('Product created successfully.');
-        navigate(`${ROUTES.PRODUCTS}${location.search}`);
+      onSuccess: async createdProduct => {
+        try {
+          if (imageFiles.length > 0) {
+            await uploadAndAttachImages(String(createdProduct.id), imageFiles);
+          }
+          toast.success('Product created successfully.');
+        } catch (error) {
+          toast.warn(`Product created, but image upload failed: ${getApiErrorMessage(error)}`);
+        } finally {
+          navigate(`${ROUTES.PRODUCTS}${location.search}`);
+        }
       },
       onError: error => {
         toast.error(getApiErrorMessage(error));
@@ -70,7 +98,9 @@ export const ProductCreatePage = (): JSX.Element => {
       title='Add New Product'
       description='Create a new product with type, warranty, coverage, and mapped surfaces.'
       submitLabel='Create Product'
-      isSubmitting={createProductMutation.isPending}
+      isSubmitting={
+        createProductMutation.isPending || uploadProductImageMutation.isPending || attachProductImageMutation.isPending
+      }
       surfaceTypes={surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES}
       basecoatOptions={basecoatOptionsQuery.data?.results ?? EMPTY_BASECOAT_OPTIONS}
       onSubmit={handleSubmit}

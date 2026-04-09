@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { PRODUCT_FORM_MAX_LENGTHS } from '#/constants';
 import { productTypes } from '#/types/products';
 
 export const productTypeSchema = z.enum(productTypes);
@@ -9,9 +10,23 @@ export const productFormSchema = z
     name: z.string().trim().min(1, 'Product name is required.'),
     productType: productTypeSchema,
     warrantyYears: z.coerce.number().int().min(1, 'Warranty years must be at least 1.'),
-    coverageDetails: z.string().trim().min(1, 'Coverage details are required.'),
+    coverageDetails: z
+      .string()
+      .trim()
+      .min(1, 'Coverage details are required.')
+      .max(
+        PRODUCT_FORM_MAX_LENGTHS.coverageDetails,
+        `Coverage details must be ${PRODUCT_FORM_MAX_LENGTHS.coverageDetails} characters or less.`
+      ),
     webpageUrl: z.string().trim().url('Enter a valid URL.'),
-    features: z.string().trim().min(1, 'Key features are required.'),
+    features: z
+      .string()
+      .trim()
+      .min(1, 'Key features are required.')
+      .max(
+        PRODUCT_FORM_MAX_LENGTHS.features,
+        `Key features must be ${PRODUCT_FORM_MAX_LENGTHS.features} characters or less.`
+      ),
     isActive: z.boolean(),
     surfaceTypeIds: z.array(z.number().int().positive()).min(1, 'Select at least one surface type.'),
     basecoatIds: z.array(z.number().int().positive()).default([]),

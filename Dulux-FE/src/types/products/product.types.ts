@@ -110,6 +110,10 @@ export interface AttachProductImagePayload extends Record<string, unknown> {
   image_id: number;
 }
 
+export interface UploadProductImageResponse extends Record<string, unknown> {
+  id: number;
+}
+
 export interface RemoveProductImagePayload extends Record<string, unknown> {
   productId: string;
   imageId: string;
@@ -125,6 +129,11 @@ export interface ProductFormValues {
   isActive: boolean;
   surfaceTypeIds: number[];
   basecoatIds: number[];
+}
+
+export interface ProductFormSubmission {
+  values: ProductFormValues;
+  imageFiles: File[];
 }
 
 export interface SurfaceTypeFormValues {
