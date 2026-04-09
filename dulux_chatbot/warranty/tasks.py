@@ -88,11 +88,14 @@ def send_registration_status_notification(registration_id: int, notification_tem
         )
         return
 
-    registration = _ensure_registration_certificate(registration)
     notification_content = _build_notification_content(
         registration=registration,
         notification_template=notification_template,
     )
+
+    should_send_certificate = registration.state == RegistrationState.APPROVED
+    if should_send_certificate:
+        registration = _ensure_registration_certificate(registration)
 
     email = EmailMultiAlternatives(
         subject=notification_content["email_subject"],
@@ -101,22 +104,24 @@ def send_registration_status_notification(registration_id: int, notification_tem
     )
     email.attach_alternative(notification_content["email_html"], "text/html")
 
-    registration.warranty_certificate.open("rb")
-    try:
-        email.attach("warranty_certificate.pdf", registration.warranty_certificate.read(), "application/pdf")
-    finally:
-        registration.warranty_certificate.close()
+    if should_send_certificate and registration.warranty_certificate:
+        registration.warranty_certificate.open("rb")
+        try:
+            email.attach("warranty_certificate.pdf", registration.warranty_certificate.read(), "application/pdf")
+        finally:
+            registration.warranty_certificate.close()
     email.send(fail_silently=False)
 
     whatsapp_message = notification_content["whatsapp_message"]
     client = WhatsAppClient()
     client.send_text(registration.phone_number, whatsapp_message)
-    client.send_document(
-        registration.phone_number,
-        registration.warranty_certificate.url,
-        "warranty_certificate.pdf",
-        caption="warranty_certificate.pdf",
-    )
+    if should_send_certificate and registration.warranty_certificate:
+        client.send_document(
+            registration.phone_number,
+            registration.warranty_certificate.url,
+            "warranty_certificate.pdf",
+            caption="warranty_certificate.pdf",
+        )
 
 
 @shared_task
@@ -184,7 +189,6 @@ def send_registration_resubmit_notification(registration_id: int) -> None:
         {
             "field_name": item.field_name,
             "display_name": get_resubmission_field_label(item.field_name),
-            "note": item.note,
         }
         for item in rejection_items
     ]

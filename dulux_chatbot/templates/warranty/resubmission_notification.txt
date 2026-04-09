@@ -4,7 +4,7 @@ Registration Code: {{ registration.registration_code }}
 
 Please resubmit the following:
 {% for item in rejection_fields %}
-- {{ item.display_name|default:item.field_name|default:"Field" }}{% if item.note %}: {{ item.note }}{% endif %}
+- {{ item.display_name|default:item.field_name|default:"Field" }}
 {% endfor %}
 
 Please reply in this chat with the requested updates.

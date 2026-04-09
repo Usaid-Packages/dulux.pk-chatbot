@@ -3,7 +3,7 @@
 <p>Please resubmit the following:</p>
 <ul>
 {% for item in rejection_fields %}
-  <li><strong>{{ item.display_name|default:item.field_name|default:"Field" }}</strong>{% if item.note %}: {{ item.note }}{% endif %}</li>
+  <li><strong>{{ item.display_name|default:item.field_name|default:"Field" }}</strong></li>
 {% endfor %}
 </ul>
 <p>Please reply in the same WhatsApp chat with the requested updates.</p>

@@ -628,10 +628,10 @@ class FlowTests(TestCase):
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.images), 1)
-        self.assertIn("Name: Flow Product", self.client.images[0]["caption"])
-        self.assertIn("Features: Durable finish", self.client.images[0]["caption"])
-        self.assertIn("Coverage details: 100 sqft per liter", self.client.images[0]["caption"])
-        self.assertIn("URL: https://example.com/products/test", self.client.images[0]["caption"])
+        self.assertIn("*Name:* Flow Product", self.client.images[0]["caption"])
+        self.assertIn("*Features:* Durable finish", self.client.images[0]["caption"])
+        self.assertIn("*Coverage details:* 100 sqft per liter", self.client.images[0]["caption"])
+        self.assertIn("*URL:* https://example.com/products/test", self.client.images[0]["caption"])
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")

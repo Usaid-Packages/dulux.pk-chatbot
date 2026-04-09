@@ -338,6 +338,48 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"][0]["customer_name"], registration.customer_name)
 
+    def test_claim_list_for_quality_user_only_returns_qa_pipeline_states(self):
+        topcoat = create_product(name="Quality List Topcoat", warranty_years=5)
+        basecoat = create_product(name="Quality List Basecoat", product_type="BASECOAT", warranty_years=3)
+        visible_states = (
+            ClaimState.QA_REVIEW,
+            ClaimState.RESUBMIT,
+            ClaimState.QA_APPROVED,
+            ClaimState.QA_REJECTED,
+        )
+        hidden_states = (
+            ClaimState.SUBMITTED,
+            ClaimState.IN_REVIEW,
+            ClaimState.APPROVED,
+            ClaimState.REJECTED,
+        )
+
+        for index, claim_state in enumerate(visible_states, start=1):
+            registration = create_registration(
+                state=RegistrationState.APPROVED,
+                phone_number=f"9230000010{index}",
+            )
+            paint_pair = create_paint_pair(registration=registration, topcoat=topcoat, basecoat=basecoat)
+            create_claim(registration=registration, paint_pair=paint_pair, state=claim_state)
+
+        for index, claim_state in enumerate(hidden_states, start=5):
+            registration = create_registration(
+                state=RegistrationState.APPROVED,
+                phone_number=f"9230000010{index}",
+            )
+            paint_pair = create_paint_pair(registration=registration, topcoat=topcoat, basecoat=basecoat)
+            create_claim(registration=registration, paint_pair=paint_pair, state=claim_state)
+
+        self.client.force_authenticate(user=self.quality_user)
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], len(visible_states))
+        self.assertEqual(
+            {item["state"] for item in response.data["results"]},
+            set(visible_states),
+        )
+
     def test_cannot_create_claim_for_non_approved_registration(self):
         registration = create_registration(state=RegistrationState.SUBMITTED)
         paint_pair = create_paint_pair(registration=registration)
@@ -1027,9 +1069,10 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Your Dulux Assurance Warranty registration has been rejected")
         self.assertIn("Rejected From UI", mail.outbox[0].body)
+        self.assertEqual(len(mail.outbox[0].attachments), 0)
         whatsapp_client = client_mock.return_value
         whatsapp_client.send_text.assert_called_once()
-        whatsapp_client.send_document.assert_called_once()
+        whatsapp_client.send_document.assert_not_called()
         self.assertEqual(
             whatsapp_client.send_text.call_args.args[1],
             f"Your Warranty registration: {registration.registration_code} is rejected.",

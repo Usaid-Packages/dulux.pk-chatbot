@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin, IsQualityReviewerOrAdmin
+from dulux_chatbot.users.choices import UserRole
 from dulux_chatbot.warranty.api.v1.serializers import (
     CardCountQuerySerializer,
     ClaimCSRResubmissionCreateSerializer,
@@ -178,6 +179,20 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return WarrantyClaimCreateSerializer
         return WarrantyClaimListSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if getattr(user, "role", None) == UserRole.QUALITY_REVIEWER:
+            return queryset.filter(
+                state__in=(
+                    ClaimState.QA_REVIEW,
+                    ClaimState.RESUBMIT,
+                    ClaimState.QA_APPROVED,
+                    ClaimState.QA_REJECTED,
+                )
+            )
+        return queryset
 
 
 class WarrantyClaimRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
