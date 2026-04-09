@@ -15,8 +15,21 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
+import {
+  PRODUCT_FORM_MAX_LENGTHS,
+  PRODUCT_IMAGE_ALLOWED_FILE_TYPES,
+  PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES,
+  PRODUCT_STATUS_OPTIONS,
+} from '#/constants';
 import { productFormSchema, type ProductFormSchemaValues } from '#/schemas/products';
-import { productTypes, type LinkedBasecoat, type ProductFormValues, type SurfaceType } from '#/types/products';
+import { productTypes } from '#/types/products';
+import type {
+  LinkedBasecoat,
+  ProductFormSubmission,
+  ProductFormValues,
+  ProductImage,
+  SurfaceType,
+} from '#/types/products';
 
 interface ProductFormProps {
   title: string;
@@ -24,9 +37,12 @@ interface ProductFormProps {
   submitLabel: string;
   isSubmitting: boolean;
   initialValues?: ProductFormValues;
+  initialImages?: ProductImage[];
   surfaceTypes: SurfaceType[];
   basecoatOptions: LinkedBasecoat[];
-  onSubmit: (values: ProductFormValues) => void;
+  onSubmit: (submission: ProductFormSubmission) => void;
+  onRemoveImage?: (imageId: string) => void;
+  isImageActionPending?: boolean;
   onCancel: () => void;
 }
 
@@ -41,11 +57,6 @@ const DEFAULT_VALUES: ProductFormValues = {
   surfaceTypeIds: [],
   basecoatIds: [],
 };
-
-const PRODUCT_STATUS_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-] as const;
 
 const getSurfaceGroup = (surfaceTypes: SurfaceType[], environment: SurfaceType['environment']): SurfaceType[] => {
   return surfaceTypes.filter(surfaceType => surfaceType.environment === environment);
@@ -170,9 +181,12 @@ export const ProductForm = ({
   submitLabel,
   isSubmitting,
   initialValues,
+  initialImages = [],
   surfaceTypes,
   basecoatOptions,
   onSubmit,
+  onRemoveImage,
+  isImageActionPending = false,
   onCancel,
 }: ProductFormProps): JSX.Element => {
   const {
@@ -194,6 +208,8 @@ export const ProductForm = ({
   const [exteriorSurfaceSearch, setExteriorSurfaceSearch] = useState<string>('');
   const [linkedBasecoatSearch, setLinkedBasecoatSearch] = useState<string>('');
   const [activeDropdown, setActiveDropdown] = useState<'interior' | 'exterior' | 'basecoat' | null>(null);
+  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [imageValidationError, setImageValidationError] = useState<string | null>(null);
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
   const normalizedInteriorSearch = interiorSurfaceSearch.trim().toLowerCase();
@@ -247,7 +263,10 @@ export const ProductForm = ({
   };
 
   const handleFormSubmit = (values: ProductFormSchemaValues): void => {
-    onSubmit(values);
+    onSubmit({
+      values,
+      imageFiles: selectedImageFiles,
+    });
   };
 
   const toggleBasecoatSelection = (basecoatId: number, checked: boolean): void => {
@@ -287,6 +306,39 @@ export const ProductForm = ({
 
   const toggleDropdown = (dropdown: 'interior' | 'exterior' | 'basecoat'): void => {
     setActiveDropdown(previous => (previous === dropdown ? null : dropdown));
+  };
+
+  const handleImageFilesChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const fileList = event.currentTarget.files;
+    if (!fileList) {
+      setSelectedImageFiles([]);
+      setImageValidationError(null);
+      return;
+    }
+
+    const files = Array.from(fileList);
+    const invalidType = files.find(file => {
+      return !PRODUCT_IMAGE_ALLOWED_FILE_TYPES.includes(file.type as (typeof PRODUCT_IMAGE_ALLOWED_FILE_TYPES)[number]);
+    });
+    if (invalidType) {
+      setSelectedImageFiles([]);
+      setImageValidationError('Only JPG, PNG, and WEBP images are allowed.');
+      return;
+    }
+
+    const invalidSize = files.find(file => file.size > PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES);
+    if (invalidSize) {
+      setSelectedImageFiles([]);
+      setImageValidationError('Each image must be 5MB or smaller.');
+      return;
+    }
+
+    setSelectedImageFiles(files);
+    setImageValidationError(null);
+  };
+
+  const handleRemoveCurrentImage = (imageId: number): void => {
+    onRemoveImage?.(String(imageId));
   };
 
   return (
@@ -406,6 +458,7 @@ export const ProductForm = ({
             rows={3}
             className='rounded-xl border-primary/20 bg-white'
             placeholder='e.g. 100 sq ft per liter on smooth plaster'
+            maxLength={PRODUCT_FORM_MAX_LENGTHS.coverageDetails}
             {...register('coverageDetails')}
             aria-invalid={Boolean(errors.coverageDetails)}
           />
@@ -421,10 +474,60 @@ export const ProductForm = ({
             rows={4}
             className='rounded-xl border-primary/20 bg-white'
             placeholder='Describe key features and customer value'
+            maxLength={PRODUCT_FORM_MAX_LENGTHS.features}
             {...register('features')}
             aria-invalid={Boolean(errors.features)}
           />
           {errors.features ? <p className='text-xs text-destructive'>{errors.features.message}</p> : null}
+        </div>
+
+        <div className='space-y-3 rounded-xl border border-primary/20 bg-white/85 p-4'>
+          <div>
+            <p className='text-sm font-medium text-text-primary'>Product Images</p>
+            <p className='text-xs text-text-muted'>Upload one or more product images (JPG, PNG, WEBP. Max 5MB each).</p>
+          </div>
+          <Input
+            type='file'
+            accept='image/jpeg,image/png,image/webp'
+            multiple
+            className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
+            onChange={handleImageFilesChange}
+          />
+          {selectedImageFiles.length > 0 ? (
+            <p className='text-xs text-text-muted'>{selectedImageFiles.length} image(s) selected for upload.</p>
+          ) : null}
+          {imageValidationError ? <p className='text-xs text-destructive'>{imageValidationError}</p> : null}
+          {initialImages.length > 0 ? (
+            <div className='space-y-2'>
+              <p className='text-xs font-medium uppercase tracking-[1.2px] text-text-muted'>Current Images</p>
+              <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                {initialImages.map(productImage => {
+                  const imageUrl = productImage.image.url || productImage.image.image;
+                  return (
+                    <div key={productImage.id} className='space-y-2 rounded-lg border border-primary/15 bg-white p-2'>
+                      <img
+                        src={imageUrl}
+                        alt='Current product preview'
+                        className='h-24 w-full rounded-md border border-primary/10 object-cover'
+                      />
+                      {onRemoveImage ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='w-full'
+                          disabled={isImageActionPending}
+                          onClick={() => handleRemoveCurrentImage(productImage.id)}
+                        >
+                          Remove
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <fieldset className='space-y-3'>
@@ -493,7 +596,7 @@ export const ProductForm = ({
           <Button
             type='submit'
             className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(imageValidationError)}
           >
             {isSubmitting ? 'Saving...' : submitLabel}
           </Button>

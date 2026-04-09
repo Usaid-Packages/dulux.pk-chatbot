@@ -2,13 +2,12 @@ import type { JSX } from 'react';
 
 import { Link, useLocation } from 'react-router-dom';
 
-import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import type { Product } from '#/types/products';
 
 interface ProductTableProps {
   products: Product[];
-  onDelete: (product: Product) => void;
 }
 
 const getTypeBadgeClassName = (type: Product['productType']): string => {
@@ -69,7 +68,7 @@ const renderLinkedBasecoats = (product: Product): JSX.Element => {
   );
 };
 
-export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Element => {
+export const ProductTable = ({ products }: ProductTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
@@ -90,7 +89,6 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
         <TableBody>
           {products.map(product => {
             const imageUrl = product.images[0]?.image.url ?? product.images[0]?.image.image ?? '';
-            const handleDeleteClick = (): void => onDelete(product);
 
             return (
               <TableRow key={product.id}>
@@ -108,7 +106,9 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                   )}
                 </TableCell>
                 <TableCell>
-                  <p className='font-medium text-text-primary'>{product.name}</p>
+                  <p className='line-clamp-3 max-w-[16rem] whitespace-normal font-medium text-text-primary'>
+                    {product.name}
+                  </p>
                   <p className='text-xs text-text-muted'>{product.warrantyYears} years warranty</p>
                 </TableCell>
                 <TableCell>
@@ -129,19 +129,9 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                   </Badge>
                 </TableCell>
                 <TableCell className='align-middle'>
-                  <div className='flex items-center gap-2'>
-                    <Link className='wf-table-link' to={`${ROUTES.PRODUCT_EDIT(String(product.id))}${location.search}`}>
-                      Edit
-                    </Link>
-                    <Button
-                      type='button'
-                      variant='link'
-                      className='h-auto p-0 text-destructive hover:text-destructive'
-                      onClick={handleDeleteClick}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                  <Link className='wf-table-link' to={`${ROUTES.PRODUCT_EDIT(String(product.id))}${location.search}`}>
+                    Edit
+                  </Link>
                 </TableCell>
               </TableRow>
             );

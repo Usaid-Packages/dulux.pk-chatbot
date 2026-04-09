@@ -10,4 +10,5 @@ export * from './routes';
 export * from './generic';
 export * from './statusCodes';
 export * from './forms/authFormFields';
+export * from './products';
 export * from './registrations';

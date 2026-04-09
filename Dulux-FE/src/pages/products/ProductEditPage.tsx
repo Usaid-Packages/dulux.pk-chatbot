@@ -7,13 +7,16 @@ import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import {
+  useAttachProductImageMutation,
   useGetProductByIdQuery,
   useGetProductsQuery,
   useGetSurfaceTypesQuery,
+  useRemoveProductImageMutation,
+  useUploadProductImageMutation,
   useUpdateProductMutation,
 } from '#/data-layer/products';
 import { mapProductFormValuesToPayload, mapProductToFormValues } from '#/hooks/products';
-import type { LinkedBasecoat, ProductFormValues, SurfaceType } from '#/types/products';
+import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
 
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
@@ -33,21 +36,61 @@ export const ProductEditPage = (): JSX.Element => {
     page_size: 100,
   });
   const updateProductMutation = useUpdateProductMutation();
+  const uploadProductImageMutation = useUploadProductImageMutation();
+  const attachProductImageMutation = useAttachProductImageMutation();
+  const removeProductImageMutation = useRemoveProductImageMutation();
 
   const handleCancel = (): void => {
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const handleSubmit = (values: ProductFormValues): void => {
+  const uploadAndAttachImages = async (imageFiles: File[]): Promise<void> => {
+    for (const imageFile of imageFiles) {
+      const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
+      await attachProductImageMutation.mutateAsync({
+        productId,
+        payload: {
+          image_id: imageId,
+        },
+      });
+    }
+  };
+
+  const handleSubmit = ({ values, imageFiles }: ProductFormSubmission): void => {
     updateProductMutation.mutate(
       {
         id: productId,
         payload: mapProductFormValuesToPayload(values),
       },
       {
+        onSuccess: async () => {
+          try {
+            if (imageFiles.length > 0) {
+              await uploadAndAttachImages(imageFiles);
+            }
+            toast.success('Product updated successfully.');
+          } catch (error) {
+            toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
+          } finally {
+            navigate(`${ROUTES.PRODUCTS}${location.search}`);
+          }
+        },
+        onError: error => {
+          toast.error(getApiErrorMessage(error));
+        },
+      }
+    );
+  };
+
+  const handleRemoveImage = (imageId: string): void => {
+    removeProductImageMutation.mutate(
+      {
+        productId,
+        imageId,
+      },
+      {
         onSuccess: () => {
-          toast.success('Product updated successfully.');
-          navigate(`${ROUTES.PRODUCTS}${location.search}`);
+          toast.success('Product image removed.');
         },
         onError: error => {
           toast.error(getApiErrorMessage(error));
@@ -111,11 +154,16 @@ export const ProductEditPage = (): JSX.Element => {
       title='Edit Product'
       description='Update product details and surface mappings.'
       submitLabel='Save Changes'
-      isSubmitting={updateProductMutation.isPending}
+      isSubmitting={
+        updateProductMutation.isPending || uploadProductImageMutation.isPending || attachProductImageMutation.isPending
+      }
       initialValues={mapProductToFormValues(productQuery.data)}
+      initialImages={productQuery.data.images}
       surfaceTypes={surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES}
       basecoatOptions={basecoatOptionsQuery.data?.results ?? EMPTY_BASECOAT_OPTIONS}
       onSubmit={handleSubmit}
+      onRemoveImage={handleRemoveImage}
+      isImageActionPending={removeProductImageMutation.isPending}
       onCancel={handleCancel}
     />
   );
