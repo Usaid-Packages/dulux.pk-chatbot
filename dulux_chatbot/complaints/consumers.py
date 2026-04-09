@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from dulux_chatbot.chatbot.services.sessions import activate_complaint_chat_session
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
@@ -76,6 +77,7 @@ class ComplaintChatConsumer(AuthenticatedConsumer):
         except WhatsAppAPIError:
             await self.send_json({"error": "Message saved but could not be sent to WhatsApp.", "message": message})
             return
+        await sync_to_async(activate_complaint_chat_session)(phone_number=phone_number, complaint_id=self.complaint_id)
         await self.channel_layer.group_send(
             self.group_name,
             {

@@ -8,6 +8,8 @@ from django.test import TransactionTestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from config.asgi import application
+from dulux_chatbot.chatbot.choices import FlowType
+from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage
 from dulux_chatbot.complaints.tests.factories import create_complaint, create_user
@@ -124,4 +126,30 @@ class ComplaintConsumerTests(TransactionTestCase):
                 ).exists
             )()
         )
+        await communicator.disconnect()
+
+    @patch("dulux_chatbot.complaints.consumers.WhatsAppClient.send_text")
+    async def test_consumer_reactivates_existing_whatsapp_session_for_complaint(self, send_text_mock):
+        complaint = await sync_to_async(create_complaint)(phone_number="923214840044")
+        session = await sync_to_async(WhatsAppSession.objects.create)(
+            phone_number="923214840044",
+            flow=None,
+            current_step="menu",
+            session_data={},
+        )
+        user = await sync_to_async(create_user)()
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/{complaint.id}/chat/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertTrue(connected)
+        await communicator.send_json_to({"text": "Hello from socket CS"})
+        await communicator.receive_json_from()
+
+        await sync_to_async(session.refresh_from_db)()
+        self.assertEqual(session.flow, FlowType.COMPLAINT)
+        self.assertEqual(session.current_step, "chat")
+        self.assertEqual(session.session_data, {"complaint_id": complaint.id})
         await communicator.disconnect()
