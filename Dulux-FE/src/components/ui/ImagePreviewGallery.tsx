@@ -105,7 +105,7 @@ export const ImagePreviewGallery = ({
                     Open image
                   </span>
                 </div>
-                <p className='mt-2 text-sm font-medium text-text-primary'>{image.label}</p>
+                <p className='mt-2 break-all text-sm font-medium text-text-primary'>{image.label}</p>
               </button>
             ))}
           </div>

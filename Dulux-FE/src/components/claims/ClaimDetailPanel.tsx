@@ -41,7 +41,9 @@ export const ClaimDetailPanel = ({
             <h1 className='mt-1 text-lg font-bold text-text-primary'>{claim.customerName}</h1>
             <p className='text-sm text-text-muted'>{claim.phone}</p>
           </div>
-          <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>
+          <Badge variant={getStatusVariant(claim.status, claim.workflowState)}>
+            {getStatusLabel(claim.status, claim.workflowState)}
+          </Badge>
         </div>
 
         <dl className='mt-4 grid gap-2 text-sm'>

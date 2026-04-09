@@ -210,39 +210,6 @@ export const ProductsListPage = (): JSX.Element => {
     });
   };
 
-  const handleExportProducts = (): void => {
-    if (products.length === 0) {
-      toast.info('No products available to export.');
-      return;
-    }
-
-    const header = ['ID', 'Name', 'Type', 'Warranty Years', 'Coverage', 'Status', 'Surface Types', 'URL'];
-    const rows = products.map(product => [
-      String(product.id),
-      product.name,
-      product.productType,
-      String(product.warrantyYears),
-      product.coverageDetails,
-      product.isActive ? 'Active' : 'Inactive',
-      product.surfaceTypes.map(surfaceType => surfaceType.name).join('; '),
-      product.webpageUrl,
-    ]);
-
-    const csv = [header, ...rows]
-      .map(row => row.map(column => `"${String(column).replaceAll('"', '""')}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const downloadUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(downloadUrl);
-  };
-
   const handleGoToProductCreate = (): void => {
     navigate(`${ROUTES.PRODUCT_NEW}${location.search}`);
   };
@@ -432,7 +399,7 @@ export const ProductsListPage = (): JSX.Element => {
       {activeTab === 'products' ? (
         <>
           <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
-            <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]'>
+            <div className='grid items-center gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]'>
               <Input
                 type='search'
                 value={productSearch}
@@ -472,13 +439,10 @@ export const ProductsListPage = (): JSX.Element => {
                   <SelectItem value='-name'>Name (Z-A)</SelectItem>
                 </SelectContent>
               </Select>
-              <div className='flex items-center justify-end gap-2'>
-                <Button type='button' variant='outline' onClick={handleExportProducts}>
-                  Export
-                </Button>
+              <div className='flex h-11 items-center justify-end'>
                 <Button
                   type='button'
-                  className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
+                  className='h-11 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] px-5 text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
                   onClick={handleGoToProductCreate}
                 >
                   Add Product

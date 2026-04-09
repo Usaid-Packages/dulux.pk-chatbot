@@ -157,6 +157,14 @@ const normalizePriority = (priority: string | undefined): ClaimPriority => {
 const normalizeIssueType = (issueType: string | undefined) => {
   return toUiClaimIssueType(issueType ?? 'OTHERS');
 };
+const toNonEmptyDescription = (notes: string | undefined): string => {
+  if (typeof notes !== 'string') {
+    return 'No additional description provided.';
+  }
+
+  const normalizedNotes = notes.trim();
+  return normalizedNotes.length > 0 ? normalizedNotes : 'No additional description provided.';
+};
 
 const normalizeStatus = (apiState: string | undefined): ClaimStatus => {
   const normalizedState = apiState?.toUpperCase() ?? '';
@@ -182,6 +190,10 @@ const normalizeStatus = (apiState: string | undefined): ClaimStatus => {
   }
 
   if (normalizedState === 'QA_REJECTED') {
+    return 'rejected';
+  }
+
+  if (normalizedState === 'QA_REJECT') {
     return 'rejected';
   }
 
@@ -216,6 +228,7 @@ const toQueueItem = (claim: WarrantyClaimApiResponse): QualityQueueItem => {
     city: claim.city ?? '-',
     priority: normalizePriority(claim.priority),
     status: normalizeStatus(claim.state),
+    workflowState: toApiClaimWorkflowState(claim.state ?? ''),
     forwardedBy: claim.forwardedBy ?? claim.forwarded_by ?? 'CS Team',
     forwardedAt,
     submittedAt,
@@ -286,7 +299,7 @@ export const mapQualityClaimDetail = (claim: WarrantyClaimApiResponse): QualityD
     areaSqFt: Number.parseFloat(claim.affectedAreaSqft ?? claim.affected_area_sqft ?? '1') || 1,
     topcoat: paintPair?.topcoatName ?? paintPair?.topcoat_name ?? '-',
     batchNumber: '-',
-    description: claim.notes ?? 'No additional description provided.',
+    description: toNonEmptyDescription(claim.notes),
     evidencePhotos: (claim.images ?? [])
       .map(image => ({
         id: toId(image.id),

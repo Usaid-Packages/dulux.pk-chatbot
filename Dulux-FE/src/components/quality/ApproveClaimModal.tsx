@@ -14,13 +14,10 @@ import {
   Textarea,
 } from '#/components/ui';
 import { qualityApproveSchema, type QualityApproveFormValues } from '#/schemas/quality.schema';
-import type { QualityDetail } from '#/types/quality.types';
-import { createClaimApprovedTemplate } from '#/utils';
 
 interface ApproveClaimModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
-  claim: QualityDetail;
   onClose: () => void;
   onSubmit: (values: QualityApproveFormValues) => void;
 }
@@ -31,18 +28,11 @@ interface ApproveClaimModalProps {
  * @param props - Modal open state and submit handler.
  * @returns QA approve modal.
  */
-export const ApproveClaimModal = ({
-  isOpen,
-  isSubmitting,
-  claim,
-  onClose,
-  onSubmit,
-}: ApproveClaimModalProps): JSX.Element => {
+export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: ApproveClaimModalProps): JSX.Element => {
   const {
     handleSubmit,
     register,
     reset,
-    watch,
     formState: { errors },
   } = useForm<QualityApproveFormValues>({
     resolver: zodResolver(qualityApproveSchema),
@@ -50,11 +40,6 @@ export const ApproveClaimModal = ({
       technicalNotes: '',
     },
   });
-  const technicalNotes = watch('technicalNotes') ?? '';
-  const previewHtml = createClaimApprovedTemplate(
-    claim,
-    technicalNotes.trim() || 'Claim approved after quality review.'
-  );
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -72,7 +57,7 @@ export const ApproveClaimModal = ({
       <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>Approve Claim (Quality)</DialogTitle>
-          <DialogDescription>Provide technical notes and review customer email before QA approval.</DialogDescription>
+          <DialogDescription>Provide technical notes before QA approval.</DialogDescription>
         </DialogHeader>
 
         <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
@@ -97,19 +82,6 @@ export const ApproveClaimModal = ({
               <p className='mt-1 text-sm text-text-primary'>
                 This claim will move to approved state with QA decision history recorded.
               </p>
-            </div>
-
-            <div className='space-y-2'>
-              <p className='text-sm font-medium text-text-primary'>Email Preview</p>
-              <p className='text-xs text-text-muted'>This is the customer email template sent on quality approval.</p>
-              <div className='overflow-hidden rounded-xl border border-primary/15 bg-white'>
-                <iframe
-                  title='Quality approval email preview'
-                  className='h-56 w-full'
-                  sandbox=''
-                  srcDoc={previewHtml}
-                />
-              </div>
             </div>
           </div>
 

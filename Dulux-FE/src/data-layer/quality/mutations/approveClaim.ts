@@ -8,15 +8,11 @@ import type { WarrantyClaimApiResponse } from '../apiMappers';
 import { mapQualityClaimDetail } from '../apiMappers';
 
 export const approveQualityClaim = async (payload: QualityApprovePayload): Promise<QualityDetail> => {
-  const response = await performRequest<
-    WarrantyClaimApiResponse,
-    { technical_notes: string; notification_template: string }
-  >({
+  const response = await performRequest<WarrantyClaimApiResponse, { technical_notes: string }>({
     method: POST,
     url: apiEndpoints.quality.approve(payload.id),
     payload: {
       technical_notes: payload.technicalNotes,
-      notification_template: payload.notificationTemplate,
     },
   });
 

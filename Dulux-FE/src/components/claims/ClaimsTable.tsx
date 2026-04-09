@@ -47,7 +47,9 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
               <TableCell>{getClaimIssueTypeLabel(claim.issueType)}</TableCell>
               <TableCell>{formatDate(claim.submittedAt)}</TableCell>
               <TableCell>
-                <Badge variant={getStatusVariant(claim.status)}>{getStatusLabel(claim.status)}</Badge>
+                <Badge variant={getStatusVariant(claim.status, claim.workflowState)}>
+                  {getStatusLabel(claim.status, claim.workflowState)}
+                </Badge>
               </TableCell>
               <TableCell className='align-middle'>
                 <Button

@@ -5,13 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { QualityQueueItem } from '#/types/quality.types';
-import {
-  getPriorityClass,
-  getPriorityLabel,
-  getQualityStatusLabel,
-  getQualityStatusVariant,
-  formatDate,
-} from './helpers';
+import { getQualityStatusLabel, getQualityStatusVariant, formatDate } from './helpers';
 
 interface QualityQueueTableProps {
   items: QualityQueueItem[];
@@ -34,7 +28,6 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
             <TableHead>Claim ID</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Issue</TableHead>
-            <TableHead>Priority</TableHead>
             <TableHead>Forwarded By</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
@@ -49,17 +42,12 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
               </TableCell>
               <TableCell>{item.customerName}</TableCell>
               <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
-              <TableCell>
-                <span
-                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${getPriorityClass(item.priority)}`}
-                >
-                  {getPriorityLabel(item.priority)}
-                </span>
-              </TableCell>
               <TableCell>{item.forwardedBy}</TableCell>
               <TableCell>{formatDate(item.submittedAt)}</TableCell>
               <TableCell>
-                <Badge variant={getQualityStatusVariant(item.status)}>{getQualityStatusLabel(item.status)}</Badge>
+                <Badge variant={getQualityStatusVariant(item.status, item.workflowState)}>
+                  {getQualityStatusLabel(item.status, item.workflowState)}
+                </Badge>
               </TableCell>
               <TableCell className='align-middle'>
                 <Button

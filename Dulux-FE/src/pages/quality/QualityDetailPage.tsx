@@ -213,7 +213,6 @@ export const QualityDetailPage = (): JSX.Element => {
       <ApproveClaimModal
         isOpen={isApproveModalOpen}
         isSubmitting={isActionPending}
-        claim={claim}
         onClose={closeApproveModal}
         onSubmit={submitApprove}
       />
@@ -221,7 +220,6 @@ export const QualityDetailPage = (): JSX.Element => {
       <RejectClaimQAModal
         isOpen={isRejectModalOpen}
         isSubmitting={isActionPending}
-        claim={claim}
         onClose={closeRejectModal}
         onSubmit={submitReject}
       />

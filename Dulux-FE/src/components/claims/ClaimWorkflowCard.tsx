@@ -13,6 +13,7 @@ const WORKFLOW_STATE_LABELS: Record<string, string> = {
   IN_REVIEW: 'In Review',
   QA_REVIEW: 'QA Review',
   QA_APPROVED: 'QA Approved',
+  QA_REJECT: 'QA Rejected',
   QA_REJECTED: 'QA Rejected',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
@@ -69,8 +70,12 @@ const getCurrentStep = (status: ClaimStatus): number => {
 
 const getStateChipClasses = (normalizedState: string): string => {
   switch (normalizedState) {
+    case 'QA_REJECT':
+    case 'QA_REJECTED':
     case 'REJECTED':
       return 'bg-status-rejected-bg text-status-rejected-text';
+    case 'QA_APPROVED':
+      return 'bg-status-qaApproved-bg text-status-qaApproved-text';
     case 'APPROVED':
       return 'bg-status-approved-bg text-status-approved-text';
     case 'QA_REVIEW':
