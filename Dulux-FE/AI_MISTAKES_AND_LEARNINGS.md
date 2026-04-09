@@ -56,6 +56,9 @@
   side effects.
 - When the user requests one module to match another module's filter style, align layout density and control treatment
   (for example remove extra labels/wrappers) instead of only recoloring controls.
+- For audit/detail UIs with potentially large text payloads (for example notes/prompts), do not render raw JSON as the
+  primary view; use field-based comparison cards with truncation, `Show more/Show less`, and bounded scroll containers
+  so long content does not break layout.
 
 ## Mistake Log (Short)
 
@@ -501,6 +504,14 @@
   without touching `eslint.config.ts`.
 - Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout)
   and keep lint config unchanged.
+
+### 2026-04-09 13:35 - Audit detail UI broke with long snapshot/note values
+
+- Issue: Audit log detail rendered long values in an unbounded way, causing layout overflow and poor readability.
+- Fix: Switched to field-based comparison/snapshot UI with truncation, `Show more/Show less`, and max-height scroll
+  containers; removed raw JSON from primary presentation.
+- Rule: In detail/audit inspection views, always design for long-content resilience (truncate + expand + scroll) and do
+  not use raw JSON as the primary UI representation.
 
 ## Final Check (Before Submit)
 

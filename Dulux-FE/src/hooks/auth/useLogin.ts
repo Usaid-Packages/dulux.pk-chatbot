@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { ROUTES } from '#/constants';
+import { getHomeRouteByRole } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useLoginMutation } from '#/data-layer/auth';
 import type { LoginFormValues } from '#/schemas/authSchemas';
@@ -28,9 +28,10 @@ export const useLogin = () => {
   const handleLogin = (values: LoginFormValues): void => {
     loginMutate(values, {
       onSuccess: (response: LoginApiResponse) => {
-        setAuthSession(mapLoginResponse(response));
+        const mappedLoginResponse = mapLoginResponse(response);
+        setAuthSession(mappedLoginResponse);
         toast.success('Logged in successfully.');
-        navigate(ROUTES.HOME, { replace: true });
+        navigate(getHomeRouteByRole(mappedLoginResponse.user.role), { replace: true });
       },
       onError: (error: Error) => {
         toast.error(getApiErrorMessage(error));

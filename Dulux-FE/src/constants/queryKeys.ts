@@ -36,6 +36,11 @@ export const queryKeys = {
     resolve: ['complaints', 'resolve'] as const,
     close: ['complaints', 'close'] as const,
   },
+  auditLogs: {
+    all: ['audit-logs'] as const,
+    list: (filters: Record<string, unknown>) => ['audit-logs', 'list', filters] as const,
+    detail: (id: string) => ['audit-logs', 'detail', id] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     summary: ['dashboard', 'cards'] as const,

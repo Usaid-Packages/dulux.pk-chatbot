@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquareText,
+  ScrollText,
   Settings,
   ShieldCheck,
 } from 'lucide-react';
@@ -16,10 +17,9 @@ import { NavLink } from 'react-router-dom';
 
 import duluxLogo from '#/assets/images/dulux-logo.png';
 import { Button } from '#/components/ui/Button';
-import { SIDEBAR_NAV_ITEMS } from '#/constants';
+import { SIDEBAR_NAV_ITEMS, normalizeAppUserRole } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useLogout } from '#/hooks';
-import type { SidebarUserRole } from '#/types/layout.types';
 import { cn } from '#/utils';
 
 const NAV_ICON_MAP: Record<string, LucideIcon> = {
@@ -29,35 +29,12 @@ const NAV_ICON_MAP: Record<string, LucideIcon> = {
   FlaskConical,
   MessageSquareText,
   Boxes,
+  ScrollText,
   FileUp,
   Settings,
 };
 
 const SIDEBAR_GROUP_ORDER = ['Main', 'Warranty', 'Support', 'Admin'] as const;
-
-const ROLE_BY_NORMALIZED_VALUE: Record<string, SidebarUserRole> = {
-  admin: 'admin',
-  cs: 'cs',
-  'cs agent': 'cs',
-  'customer service': 'cs',
-  quality: 'quality',
-  'quality reviewer': 'quality',
-};
-
-const resolveSidebarRole = (role: string | undefined): SidebarUserRole | null => {
-  if (!role) {
-    return null;
-  }
-
-  const normalizedRole = role.replaceAll('_', ' ').toLowerCase().trim();
-
-  return (
-    ROLE_BY_NORMALIZED_VALUE[normalizedRole] ??
-    (normalizedRole.includes('quality') ? 'quality' : null) ??
-    (normalizedRole.includes('admin') ? 'admin' : null) ??
-    (normalizedRole.includes('cs') ? 'cs' : null)
-  );
-};
 
 const toDisplayRole = (role: string | undefined): string => {
   if (!role) {
@@ -89,7 +66,7 @@ export const Sidebar = (): JSX.Element => {
   const userEmail = user?.email ?? 'user@dulux.pk';
   const roleLabel = toDisplayRole(user?.role);
   const initials = toInitials(user?.email);
-  const sidebarRole = resolveSidebarRole(user?.role);
+  const sidebarRole = normalizeAppUserRole(user?.role);
   const visibleNavItems = SIDEBAR_NAV_ITEMS.filter(
     item => sidebarRole !== null && item.allowedRoles.includes(sidebarRole)
   );

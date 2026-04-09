@@ -1,4 +1,5 @@
 export * from './apiEndpoints';
+export * from './authRoles';
 export * from './claimsApiMappings';
 export * from './claims.constants';
 export * from './dashboardFlowConfigs';

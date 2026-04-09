@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { AuthCard, AuthShell, LoginForm } from '#/components/auth';
-import { ROUTES } from '#/constants';
+import { getHomeRouteByRole } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useLogin } from '#/hooks';
 
@@ -13,11 +13,11 @@ import { useLogin } from '#/hooks';
  * @returns Login page component.
  */
 export const LoginPage = (): JSX.Element => {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const { handleLogin, isLoginPending } = useLogin();
 
   if (token) {
-    return <Navigate to={ROUTES.HOME} replace />;
+    return <Navigate to={getHomeRouteByRole(user?.role)} replace />;
   }
 
   return (
