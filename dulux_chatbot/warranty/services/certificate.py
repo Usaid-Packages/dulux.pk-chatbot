@@ -15,8 +15,10 @@ TEXT_COLOR = colors.HexColor("#222222")
 MUTED_TEXT_COLOR = colors.HexColor("#4B5563")
 PAGE_ONE_HEADER_IMAGE = Path(__file__).resolve().parent.parent / "assets" / "warranty_certificate_page1_header.jpg"
 PAGE_TWO_FOOTER_IMAGE = Path(__file__).resolve().parent.parent / "assets" / "warranty_certificate_page2_footer.jpg"
-HEADER_HEIGHT = 122 * mm
-PAGE_TWO_FOOTER_HEIGHT = 48 * mm
+PAGE_HORIZONTAL_MARGIN = 15 * mm
+CONTENT_WIDTH = A4[0] - (2 * PAGE_HORIZONTAL_MARGIN)
+HEADER_HEIGHT = 128 * mm
+PAGE_TWO_FOOTER_HEIGHT = 69 * mm
 
 
 def _build_story_styles() -> dict[str, ParagraphStyle]:
@@ -92,17 +94,18 @@ def _draw_first_page(canvas, _doc) -> None:
         return
 
     page_width, page_height = A4
+    draw_height = HEADER_HEIGHT
     canvas.saveState()
     clip_path = canvas.beginPath()
-    clip_path.rect(0, page_height - HEADER_HEIGHT, page_width, HEADER_HEIGHT)
+    clip_path.rect(0, page_height - draw_height, page_width, draw_height)
     canvas.clipPath(clip_path, stroke=0, fill=0)
     canvas.drawImage(
         str(PAGE_ONE_HEADER_IMAGE),
         0,
-        0,
+        page_height - draw_height,
         width=page_width,
-        height=page_height,
-        preserveAspectRatio=False,
+        height=draw_height,
+        preserveAspectRatio=True,
         mask="auto",
     )
     canvas.restoreState()
@@ -120,7 +123,7 @@ def _draw_later_pages(canvas, _doc) -> None:
         0,
         width=page_width,
         height=PAGE_TWO_FOOTER_HEIGHT,
-        preserveAspectRatio=False,
+        preserveAspectRatio=True,
         mask="auto",
     )
     canvas.restoreState()
@@ -156,8 +159,9 @@ def _build_product_table(title: str, rows: list[dict[str, str]], styles: dict[st
 
     table = Table(
         table_rows,
-        colWidths=[14 * mm, 82 * mm, 42 * mm],
+        colWidths=[18 * mm, CONTENT_WIDTH - (64 * mm), 46 * mm],
         repeatRows=1,
+        hAlign="LEFT",
     )
     table.setStyle(
         TableStyle(
@@ -192,7 +196,8 @@ def _build_registration_box(registration, styles: dict[str, ParagraphStyle]) -> 
                 Paragraph(registration.registration_code, styles["registration_value"]),
             ]
         ],
-        colWidths=[68 * mm, 28 * mm],
+        colWidths=[94 * mm, 40 * mm],
+        hAlign="LEFT",
     )
     table.setStyle(
         TableStyle(
@@ -250,13 +255,13 @@ def generate_warranty_certificate(registration):
         pagesize=A4,
         topMargin=120 * mm,
         bottomMargin=22 * mm,
-        leftMargin=15 * mm,
-        rightMargin=15 * mm,
+        leftMargin=PAGE_HORIZONTAL_MARGIN,
+        rightMargin=PAGE_HORIZONTAL_MARGIN,
         pageCompression=0,
     )
 
     story = [
-        Spacer(1, 2 * mm),
+        Spacer(1, 8 * mm),
         *_build_customer_details(registration, styles),
         Spacer(1, 6 * mm),
     ]

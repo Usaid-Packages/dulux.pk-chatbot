@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -804,6 +805,162 @@ class WarrantyClaimAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("entries", response.data)
+
+
+class WarrantyCardCountAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.cs_user = create_cs_user(email="counts-cs@example.com")
+        self.quality_user = create_quality_user(email="counts-quality@example.com")
+        self.admin_user = create_admin_user(email="counts-admin@example.com")
+        self.registration_counts_url = reverse("registration_card_counts")
+        self.claim_counts_url = reverse("claim_card_counts")
+        self.quality_counts_url = reverse("quality_card_counts")
+
+    def test_registration_card_counts_require_cs_or_admin(self):
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.get(self.registration_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_registration_card_counts_return_zero_values(self):
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(self.registration_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"total_registrations": 0, "pending_review": 0, "approved": 0})
+
+    def test_registration_card_counts_support_date_and_agent_filters(self):
+        registration_for_user = create_registration(state=RegistrationState.APPROVED)
+        registration_for_user.approved_by = self.cs_user
+        registration_for_user.save(update_fields=["approved_by"])
+
+        old_registration = create_registration(state=RegistrationState.SUBMITTED, phone_number="923009999998")
+        old_registration.created = timezone.now() - timedelta(days=7)
+        old_registration.save(update_fields=["created"])
+
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(
+            self.registration_counts_url,
+            {
+                "date_from": timezone.localdate().isoformat(),
+                "date_to": timezone.localdate().isoformat(),
+                "agent_id": self.cs_user.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"total_registrations": 1, "pending_review": 0, "approved": 1})
+
+    def test_claim_card_counts_return_expected_summary(self):
+        topcoat = create_product(name="Counts Claim Topcoat", warranty_years=5)
+        basecoat = create_product(name="Counts Claim Basecoat", product_type="BASECOAT", warranty_years=3)
+
+        submitted_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000001")
+        submitted_pair = create_paint_pair(registration=submitted_registration, topcoat=topcoat, basecoat=basecoat)
+        create_claim(registration=submitted_registration, paint_pair=submitted_pair, state=ClaimState.SUBMITTED)
+
+        resubmit_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000002")
+        resubmit_pair = create_paint_pair(registration=resubmit_registration, topcoat=topcoat, basecoat=basecoat)
+        create_claim(registration=resubmit_registration, paint_pair=resubmit_pair, state=ClaimState.RESUBMIT)
+
+        qa_review_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000003")
+        qa_review_pair = create_paint_pair(registration=qa_review_registration, topcoat=topcoat, basecoat=basecoat)
+        create_claim(registration=qa_review_registration, paint_pair=qa_review_pair, state=ClaimState.QA_REVIEW)
+
+        qa_approved_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000004")
+        qa_approved_pair = create_paint_pair(
+            registration=qa_approved_registration,
+            topcoat=topcoat,
+            basecoat=basecoat,
+        )
+        create_claim(
+            registration=qa_approved_registration,
+            paint_pair=qa_approved_pair,
+            state=ClaimState.QA_APPROVED,
+        )
+
+        resolved_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000005")
+        resolved_pair = create_paint_pair(registration=resolved_registration, topcoat=topcoat, basecoat=basecoat)
+        create_claim(registration=resolved_registration, paint_pair=resolved_pair, state=ClaimState.APPROVED)
+
+        self.client.force_authenticate(user=self.cs_user)
+        response = self.client.get(self.claim_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "total_claims": 5,
+                "pending_cs_review": 2,
+                "forwarded_to_quality": 2,
+                "resolved": 1,
+            },
+        )
+
+    def test_quality_card_counts_require_quality_or_admin(self):
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(self.quality_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_quality_card_counts_return_expected_summary(self):
+        topcoat = create_product(name="Counts QA Topcoat", warranty_years=5)
+        basecoat = create_product(name="Counts QA Basecoat", product_type="BASECOAT", warranty_years=3)
+
+        awaiting_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000006")
+        awaiting_pair = create_paint_pair(registration=awaiting_registration, topcoat=topcoat, basecoat=basecoat)
+        create_claim(registration=awaiting_registration, paint_pair=awaiting_pair, state=ClaimState.QA_REVIEW)
+
+        info_requested_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000007")
+        info_requested_pair = create_paint_pair(
+            registration=info_requested_registration,
+            topcoat=topcoat,
+            basecoat=basecoat,
+        )
+        create_claim(
+            registration=info_requested_registration,
+            paint_pair=info_requested_pair,
+            state=ClaimState.RESUBMIT,
+        )
+
+        resolved_registration = create_registration(state=RegistrationState.APPROVED, phone_number="923000000008")
+        resolved_pair = create_paint_pair(registration=resolved_registration, topcoat=topcoat, basecoat=basecoat)
+        resolved_claim = create_claim(
+            registration=resolved_registration,
+            paint_pair=resolved_pair,
+            state=ClaimState.QA_REJECTED,
+        )
+        resolved_claim.modified = timezone.now()
+        resolved_claim.save(update_fields=["modified"])
+
+        self.client.force_authenticate(user=self.quality_user)
+        response = self.client.get(self.quality_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "total_in_queue": 3,
+                "awaiting_review": 1,
+                "info_requested": 1,
+                "resolved_today": 1,
+            },
+        )
+
+    def test_card_count_endpoints_reject_invalid_date_range(self):
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(
+            self.registration_counts_url,
+            {"date_from": "2026-04-10", "date_to": "2026-04-01"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "date_from must be less than or equal to date_to.")
 
 
 class ClaimResubmissionSerializerTests(TestCase):

@@ -40,6 +40,30 @@ class DashboardBaseAPIView(APIView):
         serialized_params = "|".join(f"{key}={validated_data.get(key)}" for key in sorted(validated_data))
         return f"dashboard:{prefix}:{serialized_params}"
 
+    def _filter_registrations(self, validated_data: dict) -> QuerySet[WarrantyRegistration]:
+        queryset = WarrantyRegistration.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        return queryset
+
+    def _filter_claims(self, validated_data: dict) -> QuerySet[WarrantyClaim]:
+        queryset = WarrantyClaim.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        return queryset
+
+    def _filter_complaints(self, validated_data: dict) -> QuerySet[Complaint]:
+        queryset = Complaint.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        return queryset
+
 
 class DashboardCardsAPIView(DashboardBaseAPIView):
     REGISTRATION_APPROVAL_SCREENS = 4
@@ -149,30 +173,6 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
 
         cache.set(cache_key, payload, timeout=self.cache_timeout_seconds)
         return Response(payload)
-
-    def _filter_registrations(self, validated_data: dict) -> QuerySet[WarrantyRegistration]:
-        queryset = WarrantyRegistration.objects.all()
-        if validated_data.get("date_from"):
-            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
-        if validated_data.get("date_to"):
-            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
-        return queryset
-
-    def _filter_claims(self, validated_data: dict) -> QuerySet[WarrantyClaim]:
-        queryset = WarrantyClaim.objects.all()
-        if validated_data.get("date_from"):
-            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
-        if validated_data.get("date_to"):
-            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
-        return queryset
-
-    def _filter_complaints(self, validated_data: dict) -> QuerySet[Complaint]:
-        queryset = Complaint.objects.all()
-        if validated_data.get("date_from"):
-            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
-        if validated_data.get("date_to"):
-            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
-        return queryset
 
 
 class DashboardAnalyticsAPIView(DashboardBaseAPIView):

@@ -66,6 +66,20 @@ class PaintPairInvoiceSerializer(serializers.ModelSerializer):
         fields = ("id", "invoice_type", "image", "created")
 
 
+class CardCountQuerySerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+    agent_id = serializers.IntegerField(required=False, min_value=1)
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        date_from = attrs.get("date_from")
+        date_to = attrs.get("date_to")
+        if date_from and date_to and date_from > date_to:
+            raise serializers.ValidationError("date_from must be less than or equal to date_to.")
+        return attrs
+
+
 class RegistrationPaintPairSerializer(serializers.ModelSerializer):
     topcoat_name = serializers.SerializerMethodField()
     basecoat_name = serializers.SerializerMethodField()

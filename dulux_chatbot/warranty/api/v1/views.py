@@ -1,9 +1,13 @@
+from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin, IsQualityReviewerOrAdmin
 from dulux_chatbot.warranty.api.v1.serializers import (
+    CardCountQuerySerializer,
     ClaimCSRResubmissionCreateSerializer,
     ClaimQualityApproveSerializer,
     ClaimQualityRejectSerializer,
@@ -18,7 +22,112 @@ from dulux_chatbot.warranty.api.v1.serializers import (
     WarrantyRegistrationListSerializer,
     WarrantyRegistrationUpdateSerializer,
 )
+from dulux_chatbot.warranty.choices import ClaimState, RegistrationState
 from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
+
+
+class CardCountBaseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _validation_error_response(self, serializer) -> Response:
+        message = next(iter(serializer.errors.values()))[0]
+        return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _filter_registrations(self, validated_data: dict):
+        queryset = WarrantyRegistration.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        if validated_data.get("agent_id"):
+            queryset = queryset.filter(approved_by_id=validated_data["agent_id"])
+        return queryset
+
+    def _filter_claims(self, validated_data: dict):
+        queryset = WarrantyClaim.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        if validated_data.get("agent_id"):
+            queryset = queryset.filter(approved_by_id=validated_data["agent_id"])
+        return queryset
+
+
+class RegistrationCardCountsAPIView(CardCountBaseAPIView):
+    permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
+
+    def get(self, request, *args, **kwargs):
+        serializer = CardCountQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return self._validation_error_response(serializer)
+
+        queryset = self._filter_registrations(serializer.validated_data)
+        counts = queryset.aggregate(
+            total_registrations=Count("id"),
+            pending_review=Count("id", filter=Q(state__in=(RegistrationState.SUBMITTED, RegistrationState.RESUBMIT))),
+            approved=Count("id", filter=Q(state=RegistrationState.APPROVED)),
+        )
+        return Response({key: int(value or 0) for key, value in counts.items()}, status=status.HTTP_200_OK)
+
+
+class ClaimCardCountsAPIView(CardCountBaseAPIView):
+    permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
+
+    def get(self, request, *args, **kwargs):
+        serializer = CardCountQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return self._validation_error_response(serializer)
+
+        queryset = self._filter_claims(serializer.validated_data)
+        counts = queryset.aggregate(
+            total_claims=Count("id"),
+            pending_cs_review=Count("id", filter=Q(state__in=(ClaimState.SUBMITTED, ClaimState.RESUBMIT))),
+            forwarded_to_quality=Count(
+                "id",
+                filter=Q(
+                    state__in=(
+                        ClaimState.QA_REVIEW,
+                        ClaimState.QA_APPROVED,
+                        ClaimState.QA_REJECTED,
+                    )
+                ),
+            ),
+            resolved=Count("id", filter=Q(state__in=(ClaimState.APPROVED, ClaimState.REJECTED))),
+        )
+        return Response({key: int(value or 0) for key, value in counts.items()}, status=status.HTTP_200_OK)
+
+
+class QualityCardCountsAPIView(CardCountBaseAPIView):
+    permission_classes = [IsAuthenticated, IsQualityReviewerOrAdmin]
+
+    def get(self, request, *args, **kwargs):
+        serializer = CardCountQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return self._validation_error_response(serializer)
+
+        queryset = self._filter_claims(serializer.validated_data)
+        counts = queryset.aggregate(
+            total_in_queue=Count(
+                "id",
+                filter=Q(
+                    state__in=(
+                        ClaimState.QA_REVIEW,
+                        ClaimState.RESUBMIT,
+                        ClaimState.QA_APPROVED,
+                        ClaimState.QA_REJECTED,
+                    )
+                ),
+            ),
+            awaiting_review=Count("id", filter=Q(state=ClaimState.QA_REVIEW)),
+            info_requested=Count("id", filter=Q(state=ClaimState.RESUBMIT)),
+        )
+        payload = {key: int(value or 0) for key, value in counts.items()}
+        payload["resolved_today"] = queryset.filter(
+            state__in=(ClaimState.QA_APPROVED, ClaimState.QA_REJECTED),
+            modified__date=timezone.localdate(),
+        ).count()
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class WarrantyRegistrationListCreateAPIView(generics.ListCreateAPIView):

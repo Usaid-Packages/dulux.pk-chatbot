@@ -1,12 +1,15 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from dulux_chatbot.complaints.choices import ComplaintStatus
 from dulux_chatbot.complaints.tests.factories import create_chat_message, create_complaint, create_image, create_user
+from dulux_chatbot.users.choices import UserRole
 from dulux_chatbot.warranty.tests.factories import create_registration
 
 
@@ -138,3 +141,64 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
+
+
+class LiveChatCardCountAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.cs_user = create_user(email="live-chat-cs@example.com", role=UserRole.CS_AGENT)
+        self.quality_user = create_user(email="live-chat-quality@example.com", role=UserRole.QUALITY_REVIEWER)
+        self.live_chat_counts_url = reverse("live_chat_card_counts")
+
+    def test_live_chat_card_counts_require_cs_or_admin(self):
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.get(self.live_chat_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_live_chat_card_counts_return_expected_summary(self):
+        create_complaint(status=ComplaintStatus.OPEN, phone_number="923001111111")
+        create_complaint(status=ComplaintStatus.IN_PROGRESS, assigned_to=self.cs_user, phone_number="923001111112")
+        create_complaint(status=ComplaintStatus.CLOSED, assigned_to=self.cs_user, phone_number="923001111113")
+
+        self.client.force_authenticate(user=self.cs_user)
+        response = self.client.get(self.live_chat_counts_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"open": 1, "in_progress": 1, "closed": 1})
+
+    def test_live_chat_card_counts_support_date_and_agent_filters(self):
+        active_for_user = create_complaint(
+            status=ComplaintStatus.IN_PROGRESS,
+            assigned_to=self.cs_user,
+            phone_number="923001111114",
+        )
+        old_complaint = create_complaint(status=ComplaintStatus.OPEN, phone_number="923001111115")
+        old_complaint.created = timezone.now() - timedelta(days=7)
+        old_complaint.save(update_fields=["created"])
+
+        self.client.force_authenticate(user=self.cs_user)
+        response = self.client.get(
+            self.live_chat_counts_url,
+            {
+                "date_from": timezone.localdate().isoformat(),
+                "date_to": timezone.localdate().isoformat(),
+                "agent_id": self.cs_user.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"open": 0, "in_progress": 1, "closed": 0})
+        self.assertEqual(active_for_user.assigned_to_id, self.cs_user.id)
+
+    def test_live_chat_card_counts_reject_invalid_date_range(self):
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(
+            self.live_chat_counts_url,
+            {"date_from": "2026-04-10", "date_to": "2026-04-01"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "date_from must be less than or equal to date_to.")

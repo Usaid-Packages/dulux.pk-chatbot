@@ -1,11 +1,14 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.models import Count, Q
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.api.v1.serializers import (
+    CardCountQuerySerializer,
     ChatMessageCreateSerializer,
     ChatMessageSerializer,
     ComplaintCreateSerializer,
@@ -13,8 +16,39 @@ from dulux_chatbot.complaints.api.v1.serializers import (
     ComplaintListSerializer,
     ComplaintUpdateSerializer,
 )
+from dulux_chatbot.complaints.choices import ComplaintStatus
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.complaints.realtime import broadcast_complaint_created
+from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
+
+
+class LiveChatCardCountsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
+
+    def _validation_error_response(self, serializer) -> Response:
+        message = next(iter(serializer.errors.values()))[0]
+        return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, *args, **kwargs):
+        serializer = CardCountQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return self._validation_error_response(serializer)
+
+        validated_data = serializer.validated_data
+        queryset = Complaint.objects.all()
+        if validated_data.get("date_from"):
+            queryset = queryset.filter(created__date__gte=validated_data["date_from"])
+        if validated_data.get("date_to"):
+            queryset = queryset.filter(created__date__lte=validated_data["date_to"])
+        if validated_data.get("agent_id"):
+            queryset = queryset.filter(assigned_to_id=validated_data["agent_id"])
+
+        counts = queryset.aggregate(
+            open=Count("id", filter=Q(status=ComplaintStatus.OPEN)),
+            in_progress=Count("id", filter=Q(status=ComplaintStatus.IN_PROGRESS)),
+            closed=Count("id", filter=Q(status__in=(ComplaintStatus.RESOLVED, ComplaintStatus.CLOSED))),
+        )
+        return Response({key: int(value or 0) for key, value in counts.items()}, status=status.HTTP_200_OK)
 
 
 class ComplaintListCreateAPIView(generics.ListCreateAPIView):
