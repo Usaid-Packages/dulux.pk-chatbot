@@ -22,6 +22,7 @@ import {
 
 interface ConversationListPanelProps {
   items: ConversationListItem[];
+  openUnseenThreadIds: string[];
   isLoading: boolean;
   status: ConversationStatusFilter;
   search: string;
@@ -53,6 +54,7 @@ const formatConversationTime = (isoDateTime: string): string => {
  */
 export const ConversationListPanel = ({
   items,
+  openUnseenThreadIds,
   isLoading,
   status,
   search,
@@ -107,6 +109,7 @@ export const ConversationListPanel = ({
           {!isLoading
             ? items.map(item => {
                 const isSelected = item.id === selectedThreadId;
+                const hasOpenUnseenIndicator = openUnseenThreadIds.includes(item.id);
 
                 const handleItemClick = (): void => {
                   onThreadSelect(item.id);
@@ -144,7 +147,13 @@ export const ConversationListPanel = ({
 
                       <Badge className='rounded-md px-2 py-0.5'>{CONVERSATION_CHANNEL_LABELS[item.channel]}</Badge>
 
-                      {item.unreadCount > 0 ? (
+                      {hasOpenUnseenIndicator ? (
+                        <span
+                          className='ml-auto inline-flex h-2.5 w-2.5 rounded-full bg-chat-unreadDot'
+                          aria-label='Unopened open complaint'
+                          title='Unopened open complaint'
+                        />
+                      ) : item.unreadCount > 0 ? (
                         <span className='ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-chat-unreadDot px-2 py-0.5 text-[11px] font-semibold text-white'>
                           {item.unreadCount}
                         </span>

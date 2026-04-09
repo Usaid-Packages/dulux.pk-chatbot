@@ -2,6 +2,9 @@ export const CONVERSATION_STATUSES = ['active', 'resolved'] as const;
 export const CONVERSATION_CHANNELS = ['whatsapp', 'manual'] as const;
 export const MESSAGE_KINDS = ['customer', 'agent', 'system'] as const;
 export const COMPLAINT_API_STATUS_VALUES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
+export const COMPLAINT_SOCKET_EVENTS = {
+  COMPLAINT_CREATED: 'complaint.created',
+} as const;
 
 export const COMPLAINT_ACTIONS = {
   ASSIGN: 'ASSIGN',
@@ -23,6 +26,7 @@ export type MessageKind = (typeof MESSAGE_KINDS)[number];
 export type ConversationStatusFilter = 'all' | ComplaintApiStatus;
 export type ComplaintAction = (typeof COMPLAINT_ACTIONS)[keyof typeof COMPLAINT_ACTIONS];
 export type ComplaintApiStatus = (typeof COMPLAINT_API_STATUS_VALUES)[number];
+export type ComplaintSocketEvent = (typeof COMPLAINT_SOCKET_EVENTS)[keyof typeof COMPLAINT_SOCKET_EVENTS];
 
 export interface ChatAttachment {
   id: string;
@@ -112,6 +116,28 @@ export interface ComplaintApiMessage extends Record<string, unknown> {
   text: string;
   created?: string;
   createdAt?: string;
+}
+
+export interface ComplaintQueueSocketEventPayload extends Record<string, unknown> {
+  event: ComplaintSocketEvent;
+  complaint?: ComplaintQueueSocketComplaint;
+}
+
+export interface ComplaintQueueSocketComplaint extends Record<string, unknown> {
+  id: number | string;
+  registrationNumber?: string | null;
+  registration_number?: string | null;
+  phoneNumber?: string;
+  phone_number?: string;
+  customerName?: string;
+  customer_name?: string;
+  subject?: string;
+  status?: ComplaintApiStatus | string;
+  assignedTo?: number | null;
+  assigned_to?: number | null;
+  assignedToEmail?: string | null;
+  assigned_to_email?: string | null;
+  created?: string;
 }
 
 export interface ComplaintListApiItem extends Record<string, unknown> {

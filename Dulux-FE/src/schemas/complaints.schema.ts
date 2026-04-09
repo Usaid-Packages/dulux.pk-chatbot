@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   COMPLAINT_API_STATUS_VALUES,
+  COMPLAINT_SOCKET_EVENTS,
   CONVERSATION_CHANNELS,
   CONVERSATION_STATUSES,
   MESSAGE_KINDS,
@@ -34,6 +35,11 @@ export const complaintApiMessageSchema = z.object({
   text: z.string().trim().min(1),
   created: z.string().min(1).optional(),
   createdAt: z.string().min(1).optional(),
+});
+
+export const complaintQueueSocketEventSchema = z.object({
+  event: z.literal(COMPLAINT_SOCKET_EVENTS.COMPLAINT_CREATED),
+  complaint: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const conversationListItemSchema = z.object({

@@ -25,6 +25,7 @@ export const queryKeys = {
   },
   complaints: {
     all: ['complaints'] as const,
+    listBase: ['complaints', 'list'] as const,
     list: (filters: Record<string, unknown>) => ['complaints', 'list', filters] as const,
     detail: (id: string) => ['complaints', 'detail', id] as const,
     sendMessage: ['complaints', 'send-message'] as const,

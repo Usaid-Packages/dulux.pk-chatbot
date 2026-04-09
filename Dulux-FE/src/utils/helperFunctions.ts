@@ -26,6 +26,7 @@ import type {
   ComplaintApiStatus,
   ComplaintDetailApiResponse,
   ComplaintListApiResponse,
+  ComplaintQueueSocketComplaint,
   ConversationListItem,
   ConversationListResponse,
   ConversationStatus,
@@ -306,6 +307,72 @@ const normalizeComplaintApiStatus = (status: unknown): ComplaintApiStatus => {
   return COMPLAINT_API_STATUSES.OPEN;
 };
 
+const readQueueStringValue = (
+  payload: ComplaintQueueSocketComplaint,
+  camelKey: keyof ComplaintQueueSocketComplaint,
+  snakeKey: keyof ComplaintQueueSocketComplaint
+): string => {
+  const camelValue = payload[camelKey];
+  if (typeof camelValue === 'string' && camelValue.trim().length > 0) {
+    return camelValue;
+  }
+
+  const snakeValue = payload[snakeKey];
+  if (typeof snakeValue === 'string' && snakeValue.trim().length > 0) {
+    return snakeValue;
+  }
+
+  return '';
+};
+
+const readQueueNullableStringValue = (
+  payload: ComplaintQueueSocketComplaint,
+  camelKey: keyof ComplaintQueueSocketComplaint,
+  snakeKey: keyof ComplaintQueueSocketComplaint
+): string | null => {
+  const camelValue = payload[camelKey];
+  if (camelValue === null) {
+    return null;
+  }
+  if (typeof camelValue === 'string') {
+    return camelValue;
+  }
+
+  const snakeValue = payload[snakeKey];
+  if (snakeValue === null) {
+    return null;
+  }
+  if (typeof snakeValue === 'string') {
+    return snakeValue;
+  }
+
+  return null;
+};
+
+const readQueueNullableNumberValue = (
+  payload: ComplaintQueueSocketComplaint,
+  camelKey: keyof ComplaintQueueSocketComplaint,
+  snakeKey: keyof ComplaintQueueSocketComplaint
+): number | null => {
+  const camelValue = payload[camelKey];
+  if (camelValue === null) {
+    return null;
+  }
+  if (typeof camelValue === 'number' && Number.isFinite(camelValue)) {
+    return camelValue;
+  }
+
+  const snakeValue = payload[snakeKey];
+  if (snakeValue === null) {
+    return null;
+  }
+  if (typeof snakeValue === 'number' && Number.isFinite(snakeValue)) {
+    return snakeValue;
+  }
+
+  return null;
+};
+
 const toConversationListItem = (item: ComplaintListApiResponse['results'][number]): ConversationListItem => {
   const apiStatus = normalizeComplaintApiStatus(item.status);
 
@@ -324,6 +391,46 @@ const toConversationListItem = (item: ComplaintListApiResponse['results'][number
     assignedAgent: item.assignedToEmail ?? undefined,
     lastMessagePreview: item.subject,
     lastMessageAt: item.created,
+  };
+};
+
+export const normalizeComplaintQueueSocketItem = (payload: unknown): ConversationListItem | null => {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const complaintPayload = payload as ComplaintQueueSocketComplaint;
+  const rawId = complaintPayload.id;
+  const conversationId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
+  if (conversationId.length === 0) {
+    return null;
+  }
+
+  const registrationNumber =
+    readQueueNullableStringValue(complaintPayload, 'registrationNumber', 'registration_number') ?? conversationId;
+  const customerName = readQueueStringValue(complaintPayload, 'customerName', 'customer_name');
+  const customerPhone = readQueueStringValue(complaintPayload, 'phoneNumber', 'phone_number');
+  const subject = readQueueStringValue(complaintPayload, 'subject', 'subject');
+  const createdAt = readQueueStringValue(complaintPayload, 'created', 'created') || new Date().toISOString();
+  const assignedToId = readQueueNullableNumberValue(complaintPayload, 'assignedTo', 'assigned_to');
+  const assignedAgent = readQueueNullableStringValue(complaintPayload, 'assignedToEmail', 'assigned_to_email');
+  const apiStatus = normalizeComplaintApiStatus(complaintPayload.status);
+
+  return {
+    id: conversationId,
+    claimNumber: registrationNumber,
+    customerName: customerName || customerPhone || 'Unknown Customer',
+    customerPhone,
+    city: UNKNOWN_CITY,
+    issueType: subject || 'Complaint',
+    apiStatus,
+    status: mapComplaintApiStatusToConversationStatus(apiStatus),
+    channel: 'whatsapp',
+    unreadCount: 0,
+    assignedToId,
+    assignedAgent: assignedAgent ?? undefined,
+    lastMessagePreview: subject || 'New complaint created',
+    lastMessageAt: createdAt,
   };
 };
 
