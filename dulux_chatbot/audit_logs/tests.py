@@ -204,3 +204,121 @@ class AuditLogAPITests(TestCase):
         self.assertGreaterEqual(response.data["count"], 1)
         self.assertNotIn("model_label", response.data["results"][0])
         self.assertEqual(response.data["results"][0]["event_label"], "Product created")
+
+    def test_registration_timeline_returns_ordered_events(self):
+        registration = create_registration()
+        registration_content_type = ContentType.objects.get_for_model(registration.__class__)
+        AuditLog.objects.create(
+            actor=self.cs_user,
+            actor_email=self.cs_user.email,
+            action=AuditAction.CREATE,
+            content_type=registration_content_type,
+            object_id=str(registration.pk),
+            model_label="warranty.WarrantyRegistration",
+            object_repr=str(registration),
+            event_label="Registration created",
+            after_data={"registration_code": registration.registration_code},
+        )
+        AuditLog.objects.create(
+            actor=self.admin_user,
+            actor_email=self.admin_user.email,
+            action=AuditAction.UPDATE,
+            content_type=registration_content_type,
+            object_id=str(registration.pk),
+            model_label="warranty.WarrantyRegistration",
+            object_repr=str(registration),
+            event_label="Registration approved",
+            changes={"state": {"before": "SUBMITTED", "after": "APPROVED"}},
+            after_data={"registration_code": registration.registration_code},
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(
+            reverse("audit_log_timeline"),
+            {"type": "registration", "object_id": registration.pk},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(response.data["results"][0]["event_type"], "Registration created")
+        self.assertEqual(response.data["results"][1]["updated_fields"], ["state"])
+        self.assertEqual(response.data["results"][1]["registration_number"], registration.registration_code)
+
+    def test_claim_timeline_returns_claim_logs(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair)
+        claim_content_type = ContentType.objects.get_for_model(claim.__class__)
+        AuditLog.objects.create(
+            actor=self.cs_user,
+            actor_email=self.cs_user.email,
+            action=AuditAction.UPDATE,
+            content_type=claim_content_type,
+            object_id=str(claim.pk),
+            model_label="warranty.WarrantyClaim",
+            object_repr=str(claim),
+            event_label="Claim moved to resubmission",
+            changes={"state": {"before": "QA_REVIEW", "after": "RESUBMIT"}},
+            after_data={"registration": {"registration_code": registration.registration_code}},
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(reverse("audit_log_timeline"), {"type": "claim", "object_id": claim.pk})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["event_type"], "Claim moved to resubmission")
+        self.assertEqual(response.data["results"][0]["updated_fields"], ["state"])
+
+    def test_quality_timeline_returns_quality_logs_using_claim_id(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair)
+        quality_review = claim.quality_reviews.create(
+            decision_type="REQUEST_INFO",
+            notes="Need more details.",
+            created_by=self.quality_user,
+        )
+        quality_content_type = ContentType.objects.get_for_model(quality_review.__class__)
+        AuditLog.objects.create(
+            actor=self.quality_user,
+            actor_email=self.quality_user.email,
+            action=AuditAction.CREATE,
+            content_type=quality_content_type,
+            object_id=str(quality_review.pk),
+            model_label="warranty.ClaimQualityReview",
+            object_repr=str(quality_review),
+            event_label="QA requested more information",
+            after_data={"claim": {"id": claim.id, "registration_code": registration.registration_code}},
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(reverse("audit_log_timeline"), {"type": "quality", "object_id": claim.pk})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["event_type"], "QA requested more information")
+        self.assertEqual(response.data["results"][0]["registration_number"], registration.registration_code)
+
+    def test_complaint_timeline_returns_complaint_logs(self):
+        complaint = create_complaint()
+        complaint_content_type = ContentType.objects.get_for_model(complaint.__class__)
+        AuditLog.objects.create(
+            actor=self.cs_user,
+            actor_email=self.cs_user.email,
+            action=AuditAction.UPDATE,
+            content_type=complaint_content_type,
+            object_id=str(complaint.pk),
+            model_label="complaints.Complaint",
+            object_repr=str(complaint),
+            event_label="Complaint assigned",
+            changes={"assigned_to": {"before": None, "after": {"id": self.cs_user.id, "display": self.cs_user.email}}},
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(reverse("audit_log_timeline"), {"type": "complaint", "object_id": complaint.pk})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["event_type"], "Complaint assigned")
+        self.assertEqual(response.data["results"][0]["updated_fields"], ["assigned_to"])
