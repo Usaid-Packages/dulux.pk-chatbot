@@ -27,6 +27,7 @@ urlpatterns = [
         admin.site.urls,
     ),
     path("api/v1/core/", include("dulux_chatbot.core.api.v1.urls")),
+    path("api/v1/audit-logs/", include("dulux_chatbot.audit_logs.api.v1.urls")),
     path("api/v1/products/", include("dulux_chatbot.products.api.v1.urls")),
     path("api/v1/users/", include("dulux_chatbot.users.api.v1.urls")),
     path("api/v1/warranty/", include("dulux_chatbot.warranty.api.v1.urls")),

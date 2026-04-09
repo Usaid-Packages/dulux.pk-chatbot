@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_delete, log_update
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.products.choices import ProductType
@@ -28,12 +29,41 @@ class ProductImageSerializer(serializers.ModelSerializer):
         data["url"] = request.build_absolute_uri(image_url) if request is not None else image_url
         return data
 
+    @transaction.atomic
+    def create(self, validated_data: dict) -> ProductImage:
+        product_image = super().create(validated_data)
+        request = self.context.get("request")
+        log_create(
+            actor=getattr(request, "user", None),
+            instance=product_image,
+            request=request,
+        )
+        return product_image
+
 
 class SurfaceTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SurfaceType
         fields = ("id", "name", "environment", "created", "modified")
         read_only_fields = ("id", "created", "modified")
+
+    def create(self, validated_data: dict) -> SurfaceType:
+        instance = super().create(validated_data)
+        request = self.context.get("request")
+        log_create(actor=getattr(request, "user", None), instance=instance, request=request)
+        return instance
+
+    def update(self, instance: SurfaceType, validated_data: dict) -> SurfaceType:
+        request = self.context.get("request")
+        before_data = build_instance_snapshot(instance)
+        instance = super().update(instance, validated_data)
+        log_update(
+            actor=getattr(request, "user", None),
+            instance=instance,
+            request=request,
+            before_data=before_data,
+        )
+        return instance
 
 
 class ProductBasecoatSerializer(serializers.ModelSerializer):
@@ -92,10 +122,19 @@ class ProductSerializer(serializers.ModelSerializer):
         product = super().create(validated_data)
         self._sync_surface_types(product=product, surface_types=surface_types)
         self._sync_basecoats(product=product, basecoats=basecoats)
+        request = self.context.get("request")
+        log_create(
+            actor=getattr(request, "user", None),
+            instance=product,
+            request=request,
+            after_data=self._build_product_snapshot(product),
+        )
         return product
 
     @transaction.atomic
     def update(self, instance: Product, validated_data: dict) -> Product:
+        request = self.context.get("request")
+        before_data = self._build_product_snapshot(instance)
         surface_types = validated_data.pop("surface_types", None)
         basecoats = validated_data.pop("basecoats", None)
         product_type = validated_data.get("product_type", instance.product_type)
@@ -108,6 +147,13 @@ class ProductSerializer(serializers.ModelSerializer):
             self._sync_basecoats(product=product, basecoats=basecoats)
         elif product.product_type != ProductType.TOPCOAT:
             self._sync_basecoats(product=product, basecoats=[])
+        log_update(
+            actor=getattr(request, "user", None),
+            instance=product,
+            request=request,
+            before_data=before_data,
+            after_data=self._build_product_snapshot(product),
+        )
         return product
 
     def to_representation(self, instance: Product) -> dict:
@@ -138,9 +184,15 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"basecoats": "All selected basecoats must be BASECOAT products."})
 
     def _sync_surface_types(self, *, product: Product, surface_types: list[SurfaceType]) -> None:
+        request = self.context.get("request")
+        actor = getattr(request, "user", None)
         surface_type_ids = {surface_type.id for surface_type in surface_types}
-
-        ProductSurfaceMapping.objects.filter(product=product).exclude(surface_type_id__in=surface_type_ids).delete()
+        deleted_mappings = list(
+            ProductSurfaceMapping.objects.filter(product=product).exclude(surface_type_id__in=surface_type_ids)
+        )
+        for mapping in deleted_mappings:
+            log_delete(actor=actor, instance=mapping, request=request)
+        ProductSurfaceMapping.objects.filter(pk__in=[mapping.pk for mapping in deleted_mappings]).delete()
 
         existing_ids = set(
             ProductSurfaceMapping.objects.filter(product=product, surface_type_id__in=surface_type_ids).values_list(
@@ -149,18 +201,23 @@ class ProductSerializer(serializers.ModelSerializer):
             )
         )
 
-        ProductSurfaceMapping.objects.bulk_create(
-            [
-                ProductSurfaceMapping(product=product, surface_type=surface_type)
-                for surface_type in surface_types
-                if surface_type.id not in existing_ids
-            ]
-        )
+        new_mappings = [
+            ProductSurfaceMapping(product=product, surface_type=surface_type)
+            for surface_type in surface_types
+            if surface_type.id not in existing_ids
+        ]
+        created_mappings = ProductSurfaceMapping.objects.bulk_create(new_mappings)
+        for mapping in created_mappings:
+            log_create(actor=actor, instance=mapping, request=request)
 
     def _sync_basecoats(self, *, product: Product, basecoats: list[Product]) -> None:
+        request = self.context.get("request")
+        actor = getattr(request, "user", None)
         basecoat_ids = {basecoat.id for basecoat in basecoats}
-
-        ProductBasecoat.objects.filter(topcoat=product).exclude(basecoat_id__in=basecoat_ids).delete()
+        deleted_mappings = list(ProductBasecoat.objects.filter(topcoat=product).exclude(basecoat_id__in=basecoat_ids))
+        for mapping in deleted_mappings:
+            log_delete(actor=actor, instance=mapping, request=request)
+        ProductBasecoat.objects.filter(pk__in=[mapping.pk for mapping in deleted_mappings]).delete()
 
         existing_ids = set(
             ProductBasecoat.objects.filter(topcoat=product, basecoat_id__in=basecoat_ids).values_list(
@@ -169,10 +226,34 @@ class ProductSerializer(serializers.ModelSerializer):
             )
         )
 
-        ProductBasecoat.objects.bulk_create(
-            [
-                ProductBasecoat(topcoat=product, basecoat=basecoat)
-                for basecoat in basecoats
-                if basecoat.id not in existing_ids
-            ]
+        new_mappings = [
+            ProductBasecoat(topcoat=product, basecoat=basecoat)
+            for basecoat in basecoats
+            if basecoat.id not in existing_ids
+        ]
+        created_mappings = ProductBasecoat.objects.bulk_create(new_mappings)
+        for mapping in created_mappings:
+            log_create(actor=actor, instance=mapping, request=request)
+
+    def _build_product_snapshot(self, product: Product) -> dict:
+        return build_instance_snapshot(
+            product,
+            extra_data={
+                "surface_type_ids": list(
+                    ProductSurfaceMapping.objects.filter(product=product)
+                    .order_by("surface_type_id")
+                    .values_list(
+                        "surface_type_id",
+                        flat=True,
+                    )
+                ),
+                "basecoat_ids": list(
+                    ProductBasecoat.objects.filter(topcoat=product)
+                    .order_by("basecoat_id")
+                    .values_list(
+                        "basecoat_id",
+                        flat=True,
+                    )
+                ),
+            },
         )

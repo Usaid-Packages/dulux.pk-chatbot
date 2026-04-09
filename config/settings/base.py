@@ -55,6 +55,7 @@ THIRD_PARTY_APPS = [
 
 CUSTOM_APPS = [
     "dulux_chatbot.core",
+    "dulux_chatbot.audit_logs",
     "dulux_chatbot.users",
     "dulux_chatbot.products",
     "dulux_chatbot.warranty",

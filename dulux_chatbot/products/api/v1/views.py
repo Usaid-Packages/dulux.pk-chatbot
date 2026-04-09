@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
+from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_delete
 from dulux_chatbot.core.permissions import IsAdminUser
 from dulux_chatbot.products.api.v1.serializers import (
     ProductBasecoatSerializer,
@@ -43,6 +44,18 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
         return permissions
 
     def perform_destroy(self, instance: Product) -> None:
+        deleted_object_id = instance.pk
+        before_data = build_instance_snapshot(
+            instance,
+            extra_data={
+                "surface_type_ids": list(
+                    instance.surface_mappings.order_by("surface_type_id").values_list("surface_type_id", flat=True)
+                ),
+                "basecoat_ids": list(
+                    instance.basecoat_mappings.order_by("basecoat_id").values_list("basecoat_id", flat=True)
+                ),
+            },
+        )
         try:
             super().perform_destroy(instance)
         except ProtectedError as exc:
@@ -54,6 +67,8 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
                     )
                 }
             ) from exc
+        instance.pk = deleted_object_id
+        log_delete(actor=self.request.user, instance=instance, request=self.request, before_data=before_data)
 
 
 class ProductBasecoatListAPIView(generics.ListAPIView):
@@ -95,6 +110,13 @@ class ProductImageDestroyAPIView(generics.DestroyAPIView):
         product_id = self.kwargs.get("product_pk")
         return ProductImage.objects.select_related("image", "product").filter(product_id=product_id)
 
+    def perform_destroy(self, instance: ProductImage) -> None:
+        deleted_object_id = instance.pk
+        before_data = build_instance_snapshot(instance)
+        super().perform_destroy(instance)
+        instance.pk = deleted_object_id
+        log_delete(actor=self.request.user, instance=instance, request=self.request, before_data=before_data)
+
 
 class SurfaceTypeListCreateAPIView(generics.ListCreateAPIView):
     queryset = SurfaceType.objects.all()
@@ -118,3 +140,10 @@ class SurfaceTypeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIV
         if self.request.method in {"PUT", "PATCH", "DELETE"}:
             permissions.append(IsAdminUser())
         return permissions
+
+    def perform_destroy(self, instance: SurfaceType) -> None:
+        deleted_object_id = instance.pk
+        before_data = build_instance_snapshot(instance)
+        super().perform_destroy(instance)
+        instance.pk = deleted_object_id
+        log_delete(actor=self.request.user, instance=instance, request=self.request, before_data=before_data)
