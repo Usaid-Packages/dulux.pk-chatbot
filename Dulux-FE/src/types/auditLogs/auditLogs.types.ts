@@ -41,9 +41,10 @@ export interface AuditLogListItem {
   actor: number | null;
   actorEmail: string;
   action: AuditLogAction;
-  modelLabel: string;
   objectId: string;
   objectRepr: string;
+  eventLabel: string;
+  registrationNumber: string | null;
   created: string;
 }
 
@@ -69,9 +70,11 @@ export interface AuditLogApiListItem extends Record<string, unknown> {
   actor: number | null;
   actorEmail: string;
   action: AuditLogAction;
-  modelLabel: string;
+  modelLabel?: string;
   objectId: string;
   objectRepr: string;
+  eventLabel?: string;
+  registrationNumber?: string | null;
   created: string;
 }
 
@@ -87,9 +90,11 @@ export interface AuditLogApiDetailResponse extends Record<string, unknown> {
   actor: number | null;
   actorEmail: string;
   action: AuditLogAction;
-  modelLabel: string;
+  modelLabel?: string;
   objectId: string;
   objectRepr: string;
+  eventLabel?: string;
+  registrationNumber?: string | null;
   created: string;
   changes?: Record<string, { before: unknown; after: unknown }> | null;
   beforeData?: Record<string, unknown> | null;

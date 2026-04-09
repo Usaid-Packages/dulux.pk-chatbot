@@ -29,6 +29,18 @@ interface AuditLogDetailDialogProps {
 }
 
 const LONG_TEXT_TRUNCATE_LIMIT = 280;
+const AUDIT_OBJECT_DISPLAY_KEYS = [
+  'display',
+  'registrationCode',
+  'registration_code',
+  'email',
+  'name',
+  'customerName',
+  'customer_name',
+  'phoneNumber',
+  'phone_number',
+  'id',
+] as const;
 
 const toTitleCaseWords = (value: string): string => {
   return value
@@ -55,6 +67,33 @@ const isStateLikeField = (fieldName: string): boolean => {
   return normalizedField === 'state' || normalizedField.includes('workflow');
 };
 
+const formatAuditObjectValue = (value: Record<string, unknown>): string => {
+  const preferredValues = AUDIT_OBJECT_DISPLAY_KEYS.reduce<string[]>((accumulator, key) => {
+    const candidate = value[key];
+
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      accumulator.push(candidate.trim());
+      return accumulator;
+    }
+
+    if (typeof candidate === 'number' || typeof candidate === 'boolean') {
+      accumulator.push(String(candidate));
+    }
+
+    return accumulator;
+  }, []);
+
+  if (preferredValues.length > 0) {
+    return [...new Set(preferredValues)].join(' · ');
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return 'N/A';
+  }
+};
+
 const formatComparableValue = (fieldName: string, value: unknown): string => {
   if (value === null || value === undefined) {
     return 'N/A';
@@ -74,6 +113,18 @@ const formatComparableValue = (fieldName: string, value: unknown): string => {
 
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
+  }
+
+  if (isObjectRecord(value)) {
+    return formatAuditObjectValue(value);
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return 'N/A';
+    }
+
+    return value.map(item => formatComparableValue(fieldName, item)).join(', ');
   }
 
   try {
@@ -328,13 +379,18 @@ export const AuditLogDetailDialog = ({ isOpen, detailQuery, onClose }: AuditLogD
                 />
                 <SummaryMetaItem
                   icon={<Database className='h-3.5 w-3.5' />}
-                  label='Model Label'
-                  value={detail.modelLabel}
+                  label='Event Label'
+                  value={detail.eventLabel}
                 />
                 <SummaryMetaItem
                   icon={<Fingerprint className='h-3.5 w-3.5' />}
                   label='Object Identity'
                   value={`${detail.objectId} · ${detail.objectRepr}`}
+                />
+                <SummaryMetaItem
+                  icon={<Fingerprint className='h-3.5 w-3.5' />}
+                  label='Registration #'
+                  value={detail.registrationNumber ?? 'N/A'}
                 />
                 <SummaryMetaItem
                   icon={<Diff className='h-3.5 w-3.5' />}

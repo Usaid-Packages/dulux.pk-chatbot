@@ -234,13 +234,6 @@
   --color-source-whatsapp-text: var(--source-whatsapp-text);
   --color-source-manual-bg: var(--source-manual-bg);
   --color-source-manual-text: var(--source-manual-text);
-  --color-priority-high-bg: var(--priority-high-bg);
-  --color-priority-high-text: var(--priority-high-text);
-  --color-priority-high-dot: var(--priority-high-dot);
-  --color-priority-normal-bg: var(--priority-normal-bg);
-  --color-priority-normal-text: var(--priority-normal-text);
-  --color-priority-normal-dot: var(--priority-normal-dot);
-  --color-priority-medium-dot: var(--priority-medium-dot);
   --color-convStatus-unassigned-bg: var(--convStatus-unassigned-bg);
   --color-convStatus-unassigned-text: var(--convStatus-unassigned-text);
   --color-convStatus-active-bg: var(--convStatus-active-bg);
@@ -537,20 +530,6 @@
   --source-manual-bg: #f0f4ff;
 
   --source-manual-text: #4a6fa5;
-
-  --priority-high-bg: #fef2f2;
-
-  --priority-high-text: #dc2626;
-
-  --priority-high-dot: #ef4444;
-
-  --priority-normal-bg: #f0f0f0;
-
-  --priority-normal-text: #666666;
-
-  --priority-normal-dot: #22c55e;
-
-  --priority-medium-dot: #f59e0b;
 
   --convStatus-unassigned-bg: #fef3c7;
 

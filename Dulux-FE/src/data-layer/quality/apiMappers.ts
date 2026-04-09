@@ -1,6 +1,6 @@
 import { toApiClaimWorkflowState, toUiClaimIssueType } from '#/constants';
 import { qualityDetailSchema, qualityQueueResponseSchema } from '#/schemas/quality.schema';
-import type { ClaimPriority, ClaimStatus, ClaimTimelineItem } from '#/types/claims.types';
+import type { ClaimStatus, ClaimTimelineItem } from '#/types/claims.types';
 import type {
   QualityDetail,
   QualityQueueItem,
@@ -92,7 +92,6 @@ interface WarrantyClaimApiResponse {
   created?: string;
   modified?: string;
   notes?: string;
-  priority?: string;
   city?: string;
   customerName?: string;
   customer_name?: string;
@@ -148,10 +147,6 @@ const formatEnumLabel = (value: string | undefined): string => {
     .split('_')
     .map(token => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
-};
-
-const normalizePriority = (priority: string | undefined): ClaimPriority => {
-  return priority?.toLowerCase() === 'high' ? 'high' : 'normal';
 };
 
 const normalizeIssueType = (issueType: string | undefined) => {
@@ -226,7 +221,6 @@ const toQueueItem = (claim: WarrantyClaimApiResponse): QualityQueueItem => {
       'Unknown Customer',
     issueType: normalizeIssueType(claim.issueType ?? claim.issue_type),
     city: claim.city ?? '-',
-    priority: normalizePriority(claim.priority),
     status: normalizeStatus(claim.state),
     workflowState: toApiClaimWorkflowState(claim.state ?? ''),
     forwardedBy: claim.forwardedBy ?? claim.forwarded_by ?? 'CS Team',
@@ -293,7 +287,6 @@ export const mapQualityClaimDetail = (claim: WarrantyClaimApiResponse): QualityD
     submittedAt,
     workflowState: toApiClaimWorkflowState(claim.state ?? ''),
     status: normalizeStatus(claim.state),
-    priority: normalizePriority(claim.priority),
     phone: linkedRegistration?.phoneNumber ?? linkedRegistration?.phone_number ?? '-',
     city: claim.city ?? linkedRegistration?.city ?? '-',
     areaSqFt: Number.parseFloat(claim.affectedAreaSqft ?? claim.affected_area_sqft ?? '1') || 1,

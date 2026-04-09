@@ -36,8 +36,7 @@ export const toSendToQualityNotes = (payload: SendToQualityPayload): string => p
 
 export const toRequestMoreInfoNotes = (payload: RequestMoreInfoPayload): string => {
   const formattedItems = payload.items.map(item => `- ${item}`).join('\n');
-  const priorityLine = `Priority: ${payload.priority}`;
   const noteLine = payload.note ? `Note: ${payload.note}` : '';
 
-  return [priorityLine, 'Requested information:', formattedItems, noteLine].filter(Boolean).join('\n');
+  return ['Requested information:', formattedItems, noteLine].filter(Boolean).join('\n');
 };

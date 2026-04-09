@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-import {
-  claimDetailSchema,
-  claimPrioritySchema,
-  claimStatusSchema,
-  claimWorkflowStateSchema,
-} from '#/schemas/claim.schema';
+import { claimDetailSchema, claimStatusSchema, claimWorkflowStateSchema } from '#/schemas/claim.schema';
 import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quality.types';
 
 export const qualityQueueItemSchema = z.object({
@@ -14,7 +9,6 @@ export const qualityQueueItemSchema = z.object({
   customerName: z.string().min(1),
   issueType: z.string().min(1),
   city: z.string().min(1),
-  priority: claimPrioritySchema,
   status: claimStatusSchema,
   workflowState: claimWorkflowStateSchema,
   forwardedBy: z.string().min(1),

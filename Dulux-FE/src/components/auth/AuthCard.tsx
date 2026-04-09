@@ -27,7 +27,6 @@ export const AuthCard = ({ title, subtitle, children }: AuthCardProps): JSX.Elem
           width={64}
           height={64}
           loading='eager'
-          fetchPriority='high'
           className='h-16 w-16 object-contain'
         />
       </span>

@@ -1,4 +1,4 @@
-import type { ClaimDetail, ClaimPriority, ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
+import type { ClaimDetail, ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
 
 export const QUALITY_DECISION_TYPES = ['REQUEST_INFO', 'QA_APPROVED', 'QA_REJECTED'] as const;
 export const QUALITY_TECHNICAL_REASONS = [
@@ -49,7 +49,6 @@ export interface QualityQueueItem {
   customerName: string;
   issueType: string;
   city: string;
-  priority: ClaimPriority;
   status: ClaimStatus;
   workflowState: ClaimWorkflowState;
   forwardedBy: string;

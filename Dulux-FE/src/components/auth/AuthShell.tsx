@@ -40,7 +40,6 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
               width={160}
               height={160}
               loading='eager'
-              fetchPriority='high'
               className='h-40 w-40 object-contain'
             />
           </div>
@@ -65,7 +64,6 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
                 width={112}
                 height={112}
                 loading='eager'
-                fetchPriority='high'
                 className='h-24 w-24 object-contain sm:h-28 sm:w-28'
               />
             </div>

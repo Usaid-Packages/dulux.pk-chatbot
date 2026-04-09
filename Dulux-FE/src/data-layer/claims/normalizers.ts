@@ -173,7 +173,6 @@ const toClaimListItem = (claim: ApiClaimListItem): ClaimListItem =>
     submittedAt: readSubmittedAt(claim),
     workflowState: toApiClaimWorkflowState(readState(claim)),
     status: toUiClaimStatus(readState(claim)),
-    priority: 'normal',
   });
 
 const getListStats = (items: ClaimListItem[], total: number): ClaimsStats => ({
@@ -210,7 +209,6 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     submittedAt: readSubmittedAt(claim),
     workflowState: toApiClaimWorkflowState(readState(claim)),
     status: toUiClaimStatus(readState(claim)),
-    priority: 'normal',
     phone: readRegistrationPhone(claim),
     city: readCity(claim),
     areaSqFt: asNumber(readAffectedArea(claim)),
