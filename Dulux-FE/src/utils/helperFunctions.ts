@@ -548,6 +548,15 @@ const normalizeAuditLogListItem = (
 ): AuditLogListResponse['items'][number] => {
   const actorValue = typeof item.actor === 'number' && Number.isFinite(item.actor) ? item.actor : null;
   const objectId = item.objectId === undefined || item.objectId === null ? '' : String(item.objectId).trim();
+  const objectRepr = typeof item.objectRepr === 'string' && item.objectRepr.trim().length > 0 ? item.objectRepr : 'N/A';
+  const eventLabel =
+    typeof item.eventLabel === 'string' && item.eventLabel.trim().length > 0 ? item.eventLabel : objectRepr;
+  const registrationNumber =
+    item.registrationNumber === undefined || item.registrationNumber === null
+      ? null
+      : String(item.registrationNumber).trim().length > 0
+        ? String(item.registrationNumber).trim()
+        : null;
   const created =
     typeof item.created === 'string' && item.created.trim().length > 0 ? item.created : new Date().toISOString();
 
@@ -556,10 +565,10 @@ const normalizeAuditLogListItem = (
     actor: actorValue,
     actorEmail: typeof item.actorEmail === 'string' && item.actorEmail.trim().length > 0 ? item.actorEmail : 'Unknown',
     action: normalizeAuditLogAction(item.action),
-    modelLabel:
-      typeof item.modelLabel === 'string' && item.modelLabel.trim().length > 0 ? item.modelLabel : 'unknown.Model',
     objectId: objectId.length > 0 ? objectId : 'unknown',
-    objectRepr: typeof item.objectRepr === 'string' && item.objectRepr.trim().length > 0 ? item.objectRepr : 'N/A',
+    objectRepr,
+    eventLabel,
+    registrationNumber,
     created,
   };
 };

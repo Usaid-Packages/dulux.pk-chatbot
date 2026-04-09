@@ -31,10 +31,10 @@ export const AuditLogsTable = ({ items, onOpenDetail }: AuditLogsTableProps): JS
           <TableRow>
             <TableHead>Created</TableHead>
             <TableHead>Actor Email</TableHead>
-            <TableHead>Action</TableHead>
-            <TableHead>Model Label</TableHead>
+            <TableHead>Registration #</TableHead>
             <TableHead>Object ID</TableHead>
             <TableHead>Object Repr</TableHead>
+            <TableHead>Action</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -44,14 +44,16 @@ export const AuditLogsTable = ({ items, onOpenDetail }: AuditLogsTableProps): JS
               <TableCell>{formatAuditCreatedAt(item.created)}</TableCell>
               <TableCell className='font-medium text-text-primary'>{item.actorEmail}</TableCell>
               <TableCell>
-                <Badge variant={getAuditActionBadgeVariant(item.action)}>{getAuditActionLabel(item.action)}</Badge>
+                {item.registrationNumber ? <span className='chip-reg'>{item.registrationNumber}</span> : 'N/A'}
               </TableCell>
-              <TableCell>{item.modelLabel}</TableCell>
               <TableCell>
                 <span className='chip-reg'>{item.objectId}</span>
               </TableCell>
               <TableCell className='max-w-[260px] truncate' title={item.objectRepr}>
                 {item.objectRepr}
+              </TableCell>
+              <TableCell>
+                <Badge variant={getAuditActionBadgeVariant(item.action)}>{getAuditActionLabel(item.action)}</Badge>
               </TableCell>
               <TableCell className='align-middle'>
                 <Button

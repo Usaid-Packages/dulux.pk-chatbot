@@ -1,5 +1,4 @@
 export const CLAIM_STATUSES = ['pending', 'forwarded', 'approved', 'rejected', 'infoRequested', 'resolved'] as const;
-export const CLAIM_PRIORITIES = ['normal', 'high'] as const;
 export const CLAIM_WORKFLOW_STATES = [
   'SUBMITTED',
   'IN_REVIEW',
@@ -22,7 +21,6 @@ export const CLAIM_ISSUE_TYPES = [
 ] as const;
 
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
-export type ClaimPriority = (typeof CLAIM_PRIORITIES)[number];
 export type ClaimWorkflowState = (typeof CLAIM_WORKFLOW_STATES)[number];
 export type ClaimIssueType = (typeof CLAIM_ISSUE_TYPES)[number];
 export type ClaimListStatusFilter = 'all' | ClaimStatus;
@@ -60,7 +58,6 @@ export interface ClaimListItem {
   submittedAt: string;
   workflowState: ClaimWorkflowState;
   status: ClaimStatus;
-  priority: ClaimPriority;
 }
 
 export interface ClaimDetail extends ClaimListItem {
@@ -145,7 +142,6 @@ export interface RequestMoreInfoPayload extends Record<string, unknown> {
   id: string;
   items: string[];
   note?: string;
-  priority: ClaimPriority;
 }
 
 export interface MarkClaimInReviewPayload extends Record<string, unknown> {

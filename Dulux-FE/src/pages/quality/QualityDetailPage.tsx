@@ -121,6 +121,7 @@ export const QualityDetailPage = (): JSX.Element => {
   const canTakeDecision = claim.workflowState === 'QA_REVIEW';
   const normalizedDescription = claim.description.trim();
   const normalizedCsNotes = claim.csNotes?.trim();
+  const hasCsNotes = Boolean(normalizedCsNotes);
   const shouldShowDescription = Boolean(normalizedDescription) && normalizedDescription !== normalizedCsNotes;
 
   return (
@@ -186,7 +187,11 @@ export const QualityDetailPage = (): JSX.Element => {
             ) : null}
           </section>
 
-          <QualityAgentNotesCard notes={claim.csNotes} />
+          {hasCsNotes ? (
+            <QualityAgentNotesCard notes={normalizedCsNotes} />
+          ) : (
+            <p className='text-sm text-text-muted'>No CS notes.</p>
+          )}
           <QualityEvidencePhotos photos={claim.evidencePhotos} />
           <QualityResubmissionCard latestResubmission={claim.latestResubmission} />
           <LinkedRegistrationCard registration={claim.linkedRegistration} />
@@ -202,11 +207,7 @@ export const QualityDetailPage = (): JSX.Element => {
             onOpenRejectModal={openRejectModal}
           />
           <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
-          <QualityQuickInfoCard
-            forwardedBy={claim.forwardedBy}
-            forwardedAt={claim.forwardedAt}
-            priority={claim.priority}
-          />
+          <QualityQuickInfoCard forwardedBy={claim.forwardedBy} forwardedAt={claim.forwardedAt} />
         </div>
       </section>
 

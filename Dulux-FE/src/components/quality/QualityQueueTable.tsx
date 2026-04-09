@@ -12,7 +12,7 @@ interface QualityQueueTableProps {
 }
 
 /**
- * QualityQueueTable renders the QA work queue with priority and forwarding context.
+ * QualityQueueTable renders the QA work queue with forwarding context.
  *
  * @param props - Queue list items.
  * @returns Queue table component.

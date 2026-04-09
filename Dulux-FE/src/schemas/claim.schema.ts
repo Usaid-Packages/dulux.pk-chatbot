@@ -1,9 +1,8 @@
 import { z } from 'zod';
 
-import { CLAIM_ISSUE_TYPES, CLAIM_PRIORITIES, CLAIM_STATUSES, CLAIM_WORKFLOW_STATES } from '#/types/claims.types';
+import { CLAIM_ISSUE_TYPES, CLAIM_STATUSES, CLAIM_WORKFLOW_STATES } from '#/types/claims.types';
 
 export const claimStatusSchema = z.enum(CLAIM_STATUSES);
-export const claimPrioritySchema = z.enum(CLAIM_PRIORITIES);
 export const claimWorkflowStateSchema = z.enum(CLAIM_WORKFLOW_STATES);
 export const claimIssueTypeSchema = z.enum(CLAIM_ISSUE_TYPES);
 
@@ -40,7 +39,6 @@ export const claimListItemSchema = z.object({
   submittedAt: z.string().min(1),
   workflowState: claimWorkflowStateSchema,
   status: claimStatusSchema,
-  priority: claimPrioritySchema,
 });
 
 export const claimDetailSchema = claimListItemSchema.extend({
@@ -125,7 +123,6 @@ export const requestMoreInfoSchema = z
     items: z.array(z.string().min(1)).min(1, 'Select at least one item.'),
     otherDetails: z.string().trim().max(200, 'Other details must be 200 characters or fewer.').optional(),
     note: z.string().trim().max(300, 'Note must be 300 characters or fewer.').optional(),
-    priority: claimPrioritySchema,
   })
   .superRefine((values, ctx) => {
     const isOtherSelected = values.items.includes(OTHER_REQUEST_INFO_ITEM);

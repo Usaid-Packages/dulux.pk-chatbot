@@ -11,15 +11,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Textarea,
 } from '#/components/ui';
 import { requestMoreInfoSchema, type RequestMoreInfoFormValues } from '#/schemas/claim.schema';
-import type { ClaimPriority } from '#/types/claims.types';
 import { REQUEST_INFO_ITEMS } from './constants';
 
 interface RequestMoreInfoModalProps {
@@ -28,11 +22,6 @@ interface RequestMoreInfoModalProps {
   onClose: () => void;
   onSubmit: (values: RequestMoreInfoFormValues) => void;
 }
-
-const PRIORITY_OPTIONS: ReadonlyArray<{ value: ClaimPriority; label: string }> = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'high', label: 'High' },
-];
 
 const OTHER_ITEM = 'Other';
 
@@ -61,7 +50,6 @@ export const RequestMoreInfoModal = ({
       items: [],
       note: '',
       otherDetails: '',
-      priority: 'normal',
     },
   });
 
@@ -156,32 +144,6 @@ export const RequestMoreInfoModal = ({
             />
             {errors.note ? <p className='text-xs text-destructive'>{errors.note.message}</p> : null}
           </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='request-priority' className='text-sm font-medium text-text-primary'>
-              Priority
-            </label>
-            <Controller
-              control={control}
-              name='priority'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='request-priority'>
-                    <SelectValue placeholder='Select priority' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITY_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.priority ? <p className='text-xs text-destructive'>{errors.priority.message}</p> : null}
-          </div>
-
           <DialogFooter>
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel

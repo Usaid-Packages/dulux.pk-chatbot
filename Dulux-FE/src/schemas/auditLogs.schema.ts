@@ -11,9 +11,10 @@ export const auditLogListItemSchema = z.object({
   actor: z.number().int().nullable(),
   actorEmail: z.string().trim().min(1),
   action: auditLogActionSchema,
-  modelLabel: z.string().trim().min(1),
   objectId: z.string().trim().min(1),
   objectRepr: z.string().trim().min(1),
+  eventLabel: z.string().trim().min(1),
+  registrationNumber: z.string().trim().min(1).nullable(),
   created: z.string().trim().min(1),
 });
 
