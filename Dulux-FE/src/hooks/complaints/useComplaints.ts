@@ -10,6 +10,7 @@ import type {
   ConversationListResponse,
   ConversationStatusFilter,
 } from '#/types/complaints';
+import { useComplaintsQueueSocket } from './useComplaintsQueueSocket';
 
 const DEFAULT_FILTERS: ConversationListRequestParams = {
   status: 'all',
@@ -33,6 +34,7 @@ interface UseComplaintsResult {
  */
 export const useComplaints = (): UseComplaintsResult => {
   const [filters, setFilters] = useState<ConversationListRequestParams>(DEFAULT_FILTERS);
+  useComplaintsQueueSocket({ enabled: true });
 
   const conversationsQuery = useQuery<ConversationListResponse, Error>({
     queryKey: queryKeys.complaints.list(filters),

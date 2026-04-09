@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -31,8 +31,32 @@ export const LiveChatPage = (): JSX.Element => {
   const { threadQuery, sendMessage, resolveConversation, isMessageSending, isActionPending } =
     useComplaintThread(threadId);
   const [isResolveOpen, setResolveOpen] = useState(false);
+  const [openedThreadIds, setOpenedThreadIds] = useState<Set<string>>(new Set());
 
   const conversationItems = conversationsQuery.data?.items ?? EMPTY_CONVERSATIONS;
+
+  useEffect(() => {
+    if (!selectedThreadId) {
+      return;
+    }
+
+    setOpenedThreadIds(previous => {
+      if (previous.has(selectedThreadId)) {
+        return previous;
+      }
+
+      const next = new Set(previous);
+      next.add(selectedThreadId);
+      return next;
+    });
+  }, [selectedThreadId]);
+
+  const openUnseenThreadIds = useMemo(() => {
+    return conversationItems
+      .filter(item => item.apiStatus === 'OPEN' && !openedThreadIds.has(item.id))
+      .map(item => item.id);
+  }, [conversationItems, openedThreadIds]);
+
   useEffect(() => {
     if (selectedThreadId) {
       return;
@@ -109,6 +133,7 @@ export const LiveChatPage = (): JSX.Element => {
       <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>
         <ConversationListPanel
           items={conversationItems}
+          openUnseenThreadIds={openUnseenThreadIds}
           isLoading={conversationsQuery.isLoading}
           status={filters.status}
           search={filters.search ?? ''}
