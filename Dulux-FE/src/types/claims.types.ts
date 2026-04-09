@@ -103,6 +103,13 @@ export interface ClaimsListResponse {
   stats: ClaimsStats;
 }
 
+export interface ClaimsCardCounts {
+  totalClaims: number;
+  pendingCsReview: number;
+  forwardedToQuality: number;
+  resolved: number;
+}
+
 export interface CreateClaimPayload extends Record<string, unknown> {
   registration: number;
   paintPair: number;

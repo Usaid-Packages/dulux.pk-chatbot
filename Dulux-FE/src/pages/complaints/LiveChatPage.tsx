@@ -13,7 +13,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '#/components/ui';
 import { ROUTES } from '#/constants';
 import { useComplaintThread, useComplaints } from '#/hooks/complaints';
-import type { ConversationListItem } from '#/types/complaints';
+import type { ConversationListItem, ConversationStats as ConversationStatsType } from '#/types/complaints';
 const EMPTY_CONVERSATIONS: ConversationListItem[] = [];
 
 /**
@@ -25,7 +25,7 @@ export const LiveChatPage = (): JSX.Element => {
   const { id: selectedThreadId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { conversationsQuery, filters, setStatusFilter, setSearch } = useComplaints();
+  const { conversationsQuery, cardCountsQuery, filters, setStatusFilter, setSearch } = useComplaints();
 
   const threadId = selectedThreadId ?? '';
   const { threadQuery, sendMessage, resolveConversation, isMessageSending, isActionPending } =
@@ -34,6 +34,12 @@ export const LiveChatPage = (): JSX.Element => {
   const [openedThreadIds, setOpenedThreadIds] = useState<Set<string>>(new Set());
 
   const conversationItems = conversationsQuery.data?.items ?? EMPTY_CONVERSATIONS;
+  const conversationStats: ConversationStatsType = {
+    open: cardCountsQuery.data?.open ?? 0,
+    inProgress: cardCountsQuery.data?.inProgress ?? 0,
+    resolved: conversationsQuery.data?.stats.resolved ?? 0,
+    closed: cardCountsQuery.data?.closed ?? 0,
+  };
 
   useEffect(() => {
     if (!selectedThreadId) {
@@ -128,7 +134,7 @@ export const LiveChatPage = (): JSX.Element => {
         </div>
       </section>
 
-      <ConversationStats stats={conversationsQuery.data?.stats} />
+      <ConversationStats stats={conversationStats} />
 
       <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>
         <ConversationListPanel

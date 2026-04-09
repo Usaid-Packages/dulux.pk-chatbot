@@ -20,7 +20,7 @@ const STAT_CARD_STYLES = [
  * @returns Quality list page.
  */
 export const QualityListPage = (): JSX.Element => {
-  const { qualityQueueQuery, filters, setStatusFilter, setPage } = useQualityQueue();
+  const { qualityQueueQuery, cardCountsQuery, filters, setStatusFilter, setPage } = useQualityQueue();
 
   const queueData = qualityQueueQuery.data;
   const queueItems = queueData?.items ?? [];
@@ -57,10 +57,10 @@ export const QualityListPage = (): JSX.Element => {
 
       <section className='wf-stat-grid-4'>
         {[
-          { label: 'Total In Queue', value: queueData?.stats.totalInQueue ?? 0 },
-          { label: 'Awaiting Review', value: queueData?.stats.awaitingReview ?? 0 },
-          { label: 'Info Requested', value: queueData?.stats.infoRequested ?? 0 },
-          { label: 'Resolved Today', value: queueData?.stats.resolvedToday ?? 0 },
+          { label: 'Total In Queue', value: cardCountsQuery.data?.totalInQueue ?? 0 },
+          { label: 'Awaiting Review', value: cardCountsQuery.data?.awaitingReview ?? 0 },
+          { label: 'Info Requested', value: cardCountsQuery.data?.infoRequested ?? 0 },
+          { label: 'Resolved Today', value: cardCountsQuery.data?.resolvedToday ?? 0 },
         ].map((card, index) => (
           <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
             <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>

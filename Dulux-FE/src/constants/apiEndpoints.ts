@@ -19,6 +19,7 @@ export const apiEndpoints = {
     list: `${API_WARRANTY_V1}/claims/`,
     create: `${API_WARRANTY_V1}/claims/`,
     detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    cardCounts: `${API_WARRANTY_V1}/card-counts/claims/`,
   },
   quality: {
     list: `${API_WARRANTY_V1}/claims/`,
@@ -27,6 +28,7 @@ export const apiEndpoints = {
     reject: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/quality/reject/`,
     requestInfo: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/quality/request-info/`,
     csrResubmission: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/csr-resubmission/`,
+    cardCounts: `${API_WARRANTY_V1}/card-counts/quality/`,
   },
   dashboard: {
     cards: `${API_USERS_V1}/cards/`,
@@ -36,6 +38,7 @@ export const apiEndpoints = {
     list: `${API_WARRANTY_V1}/registrations/`,
     createManual: `${API_WARRANTY_V1}/registrations/`,
     detail: (id: string | number): string => `${API_WARRANTY_V1}/registrations/${id}/`,
+    cardCounts: `${API_WARRANTY_V1}/card-counts/registrations/`,
   },
   products: {
     list: `${API_PRODUCTS_V1}/`,
@@ -51,5 +54,6 @@ export const apiEndpoints = {
     list: `${API_COMPLAINTS_V1}/`,
     detail: (id: string): string => `${API_COMPLAINTS_V1}/${id}/`,
     sendMessage: (id: string): string => `${API_COMPLAINTS_V1}/${id}/messages/`,
+    cardCountsLiveChat: `${API_COMPLAINTS_V1}/card-counts/live-chat/`,
   },
 } as const;

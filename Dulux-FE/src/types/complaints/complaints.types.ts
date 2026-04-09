@@ -90,6 +90,12 @@ export interface ConversationStats {
   closed: number;
 }
 
+export interface LiveChatCardCounts {
+  open: number;
+  inProgress: number;
+  closed: number;
+}
+
 export interface ConversationListRequestParams {
   status: ConversationStatusFilter;
   search?: string;

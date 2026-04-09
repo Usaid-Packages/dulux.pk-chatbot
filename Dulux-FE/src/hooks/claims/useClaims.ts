@@ -4,8 +4,9 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
-import { getClaims, useCreateClaimMutation } from '#/data-layer/claims';
+import { getClaimCardCounts, getClaims, useCreateClaimMutation } from '#/data-layer/claims';
 import type {
+  ClaimsCardCounts,
   ClaimIssueType,
   ClaimListStatusFilter,
   ClaimsListRequestParams,
@@ -36,6 +37,7 @@ const CLAIM_ISSUE_FILTER_VALUES: readonly ('all' | ClaimIssueType)[] = ['all', .
 
 interface UseClaimsResult {
   claimsQuery: UseQueryResult<ClaimsListResponse, Error>;
+  cardCountsQuery: UseQueryResult<ClaimsCardCounts, Error>;
   filters: ClaimsListRequestParams;
   setStatusFilter: (status: ClaimListStatusFilter) => void;
   setIssueTypeFilter: (issueType: 'all' | ClaimIssueType) => void;
@@ -81,6 +83,10 @@ export const useClaims = (): UseClaimsResult => {
   const claimsQuery = useQuery<ClaimsListResponse, Error>({
     queryKey: queryKeys.claims.list(filters),
     queryFn: () => getClaims(filters),
+  });
+  const cardCountsQuery = useQuery<ClaimsCardCounts, Error>({
+    queryKey: queryKeys.claims.cardCounts,
+    queryFn: getClaimCardCounts,
   });
 
   const setStatusFilter = (status: ClaimListStatusFilter): void => {
@@ -137,6 +143,7 @@ export const useClaims = (): UseClaimsResult => {
 
   return {
     claimsQuery,
+    cardCountsQuery,
     filters,
     setStatusFilter,
     setIssueTypeFilter,

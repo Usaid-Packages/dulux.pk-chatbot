@@ -19,7 +19,8 @@ import {
 } from '#/components/ui';
 import { getClaimIssueTypeLabel } from '#/constants';
 import { useClaims } from '#/hooks/claims';
-import { CLAIM_ISSUE_TYPES, type CreateClaimPayload } from '#/types/claims.types';
+import { CLAIM_ISSUE_TYPES } from '#/types/claims.types';
+import type { CreateClaimPayload } from '#/types/claims.types';
 import { cn } from '#/utils';
 
 const PAGE_SIZE = 10;
@@ -39,6 +40,7 @@ const STAT_CARD_STYLES = [
 export const ClaimsListPage = (): JSX.Element => {
   const {
     claimsQuery,
+    cardCountsQuery,
     filters,
     setStatusFilter,
     setIssueTypeFilter,
@@ -103,10 +105,10 @@ export const ClaimsListPage = (): JSX.Element => {
 
       <section className='wf-stat-grid-4'>
         {[
-          { label: 'Total Claims', value: claimsData?.stats.totalClaims ?? 0 },
-          { label: 'Pending CS Review', value: claimsData?.stats.pendingReview ?? 0 },
-          { label: 'Forwarded to Quality', value: claimsData?.stats.forwardedToQuality ?? 0 },
-          { label: 'Resolved', value: claimsData?.stats.resolved ?? 0 },
+          { label: 'Total Claims', value: cardCountsQuery.data?.totalClaims ?? 0 },
+          { label: 'Pending CS Review', value: cardCountsQuery.data?.pendingCsReview ?? 0 },
+          { label: 'Forwarded to Quality', value: cardCountsQuery.data?.forwardedToQuality ?? 0 },
+          { label: 'Resolved', value: cardCountsQuery.data?.resolved ?? 0 },
         ].map((card, index) => (
           <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
             <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
