@@ -21,6 +21,7 @@ export const RegistrationsListPage = (): JSX.Element => {
     activeTab,
     searchValue,
     currentPage,
+    totalPages,
     registrations,
     stats,
     isLoading,
@@ -119,7 +120,9 @@ export const RegistrationsListPage = (): JSX.Element => {
       )}
 
       <section className='wf-pagination-panel'>
-        <p className='text-sm text-text-muted'>Page {currentPage}</p>
+        <p className='text-sm text-text-muted'>
+          Page {currentPage} of {totalPages}
+        </p>
         <div className='flex gap-2'>
           <Button type='button' variant='outline' disabled={!hasPreviousPage || isLoading} onClick={goToPreviousPage}>
             Previous

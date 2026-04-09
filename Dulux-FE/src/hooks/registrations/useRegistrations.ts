@@ -13,6 +13,7 @@ import type {
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_TAB = registrationFilterTabs[0];
+const REGISTRATIONS_PAGE_SIZE = 10;
 
 const isRegistrationStatus = (value: string | null): value is RegistrationStatus => {
   return (
@@ -39,6 +40,7 @@ export interface UseRegistrationsResult {
   searchValue: string;
   statusValue: RegistrationStatus | 'ALL';
   currentPage: number;
+  totalPages: number;
   registrations: RegistrationListItem[];
   stats: RegistrationStats;
   isLoading: boolean;
@@ -77,6 +79,7 @@ export const useRegistrations = (): UseRegistrationsResult => {
 
   const queryResult = useGetRegistrationsQuery({
     page: currentPage,
+    page_size: REGISTRATIONS_PAGE_SIZE,
     search: searchValue.trim() || undefined,
     state: effectiveStateFilter,
   });
@@ -86,6 +89,8 @@ export const useRegistrations = (): UseRegistrationsResult => {
   });
 
   const registrations = queryResult.data?.results ?? [];
+  const totalItems = queryResult.data?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / REGISTRATIONS_PAGE_SIZE));
   const stats: RegistrationStats = {
     total: cardCountsQuery.data?.totalRegistrations ?? 0,
     pending: cardCountsQuery.data?.pendingReview ?? 0,
@@ -149,6 +154,7 @@ export const useRegistrations = (): UseRegistrationsResult => {
     searchValue,
     statusValue,
     currentPage,
+    totalPages,
     registrations,
     stats,
     isLoading: queryResult.isLoading,
