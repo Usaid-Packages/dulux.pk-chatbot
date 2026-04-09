@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+
+import { useSearchParams } from 'react-router-dom';
 
 import { REGISTRATION_TAB_TO_STATUS } from '#/constants';
 import { useGetRegistrationsQuery } from '#/data-layer/registrations';
@@ -10,6 +12,21 @@ import {
 } from '#/types/registrations';
 
 const DEFAULT_PAGE = 1;
+const DEFAULT_TAB = registrationFilterTabs[0];
+
+const isRegistrationStatus = (value: string | null): value is RegistrationStatus => {
+  return (
+    value === 'SUBMITTED' ||
+    value === 'IN_PROGRESS' ||
+    value === 'APPROVED' ||
+    value === 'REJECTED' ||
+    value === 'RESUBMIT'
+  );
+};
+
+const isRegistrationFilterTab = (value: string | null): value is RegistrationFilterTab => {
+  return registrationFilterTabs.includes(value as RegistrationFilterTab);
+};
 
 export interface RegistrationStats {
   total: number;
@@ -42,10 +59,18 @@ export interface UseRegistrationsResult {
  * @returns Registrations list state, actions, and query results.
  */
 export const useRegistrations = (): UseRegistrationsResult => {
-  const [activeTab, setActiveTabState] = useState<RegistrationFilterTab>(registrationFilterTabs[0]);
-  const [searchValue, setSearchValueState] = useState<string>('');
-  const [statusValue, setStatusValueState] = useState<RegistrationStatus | 'ALL'>('ALL');
-  const [currentPage, setCurrentPage] = useState<number>(DEFAULT_PAGE);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTabParam = searchParams.get('tab');
+  const activeTab = isRegistrationFilterTab(activeTabParam) ? activeTabParam : DEFAULT_TAB;
+
+  const searchValue = searchParams.get('search') ?? '';
+  const statusParam = searchParams.get('status');
+  const statusValue: RegistrationStatus | 'ALL' =
+    statusParam === 'ALL' ? 'ALL' : isRegistrationStatus(statusParam) ? statusParam : 'ALL';
+
+  const pageParam = Number.parseInt(searchParams.get('page') ?? String(DEFAULT_PAGE), 10);
+  const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : DEFAULT_PAGE;
 
   const stateFromTab = REGISTRATION_TAB_TO_STATUS[activeTab];
   const effectiveStateFilter = statusValue === 'ALL' ? stateFromTab : statusValue;
@@ -75,29 +100,54 @@ export const useRegistrations = (): UseRegistrationsResult => {
   }, [registrations]);
 
   const handleSearchChange = (value: string): void => {
-    setSearchValueState(value);
-    setCurrentPage(DEFAULT_PAGE);
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+      const normalizedValue = value.trim();
+      if (normalizedValue.length > 0) {
+        nextParams.set('search', normalizedValue);
+      } else {
+        nextParams.delete('search');
+      }
+      nextParams.set('page', String(DEFAULT_PAGE));
+      return nextParams;
+    });
   };
 
   const handleStatusChange = (value: RegistrationStatus | 'ALL'): void => {
-    setStatusValueState(value);
-    setCurrentPage(DEFAULT_PAGE);
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+      nextParams.set('status', value);
+      nextParams.set('page', String(DEFAULT_PAGE));
+      return nextParams;
+    });
   };
 
   const handleTabChange = (tab: RegistrationFilterTab): void => {
-    setActiveTabState(tab);
-    setCurrentPage(DEFAULT_PAGE);
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+      nextParams.set('tab', tab);
+      nextParams.set('page', String(DEFAULT_PAGE));
+      return nextParams;
+    });
   };
 
   const goToNextPage = (): void => {
     if (queryResult.data?.next) {
-      setCurrentPage(previousPage => previousPage + 1);
+      setSearchParams(previous => {
+        const nextParams = new URLSearchParams(previous);
+        nextParams.set('page', String(currentPage + 1));
+        return nextParams;
+      });
     }
   };
 
   const goToPreviousPage = (): void => {
     if (currentPage > DEFAULT_PAGE) {
-      setCurrentPage(previousPage => previousPage - 1);
+      setSearchParams(previous => {
+        const nextParams = new URLSearchParams(previous);
+        nextParams.set('page', String(currentPage - 1));
+        return nextParams;
+      });
     }
   };
 

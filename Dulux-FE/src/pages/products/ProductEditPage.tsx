@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { ProductForm } from '#/components/products';
@@ -21,6 +21,7 @@ const EMPTY_BASECOAT_OPTIONS: LinkedBasecoat[] = [];
 
 export const ProductEditPage = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams<{ id: string }>();
   const productId = params.id ?? '';
 
@@ -34,7 +35,7 @@ export const ProductEditPage = (): JSX.Element => {
   const updateProductMutation = useUpdateProductMutation();
 
   const handleCancel = (): void => {
-    navigate(ROUTES.PRODUCTS);
+    navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
   const handleSubmit = (values: ProductFormValues): void => {
@@ -46,7 +47,7 @@ export const ProductEditPage = (): JSX.Element => {
       {
         onSuccess: () => {
           toast.success('Product updated successfully.');
-          navigate(ROUTES.PRODUCTS);
+          navigate(`${ROUTES.PRODUCTS}${location.search}`);
         },
         onError: error => {
           toast.error(getApiErrorMessage(error));

@@ -59,12 +59,6 @@ export const createRegistrationRejectedTemplate = (registration: RegistrationDet
         <p>
           You may submit a new registration once the highlighted issues are corrected and all required information is complete.
         </p>
-        <p><strong>Recommended next steps:</strong></p>
-        <ul>
-          <li>Review your registration details for accuracy.</li>
-          <li>Update any missing or incorrect information.</li>
-          <li>Re-upload clear supporting invoices/documents if needed.</li>
-        </ul>
         <p>
           If you need assistance, please contact our Customer Service team and share your registration code
           <strong> ${registrationCode}</strong> for quick support.

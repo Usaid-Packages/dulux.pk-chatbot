@@ -1,6 +1,6 @@
 import type { JSX, MouseEvent } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { RegistrationFilters, RegistrationTable } from '#/components/registrations';
 import { Button } from '#/components/ui';
@@ -16,6 +16,7 @@ import { cn } from '#/utils';
  */
 export const RegistrationsListPage = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     activeTab,
     searchValue,
@@ -38,7 +39,7 @@ export const RegistrationsListPage = (): JSX.Element => {
   };
 
   const handleOpenDetail = (id: string): void => {
-    navigate(ROUTES.REGISTRATION_DETAIL(id));
+    navigate(`${ROUTES.REGISTRATION_DETAIL(id)}${location.search}`);
   };
 
   const handleTabClick = (event: MouseEvent<HTMLButtonElement>): void => {

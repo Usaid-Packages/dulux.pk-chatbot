@@ -70,7 +70,9 @@ export const Sidebar = (): JSX.Element => {
       <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_8%,rgba(110,179,255,0.24),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0))]' />
 
       <div className='relative flex items-center gap-3 border-b border-sidebar-borderColor px-5 pb-5 pt-5'>
-        <img src={duluxLogo} alt='Dulux logo' className='h-10 w-10 rounded-xl object-cover' />
+        <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-1 shadow-[0_10px_24px_rgba(2,12,36,0.28)]'>
+          <img src={duluxLogo} alt='Dulux logo' className='h-full w-full rounded-xl object-contain' />
+        </div>
         <div className='flex min-w-0 flex-col'>
           <h1 className='truncate text-base font-extrabold tracking-tight text-white'>Dulux CS</h1>
           <p className='text-[11px] text-blue-100/70'>Assurance Studio</p>

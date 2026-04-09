@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES } from '#/constants';
@@ -18,6 +18,8 @@ const getTypeBadgeClassName = (type: Product['productType']): string => {
 };
 
 export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Element => {
+  const location = useLocation();
+
   return (
     <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
       <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
@@ -100,9 +102,9 @@ export const ProductTable = ({ products, onDelete }: ProductTableProps): JSX.Ele
                     {product.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className='align-middle'>
                   <div className='flex items-center gap-2'>
-                    <Link className='wf-table-link' to={ROUTES.PRODUCT_EDIT(String(product.id))}>
+                    <Link className='wf-table-link' to={`${ROUTES.PRODUCT_EDIT(String(product.id))}${location.search}`}>
                       Edit
                     </Link>
                     <Button

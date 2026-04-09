@@ -47,7 +47,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent className='flex max-h-[62vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[500px]'>
+      <DialogContent className='flex max-h-[78vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[520px]'>
         <DialogHeader>
           <DialogTitle>Request Resubmission</DialogTitle>
           <DialogDescription>Select the fields that need correction and add notes for the customer.</DialogDescription>
@@ -75,12 +75,12 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
           <div className='mt-3 border-t border-primary/10 pt-3'>
             <div className='space-y-2'>
               <label htmlFor='resubmission-note' className='block text-sm font-medium text-text-primary'>
-                Notes
+                Note to Customer
               </label>
               <Textarea
                 id='resubmission-note'
                 rows={3}
-                placeholder='Add context for the customer...'
+                placeholder='Add a clear note for the customer...'
                 {...register('notes')}
               />
               {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}

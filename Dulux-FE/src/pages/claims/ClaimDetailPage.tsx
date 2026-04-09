@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useState } from 'react';
 
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
   ApproveClaimModal,
@@ -33,6 +33,7 @@ export const ClaimDetailPage = (): JSX.Element => {
   const claimId = params.id ?? '';
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { claimQuery, handleApprove, handleReject, handleSendToQuality, isActionPending } = useClaimDetail(claimId);
 
@@ -41,7 +42,7 @@ export const ClaimDetailPage = (): JSX.Element => {
   const [isRejectModalOpen, setRejectModalOpen] = useState(false);
 
   const handleBackClick = (): void => {
-    navigate(ROUTES.CLAIMS);
+    navigate(`${ROUTES.CLAIMS}${location.search}`);
   };
 
   const openApproveModal = (): void => setApproveModalOpen(true);

@@ -7,7 +7,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Registration Approvals',
     icon: 'check',
     to: ROUTES.REGISTRATIONS,
-    description: 'List, detail, resubmission & rejection modals',
+    description: 'Review, approve, reject, or request additional information for submitted registrations.',
     defaultStats: {
       screens: 4,
       primaryStat: { label: 'Pending', value: 42 },
@@ -19,7 +19,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Manual Registration',
     icon: 'edit',
     to: ROUTES.MANUAL_REGISTRATION_STEP_1,
-    description: '5-step form wizard with review & success states',
+    description: 'Create and manage registrations through a guided 5-step process.',
     defaultStats: {
       screens: 6,
       primaryStat: { label: 'Drafts', value: 7 },
@@ -31,7 +31,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Claims Approvals',
     icon: 'alert',
     to: ROUTES.CLAIMS,
-    description: 'List, detail, forward, reject & request info modals',
+    description: 'Evaluate warranty claims, or request more information from users.',
     defaultStats: {
       screens: 5,
       primaryStat: { label: 'Pending CS Review', value: 21 },
@@ -43,7 +43,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Quality Review',
     icon: 'inspect',
     to: ROUTES.QUALITY,
-    description: 'Technical review, approve, reject & request info modals',
+    description: 'Perform technical assessments, validate claims.',
     defaultStats: {
       screens: 5,
       primaryStat: { label: 'Awaiting Review', value: 14 },
@@ -55,7 +55,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Live Chat',
     icon: 'chat',
     to: ROUTES.COMPLAINTS,
-    description: '3-panel chat with resolve, transfer & escalate modals',
+    description: 'Engage with customers in real-time, and resolve queries when needed.',
     defaultStats: {
       screens: 6,
       primaryStat: { label: 'Unassigned', value: 12 },
@@ -67,7 +67,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     title: 'Product Catalog',
     icon: 'box',
     to: ROUTES.PRODUCTS,
-    description: 'Products, surfaces, add/edit forms & delete modal',
+    description: 'Manage products and surface types, and maintain accurate data for registrations and claims.',
     defaultStats: {
       screens: 5,
       primaryStat: { label: 'Products', value: 24 },
