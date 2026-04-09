@@ -34,6 +34,7 @@ export const AuditLogsTable = ({ items, onOpenDetail }: AuditLogsTableProps): JS
             <TableHead>Registration #</TableHead>
             <TableHead>Object ID</TableHead>
             <TableHead>Object Repr</TableHead>
+            <TableHead>Event Label</TableHead>
             <TableHead>Action</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -51,6 +52,9 @@ export const AuditLogsTable = ({ items, onOpenDetail }: AuditLogsTableProps): JS
               </TableCell>
               <TableCell className='max-w-[260px] truncate' title={item.objectRepr}>
                 {item.objectRepr}
+              </TableCell>
+              <TableCell className='max-w-[320px] truncate' title={item.eventLabel}>
+                {item.eventLabel}
               </TableCell>
               <TableCell>
                 <Badge variant={getAuditActionBadgeVariant(item.action)}>{getAuditActionLabel(item.action)}</Badge>

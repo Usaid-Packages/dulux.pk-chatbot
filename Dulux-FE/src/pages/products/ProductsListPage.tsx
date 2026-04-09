@@ -41,6 +41,8 @@ import type {
 import { cn, getApiErrorMessage } from '#/utils';
 
 const FIRST_PAGE = 1;
+const PRODUCT_PAGE_SIZE = 10;
+const SURFACE_TYPE_PAGE_SIZE = 10;
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 
@@ -131,7 +133,7 @@ export const ProductsListPage = (): JSX.Element => {
     product_type: productTypeFilter === 'ALL' ? undefined : productTypeFilter,
     is_active: productStatusFilter === 'ALL' ? undefined : productStatusFilter === 'ACTIVE',
     ordering: productOrdering,
-    page_size: 10,
+    page_size: PRODUCT_PAGE_SIZE,
     page: productPage,
   });
 
@@ -139,6 +141,7 @@ export const ProductsListPage = (): JSX.Element => {
     search: surfaceSearch.trim() || undefined,
     environment: surfaceEnvironmentFilter === 'ALL' ? undefined : surfaceEnvironmentFilter,
     page: surfacePage,
+    page_size: SURFACE_TYPE_PAGE_SIZE,
   };
 
   const surfaceTypesQuery = useGetSurfaceTypesQuery(surfaceTypeParams);
@@ -150,6 +153,10 @@ export const ProductsListPage = (): JSX.Element => {
 
   const products = productQuery.data?.results ?? EMPTY_PRODUCTS;
   const surfaceTypes = surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES;
+  const productTotalItems = productQuery.data?.count ?? 0;
+  const productTotalPages = Math.max(1, Math.ceil(productTotalItems / PRODUCT_PAGE_SIZE));
+  const surfaceTypeTotalItems = surfaceTypesQuery.data?.count ?? 0;
+  const surfaceTypeTotalPages = Math.max(1, Math.ceil(surfaceTypeTotalItems / SURFACE_TYPE_PAGE_SIZE));
 
   const linkedProductCountMap = useMemo<Record<number, number>>(() => {
     return buildSurfaceLinkedCountMap(products);
@@ -486,7 +493,9 @@ export const ProductsListPage = (): JSX.Element => {
               <ProductTable products={products} onDelete={requestProductDelete} />
 
               <section className='wf-pagination-panel'>
-                <p className='text-sm text-text-muted'>Page {productPage}</p>
+                <p className='text-sm text-text-muted'>
+                  Page {productPage} of {productTotalPages}
+                </p>
                 <div className='flex gap-2'>
                   <Button
                     type='button'
@@ -583,7 +592,9 @@ export const ProductsListPage = (): JSX.Element => {
               />
 
               <section className='wf-pagination-panel'>
-                <p className='text-sm text-text-muted'>Page {surfacePage}</p>
+                <p className='text-sm text-text-muted'>
+                  Page {surfacePage} of {surfaceTypeTotalPages}
+                </p>
                 <div className='flex gap-2'>
                   <Button
                     type='button'

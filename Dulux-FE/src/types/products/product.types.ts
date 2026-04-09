@@ -84,6 +84,7 @@ export interface ProductQueryParams extends Record<string, unknown> {
 export interface SurfaceTypeQueryParams extends Record<string, unknown> {
   search?: string;
   environment?: ProductEnvironment;
+  page_size?: number;
   page?: number;
   ordering?: string;
 }
