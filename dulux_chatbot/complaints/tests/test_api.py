@@ -164,6 +164,20 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(session.current_step, "chat")
         self.assertEqual(session.session_data, {"complaint_id": complaint.id})
 
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_reactivates_customer_complaint_session_with_normalized_phone(self, send_text_mock):
+        complaint = create_complaint(phone_number="030021484045")
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.post(url, {"text": "Please share an update"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        session = WhatsAppSession.objects.get(phone_number="9230021484045")
+        self.assertEqual(session.flow, FlowType.COMPLAINT)
+        self.assertEqual(session.current_step, "chat")
+        self.assertEqual(session.session_data, {"complaint_id": complaint.id})
+
 
 class LiveChatCardCountAPITests(TestCase):
     def setUp(self):

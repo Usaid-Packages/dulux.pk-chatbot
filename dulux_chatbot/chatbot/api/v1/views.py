@@ -11,6 +11,7 @@ from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.handlers.message_parser import parse_incoming_message
 from dulux_chatbot.chatbot.models import ProcessedMessage, WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.core.validators import normalize_pakistan_phone_number
 
 
 logger = logging.getLogger("dulux_chatbot")
@@ -42,7 +43,7 @@ class WhatsAppWebhookView(APIView):
         if not created:
             return Response(status=200)
 
-        phone_number = str(message.get("from") or "").strip()
+        phone_number = normalize_pakistan_phone_number(str(message.get("from") or "").strip())
         if not phone_number:
             return Response(status=200)
 
