@@ -6,6 +6,10 @@ Please resubmit the following:
 {% for item in rejection_fields %}
 - {{ item.display_name|default:item.field_name|default:"Field" }}
 {% endfor %}
+{% if registration.notes %}
+
+Note: {{ registration.notes }}
+{% endif %}
 
 Please reply in the same WhatsApp chat with the requested updates.
 {{ fallback_message }}

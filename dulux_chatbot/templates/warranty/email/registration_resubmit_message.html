@@ -6,5 +6,8 @@
   <li><strong>{{ item.display_name|default:item.field_name|default:"Field" }}</strong></li>
 {% endfor %}
 </ul>
+{% if registration.notes %}
+<p><strong>Note:</strong> {{ registration.notes }}</p>
+{% endif %}
 <p>Please reply in the same WhatsApp chat with the requested updates.</p>
 <p>{{ fallback_message }}</p>
