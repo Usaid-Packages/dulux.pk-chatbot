@@ -7,6 +7,7 @@ export const queryKeys = {
   claims: {
     all: ['claims'] as const,
     list: (filters: Record<string, unknown>) => ['claims', 'list', filters] as const,
+    cardCounts: ['claims', 'card-counts'] as const,
     detail: (id: string) => ['claims', 'detail', id] as const,
     create: ['claims', 'create'] as const,
     approve: ['claims', 'approve'] as const,
@@ -18,6 +19,7 @@ export const queryKeys = {
   quality: {
     all: ['quality'] as const,
     list: (filters: Record<string, unknown>) => ['quality', 'list', filters] as const,
+    cardCounts: ['quality', 'card-counts'] as const,
     detail: (id: string) => ['quality', 'detail', id] as const,
     approve: ['quality', 'approve'] as const,
     reject: ['quality', 'reject'] as const,
@@ -27,6 +29,7 @@ export const queryKeys = {
     all: ['complaints'] as const,
     listBase: ['complaints', 'list'] as const,
     list: (filters: Record<string, unknown>) => ['complaints', 'list', filters] as const,
+    cardCountsLiveChat: ['complaints', 'card-counts', 'live-chat'] as const,
     detail: (id: string) => ['complaints', 'detail', id] as const,
     sendMessage: ['complaints', 'send-message'] as const,
     markInProgress: ['complaints', 'mark-in-progress'] as const,
@@ -41,6 +44,7 @@ export const queryKeys = {
   registrations: {
     all: ['registrations'] as const,
     list: (paramsKey: string): readonly ['registrations', string] => ['registrations', paramsKey] as const,
+    cardCounts: ['registrations', 'card-counts'] as const,
     detail: (id: string): readonly ['registration', string] => ['registration', id] as const,
     manualCreate: ['registrations', 'manual-create'] as const,
     manualProducts: ['registrations', 'manual-products'] as const,

@@ -67,6 +67,13 @@ export const claimsStatsSchema = z.object({
   resolved: z.number().int().nonnegative(),
 });
 
+export const claimsCardCountsSchema = z.object({
+  totalClaims: z.number().int().nonnegative(),
+  pendingCsReview: z.number().int().nonnegative(),
+  forwardedToQuality: z.number().int().nonnegative(),
+  resolved: z.number().int().nonnegative(),
+});
+
 export const claimsListResponseSchema = z.object({
   items: claimListItemSchema.array(),
   total: z.number().int().nonnegative(),

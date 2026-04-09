@@ -77,6 +77,13 @@ export interface QualityQueueResponse {
   stats: QualityQueueStats;
 }
 
+export interface QualityCardCounts {
+  totalInQueue: number;
+  awaitingReview: number;
+  infoRequested: number;
+  resolvedToday: number;
+}
+
 export interface QualityApprovePayload extends Record<string, unknown> {
   id: string;
   technicalNotes: string;

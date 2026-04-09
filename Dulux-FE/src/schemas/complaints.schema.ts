@@ -88,6 +88,12 @@ export const conversationStatsSchema = z.object({
   closed: z.number().int().nonnegative(),
 });
 
+export const liveChatCardCountsSchema = z.object({
+  open: z.number().int().nonnegative(),
+  inProgress: z.number().int().nonnegative(),
+  closed: z.number().int().nonnegative(),
+});
+
 export const conversationListResponseSchema = z.object({
   items: conversationListItemSchema.array(),
   total: z.number().int().nonnegative(),

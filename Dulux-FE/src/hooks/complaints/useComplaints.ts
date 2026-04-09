@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 import { queryKeys } from '#/constants';
-import { getConversations } from '#/data-layer/complaints';
+import { getConversations, getLiveChatCardCounts } from '#/data-layer/complaints';
 import type {
   ConversationListRequestParams,
   ConversationListResponse,
   ConversationStatusFilter,
+  LiveChatCardCounts,
 } from '#/types/complaints';
 import { useComplaintsQueueSocket } from './useComplaintsQueueSocket';
 
@@ -21,6 +22,7 @@ const DEFAULT_FILTERS: ConversationListRequestParams = {
 
 interface UseComplaintsResult {
   conversationsQuery: UseQueryResult<ConversationListResponse, Error>;
+  cardCountsQuery: UseQueryResult<LiveChatCardCounts, Error>;
   filters: ConversationListRequestParams;
   setStatusFilter: (status: ConversationStatusFilter) => void;
   setSearch: (search?: string) => void;
@@ -39,6 +41,11 @@ export const useComplaints = (): UseComplaintsResult => {
   const conversationsQuery = useQuery<ConversationListResponse, Error>({
     queryKey: queryKeys.complaints.list(filters),
     queryFn: () => getConversations(filters),
+    refetchOnWindowFocus: false,
+  });
+  const cardCountsQuery = useQuery<LiveChatCardCounts, Error>({
+    queryKey: queryKeys.complaints.cardCountsLiveChat,
+    queryFn: getLiveChatCardCounts,
     refetchOnWindowFocus: false,
   });
 
@@ -61,6 +68,7 @@ export const useComplaints = (): UseComplaintsResult => {
 
   return {
     conversationsQuery,
+    cardCountsQuery,
     filters,
     setStatusFilter,
     setSearch,

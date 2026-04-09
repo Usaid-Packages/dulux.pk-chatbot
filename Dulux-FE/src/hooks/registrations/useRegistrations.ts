@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
-
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
-import { REGISTRATION_TAB_TO_STATUS } from '#/constants';
-import { useGetRegistrationsQuery } from '#/data-layer/registrations';
-import {
-  registrationFilterTabs,
-  type RegistrationFilterTab,
-  type RegistrationListItem,
-  type RegistrationStatus,
+import { queryKeys, REGISTRATION_TAB_TO_STATUS } from '#/constants';
+import { getRegistrationCardCounts, useGetRegistrationsQuery } from '#/data-layer/registrations';
+import { registrationFilterTabs } from '#/types/registrations';
+import type {
+  RegistrationCardCounts,
+  RegistrationFilterTab,
+  RegistrationListItem,
+  RegistrationStatus,
 } from '#/types/registrations';
 
 const DEFAULT_PAGE = 1;
@@ -80,24 +80,17 @@ export const useRegistrations = (): UseRegistrationsResult => {
     search: searchValue.trim() || undefined,
     state: effectiveStateFilter,
   });
+  const cardCountsQuery = useQuery<RegistrationCardCounts, Error>({
+    queryKey: queryKeys.registrations.cardCounts,
+    queryFn: getRegistrationCardCounts,
+  });
 
   const registrations = queryResult.data?.results ?? [];
-
-  const stats = useMemo<RegistrationStats>(() => {
-    return registrations.reduce<RegistrationStats>(
-      (accumulator, item) => {
-        if (item.state === 'SUBMITTED' || item.state === 'IN_PROGRESS') {
-          accumulator.pending += 1;
-        }
-        if (item.state === 'APPROVED') {
-          accumulator.approved += 1;
-        }
-        accumulator.total += 1;
-        return accumulator;
-      },
-      { total: 0, pending: 0, approved: 0 }
-    );
-  }, [registrations]);
+  const stats: RegistrationStats = {
+    total: cardCountsQuery.data?.totalRegistrations ?? 0,
+    pending: cardCountsQuery.data?.pendingReview ?? 0,
+    approved: cardCountsQuery.data?.approved ?? 0,
+  };
 
   const handleSearchChange = (value: string): void => {
     setSearchParams(previous => {

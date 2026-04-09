@@ -79,6 +79,12 @@ export interface RegistrationsListResponse {
   results: RegistrationListItem[];
 }
 
+export interface RegistrationCardCounts {
+  totalRegistrations: number;
+  pendingReview: number;
+  approved: number;
+}
+
 export interface RegistrationsQueryParams extends Record<string, unknown> {
   search?: string;
   state?: RegistrationStatus;

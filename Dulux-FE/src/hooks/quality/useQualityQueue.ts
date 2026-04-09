@@ -3,8 +3,13 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys } from '#/constants';
-import { getQualityQueue } from '#/data-layer/quality';
-import type { QualityQueueRequestParams, QualityQueueResponse, QualityQueueStatusFilter } from '#/types/quality.types';
+import { getQualityCardCounts, getQualityQueue } from '#/data-layer/quality';
+import type {
+  QualityCardCounts,
+  QualityQueueRequestParams,
+  QualityQueueResponse,
+  QualityQueueStatusFilter,
+} from '#/types/quality.types';
 
 const DEFAULT_FILTERS: QualityQueueRequestParams = {
   status: 'all',
@@ -14,6 +19,7 @@ const DEFAULT_FILTERS: QualityQueueRequestParams = {
 
 interface UseQualityQueueResult {
   qualityQueueQuery: UseQueryResult<QualityQueueResponse, Error>;
+  cardCountsQuery: UseQueryResult<QualityCardCounts, Error>;
   filters: QualityQueueRequestParams;
   setStatusFilter: (status: QualityQueueStatusFilter) => void;
   setPage: (page: number) => void;
@@ -46,6 +52,10 @@ export const useQualityQueue = (): UseQualityQueueResult => {
     queryKey: queryKeys.quality.list(filters),
     queryFn: () => getQualityQueue(filters),
   });
+  const cardCountsQuery = useQuery<QualityCardCounts, Error>({
+    queryKey: queryKeys.quality.cardCounts,
+    queryFn: getQualityCardCounts,
+  });
 
   const setStatusFilter = (status: QualityQueueStatusFilter): void => {
     setSearchParams(previous => {
@@ -66,6 +76,7 @@ export const useQualityQueue = (): UseQualityQueueResult => {
 
   return {
     qualityQueueQuery,
+    cardCountsQuery,
     filters,
     setStatusFilter,
     setPage,
