@@ -13,6 +13,7 @@ class BaseFlow(ABC):
     MAIN_MENU_COMMAND = "00"
     TEXT_BACK_COMMANDS = {"BACK"}
     TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
+    IMAGE_UPLOAD_NOTE = "Note : Please add one Invoice image at a time"
 
     def __init__(self, session, client):
         self.session = session
@@ -129,6 +130,9 @@ class BaseFlow(ABC):
 
     def _send_validation_error(self, text: str) -> None:
         self._send_step_prompt(text)
+
+    def _with_image_upload_note(self, text: str) -> str:
+        return f"{text}\n\n{self.IMAGE_UPLOAD_NOTE}"
 
     def _is_plain_text_value(self, value: str) -> bool:
         stripped = value.strip()

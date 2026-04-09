@@ -7,6 +7,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from dulux_chatbot.chatbot.choices import FlowType
+from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.complaints.choices import ComplaintStatus
 from dulux_chatbot.complaints.tests.factories import create_chat_message, create_complaint, create_image, create_user
 from dulux_chatbot.users.choices import UserRole
@@ -141,6 +143,26 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
+
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_reactivates_customer_complaint_session(self, send_text_mock):
+        complaint = create_complaint(phone_number="923214840044")
+        WhatsAppSession.objects.create(
+            phone_number=complaint.phone_number,
+            flow=FlowType.REGISTRATION,
+            current_step="email",
+            session_data={"email": "customer@example.com"},
+        )
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.post(url, {"text": "Please share an update"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        session = WhatsAppSession.objects.get(phone_number=complaint.phone_number)
+        self.assertEqual(session.flow, FlowType.COMPLAINT)
+        self.assertEqual(session.current_step, "chat")
+        self.assertEqual(session.session_data, {"complaint_id": complaint.id})
 
 
 class LiveChatCardCountAPITests(TestCase):

@@ -19,10 +19,12 @@ class ComplaintFlow(BaseFlow):
         self._send_step_prompt("Please describe the complaint.")
 
     def prompt_image_upload(self) -> None:
-        self._send_step_prompt("Upload an image or reply DONE to finish.")
+        self._send_step_prompt(self._with_image_upload_note("Upload an image or reply DONE to finish."))
 
     def prompt_chat(self) -> None:
-        self._send_step_prompt("Please send a text message or upload an image for the complaint chat.")
+        self._send_step_prompt(
+            self._with_image_upload_note("Please send a text message or upload an image for the complaint chat.")
+        )
 
     def handle_subject(self, message: dict) -> None:
         subject = self._get_text(message)
@@ -71,7 +73,7 @@ class ComplaintFlow(BaseFlow):
         image = self._save_media_image(media_id, filename_prefix="complaint")
         images.append(image.id)
         self._save_data("image_ids", images)
-        self._send_step_prompt("Image saved. Upload another image or reply DONE.")
+        self._send_step_prompt(self._with_image_upload_note("Image saved. Upload another image or reply DONE."))
 
     @transaction.atomic
     def handle_complete(self, _message: dict) -> None:

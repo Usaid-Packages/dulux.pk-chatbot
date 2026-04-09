@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from dulux_chatbot.chatbot.services.sessions import activate_complaint_chat_session
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.api.v1.serializers import (
     CardCountQuerySerializer,
@@ -132,4 +133,5 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
+        activate_complaint_chat_session(phone_number=complaint.phone_number, complaint_id=complaint.id)
         return Response(payload, status=status.HTTP_201_CREATED)

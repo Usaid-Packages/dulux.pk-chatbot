@@ -88,7 +88,9 @@ class RegistrationFlow(BaseFlow):
 
     def prompt_invoice_upload(self) -> None:
         self._send_step_prompt(
-            "Please upload at least one invoice image. After uploading all invoice images, reply DONE."
+            self._with_image_upload_note(
+                "Please upload at least one invoice image. After uploading all invoice images, reply DONE."
+            )
         )
 
     def handle_consent(self, message: dict) -> None:
@@ -321,7 +323,9 @@ class RegistrationFlow(BaseFlow):
             return
         image = self._save_media_image(media_id, filename_prefix="registration_invoice")
         self._append_data("paint_pair_invoices", {"image_id": image.id, "invoice_type": "TOPCOAT"})
-        self._send_step_prompt("Invoice saved. Upload another invoice image or reply DONE.")
+        self._send_step_prompt(
+            self._with_image_upload_note("Invoice saved. Upload another invoice image or reply DONE.")
+        )
 
     @transaction.atomic
     def handle_complete(self, _message: dict) -> None:

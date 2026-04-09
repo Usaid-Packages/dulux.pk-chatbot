@@ -64,13 +64,13 @@ class ClaimFlow(BaseFlow):
         self._send_step_prompt("Please share the affected area in square feet.")
 
     def prompt_photo_long_shot(self) -> None:
-        self._send_step_prompt("Please upload the long shot image.")
+        self._send_step_prompt(self._with_image_upload_note("Please upload the long shot image."))
 
     def prompt_photo_close_shot(self) -> None:
-        self._send_step_prompt("Please upload the close shot image.")
+        self._send_step_prompt(self._with_image_upload_note("Please upload the close shot image."))
 
     def prompt_photo_alternate_angle(self) -> None:
-        self._send_step_prompt("Please upload the alternate angle image.")
+        self._send_step_prompt(self._with_image_upload_note("Please upload the alternate angle image."))
 
     def handle_registration_lookup(self, message: dict) -> None:
         code = self._get_text(message)
@@ -141,7 +141,7 @@ class ClaimFlow(BaseFlow):
             message,
             step="photo_close_shot",
             photo_type=PhotoType.LONG_SHOT,
-            prompt="Please upload the close shot image.",
+            prompt=self._with_image_upload_note("Please upload the close shot image."),
         )
 
     def handle_photo_close_shot(self, message: dict) -> None:
@@ -149,7 +149,7 @@ class ClaimFlow(BaseFlow):
             message,
             step="photo_alternate_angle",
             photo_type=PhotoType.CLOSE_SHOT,
-            prompt="Please upload the alternate angle image.",
+            prompt=self._with_image_upload_note("Please upload the alternate angle image."),
         )
 
     def handle_photo_alternate_angle(self, message: dict) -> None:

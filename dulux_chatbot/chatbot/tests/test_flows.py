@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
+from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_flows import WarrantyRegistrationFlowService
@@ -196,6 +197,7 @@ class FlowTests(TestCase):
         self.dispatch_text("NO")
 
         self.assertEqual(self.session.current_step, "invoice_upload")
+        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
         self.dispatch_text("DONE")
         self.assertEqual(self.session.flow, "REGISTRATION")
         self.assertEqual(self.session.current_step, "invoice_upload")
@@ -318,6 +320,19 @@ class FlowTests(TestCase):
         self.assertEqual(claim.resubmissions.count(), 1)
         self.assertEqual(claim.resubmissions.first().entries.count(), 1)
 
+    def test_claim_resubmission_prompt_includes_image_note(self):
+        self.session.flow = "CLAIM_RESUBMISSION"
+        self.session.current_step = "claim_resubmission_item"
+        self.session.session_data = {
+            "claim_resubmission_items": ["CLOSE_UP_DAMAGE_PHOTOS"],
+            "claim_resubmission_item_index": 0,
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        ClaimResubmissionFlow(session=self.session, client=self.client).send_initial_prompt()
+
+        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
+
     @patch("dulux_chatbot.chatbot.flows.complaint.broadcast_complaint_created")
     def test_whatsapp_complaint_flow_broadcasts_created_complaint(self, broadcast_mock):
         self.dispatch_text("4")
@@ -336,6 +351,7 @@ class FlowTests(TestCase):
         broadcast_mock.assert_called_once_with(complaint=complaint)
         self.assertEqual((self.session.session_data or {}).get("complaint_id"), complaint.id)
         self.assertEqual(self.session.current_step, "chat")
+        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-2]["text"])
 
     def test_registration_rejects_non_image_invoice_upload(self):
         create_product(name="Flow Topcoat")
@@ -526,6 +542,18 @@ class FlowTests(TestCase):
         self.assertEqual(claim.images.count(), 3)
         self.assertIsNone(self.session.flow)
 
+    def test_claim_flow_image_prompt_includes_note(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
+        create_paint_pair(registration=registration)
+
+        self.dispatch_text("2")
+        self.dispatch_text(registration.registration_code)
+        self.dispatch_text("1")
+        self.dispatch_text("1")
+        self.dispatch_text("100")
+
+        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
+
     def test_claim_flow_final_submit_is_idempotent_for_duplicate_completion(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)
@@ -693,7 +721,7 @@ class FlowTests(TestCase):
 
         claim = WarrantyClaim.objects.get(registration=registration, paint_pair=paint_pair)
         self.assertIn(
-            f"Claim submitted successfully. Registration number: {registration.registration_code}.",
+            f"Claim submitted successfully for Registration number: {registration.registration_code}",
             self.client.text_messages[-1]["text"],
         )
         self.assertEqual(claim.registration.registration_code, registration.registration_code)

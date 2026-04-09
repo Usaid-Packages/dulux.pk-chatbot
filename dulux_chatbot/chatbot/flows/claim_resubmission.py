@@ -34,7 +34,9 @@ class ClaimResubmissionFlow(BaseFlow):
         item_label = self._quality_item_label(current_item)
         if current_item in self.IMAGE_REQUIRED_ITEMS:
             self._send_step_prompt(
-                f"Please upload image evidence for: {item_label}. Reply with DONE when you have finished uploading."
+                self._with_image_upload_note(
+                    f"Please upload image evidence for: {item_label}. Reply with DONE when you have finished uploading."
+                )
             )
             return
 
@@ -96,7 +98,7 @@ class ClaimResubmissionFlow(BaseFlow):
 
         image = self._save_media_image(media_id, filename_prefix="claim_resubmit")
         self._append_data("claim_resubmission_current_images", image.id)
-        self._send_step_prompt("Image received. Upload another image or reply with DONE.")
+        self._send_step_prompt(self._with_image_upload_note("Image received. Upload another image or reply with DONE."))
 
     def _advance_item_index(self) -> None:
         session_data = self.session.session_data or {}
