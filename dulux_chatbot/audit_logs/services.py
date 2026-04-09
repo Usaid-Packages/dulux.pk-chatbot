@@ -14,6 +14,11 @@ from dulux_chatbot.audit_logs.models import AuditLog
 
 
 EXCLUDED_SNAPSHOT_FIELDS = {"password", "last_login", "created", "modified"}
+DEFAULT_ACTION_LABELS = {
+    AuditAction.CREATE: "created",
+    AuditAction.UPDATE: "updated",
+    AuditAction.DELETE: "deleted",
+}
 
 
 def _serialize_value(value: Any) -> Any:
@@ -34,12 +39,43 @@ def _serialize_value(value: Any) -> Any:
     return value
 
 
+def _serialize_related_instance(value: Model | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+
+    related_data: dict[str, Any] = {
+        "id": value.pk,
+        "display": str(value),
+        "model_label": f"{value._meta.app_label}.{value.__class__.__name__}",
+    }
+    for attr_name in ("registration_code", "email", "name", "subject", "phone_number", "customer_name", "role"):
+        attr_value = getattr(value, attr_name, None)
+        if attr_value not in (None, ""):
+            related_data[attr_name] = _serialize_value(attr_value)
+
+    registration = getattr(value, "registration", None)
+    registration_code = getattr(registration, "registration_code", None)
+    if registration_code:
+        related_data["registration_code"] = registration_code
+
+    return related_data
+
+
+def _build_default_event_label(*, instance: Model, action: str) -> str:
+    action_label = DEFAULT_ACTION_LABELS.get(action, action.lower())
+    verbose_name = instance._meta.verbose_name.title()
+    return f"{verbose_name} {action_label}"
+
+
 def build_instance_snapshot(instance: Model, *, extra_data: dict[str, Any] | None = None) -> dict[str, Any]:
     snapshot: dict[str, Any] = {}
     for field in instance._meta.concrete_fields:
         if field.name in EXCLUDED_SNAPSHOT_FIELDS:
             continue
-        value = getattr(instance, field.attname)
+        if field.is_relation:
+            value = _serialize_related_instance(getattr(instance, field.name, None))
+        else:
+            value = getattr(instance, field.attname)
         snapshot[field.name] = _serialize_value(value)
     for field in instance._meta.many_to_many:
         if not instance.pk:
@@ -72,6 +108,7 @@ def create_audit_log(
     before_data: dict[str, Any] | None = None,
     after_data: dict[str, Any] | None = None,
     changes: dict[str, Any] | None = None,
+    event_label: str = "",
 ) -> AuditLog | None:
     if actor is None or not getattr(actor, "is_authenticated", False):
         return None
@@ -82,6 +119,7 @@ def create_audit_log(
         resolved_object_id = before_data.get("id")
     if resolved_object_id is None and after_data is not None:
         resolved_object_id = after_data.get("id")
+    final_event_label = event_label or _build_default_event_label(instance=instance, action=action)
     return AuditLog.objects.create(
         actor=actor,
         actor_email=getattr(actor, "email", "") or "",
@@ -90,13 +128,21 @@ def create_audit_log(
         object_id=str(resolved_object_id),
         model_label=f"{instance._meta.app_label}.{instance.__class__.__name__}",
         object_repr=str(instance),
+        event_label=final_event_label,
         before_data=before_data,
         after_data=after_data,
         changes=changes,
     )
 
 
-def log_create(*, actor, instance: Model, request=None, after_data: dict[str, Any] | None = None) -> AuditLog | None:
+def log_create(
+    *,
+    actor,
+    instance: Model,
+    request=None,
+    after_data: dict[str, Any] | None = None,
+    event_label: str = "",
+) -> AuditLog | None:
     final_after_data = after_data if after_data is not None else build_instance_snapshot(instance)
     return create_audit_log(
         actor=actor,
@@ -104,6 +150,7 @@ def log_create(*, actor, instance: Model, request=None, after_data: dict[str, An
         instance=instance,
         request=request,
         after_data=final_after_data,
+        event_label=event_label,
     )
 
 
@@ -114,6 +161,7 @@ def log_update(
     request=None,
     before_data: dict[str, Any],
     after_data: dict[str, Any] | None = None,
+    event_label: str = "",
 ) -> AuditLog | None:
     final_after_data = after_data if after_data is not None else build_instance_snapshot(instance)
     changes = build_snapshot_diff(before_data, final_after_data)
@@ -127,6 +175,7 @@ def log_update(
         before_data=before_data,
         after_data=final_after_data,
         changes=changes,
+        event_label=event_label,
     )
 
 
@@ -136,6 +185,7 @@ def log_delete(
     instance: Model,
     request=None,
     before_data: dict[str, Any] | None = None,
+    event_label: str = "",
 ) -> AuditLog | None:
     final_before_data = before_data if before_data is not None else build_instance_snapshot(instance)
     return create_audit_log(
@@ -144,4 +194,28 @@ def log_delete(
         instance=instance,
         request=request,
         before_data=final_before_data,
+        event_label=event_label,
+    )
+
+
+def log_event(
+    *,
+    actor,
+    action: str,
+    instance: Model,
+    request=None,
+    before_data: dict[str, Any] | None = None,
+    after_data: dict[str, Any] | None = None,
+    changes: dict[str, Any] | None = None,
+    event_label: str = "",
+) -> AuditLog | None:
+    return create_audit_log(
+        actor=actor,
+        action=action,
+        instance=instance,
+        request=request,
+        before_data=before_data,
+        after_data=after_data,
+        changes=changes,
+        event_label=event_label,
     )

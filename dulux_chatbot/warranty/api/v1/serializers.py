@@ -6,7 +6,7 @@ from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from rest_framework import serializers
 
-from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_delete, log_update
+from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_update
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.core.validators import validate_pakistan_phone_number
@@ -86,9 +86,47 @@ def _build_claim_snapshot(claim: WarrantyClaim) -> dict:
     return build_instance_snapshot(
         claim,
         extra_data={
-            "image_ids": list(claim.images.order_by("id").values_list("image_id", flat=True)),
+            "images": [
+                {
+                    "id": image.id,
+                    "image_id": image.image_id,
+                    "photo_type": image.photo_type,
+                }
+                for image in claim.images.order_by("id")
+            ],
             "quality_review_ids": list(claim.quality_reviews.order_by("id").values_list("id", flat=True)),
-            "resubmission_ids": list(claim.resubmissions.order_by("id").values_list("id", flat=True)),
+            "resubmissions": [
+                {
+                    "id": resubmission.id,
+                    "source": resubmission.source,
+                    "notes": resubmission.notes,
+                    "entries": [
+                        {
+                            "id": entry.id,
+                            "required_item": entry.required_item,
+                            "response_text": entry.response_text,
+                            "image_id": entry.image_id,
+                        }
+                        for entry in resubmission.entries.order_by("id")
+                    ],
+                }
+                for resubmission in claim.resubmissions.order_by("id").prefetch_related("entries")
+            ],
+        },
+    )
+
+
+def _build_quality_review_snapshot(review: ClaimQualityReview) -> dict:
+    return build_instance_snapshot(
+        review,
+        extra_data={
+            "required_items": [
+                {
+                    "id": item.id,
+                    "required_item": item.required_item,
+                }
+                for item in review.required_items.order_by("id")
+            ]
         },
     )
 
@@ -283,22 +321,17 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             **validated_data,
         )
 
-        created_paint_pairs: list[RegistrationPaintPair] = []
         for paint_pair_data in paint_pairs:
-            created_paint_pairs.append(
-                RegistrationPaintPair.objects.create(registration=registration, **paint_pair_data)
-            )
+            RegistrationPaintPair.objects.create(registration=registration, **paint_pair_data)
 
-        created_invoices = self._sync_paint_pair_invoices(
-            registration=registration, paint_pair_invoices=paint_pair_invoices
-        )
+        self._sync_paint_pair_invoices(registration=registration, paint_pair_invoices=paint_pair_invoices)
         log_create(
-            actor=actor, instance=registration, request=request, after_data=_build_registration_snapshot(registration)
+            actor=actor,
+            instance=registration,
+            request=request,
+            after_data=_build_registration_snapshot(registration),
+            event_label="Registration created",
         )
-        for paint_pair in created_paint_pairs:
-            log_create(actor=actor, instance=paint_pair, request=request)
-        for invoice in created_invoices:
-            log_create(actor=actor, instance=invoice, request=request)
 
         return registration
 
@@ -449,6 +482,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             request=request,
             before_data=before_data,
             after_data=_build_registration_snapshot(instance),
+            event_label=self._build_registration_event_label(action=action),
         )
 
         return instance
@@ -459,12 +493,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         instance: WarrantyRegistration,
         paint_pairs: list[dict],
     ) -> None:
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
         try:
-            existing_pairs = list(instance.paint_pairs.all())
-            for paint_pair in existing_pairs:
-                log_delete(actor=actor, instance=paint_pair, request=request)
             instance.paint_pairs.all().delete()
         except ProtectedError as exc:
             raise serializers.ValidationError(
@@ -476,59 +505,39 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
                 }
             ) from exc
         for paint_pair_data in paint_pairs:
-            paint_pair = RegistrationPaintPair.objects.create(registration=instance, **paint_pair_data)
-            log_create(actor=actor, instance=paint_pair, request=request)
+            RegistrationPaintPair.objects.create(registration=instance, **paint_pair_data)
 
     def _sync_paint_pair_invoices(self, *, instance: WarrantyRegistration, paint_pair_invoices: list[dict]) -> None:
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
-        existing_invoices = list(instance.invoices.all())
-        for invoice in existing_invoices:
-            log_delete(actor=actor, instance=invoice, request=request)
         instance.invoices.all().delete()
         for invoice_data in paint_pair_invoices:
-            invoice = PaintPairInvoice.objects.create(
-                registration=instance,
-                **invoice_data,
-            )
-            log_create(actor=actor, instance=invoice, request=request)
+            PaintPairInvoice.objects.create(registration=instance, **invoice_data)
 
     def _sync_rejection_fields(self, *, instance: WarrantyRegistration, rejection_fields: list[dict]) -> None:
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
         if instance.state != RegistrationState.RESUBMIT:
-            existing_fields = list(instance.rejection_fields.all())
-            for rejection_field in existing_fields:
-                log_delete(actor=actor, instance=rejection_field, request=request)
             instance.rejection_fields.all().delete()
             return
 
         field_names = {item.get("field_name", "") for item in rejection_fields}
-        deleted_fields = list(RejectionField.objects.filter(registration=instance).exclude(field_name__in=field_names))
-        for rejection_field in deleted_fields:
-            log_delete(actor=actor, instance=rejection_field, request=request)
-        RejectionField.objects.filter(pk__in=[item.pk for item in deleted_fields]).delete()
+        RejectionField.objects.filter(registration=instance).exclude(field_name__in=field_names).delete()
 
         for rejection_field in rejection_fields:
             field_name = rejection_field.get("field_name", "")
             note = rejection_field.get("note", "")
-            existing_field = RejectionField.objects.filter(registration=instance, field_name=field_name).first()
-            before_snapshot = build_instance_snapshot(existing_field) if existing_field is not None else None
-            obj, created = RejectionField.objects.update_or_create(
+            RejectionField.objects.update_or_create(
                 registration=instance,
                 field_name=field_name,
                 defaults={"note": note},
             )
-            if created:
-                log_create(actor=actor, instance=obj, request=request)
-            else:
-                log_update(
-                    actor=actor,
-                    instance=obj,
-                    request=request,
-                    before_data=before_snapshot or build_instance_snapshot(obj),
-                    after_data=build_instance_snapshot(obj),
-                )
+
+    @staticmethod
+    def _build_registration_event_label(*, action: str | None) -> str:
+        action_labels = {
+            "APPROVE": "Registration approved",
+            "REJECT": "Registration rejected",
+            "RESUBMIT": "Registration marked for resubmission",
+            "IN_PROGRESS": "Registration moved to in progress",
+        }
+        return action_labels.get(action or "", "Registration updated")
 
 
 class ClaimImageSerializer(serializers.ModelSerializer):
@@ -708,12 +717,15 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         actor = getattr(request, "user", None)
         claim = WarrantyClaim.objects.create(**validated_data)
-        created_images: list[ClaimImage] = []
         for image_data in images:
-            created_images.append(ClaimImage.objects.create(claim=claim, **image_data))
-        log_create(actor=actor, instance=claim, request=request, after_data=_build_claim_snapshot(claim))
-        for claim_image in created_images:
-            log_create(actor=actor, instance=claim_image, request=request)
+            ClaimImage.objects.create(claim=claim, **image_data)
+        log_create(
+            actor=actor,
+            instance=claim,
+            request=request,
+            after_data=_build_claim_snapshot(claim),
+            event_label="Claim created",
+        )
         return claim
 
 
@@ -814,9 +826,20 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(instance),
+            event_label=self._build_claim_event_label(action=action),
         )
 
         return instance
+
+    @staticmethod
+    def _build_claim_event_label(*, action: str | None) -> str:
+        action_labels = {
+            "IN_REVIEW": "Claim moved to CS review",
+            "QA_REVIEW": "Claim forwarded to quality",
+            "APPROVE": "Claim approved",
+            "REJECT": "Claim rejected",
+        }
+        return action_labels.get(action or "", "Claim updated")
 
 
 class ClaimQualityApproveSerializer(serializers.Serializer):
@@ -845,13 +868,20 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
         claim.state = ClaimState.QA_APPROVED
         claim.notes = notes
         claim.save(update_fields=["state", "notes", "modified"])
-        log_create(actor=actor, instance=quality_review, request=request)
+        log_create(
+            actor=actor,
+            instance=quality_review,
+            request=request,
+            after_data=_build_quality_review_snapshot(quality_review),
+            event_label="QA approved claim",
+        )
         log_update(
             actor=actor,
             instance=claim,
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(claim),
+            event_label="Claim moved to QA approved",
         )
         return claim
 
@@ -884,13 +914,20 @@ class ClaimQualityRejectSerializer(serializers.Serializer):
         claim.state = ClaimState.QA_REJECTED
         claim.notes = notes
         claim.save(update_fields=["state", "notes", "modified"])
-        log_create(actor=actor, instance=quality_review, request=request)
+        log_create(
+            actor=actor,
+            instance=quality_review,
+            request=request,
+            after_data=_build_quality_review_snapshot(quality_review),
+            event_label="QA rejected claim",
+        )
         log_update(
             actor=actor,
             instance=claim,
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(claim),
+            event_label="Claim moved to QA rejected",
         )
         return claim
 
@@ -928,10 +965,15 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
             other_text=other_text,
             created_by=request.user,
         )
-        log_create(actor=actor, instance=quality_review, request=request)
         for required_item in required_items:
-            item = ClaimQualityReviewItem.objects.create(quality_review=quality_review, required_item=required_item)
-            log_create(actor=actor, instance=item, request=request)
+            ClaimQualityReviewItem.objects.create(quality_review=quality_review, required_item=required_item)
+        log_create(
+            actor=actor,
+            instance=quality_review,
+            request=request,
+            after_data=_build_quality_review_snapshot(quality_review),
+            event_label="QA requested more information",
+        )
         claim.state = ClaimState.RESUBMIT
         if notes:
             claim.notes = notes
@@ -944,6 +986,7 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(claim),
+            event_label="Claim moved to resubmission",
         )
         send_claim_resubmit_notification.delay(claim.id)
         return claim
@@ -1041,10 +1084,8 @@ class ClaimResubmissionCreateSerializer(serializers.Serializer):
             source=ClaimResubmissionSource.WHATSAPP,
             notes=notes,
         )
-        log_create(actor=actor, instance=resubmission, request=request)
         for entry in self.validated_data.get("entries", []):
-            resubmission_entry = ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
-            log_create(actor=actor, instance=resubmission_entry, request=request)
+            ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
         claim.state = ClaimState.QA_REVIEW
         if notes:
             claim.notes = notes
@@ -1057,6 +1098,7 @@ class ClaimResubmissionCreateSerializer(serializers.Serializer):
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(claim),
+            event_label="Claim resubmitted",
         )
         return claim
 
@@ -1116,10 +1158,8 @@ class ClaimCSRResubmissionCreateSerializer(serializers.Serializer):
             source=ClaimResubmissionSource.COMPLAINT,
             notes=notes,
         )
-        log_create(actor=actor, instance=resubmission, request=request)
         for entry in self.validated_data.get("entries", []):
-            resubmission_entry = ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
-            log_create(actor=actor, instance=resubmission_entry, request=request)
+            ClaimResubmissionEntry.objects.create(resubmission=resubmission, **entry)
         claim.state = ClaimState.QA_REVIEW
         if notes:
             claim.notes = notes
@@ -1132,5 +1172,6 @@ class ClaimCSRResubmissionCreateSerializer(serializers.Serializer):
             request=request,
             before_data=before_data,
             after_data=_build_claim_snapshot(claim),
+            event_label="Claim resubmitted by CSR",
         )
         return claim

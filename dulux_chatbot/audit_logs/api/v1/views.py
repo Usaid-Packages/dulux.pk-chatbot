@@ -11,7 +11,7 @@ class AuditLogListAPIView(generics.ListAPIView):
     serializer_class = AuditLogListSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
     filterset_class = AuditLogFilter
-    search_fields = ("actor_email", "object_repr", "model_label", "object_id")
+    search_fields = ("actor_email", "object_repr", "model_label", "object_id", "event_label")
     ordering_fields = ("created", "id", "action", "model_label", "object_id", "actor_email")
     ordering = ("-created", "-id")
     queryset = AuditLog.objects.select_related("actor", "content_type").order_by("-created", "-id")

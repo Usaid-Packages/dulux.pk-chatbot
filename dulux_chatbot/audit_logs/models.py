@@ -25,6 +25,7 @@ class AuditLog(TimeStampedModel):
     content_object = GenericForeignKey("content_type", "object_id")
     model_label = models.CharField(max_length=255)
     object_repr = models.CharField(max_length=255)
+    event_label = models.CharField(max_length=255, blank=True)
     changes = models.JSONField(null=True, blank=True)
     before_data = models.JSONField(null=True, blank=True)
     after_data = models.JSONField(null=True, blank=True)

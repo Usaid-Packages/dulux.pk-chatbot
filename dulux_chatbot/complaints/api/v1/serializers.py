@@ -2,7 +2,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_delete, log_update
+from dulux_chatbot.audit_logs.choices import AuditAction
+from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_event, log_update
 from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
@@ -126,24 +127,28 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         actor = getattr(request, "user", None)
         complaint = Complaint.objects.create(**validated_data)
-        created_images: list[ComplaintImage] = []
         for image_data in images:
-            created_images.append(ComplaintImage.objects.create(complaint=complaint, **image_data))
+            ComplaintImage.objects.create(complaint=complaint, **image_data)
         log_create(
             actor=actor,
             instance=complaint,
             request=request,
             after_data=self._build_complaint_snapshot(complaint),
+            event_label="Complaint created",
         )
-        for complaint_image in created_images:
-            log_create(actor=actor, instance=complaint_image, request=request)
         return complaint
 
     def _build_complaint_snapshot(self, complaint: Complaint) -> dict:
         return build_instance_snapshot(
             complaint,
             extra_data={
-                "image_ids": list(complaint.images.order_by("id").values_list("image_id", flat=True)),
+                "images": [
+                    {
+                        "id": complaint_image.id,
+                        "image_id": complaint_image.image_id,
+                    }
+                    for complaint_image in complaint.images.order_by("id")
+                ],
             },
         )
 
@@ -236,13 +241,9 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         if images is not None:
-            existing_images = list(instance.images.all())
-            for complaint_image in existing_images:
-                log_delete(actor=actor, instance=complaint_image, request=request)
             instance.images.all().delete()
             for image_data in images:
-                complaint_image = ComplaintImage.objects.create(complaint=instance, **image_data)
-                log_create(actor=actor, instance=complaint_image, request=request)
+                ComplaintImage.objects.create(complaint=instance, **image_data)
 
         log_update(
             actor=actor,
@@ -252,12 +253,29 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
             after_data=build_instance_snapshot(
                 instance,
                 extra_data={
-                    "image_ids": list(instance.images.order_by("id").values_list("image_id", flat=True)),
+                    "images": [
+                        {
+                            "id": complaint_image.id,
+                            "image_id": complaint_image.image_id,
+                        }
+                        for complaint_image in instance.images.order_by("id")
+                    ],
                 },
             ),
+            event_label=self._build_complaint_event_label(action=action),
         )
 
         return instance
+
+    @staticmethod
+    def _build_complaint_event_label(*, action: str | None) -> str:
+        action_labels = {
+            "ASSIGN": "Complaint assigned",
+            "RESOLVE": "Complaint resolved",
+            "CLOSE": "Complaint closed",
+            "REOPEN": "Complaint reopened",
+        }
+        return action_labels.get(action or "", "Complaint updated")
 
 
 class ChatMessageCreateSerializer(serializers.ModelSerializer):
@@ -279,5 +297,36 @@ class ChatMessageCreateSerializer(serializers.ModelSerializer):
             **validated_data,
         )
         request = self.context.get("request")
-        log_create(actor=getattr(request, "user", None), instance=message, request=request)
+        actor = getattr(request, "user", None)
+        complaint_snapshot = build_instance_snapshot(
+            complaint,
+            extra_data={
+                "images": [
+                    {
+                        "id": complaint_image.id,
+                        "image_id": complaint_image.image_id,
+                    }
+                    for complaint_image in complaint.images.order_by("id")
+                ]
+            },
+        )
+        log_event(
+            actor=actor,
+            action=AuditAction.UPDATE,
+            instance=complaint,
+            request=request,
+            before_data=complaint_snapshot,
+            after_data=complaint_snapshot,
+            changes={
+                "latest_message": {
+                    "before": None,
+                    "after": {
+                        "id": message.id,
+                        "sender": message.sender,
+                        "text": message.text,
+                    },
+                }
+            },
+            event_label="Complaint message added",
+        )
         return message
