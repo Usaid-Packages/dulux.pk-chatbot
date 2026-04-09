@@ -4,8 +4,9 @@ import { Suspense } from 'react';
 import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 
 import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
-import { ROUTES } from '#/constants';
+import { APP_USER_ROLES, ROUTES, getHomeRouteByRole } from '#/constants';
 import { useAuthContext } from '#/context';
+import { AuditLogsPage } from '#/pages/auditLogs';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { LiveChatPage } from '#/pages/complaints';
@@ -18,7 +19,9 @@ import {
   RegistrationDetailPage,
   RegistrationsListPage,
 } from '#/pages/registrations';
+import { AdminRoute } from '#/routes/AdminRoute';
 import { PrivateRoute } from '#/routes/PrivateRoute';
+import { RoleRoute } from '#/routes/RoleRoute';
 
 const LoadingFallback = (): JSX.Element => (
   <div className='flex h-screen items-center justify-center'>
@@ -27,8 +30,8 @@ const LoadingFallback = (): JSX.Element => (
 );
 
 const RedirectHandler = (): JSX.Element => {
-  const { token } = useAuthContext();
-  return token ? <Navigate to={ROUTES.DASHBOARD} replace /> : <Navigate to={ROUTES.LOGIN} replace />;
+  const { token, user } = useAuthContext();
+  return token ? <Navigate to={getHomeRouteByRole(user?.role)} replace /> : <Navigate to={ROUTES.LOGIN} replace />;
 };
 
 const protectedRouteGroup = (
@@ -50,8 +53,10 @@ export const router = createBrowserRouter(
       <Route path={ROUTES.UNAUTHORIZED} element={<Navigate to={ROUTES.LOGIN} replace />} />
 
       <Route element={protectedRouteGroup}>
-        <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-        <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        <Route index element={<RedirectHandler />} />
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS]} />}>
+          <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        </Route>
         <Route path={ROUTES.CLAIMS}>
           <Route index element={<ClaimsListPage />} />
           <Route path=':id' element={<ClaimDetailPage />} />
@@ -60,9 +65,11 @@ export const router = createBrowserRouter(
           <Route index element={<RegistrationsListPage />} />
           <Route path=':id' element={<RegistrationDetailPage />} />
         </Route>
-        <Route path={ROUTES.QUALITY}>
-          <Route index element={<QualityListPage />} />
-          <Route path=':id' element={<QualityDetailPage />} />
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.QUALITY]} />}>
+          <Route path={ROUTES.QUALITY}>
+            <Route index element={<QualityListPage />} />
+            <Route path=':id' element={<QualityDetailPage />} />
+          </Route>
         </Route>
         <Route path={ROUTES.COMPLAINTS}>
           <Route index element={<LiveChatPage />} />
@@ -77,6 +84,9 @@ export const router = createBrowserRouter(
           <Route index element={<ProductsListPage />} />
           <Route path='new' element={<ProductCreatePage />} />
           <Route path=':id/edit' element={<ProductEditPage />} />
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path={ROUTES.AUDIT_LOGS} element={<AuditLogsPage />} />
         </Route>
       </Route>
 

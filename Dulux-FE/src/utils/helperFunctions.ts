@@ -18,6 +18,12 @@
  */
 
 import { DEFAULT_API_ERROR_MESSAGE } from '#/constants';
+import type {
+  AuditLogApiDetailResponse,
+  AuditLogApiListResponse,
+  AuditLogDetail,
+  AuditLogListResponse,
+} from '#/types/auditLogs';
 import type { ApiErrorShape } from '#/types/common/error.types';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
 import type {
@@ -516,5 +522,87 @@ export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiRes
       ...message,
       attachments: message === normalizedMessages[0] ? attachments : undefined,
     })),
+  };
+};
+
+const AUDIT_LOG_ACTION_VALUES = ['CREATE', 'UPDATE', 'DELETE'] as const;
+
+const isAuditLogAction = (value: unknown): value is AuditLogDetail['action'] => {
+  return typeof value === 'string' && AUDIT_LOG_ACTION_VALUES.includes(value as AuditLogDetail['action']);
+};
+
+const isRecordValue = (value: unknown): value is Record<string, unknown> => {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+};
+
+const normalizeAuditLogAction = (value: unknown): AuditLogDetail['action'] => {
+  if (isAuditLogAction(value)) {
+    return value;
+  }
+
+  return 'UPDATE';
+};
+
+const normalizeAuditLogListItem = (
+  item: Partial<AuditLogApiListResponse['results'][number]>
+): AuditLogListResponse['items'][number] => {
+  const actorValue = typeof item.actor === 'number' && Number.isFinite(item.actor) ? item.actor : null;
+  const objectId = item.objectId === undefined || item.objectId === null ? '' : String(item.objectId).trim();
+  const created =
+    typeof item.created === 'string' && item.created.trim().length > 0 ? item.created : new Date().toISOString();
+
+  return {
+    id: typeof item.id === 'number' && Number.isFinite(item.id) ? item.id : 0,
+    actor: actorValue,
+    actorEmail: typeof item.actorEmail === 'string' && item.actorEmail.trim().length > 0 ? item.actorEmail : 'Unknown',
+    action: normalizeAuditLogAction(item.action),
+    modelLabel:
+      typeof item.modelLabel === 'string' && item.modelLabel.trim().length > 0 ? item.modelLabel : 'unknown.Model',
+    objectId: objectId.length > 0 ? objectId : 'unknown',
+    objectRepr: typeof item.objectRepr === 'string' && item.objectRepr.trim().length > 0 ? item.objectRepr : 'N/A',
+    created,
+  };
+};
+
+const normalizeAuditChanges = (changes: AuditLogApiDetailResponse['changes']): AuditLogDetail['changes'] => {
+  if (!isRecordValue(changes)) {
+    return null;
+  }
+
+  return Object.entries(changes).reduce<NonNullable<AuditLogDetail['changes']>>((accumulator, [key, value]) => {
+    if (isRecordValue(value)) {
+      accumulator[key] = {
+        before: value.before,
+        after: value.after,
+      };
+    }
+
+    return accumulator;
+  }, {});
+};
+
+export const normalizeAuditLogListResponse = (
+  response: AuditLogApiListResponse,
+  page: number,
+  pageSize: number
+): AuditLogListResponse => {
+  return {
+    total: typeof response.count === 'number' && Number.isFinite(response.count) ? response.count : 0,
+    next: typeof response.next === 'string' ? response.next : null,
+    previous: typeof response.previous === 'string' ? response.previous : null,
+    page,
+    pageSize,
+    items: Array.isArray(response.results) ? response.results.map(item => normalizeAuditLogListItem(item)) : [],
+  };
+};
+
+export const normalizeAuditLogDetailResponse = (response: AuditLogApiDetailResponse): AuditLogDetail => {
+  const normalizedListItem = normalizeAuditLogListItem(response);
+
+  return {
+    ...normalizedListItem,
+    changes: normalizeAuditChanges(response.changes),
+    beforeData: isRecordValue(response.beforeData) ? response.beforeData : null,
+    afterData: isRecordValue(response.afterData) ? response.afterData : null,
   };
 };

@@ -3,6 +3,7 @@ const API_CORE_V1 = '/api/v1/core';
 const API_WARRANTY_V1 = '/api/v1/warranty';
 const API_PRODUCTS_V1 = '/api/v1/products';
 const API_COMPLAINTS_V1 = '/api/v1/complaints';
+const API_AUDIT_LOGS_V1 = '/api/v1/audit-logs';
 
 export const apiEndpoints = {
   auth: {
@@ -55,5 +56,9 @@ export const apiEndpoints = {
     detail: (id: string): string => `${API_COMPLAINTS_V1}/${id}/`,
     sendMessage: (id: string): string => `${API_COMPLAINTS_V1}/${id}/messages/`,
     cardCountsLiveChat: `${API_COMPLAINTS_V1}/card-counts/live-chat/`,
+  },
+  auditLogs: {
+    list: `${API_AUDIT_LOGS_V1}/`,
+    detail: (id: string): string => `${API_AUDIT_LOGS_V1}/${id}/`,
   },
 } as const;
