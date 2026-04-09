@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useState } from 'react';
 
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import {
   ApproveRegistrationModal,
@@ -30,6 +30,7 @@ import { useRegistrationDetail } from '#/hooks/registrations';
  */
 export const RegistrationDetailPage = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
   const registrationId = id ?? '';
@@ -51,7 +52,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
   } = useRegistrationDetail(registrationId);
 
   const handleBackToList = (): void => {
-    navigate(ROUTES.REGISTRATIONS);
+    navigate(`${ROUTES.REGISTRATIONS}${location.search}`);
   };
 
   const openResubmissionModal = (): void => {
@@ -143,7 +144,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   const invoiceGalleryItems = registration.paintPairInvoices.map(invoice => ({
     id: invoice.id,
-    label: `${invoice.invoiceType.replace(/_/g, ' ')} Invoice`,
+    label: 'Invoice',
     url: invoice.image.image,
   }));
 
@@ -209,7 +210,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
           </article>
 
           <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
-            <h2 className='text-md font-semibold text-text-primary'>Purchase Information</h2>
+            <h2 className='text-md font-semibold text-text-primary'>Dealer Information</h2>
             <dl className='mt-3 grid gap-3 text-sm md:grid-cols-2'>
               <div>
                 <dt className='text-text-muted'>Dealer</dt>
@@ -224,8 +225,12 @@ export const RegistrationDetailPage = (): JSX.Element => {
                 <dd className='font-medium text-text-primary'>{registration.purchaseDealerAddress}</dd>
               </div>
               <div>
-                <dt className='text-text-muted'>Postal code</dt>
-                <dd className='font-medium text-text-primary'>{registration.postalCode}</dd>
+                <dt className='text-text-muted'>Province</dt>
+                <dd className='font-medium text-text-primary'>{registration.province}</dd>
+              </div>
+              <div className='md:col-span-2'>
+                <dt className='text-text-muted'>Site address</dt>
+                <dd className='font-medium text-text-primary'>{registration.siteAddress}</dd>
               </div>
             </dl>
           </article>

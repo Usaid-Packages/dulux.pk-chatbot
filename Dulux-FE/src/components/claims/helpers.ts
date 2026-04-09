@@ -1,19 +1,6 @@
 import type { BadgeProps } from '#/components/ui/Badge';
 import type { ClaimStatus } from '#/types/claims.types';
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-});
-
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+import { formatDisplayDate, formatDisplayDateTime } from '#/utils';
 
 const STATUS_LABELS: Record<ClaimStatus, string> = {
   pending: 'Pending',
@@ -34,19 +21,11 @@ const STATUS_VARIANTS: Record<ClaimStatus, NonNullable<BadgeProps['variant']>> =
 };
 
 export const formatDate = (dateValue: string): string => {
-  const timestamp = Date.parse(dateValue);
-  if (Number.isNaN(timestamp)) {
-    return 'Unknown';
-  }
-  return DATE_FORMATTER.format(timestamp);
+  return formatDisplayDate(dateValue);
 };
 
 export const formatDateTime = (dateValue: string): string => {
-  const timestamp = Date.parse(dateValue);
-  if (Number.isNaN(timestamp)) {
-    return 'Unknown';
-  }
-  return DATE_TIME_FORMATTER.format(timestamp);
+  return formatDisplayDateTime(dateValue);
 };
 
 export const getStatusLabel = (status: ClaimStatus): string => STATUS_LABELS[status];

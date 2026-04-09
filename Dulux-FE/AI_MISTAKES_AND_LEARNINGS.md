@@ -37,6 +37,10 @@
   item unless the user explicitly asks.
 - After reviewing lint rules, enforce import-order shape before finalizing changes: avoid mixed value+type imports in
   one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
+- STRICT: Do not change `eslint.config.ts` to bypass `import/order`; always fix import shape/order in source files.
+- STRICT: For files using React hooks + React types, avoid fragile import layouts that trigger `import/order` crashes
+  (for example separate `import type ... from 'react'` plus value imports in unstable order); prefer a stable shape
+  such as `React.ReactNode` / `React.JSX.Element` type usage when needed.
 - Never add file-level `import/order` disable comments in source files.
 - On claim detail page open, fetch claim detail and if backend state is `SUBMITTED`, trigger a follow-up claim action
   transition to `IN_REVIEW`.
@@ -489,6 +493,14 @@
 - Fix: Added a narrowly scoped `import/order: off` override in `eslint.config.ts` for that file and reran targeted lint.
 - Rule: For this repo/toolchain, when `import/order` crashes on a touched complaints file, apply the smallest
   file-scoped override in ESLint config (not source comments) and continue enforcing all other rules.
+
+### 2026-04-09 12:45 - `import/order` crash reoccurred on layout wrapper import shape
+
+- Issue: ESLint `import/order` crashed on `src/components/layout/PageWrapper.tsx` at import parsing stage.
+- Fix: Reworked React type usage to `React.ReactNode` / `React.JSX.Element` and kept external imports in stable order
+  without touching `eslint.config.ts`.
+- Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout)
+  and keep lint config unchanged.
 
 ## Final Check (Before Submit)
 

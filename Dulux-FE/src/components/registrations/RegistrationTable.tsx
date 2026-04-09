@@ -4,6 +4,7 @@ import { Badge, Button, Empty, EmptyDescription, EmptyHeader, EmptyTitle, Skelet
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui/Table';
 import { REGISTRATION_STATUS_LABELS } from '#/constants';
 import type { RegistrationListItem, RegistrationStatus } from '#/types/registrations';
+import { formatDisplayDate } from '#/utils';
 import { SourceTag } from './SourceTag';
 
 interface RegistrationTableProps {
@@ -80,7 +81,7 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
             <TableHead>Source</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className='text-right'>Actions</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,13 +97,13 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
               <TableCell>
                 <SourceTag source={registration.channel} />
               </TableCell>
-              <TableCell>{new Date(registration.created).toLocaleDateString()}</TableCell>
+              <TableCell>{formatDisplayDate(registration.created)}</TableCell>
               <TableCell>
                 <Badge variant={getBadgeVariant(registration.state)}>
                   {REGISTRATION_STATUS_LABELS[registration.state]}
                 </Badge>
               </TableCell>
-              <TableCell className='text-right'>
+              <TableCell className='align-middle'>
                 <Button
                   type='button'
                   variant='outline'

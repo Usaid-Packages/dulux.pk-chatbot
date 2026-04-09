@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
@@ -54,6 +54,27 @@ const isProductTab = (value: string | null): value is ProductTab => {
   return value === 'products' || value === 'surface-types';
 };
 
+const isProductTypeFilter = (value: string | null): value is ProductTypeFilter => {
+  return value === 'ALL' || value === 'TOPCOAT' || value === 'BASECOAT';
+};
+
+const isProductStatusFilter = (value: string | null): value is ProductStatusFilter => {
+  return value === 'ALL' || value === 'ACTIVE' || value === 'INACTIVE';
+};
+
+const isProductOrdering = (value: string | null): value is ProductOrdering => {
+  return value === 'name' || value === '-name' || value === 'created' || value === '-created';
+};
+
+const isSurfaceEnvironmentFilter = (value: string | null): value is SurfaceEnvironmentFilter => {
+  return value === 'ALL' || value === 'INTERIOR' || value === 'EXTERIOR';
+};
+
+const parsePageFromSearchParam = (value: string | null): number => {
+  const parsedPage = Number.parseInt(value ?? String(FIRST_PAGE), 10);
+  return Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : FIRST_PAGE;
+};
+
 const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number> => {
   return products.reduce<Record<number, number>>((accumulator, product) => {
     product.surfaceTypes.forEach(surfaceType => {
@@ -66,20 +87,38 @@ const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number>
 };
 
 export const ProductsListPage = (): JSX.Element => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = isProductTab(searchParams.get('tab')) ? searchParams.get('tab') : 'products';
+  const tabParam = searchParams.get('tab');
+  const activeTab: ProductTab = isProductTab(tabParam) ? tabParam : 'products';
 
-  const [productSearch, setProductSearch] = useState<string>('');
-  const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>('ALL');
-  const [productStatusFilter, setProductStatusFilter] = useState<ProductStatusFilter>('ALL');
-  const [productOrdering, setProductOrdering] = useState<ProductOrdering>('-created');
-  const [productPage, setProductPage] = useState<number>(FIRST_PAGE);
+  const [productSearch, setProductSearch] = useState<string>(() => searchParams.get('productSearch') ?? '');
+  const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>(() => {
+    const value = searchParams.get('productType');
+    return isProductTypeFilter(value) ? value : 'ALL';
+  });
+  const [productStatusFilter, setProductStatusFilter] = useState<ProductStatusFilter>(() => {
+    const value = searchParams.get('productStatus');
+    return isProductStatusFilter(value) ? value : 'ALL';
+  });
+  const [productOrdering, setProductOrdering] = useState<ProductOrdering>(() => {
+    const value = searchParams.get('productOrdering');
+    return isProductOrdering(value) ? value : '-created';
+  });
+  const [productPage, setProductPage] = useState<number>(() =>
+    parsePageFromSearchParam(searchParams.get('productPage'))
+  );
 
-  const [surfaceSearch, setSurfaceSearch] = useState<string>('');
-  const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = useState<SurfaceEnvironmentFilter>('ALL');
-  const [surfacePage, setSurfacePage] = useState<number>(FIRST_PAGE);
+  const [surfaceSearch, setSurfaceSearch] = useState<string>(() => searchParams.get('surfaceSearch') ?? '');
+  const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = useState<SurfaceEnvironmentFilter>(() => {
+    const value = searchParams.get('surfaceEnvironment');
+    return isSurfaceEnvironmentFilter(value) ? value : 'ALL';
+  });
+  const [surfacePage, setSurfacePage] = useState<number>(() =>
+    parsePageFromSearchParam(searchParams.get('surfacePage'))
+  );
 
   const [productDeleteTarget, setProductDeleteTarget] = useState<Product | null>(null);
   const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
@@ -115,9 +154,60 @@ export const ProductsListPage = (): JSX.Element => {
   const linkedProductCountMap = useMemo<Record<number, number>>(() => {
     return buildSurfaceLinkedCountMap(products);
   }, [products]);
+  const searchParamsString = searchParams.toString();
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+    nextParams.set('tab', activeTab);
+
+    if (productSearch.trim().length > 0) {
+      nextParams.set('productSearch', productSearch.trim());
+    }
+    if (productTypeFilter !== 'ALL') {
+      nextParams.set('productType', productTypeFilter);
+    }
+    if (productStatusFilter !== 'ALL') {
+      nextParams.set('productStatus', productStatusFilter);
+    }
+    if (productOrdering !== '-created') {
+      nextParams.set('productOrdering', productOrdering);
+    }
+    if (productPage !== FIRST_PAGE) {
+      nextParams.set('productPage', String(productPage));
+    }
+    if (surfaceSearch.trim().length > 0) {
+      nextParams.set('surfaceSearch', surfaceSearch.trim());
+    }
+    if (surfaceEnvironmentFilter !== 'ALL') {
+      nextParams.set('surfaceEnvironment', surfaceEnvironmentFilter);
+    }
+    if (surfacePage !== FIRST_PAGE) {
+      nextParams.set('surfacePage', String(surfacePage));
+    }
+
+    if (nextParams.toString() !== searchParamsString) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [
+    activeTab,
+    productOrdering,
+    productPage,
+    productSearch,
+    productStatusFilter,
+    productTypeFilter,
+    searchParamsString,
+    setSearchParams,
+    surfaceEnvironmentFilter,
+    surfacePage,
+    surfaceSearch,
+  ]);
 
   const setTab = (tab: ProductTab): void => {
-    setSearchParams({ tab });
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+      nextParams.set('tab', tab);
+      return nextParams;
+    });
   };
 
   const handleExportProducts = (): void => {
@@ -154,7 +244,7 @@ export const ProductsListPage = (): JSX.Element => {
   };
 
   const handleGoToProductCreate = (): void => {
-    navigate(ROUTES.PRODUCT_NEW);
+    navigate(`${ROUTES.PRODUCT_NEW}${location.search}`);
   };
 
   const handleProductSearchChange = (value: string): void => {

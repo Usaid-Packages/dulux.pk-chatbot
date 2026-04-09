@@ -33,6 +33,7 @@ export const ImagePreviewGallery = ({
   fallbackModalTitle = 'Image Preview',
 }: ImagePreviewGalleryProps): JSX.Element => {
   const [activeImage, setActiveImage] = useState<ImagePreviewGalleryItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalImageLoading, setModalImageLoading] = useState(false);
   const [loadedImageMap, setLoadedImageMap] = useState<Record<string, boolean>>({});
 
@@ -40,6 +41,7 @@ export const ImagePreviewGallery = ({
 
   const openImageModal = (image: ImagePreviewGalleryItem): void => {
     setActiveImage(image);
+    setIsModalOpen(true);
     setModalImageLoading(true);
   };
 
@@ -49,10 +51,13 @@ export const ImagePreviewGallery = ({
   };
 
   const handleModalOpenChange = (open: boolean): void => {
-    if (!open) {
-      setActiveImage(null);
-      setModalImageLoading(false);
+    setIsModalOpen(open);
+
+    if (open) {
+      return;
     }
+
+    setModalImageLoading(false);
   };
 
   return (
@@ -107,7 +112,7 @@ export const ImagePreviewGallery = ({
         )}
       </section>
 
-      <Dialog open={Boolean(activeImage)} onOpenChange={handleModalOpenChange}>
+      <Dialog open={isModalOpen} onOpenChange={handleModalOpenChange}>
         <DialogContent className='max-w-4xl'>
           <DialogHeader>
             <DialogTitle>{activeImage?.label ?? fallbackModalTitle}</DialogTitle>

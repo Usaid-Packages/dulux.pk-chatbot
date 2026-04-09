@@ -40,7 +40,7 @@ export const SurfaceTypeTable = ({
                 <TableCell>{surfaceType.environment === 'INTERIOR' ? 'Interior' : 'Exterior'}</TableCell>
                 <TableCell>{linkedCount}</TableCell>
                 <TableCell>{linkedCount > 0 ? 'In Use' : 'Available'}</TableCell>
-                <TableCell>
+                <TableCell className='align-middle'>
                   <div className='flex items-center gap-2'>
                     <Button type='button' variant='link' className='h-auto p-0' onClick={handleEditClick}>
                       Edit

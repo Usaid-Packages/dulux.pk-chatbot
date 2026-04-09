@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { ProductForm } from '#/components/products';
@@ -15,6 +15,7 @@ const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 const EMPTY_BASECOAT_OPTIONS: LinkedBasecoat[] = [];
 
 export const ProductCreatePage = (): JSX.Element => {
+  const location = useLocation();
   const navigate = useNavigate();
   const surfaceTypesQuery = useGetSurfaceTypesQuery();
   const basecoatOptionsQuery = useGetProductsQuery({
@@ -25,14 +26,14 @@ export const ProductCreatePage = (): JSX.Element => {
   const createProductMutation = useCreateProductMutation();
 
   const handleCancel = (): void => {
-    navigate(ROUTES.PRODUCTS);
+    navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
   const handleSubmit = (values: ProductFormValues): void => {
     createProductMutation.mutate(mapProductFormValuesToPayload(values), {
       onSuccess: () => {
         toast.success('Product created successfully.');
-        navigate(ROUTES.PRODUCTS);
+        navigate(`${ROUTES.PRODUCTS}${location.search}`);
       },
       onError: error => {
         toast.error(getApiErrorMessage(error));

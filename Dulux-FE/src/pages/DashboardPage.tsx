@@ -27,7 +27,8 @@ export const DashboardPage = (): JSX.Element => {
               Command Center Dashboard
             </h1>
             <p className='mt-2 max-w-[620px] text-sm text-blue-50/90 md:text-base'>
-              A sharper overview to monitor workload, jump into workflows, and keep quality response times consistent.
+              Your central hub to manage registrations, claims, and customer interactions with speed, accuracy, and
+              consistency.
             </p>
             <p className='mt-3 text-xs font-semibold uppercase tracking-[1.8px] text-blue-100'>
               Live insights for your operations team
@@ -36,11 +37,13 @@ export const DashboardPage = (): JSX.Element => {
 
           <div className='relative hidden md:block'>
             <div className='absolute -inset-3 rounded-full bg-white/25 blur-2xl' />
-            <img
-              src={dashboardVisual}
-              alt='Dulux dashboard visual'
-              className='relative h-[150px] w-[190px] rounded-2xl border border-white/35 bg-white/10 p-3 backdrop-blur-xl'
-            />
+            <div className='relative rounded-2xl border border-white/60 bg-white/95 p-2 shadow-[0_14px_30px_rgba(9,36,76,0.28)]'>
+              <img
+                src={dashboardVisual}
+                alt='Dulux dashboard visual'
+                className='h-[150px] w-[190px] rounded-xl bg-white object-contain p-2'
+              />
+            </div>
           </div>
         </div>
       </section>

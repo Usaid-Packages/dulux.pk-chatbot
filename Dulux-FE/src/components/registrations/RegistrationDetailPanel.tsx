@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { Badge, Button } from '#/components/ui';
 import { REGISTRATION_STATUS_LABELS } from '#/constants';
 import type { RegistrationDetail, RegistrationStatus } from '#/types/registrations';
+import { formatDisplayDate } from '#/utils';
 import { SourceTag } from './SourceTag';
 
 interface RegistrationDetailPanelProps {
@@ -81,13 +82,11 @@ export const RegistrationDetailPanel = ({
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>Purchase Date</dt>
-            <dd className='font-medium text-text-primary'>
-              {new Date(registration.purchaseDate).toLocaleDateString()}
-            </dd>
+            <dd className='font-medium text-text-primary'>{formatDisplayDate(registration.purchaseDate)}</dd>
           </div>
           <div className='flex justify-between gap-3'>
-            <dt className='text-text-muted'>Submitted</dt>
-            <dd className='font-medium text-text-primary'>{new Date(registration.created).toLocaleDateString()}</dd>
+            <dt className='text-text-muted'>Submitted On</dt>
+            <dd className='font-medium text-text-primary'>{formatDisplayDate(registration.created)}</dd>
           </div>
         </dl>
 
@@ -126,28 +125,6 @@ export const RegistrationDetailPanel = ({
           >
             Reject Registration
           </Button>
-        </div>
-      </article>
-
-      <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
-        <h2 className='text-md font-semibold text-text-primary'>Quick Info</h2>
-        <div className='mt-3 space-y-3 text-sm'>
-          <div className='flex items-center justify-between'>
-            <span className='text-text-muted'>Dealer</span>
-            <span className='font-medium text-text-primary'>{registration.purchaseDealer}</span>
-          </div>
-          <div className='flex items-center justify-between'>
-            <span className='text-text-muted'>Dealer City</span>
-            <span className='font-medium text-text-primary'>{registration.purchaseDealerCity}</span>
-          </div>
-          <div className='flex items-center justify-between'>
-            <span className='text-text-muted'>Assigned to</span>
-            <span className='font-medium text-text-primary'>{registration.approvedByEmail ?? 'Unassigned'}</span>
-          </div>
-          <div className='flex items-start justify-between gap-3'>
-            <span className='text-text-muted'>Site Address</span>
-            <span className='text-right font-medium text-text-primary'>{registration.siteAddress}</span>
-          </div>
         </div>
       </article>
     </section>

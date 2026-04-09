@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useState } from 'react';
 
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { ClaimTimeline, ClaimWorkflowCard, LinkedRegistrationCard } from '#/components/claims';
 import {
@@ -34,6 +34,7 @@ export const QualityDetailPage = (): JSX.Element => {
   const claimId = params.id ?? '';
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { qualityDetailQuery, handleApprove, handleReject, handleRequestInfo, isActionPending } =
     useQualityDetail(claimId);
 
@@ -42,7 +43,7 @@ export const QualityDetailPage = (): JSX.Element => {
   const [isRequestInfoModalOpen, setRequestInfoModalOpen] = useState(false);
 
   const handleBackClick = (): void => {
-    navigate(ROUTES.QUALITY);
+    navigate(`${ROUTES.QUALITY}${location.search}`);
   };
 
   const openApproveModal = (): void => {

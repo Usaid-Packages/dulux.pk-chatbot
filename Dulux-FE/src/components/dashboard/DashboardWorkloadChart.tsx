@@ -105,63 +105,68 @@ export const DashboardWorkloadChart = ({ data }: DashboardWorkloadChartProps): J
           </span>
         </div>
 
-        <ResponsiveContainer width='100%' height='100%'>
-          <BarChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 6 }}>
-            <defs>
-              <linearGradient id='pendingFill' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#8bc5ff' />
-                <stop offset='100%' stopColor='#5ea8f4' />
-              </linearGradient>
-              <linearGradient id='inReviewFill' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#2f8aeb' />
-                <stop offset='100%' stopColor='#226fc9' />
-              </linearGradient>
-              <linearGradient id='resolvedFill' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stopColor='#0f4f9f' />
-                <stop offset='100%' stopColor='#093a75' />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke='var(--color-border)' strokeDasharray='5 6' vertical={false} />
-            <XAxis
-              dataKey='module'
-              tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip content={<WorkloadTooltipContent />} />
-            <Bar
-              dataKey='pending'
-              name='Pending'
-              stackId='queue'
-              fill='url(#pendingFill)'
-              radius={[8, 8, 0, 0]}
-              isAnimationActive={true}
-              animationDuration={1000}
-              barSize={34}
-            />
-            <Bar
-              dataKey='inReview'
-              name='In Review'
-              stackId='queue'
-              fill='url(#inReviewFill)'
-              radius={[8, 8, 0, 0]}
-              isAnimationActive={true}
-              animationDuration={1200}
-              barSize={34}
-            />
-            <Bar
-              dataKey='resolved'
-              name='Resolved'
-              stackId='queue'
-              fill='url(#resolvedFill)'
-              radius={[8, 8, 0, 0]}
-              isAnimationActive={true}
-              animationDuration={1400}
-              barSize={34}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className='h-[calc(100%-36px)] w-full'>
+          <ResponsiveContainer width='100%' height='100%'>
+            <BarChart data={data} margin={{ top: 10, right: 16, left: 6, bottom: 18 }}>
+              <defs>
+                <linearGradient id='pendingFill' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='#8bc5ff' />
+                  <stop offset='100%' stopColor='#5ea8f4' />
+                </linearGradient>
+                <linearGradient id='inReviewFill' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='#2f8aeb' />
+                  <stop offset='100%' stopColor='#226fc9' />
+                </linearGradient>
+                <linearGradient id='resolvedFill' x1='0' y1='0' x2='0' y2='1'>
+                  <stop offset='0%' stopColor='#0f4f9f' />
+                  <stop offset='100%' stopColor='#093a75' />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke='var(--color-border)' strokeDasharray='5 6' vertical={false} />
+              <XAxis
+                dataKey='module'
+                tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={10}
+                height={36}
+                interval={0}
+              />
+              <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<WorkloadTooltipContent />} />
+              <Bar
+                dataKey='pending'
+                name='Pending'
+                stackId='queue'
+                fill='url(#pendingFill)'
+                radius={[8, 8, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1000}
+                barSize={34}
+              />
+              <Bar
+                dataKey='inReview'
+                name='In Review'
+                stackId='queue'
+                fill='url(#inReviewFill)'
+                radius={[8, 8, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1200}
+                barSize={34}
+              />
+              <Bar
+                dataKey='resolved'
+                name='Resolved'
+                stackId='queue'
+                fill='url(#resolvedFill)'
+                radius={[8, 8, 0, 0]}
+                isAnimationActive={true}
+                animationDuration={1400}
+                barSize={34}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className='mt-4 grid gap-2 text-xs font-semibold text-text-muted sm:grid-cols-3'>
