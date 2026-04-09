@@ -13,6 +13,7 @@ const badgeVariants = cva(
         default: 'bg-surface-muted text-text-secondary',
         pending: 'bg-status-pending-bg text-status-pending-text',
         approved: 'bg-status-approved-bg text-status-approved-text',
+        qaApproved: 'bg-status-qaApproved-bg text-status-qaApproved-text',
         success: 'bg-status-approved-bg text-status-approved-text',
         rejected: 'bg-status-rejected-bg text-status-rejected-text',
         destructive: 'bg-status-rejected-bg text-status-rejected-text',

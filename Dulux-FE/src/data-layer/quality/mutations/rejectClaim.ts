@@ -10,14 +10,13 @@ import { mapQualityClaimDetail } from '../apiMappers';
 export const rejectQualityClaim = async (payload: QualityRejectPayload): Promise<QualityDetail> => {
   const response = await performRequest<
     WarrantyClaimApiResponse,
-    { technical_reason: string; technical_notes: string; notification_template: string }
+    { technical_reason: string; technical_notes: string }
   >({
     method: POST,
     url: apiEndpoints.quality.reject(payload.id),
     payload: {
       technical_reason: payload.technicalReason,
       technical_notes: payload.technicalNotes,
-      notification_template: payload.notificationTemplate,
     },
   });
 

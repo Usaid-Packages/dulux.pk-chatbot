@@ -19,14 +19,11 @@ import {
   Textarea,
 } from '#/components/ui';
 import { qualityRejectSchema, type QualityRejectFormValues } from '#/schemas/quality.schema';
-import type { QualityDetail } from '#/types/quality.types';
-import { createClaimRejectedTemplate } from '#/utils';
 import { QUALITY_REJECTION_REASONS } from './constants';
 
 interface RejectClaimQAModalProps {
   isOpen: boolean;
   isSubmitting: boolean;
-  claim: QualityDetail;
   onClose: () => void;
   onSubmit: (values: QualityRejectFormValues) => void;
 }
@@ -40,7 +37,6 @@ interface RejectClaimQAModalProps {
 export const RejectClaimQAModal = ({
   isOpen,
   isSubmitting,
-  claim,
   onClose,
   onSubmit,
 }: RejectClaimQAModalProps): JSX.Element => {
@@ -49,7 +45,6 @@ export const RejectClaimQAModal = ({
     register,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<QualityRejectFormValues>({
     resolver: zodResolver(qualityRejectSchema),
@@ -58,10 +53,6 @@ export const RejectClaimQAModal = ({
       technicalNotes: '',
     },
   });
-  const technicalReason = watch('technicalReason');
-  const technicalNotes = watch('technicalNotes') ?? '';
-  const rejectionSummary = [technicalReason, technicalNotes.trim()].filter(Boolean).join(' - ');
-  const previewHtml = createClaimRejectedTemplate(claim, rejectionSummary || 'Claim rejected after quality review.');
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -79,9 +70,7 @@ export const RejectClaimQAModal = ({
       <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>Reject Claim (Quality)</DialogTitle>
-          <DialogDescription>
-            Provide technical reason/notes and review customer email before rejection.
-          </DialogDescription>
+          <DialogDescription>Provide technical reason and notes before rejection.</DialogDescription>
         </DialogHeader>
 
         <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
@@ -126,19 +115,6 @@ export const RejectClaimQAModal = ({
               {errors.technicalNotes ? (
                 <p className='text-xs text-destructive'>{errors.technicalNotes.message}</p>
               ) : null}
-            </div>
-
-            <div className='space-y-2'>
-              <p className='text-sm font-medium text-text-primary'>Email Preview</p>
-              <p className='text-xs text-text-muted'>This is the customer email template sent on quality rejection.</p>
-              <div className='overflow-hidden rounded-xl border border-primary/15 bg-white'>
-                <iframe
-                  title='Quality rejection email preview'
-                  className='h-56 w-full'
-                  sandbox=''
-                  srcDoc={previewHtml}
-                />
-              </div>
             </div>
           </div>
 

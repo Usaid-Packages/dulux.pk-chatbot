@@ -14,12 +14,12 @@ import type {
   QualityRejectPayload,
   QualityRequestInfoPayload,
 } from '#/types/quality.types';
-import { createClaimApprovedTemplate, createClaimRejectedTemplate, getApiErrorMessage } from '#/utils';
+import { getApiErrorMessage } from '#/utils';
 
 interface UseQualityDetailResult {
   qualityDetailQuery: UseQueryResult<QualityDetail, Error>;
-  handleApprove: (payload: Omit<QualityApprovePayload, 'notificationTemplate'>) => void;
-  handleReject: (payload: Omit<QualityRejectPayload, 'notificationTemplate'>) => void;
+  handleApprove: (payload: QualityApprovePayload) => void;
+  handleReject: (payload: QualityRejectPayload) => void;
   handleRequestInfo: (payload: QualityRequestInfoPayload) => void;
   isActionPending: boolean;
 }
@@ -41,58 +41,38 @@ export const useQualityDetail = (id: string): UseQualityDetailResult => {
   const rejectMutation = useRejectQualityClaimMutation();
   const requestInfoMutation = useRequestMoreInfoQAMutation();
 
-  const handleApprove = (payload: Omit<QualityApprovePayload, 'notificationTemplate'>): void => {
+  const handleApprove = (payload: QualityApprovePayload): void => {
     const claim = qualityDetailQuery.data;
     if (!claim) {
       toast.error('Claim detail is not available.');
       return;
     }
 
-    approveMutation.mutate(
-      {
-        ...payload,
-        notificationTemplate: createClaimApprovedTemplate(
-          claim,
-          payload.technicalNotes.trim() || 'Claim approved after quality review.'
-        ),
+    approveMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success('Technical approval submitted.');
       },
-      {
-        onSuccess: () => {
-          toast.success('Technical approval submitted.');
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      onError: error => {
+        toast.error(getApiErrorMessage(error));
+      },
+    });
   };
 
-  const handleReject = (payload: Omit<QualityRejectPayload, 'notificationTemplate'>): void => {
+  const handleReject = (payload: QualityRejectPayload): void => {
     const claim = qualityDetailQuery.data;
     if (!claim) {
       toast.error('Claim detail is not available.');
       return;
     }
 
-    const rejectionSummary = [payload.technicalReason, payload.technicalNotes.trim()].filter(Boolean).join(' - ');
-
-    rejectMutation.mutate(
-      {
-        ...payload,
-        notificationTemplate: createClaimRejectedTemplate(
-          claim,
-          rejectionSummary || 'Claim rejected after quality review.'
-        ),
+    rejectMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success('Technical rejection submitted.');
       },
-      {
-        onSuccess: () => {
-          toast.success('Technical rejection submitted.');
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      onError: error => {
+        toast.error(getApiErrorMessage(error));
+      },
+    });
   };
 
   const handleRequestInfo = (payload: QualityRequestInfoPayload): void => {

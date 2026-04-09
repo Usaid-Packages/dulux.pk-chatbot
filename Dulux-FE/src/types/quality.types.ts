@@ -1,4 +1,4 @@
-import type { ClaimDetail, ClaimPriority, ClaimStatus } from '#/types/claims.types';
+import type { ClaimDetail, ClaimPriority, ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
 
 export const QUALITY_DECISION_TYPES = ['REQUEST_INFO', 'QA_APPROVED', 'QA_REJECTED'] as const;
 export const QUALITY_TECHNICAL_REASONS = [
@@ -51,6 +51,7 @@ export interface QualityQueueItem {
   city: string;
   priority: ClaimPriority;
   status: ClaimStatus;
+  workflowState: ClaimWorkflowState;
   forwardedBy: string;
   forwardedAt: string;
   submittedAt: string;
@@ -87,14 +88,12 @@ export interface QualityCardCounts {
 export interface QualityApprovePayload extends Record<string, unknown> {
   id: string;
   technicalNotes: string;
-  notificationTemplate: string;
 }
 
 export interface QualityRejectPayload extends Record<string, unknown> {
   id: string;
   technicalReason: QualityTechnicalReason;
   technicalNotes: string;
-  notificationTemplate: string;
 }
 
 export interface QualityRequestInfoPayload extends Record<string, unknown> {

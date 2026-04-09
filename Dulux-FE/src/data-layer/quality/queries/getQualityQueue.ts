@@ -29,7 +29,7 @@ export const getQualityQueue = async (params?: Partial<QualityQueueRequestParams
   const infoRequested = queueResults.filter(item => (item.state ?? '').toUpperCase() === 'RESUBMIT').length;
   const resolvedToday = queueResults.filter(item => {
     const normalizedState = (item.state ?? '').toUpperCase();
-    return normalizedState === 'QA_APPROVED' || normalizedState === 'QA_REJECTED';
+    return normalizedState === 'QA_APPROVED' || normalizedState === 'QA_REJECTED' || normalizedState === 'QA_REJECT';
   }).length;
 
   return mapQualityQueueResponse({

@@ -7,6 +7,11 @@ const DEFAULT_PAGE_SIZE = 10;
 const UNKNOWN_VALUE = 'N/A';
 const FALLBACK_DATE = new Date(0).toISOString();
 const DEFAULT_AREA_SQFT = 1;
+const CLAIM_PHOTO_TYPE_LABELS: Record<string, string> = {
+  LONG_SHOT: 'Long Shot',
+  CLOSE_SHOT: 'Close Shot',
+  ALTERNATE_ANGLE: 'Alternate Angle',
+};
 
 const toClaimNumber = (id: number): string => `CLM-${id}`;
 const asString = (value: unknown, fallback: string = UNKNOWN_VALUE): string =>
@@ -25,6 +30,34 @@ const asNumber = (value: unknown): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_AREA_SQFT;
 };
 const normalizeLabel = (value: unknown): string => asString(value).replaceAll('_', ' ');
+const toTitleCaseLabel = (value: string): string =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map(token => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(' ');
+const readEvidencePhotoLabel = (
+  image: {
+    photo_type?: unknown;
+    photoType?: unknown;
+  },
+  fallbackIndex: number
+): string => {
+  const photoTypeRaw =
+    (typeof image.photo_type === 'string' ? image.photo_type : null) ??
+    (typeof image.photoType === 'string' ? image.photoType : null);
+
+  if (!photoTypeRaw) {
+    return `Evidence Photo ${fallbackIndex}`;
+  }
+
+  const normalizedPhotoType = photoTypeRaw.trim().toUpperCase();
+  if (CLAIM_PHOTO_TYPE_LABELS[normalizedPhotoType]) {
+    return CLAIM_PHOTO_TYPE_LABELS[normalizedPhotoType];
+  }
+
+  return toTitleCaseLabel(normalizedPhotoType);
+};
 const readIssueType = (claim: ApiClaimListItem | ApiClaimDetail): string =>
   asString(
     (claim as { issue_type?: string; issueType?: string }).issue_type ?? (claim as { issueType?: string }).issueType
@@ -185,13 +218,16 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     batchNumber: UNKNOWN_VALUE,
     description: asString(claim.notes, 'No description provided.'),
     evidencePhotos: (claim.images ?? []).reduce<ClaimDetail['evidencePhotos']>((photos, image) => {
-      const url = image.image?.image;
+      const imageAsset = image.image as { image?: unknown; url?: unknown } | undefined;
+      const url =
+        (typeof imageAsset?.image === 'string' && imageAsset.image.trim().length > 0 ? imageAsset.image : null) ??
+        (typeof imageAsset?.url === 'string' && imageAsset.url.trim().length > 0 ? imageAsset.url : null);
       if (typeof url !== 'string' || url.trim().length === 0) {
         return photos;
       }
       photos.push({
         id: String(image.id),
-        label: normalizeLabel(image.photo_type),
+        label: readEvidencePhotoLabel(image, photos.length + 1),
         url,
       });
       return photos;

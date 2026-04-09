@@ -145,6 +145,10 @@
 
   --color-status-approved-text: var(--status-approved-text);
 
+  --color-status-qaApproved-bg: var(--status-qaApproved-bg);
+
+  --color-status-qaApproved-text: var(--status-qaApproved-text);
+
   --color-status-rejected-bg: var(--status-rejected-bg);
 
   --color-status-rejected-text: var(--status-rejected-text);
@@ -382,6 +386,10 @@
   --status-approved-bg: #e6f9e6;
 
   --status-approved-text: #2e7d32;
+
+  --status-qaApproved-bg: #e0f2fe;
+
+  --status-qaApproved-text: #0369a1;
 
   --status-rejected-bg: #fef2f2;
 
@@ -669,6 +677,10 @@
 
   --status-approved-text: #76d39b;
 
+  --status-qaApproved-bg: #16304a;
+
+  --status-qaApproved-text: #7cc2ff;
+
   --status-rejected-bg: #442124;
 
   --status-rejected-text: #ff8b95;
@@ -933,6 +945,10 @@
 
   .badge-approved {
     @apply bg-status-approved-bg text-status-approved-text;
+  }
+
+  .badge-qa-approved {
+    @apply bg-status-qaApproved-bg text-status-qaApproved-text;
   }
 
   .badge-rejected {
