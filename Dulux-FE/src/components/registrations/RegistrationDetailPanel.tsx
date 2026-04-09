@@ -47,6 +47,10 @@ export const RegistrationDetailPanel = ({
   onOpenResubmitModal,
   onOpenRejectModal,
 }: RegistrationDetailPanelProps): JSX.Element => {
+  const isRejected = registration.state === 'REJECTED';
+  const isApproveActionDisabled = isApprovePending || isApproveDisabled || isRejected;
+  const isReviewActionsDisabled = isReviewActionDisabled || isRejected;
+
   return (
     <section className='space-y-4'>
       <article className='wf-card wf-card-p4 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
@@ -74,7 +78,9 @@ export const RegistrationDetailPanel = ({
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>Email</dt>
-            <dd className='font-medium text-text-primary'>{registration.email}</dd>
+            <dd className='max-w-[190px] truncate text-right font-medium text-text-primary' title={registration.email}>
+              {registration.email}
+            </dd>
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>City</dt>
@@ -102,16 +108,16 @@ export const RegistrationDetailPanel = ({
           <Button
             type='button'
             className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
-            disabled={isApprovePending || isApproveDisabled}
+            disabled={isApproveActionDisabled}
             onClick={onOpenApproveModal}
           >
-            {isApprovePending ? 'Approving...' : isApproveDisabled ? 'Approved' : 'Approve'}
+            {isApprovePending ? 'Approving...' : isRejected ? 'Rejected' : isApproveDisabled ? 'Approved' : 'Approve'}
           </Button>
           <Button
             type='button'
             variant='outline'
             className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
-            disabled={isReviewActionDisabled}
+            disabled={isReviewActionsDisabled}
             onClick={onOpenResubmitModal}
           >
             Request Resubmission
@@ -120,7 +126,7 @@ export const RegistrationDetailPanel = ({
             type='button'
             variant='destructive'
             className='h-10 w-full rounded-xl'
-            disabled={isReviewActionDisabled}
+            disabled={isReviewActionsDisabled}
             onClick={onOpenRejectModal}
           >
             Reject Registration

@@ -14,12 +14,51 @@ export const APP_NAVIGATION_ITEMS: AppNavigationItem[] = [
 ];
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
-  { icon: 'LayoutDashboard', label: 'Dashboard', path: ROUTES.DASHBOARD, group: 'Main' },
-  { icon: 'ClipboardList', label: 'Registrations', path: ROUTES.REGISTRATIONS, group: 'Warranty', badgeCount: 12 },
-  { icon: 'ShieldCheck', label: 'Claims', path: ROUTES.CLAIMS, group: 'Warranty', badgeCount: 5 },
-  { icon: 'FlaskConical', label: 'Quality Review', path: ROUTES.QUALITY, group: 'Warranty' },
-  { icon: 'MessageSquareText', label: 'Live Chat', path: ROUTES.COMPLAINTS, group: 'Support', badgeCount: 3 },
-  { icon: 'Boxes', label: 'Product Catalog', path: ROUTES.PRODUCTS, group: 'Admin' },
+  {
+    icon: 'LayoutDashboard',
+    label: 'Dashboard',
+    path: ROUTES.DASHBOARD,
+    group: 'Main',
+    allowedRoles: ['admin', 'cs'],
+  },
+  {
+    icon: 'ClipboardList',
+    label: 'Registrations',
+    path: ROUTES.REGISTRATIONS,
+    group: 'Warranty',
+    badgeCount: 12,
+    allowedRoles: ['admin', 'cs'],
+  },
+  {
+    icon: 'ShieldCheck',
+    label: 'Claims',
+    path: ROUTES.CLAIMS,
+    group: 'Warranty',
+    badgeCount: 5,
+    allowedRoles: ['admin', 'cs'],
+  },
+  {
+    icon: 'FlaskConical',
+    label: 'Quality Review',
+    path: ROUTES.QUALITY,
+    group: 'Warranty',
+    allowedRoles: ['admin', 'cs', 'quality'],
+  },
+  {
+    icon: 'MessageSquareText',
+    label: 'Live Chat',
+    path: ROUTES.COMPLAINTS,
+    group: 'Support',
+    badgeCount: 3,
+    allowedRoles: ['admin', 'cs'],
+  },
+  {
+    icon: 'Boxes',
+    label: 'Product Catalog',
+    path: ROUTES.PRODUCTS,
+    group: 'Admin',
+    allowedRoles: ['admin', 'cs'],
+  },
 ];
 
 export const HEADER_TITLE_MAP: HeaderTitleMapItem[] = [

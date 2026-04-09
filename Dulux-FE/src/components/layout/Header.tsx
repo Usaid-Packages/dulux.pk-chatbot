@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { useLocation } from 'react-router-dom';
 
-import { HEADER_TITLE_MAP, ROUTES } from '#/constants';
+import { HEADER_TITLE_MAP } from '#/constants';
 
 const getHeaderTitle = (pathName: string): string => {
   const matchedHeader = HEADER_TITLE_MAP.find(item => pathName.startsWith(item.pathPrefix));
@@ -10,10 +10,7 @@ const getHeaderTitle = (pathName: string): string => {
 };
 
 const getBreadcrumb = (pathName: string): string | null => {
-  if (pathName.startsWith(ROUTES.MANUAL_REGISTRATION_ROOT)) {
-    return '/ Manual Entry';
-  }
-
+  void pathName;
   return null;
 };
 

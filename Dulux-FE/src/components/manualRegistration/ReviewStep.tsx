@@ -11,7 +11,7 @@ const renderReviewRow = (label: string, value?: string): JSX.Element => {
   return (
     <div key={label} className='rounded-md border border-border bg-surface-subtle p-3'>
       <p className='text-xs uppercase tracking-wide text-text-muted'>{label}</p>
-      <p className='mt-1 text-sm font-medium text-text-primary'>{value ?? '—'}</p>
+      <p className='mt-1 break-words text-sm font-medium text-text-primary'>{value ?? '—'}</p>
     </div>
   );
 };
@@ -104,12 +104,23 @@ export const ReviewStep = (): JSX.Element => {
             {renderReviewRow('Basecoat Product', basecoatProductLabel || '--')}
             {renderReviewRow('Basecoat Quantity', values.basecoatQuantity || '--')}
             {renderReviewRow('Invoice Count', String(values.invoices?.length ?? 0))}
-            {renderReviewRow(
-              'Invoices',
-              values.invoices && values.invoices.length > 0
-                ? values.invoices.map(invoice => invoice.name).join(', ')
-                : '--'
-            )}
+            <div className='rounded-md border border-border bg-surface-subtle p-3 md:col-span-2'>
+              <p className='text-xs uppercase tracking-wide text-text-muted'>Invoices</p>
+              {values.invoices && values.invoices.length > 0 ? (
+                <ul className='mt-1 space-y-1'>
+                  {values.invoices.map(invoice => (
+                    <li
+                      key={`${invoice.name}-${invoice.lastModified}`}
+                      className='break-all text-sm font-medium text-text-primary'
+                    >
+                      {invoice.name}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className='mt-1 text-sm font-medium text-text-primary'>--</p>
+              )}
+            </div>
           </div>
 
           {(values.additionalPaintPairs ?? []).map((pair, index) => {

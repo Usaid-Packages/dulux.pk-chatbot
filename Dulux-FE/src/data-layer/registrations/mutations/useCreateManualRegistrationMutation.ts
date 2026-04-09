@@ -45,7 +45,7 @@ interface UploadImageResponse {
   id: number;
 }
 
-const PAKISTAN_PHONE_REGEX = /^92\d{10}$/;
+const PAKISTAN_PHONE_REGEX = /^923\d{9}$/;
 
 const normalizePakistanPhoneNumber = (phoneNumber: string): string => {
   const digits = phoneNumber.replace(/\D/g, '');
@@ -75,7 +75,7 @@ const buildCreateRegistrationPayload = async (
 ): Promise<RegistrationCreatePayload> => {
   const normalizedPhoneNumber = normalizePakistanPhoneNumber(values.phoneNumber);
   if (!PAKISTAN_PHONE_REGEX.test(normalizedPhoneNumber)) {
-    throw new Error('Phone number must start with 92 and include 10 digits after it.');
+    throw new Error('Phone number must be in 923XXXXXXXXX format.');
   }
   const allPaintPairValues: ManualRegistrationPaintPairInput[] = [
     {

@@ -19,6 +19,7 @@ import { Button } from '#/components/ui/Button';
 import { SIDEBAR_NAV_ITEMS } from '#/constants';
 import { useAuthContext } from '#/context';
 import { useLogout } from '#/hooks';
+import type { SidebarUserRole } from '#/types/layout.types';
 import { cn } from '#/utils';
 
 const NAV_ICON_MAP: Record<string, LucideIcon> = {
@@ -33,6 +34,30 @@ const NAV_ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const SIDEBAR_GROUP_ORDER = ['Main', 'Warranty', 'Support', 'Admin'] as const;
+
+const ROLE_BY_NORMALIZED_VALUE: Record<string, SidebarUserRole> = {
+  admin: 'admin',
+  cs: 'cs',
+  'cs agent': 'cs',
+  'customer service': 'cs',
+  quality: 'quality',
+  'quality reviewer': 'quality',
+};
+
+const resolveSidebarRole = (role: string | undefined): SidebarUserRole | null => {
+  if (!role) {
+    return null;
+  }
+
+  const normalizedRole = role.replaceAll('_', ' ').toLowerCase().trim();
+
+  return (
+    ROLE_BY_NORMALIZED_VALUE[normalizedRole] ??
+    (normalizedRole.includes('quality') ? 'quality' : null) ??
+    (normalizedRole.includes('admin') ? 'admin' : null) ??
+    (normalizedRole.includes('cs') ? 'cs' : null)
+  );
+};
 
 const toDisplayRole = (role: string | undefined): string => {
   if (!role) {
@@ -64,6 +89,10 @@ export const Sidebar = (): JSX.Element => {
   const userEmail = user?.email ?? 'user@dulux.pk';
   const roleLabel = toDisplayRole(user?.role);
   const initials = toInitials(user?.email);
+  const sidebarRole = resolveSidebarRole(user?.role);
+  const visibleNavItems = SIDEBAR_NAV_ITEMS.filter(
+    item => sidebarRole !== null && item.allowedRoles.includes(sidebarRole)
+  );
 
   return (
     <aside className='relative flex w-[272px] shrink-0 flex-col overflow-y-auto border-r border-sidebar-borderColor bg-sidebar-bg/95 backdrop-blur-2xl'>
@@ -81,7 +110,7 @@ export const Sidebar = (): JSX.Element => {
 
       <nav aria-label='Primary navigation' className='relative px-3 pb-2 pt-1'>
         {SIDEBAR_GROUP_ORDER.map(group => {
-          const groupItems = SIDEBAR_NAV_ITEMS.filter(item => item.group === group);
+          const groupItems = visibleNavItems.filter(item => item.group === group);
 
           if (groupItems.length === 0) {
             return null;

@@ -23,6 +23,27 @@ import {
 import { ROUTES } from '#/constants';
 import { useRegistrationDetail } from '#/hooks/registrations';
 
+const DETAIL_TEXT_TRUNCATE_LENGTH = 35;
+
+const renderExpandableText = (value: string): JSX.Element => {
+  if (value.length <= DETAIL_TEXT_TRUNCATE_LENGTH) {
+    return <span className='break-words'>{value}</span>;
+  }
+
+  const truncatedValue = `${value.slice(0, DETAIL_TEXT_TRUNCATE_LENGTH)}...`;
+
+  return (
+    <details className='group'>
+      <summary className='list-none cursor-pointer break-words'>
+        <span>{truncatedValue}</span>
+        <span className='ml-2 text-xs font-semibold text-primary group-open:hidden'>Show more</span>
+        <span className='ml-2 hidden text-xs font-semibold text-primary group-open:inline'>Show less</span>
+      </summary>
+      <p className='mt-1 break-all'>{value}</p>
+    </details>
+  );
+};
+
 /**
  * RegistrationDetailPage renders detailed registration data with CS actions.
  *
@@ -214,19 +235,23 @@ export const RegistrationDetailPage = (): JSX.Element => {
             <dl className='mt-3 grid gap-3 text-sm md:grid-cols-2'>
               <div>
                 <dt className='text-text-muted'>Dealer</dt>
-                <dd className='font-medium text-text-primary'>{registration.purchaseDealer}</dd>
+                <dd className='font-medium text-text-primary'>{renderExpandableText(registration.purchaseDealer)}</dd>
               </div>
               <div>
                 <dt className='text-text-muted'>Dealer city</dt>
-                <dd className='font-medium text-text-primary'>{registration.purchaseDealerCity}</dd>
+                <dd className='font-medium text-text-primary'>
+                  {renderExpandableText(registration.purchaseDealerCity)}
+                </dd>
               </div>
               <div>
                 <dt className='text-text-muted'>Dealer address</dt>
-                <dd className='font-medium text-text-primary'>{registration.purchaseDealerAddress}</dd>
+                <dd className='font-medium text-text-primary'>
+                  {renderExpandableText(registration.purchaseDealerAddress)}
+                </dd>
               </div>
               <div>
                 <dt className='text-text-muted'>Province</dt>
-                <dd className='font-medium text-text-primary'>{registration.province}</dd>
+                <dd className='font-medium text-text-primary'>{renderExpandableText(registration.province)}</dd>
               </div>
               <div className='md:col-span-2'>
                 <dt className='text-text-muted'>Site address</dt>

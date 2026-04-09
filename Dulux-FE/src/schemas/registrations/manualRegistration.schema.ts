@@ -3,7 +3,27 @@ import { z } from 'zod';
 import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
 
 const quantityPattern = /^\d+(\.\d{1,2})?$/;
-const pakistanPhoneInputPattern = /^(?:\+?92)3\d{9}$/;
+const pakistanPhoneInputPattern = /^923\d{9}$/;
+const DEALER_NAME_MAX_LENGTH = 120;
+const DEALER_CITY_MAX_LENGTH = 80;
+const DEALER_ADDRESS_MAX_LENGTH = 180;
+const PURCHASE_DATE_RANGE_DAYS = 60;
+
+const isPurchaseDateWithinAllowedWindow = (value: string): boolean => {
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return false;
+  }
+
+  parsedDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const earliestAllowedDate = new Date(today);
+  earliestAllowedDate.setDate(today.getDate() - (PURCHASE_DATE_RANGE_DAYS - 1));
+
+  return parsedDate >= earliestAllowedDate && parsedDate <= today;
+};
 
 const fileSchema = z
   .instanceof(File, { message: 'Please upload a valid file.' })
@@ -13,7 +33,7 @@ const fileSchema = z
       MANUAL_REGISTRATION_ALLOWED_FILE_TYPES.includes(
         file.type as (typeof MANUAL_REGISTRATION_ALLOWED_FILE_TYPES)[number]
       ),
-    'Only JPG, PNG, or PDF files are allowed.'
+    'Only JPG and PNG files are allowed.'
   );
 
 const paintPairSchema = z.object({
@@ -33,7 +53,7 @@ const manualRegistrationBaseSchema = z.object({
     .string()
     .trim()
     .refine(value => pakistanPhoneInputPattern.test(value.replace(/[\s-]/g, '')), {
-      message: 'Phone number must start with 92 and include 10 digits after it.',
+      message: 'Phone number must be in 923XXXXXXXXX format.',
     }),
   email: z.string().trim().min(1, 'Email is required.').pipe(z.email('Please enter a valid email address.')),
   city: z.string().trim().min(2, 'City is required.'),
@@ -45,10 +65,26 @@ const manualRegistrationBaseSchema = z.object({
     .refine(value => value.length === 0 || value.length >= 3, {
       message: 'Postal code must be at least 3 characters.',
     }),
-  purchaseDate: z.string().trim().min(1, 'Purchase date is required.'),
-  purchaseDealer: z.string().trim().min(2, 'Dealer name is required.'),
-  purchaseDealerCity: z.string().trim().min(2, 'Dealer city is required.'),
-  purchaseDealerAddress: z.string().trim().min(5, 'Dealer address is required.'),
+  purchaseDate: z
+    .string()
+    .trim()
+    .min(1, 'Purchase date is required.')
+    .refine(isPurchaseDateWithinAllowedWindow, 'Purchase date must be within the last 60 days.'),
+  purchaseDealer: z
+    .string()
+    .trim()
+    .min(2, 'Dealer name is required.')
+    .max(DEALER_NAME_MAX_LENGTH, `Dealer name must be ${DEALER_NAME_MAX_LENGTH} characters or less.`),
+  purchaseDealerCity: z
+    .string()
+    .trim()
+    .min(2, 'Dealer city is required.')
+    .max(DEALER_CITY_MAX_LENGTH, `Dealer city must be ${DEALER_CITY_MAX_LENGTH} characters or less.`),
+  purchaseDealerAddress: z
+    .string()
+    .trim()
+    .min(5, 'Dealer address is required.')
+    .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`),
   notes: z.string().trim().max(500, 'Notes must be 500 characters or less.'),
   topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
   topcoatQuantity: z
