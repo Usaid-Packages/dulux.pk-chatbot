@@ -8,6 +8,7 @@ from dulux_chatbot.products.tests.factories import (
     attach_product_image,
     create_admin_user,
     create_cs_user,
+    create_image,
     create_product,
     create_product_basecoat,
     create_product_surface_mapping,
@@ -73,7 +74,7 @@ class ProductAPITests(TestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["name"], "Dulux Weather Shield Max")
 
-    def test_non_admin_post_returns_403(self):
+    def test_cs_agent_can_create_product(self):
         self.client.force_authenticate(user=self.cs_user)
 
         response = self.client.post(
@@ -89,7 +90,8 @@ class ProductAPITests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["name"], "Dulux New Product")
 
     def test_admin_can_create_topcoat(self):
         surface_type = create_surface_type()
@@ -203,6 +205,19 @@ class ProductAPITests(TestCase):
         self.assertEqual(len(response.data["basecoats"]), 1)
         self.assertEqual(response.data["basecoats"][0]["id"], basecoat.id)
 
+    def test_cs_agent_can_patch_product(self):
+        product = create_product(name="Patch Me Too", warranty_years=5)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("product_detail", kwargs={"pk": product.pk}),
+            {"is_active": False},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["is_active"])
+
     def test_can_list_basecoats_for_topcoat(self):
         topcoat = create_product(name="Linked Topcoat", product_type=ProductType.TOPCOAT, warranty_years=5)
         basecoat_one = create_product(name="Basecoat One", product_type=ProductType.BASECOAT, warranty_years=3)
@@ -237,6 +252,14 @@ class ProductAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_cs_agent_can_delete_product(self):
+        product = create_product(name="Delete Me Too", warranty_years=5)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.delete(reverse("product_detail", kwargs={"pk": product.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
     def test_admin_cannot_delete_product_when_it_is_in_use(self):
         from dulux_chatbot.warranty.tests.factories import create_paint_pair, create_registration
 
@@ -252,3 +275,61 @@ class ProductAPITests(TestCase):
             response.data["detail"],
             "Product cannot be deleted because it is linked to existing warranty registrations, claims, or product mappings.",
         )
+
+    def test_cs_agent_can_upload_product_image(self):
+        product = create_product()
+        image = create_image()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            reverse("product_image_list_create", kwargs={"product_pk": product.pk}),
+            {"image_id": image.pk},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("image", response.data)
+
+    def test_cs_agent_can_delete_product_image(self):
+        product = create_product()
+        product_image = attach_product_image(product=product)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.delete(
+            reverse("product_image_destroy", kwargs={"product_pk": product.pk, "pk": product_image.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_cs_agent_can_create_surface_type(self):
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            reverse("surface_type_list_create"),
+            {"name": "Concrete", "environment": "EXTERIOR"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["name"], "Concrete")
+
+    def test_cs_agent_can_patch_surface_type(self):
+        surface_type = create_surface_type()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("surface_type_detail", kwargs={"pk": surface_type.pk}),
+            {"name": "Updated Wood"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Updated Wood")
+
+    def test_cs_agent_can_delete_surface_type(self):
+        surface_type = create_surface_type()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.delete(reverse("surface_type_detail", kwargs={"pk": surface_type.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

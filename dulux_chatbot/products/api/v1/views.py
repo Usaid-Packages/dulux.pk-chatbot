@@ -4,7 +4,7 @@ from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
 from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_delete
-from dulux_chatbot.core.permissions import IsAdminUser
+from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
 from dulux_chatbot.products.api.v1.serializers import (
     ProductBasecoatSerializer,
     ProductImageSerializer,
@@ -27,7 +27,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     def get_permissions(self):
         permissions = super().get_permissions()
         if self.request.method == "POST":
-            permissions.append(IsAdminUser())
+            permissions.append(IsCSAgentOrAdmin())
         return permissions
 
 
@@ -40,7 +40,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     def get_permissions(self):
         permissions = super().get_permissions()
         if self.request.method in {"PUT", "PATCH", "DELETE"}:
-            permissions.append(IsAdminUser())
+            permissions.append(IsCSAgentOrAdmin())
         return permissions
 
     def perform_destroy(self, instance: Product) -> None:
@@ -94,7 +94,7 @@ class ProductImageListCreateAPIView(generics.ListCreateAPIView):
     def get_permissions(self):
         permissions = super().get_permissions()
         if self.request.method == "POST":
-            permissions.append(IsAdminUser())
+            permissions.append(IsCSAgentOrAdmin())
         return permissions
 
     def perform_create(self, serializer: ProductImageSerializer) -> None:
@@ -104,7 +104,7 @@ class ProductImageListCreateAPIView(generics.ListCreateAPIView):
 
 class ProductImageDestroyAPIView(generics.DestroyAPIView):
     serializer_class = ProductImageSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsCSAgentOrAdmin]
 
     def get_queryset(self):
         product_id = self.kwargs.get("product_pk")
@@ -127,7 +127,7 @@ class SurfaceTypeListCreateAPIView(generics.ListCreateAPIView):
     def get_permissions(self):
         permissions = super().get_permissions()
         if self.request.method == "POST":
-            permissions.append(IsAdminUser())
+            permissions.append(IsCSAgentOrAdmin())
         return permissions
 
 
@@ -138,7 +138,7 @@ class SurfaceTypeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIV
     def get_permissions(self):
         permissions = super().get_permissions()
         if self.request.method in {"PUT", "PATCH", "DELETE"}:
-            permissions.append(IsAdminUser())
+            permissions.append(IsCSAgentOrAdmin())
         return permissions
 
     def perform_destroy(self, instance: SurfaceType) -> None:
