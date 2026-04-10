@@ -1,4 +1,5 @@
 from dulux_chatbot.chatbot.flows.base import BaseFlow
+from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.products.models import Product, SurfaceType
 
 
@@ -79,10 +80,12 @@ class FindProductFlow(BaseFlow):
 
     def handle_result(self, _message: dict) -> None:
         surface_type_id = (self.session.session_data or {}).get("surface_type_id")
-        products = Product.objects.filter(
-            surface_mappings__surface_type_id=surface_type_id, is_active=True
-        ).prefetch_related("images__image")
-        if not products.exists():
+        products = list(
+            Product.objects.filter(surface_mappings__surface_type_id=surface_type_id, is_active=True).prefetch_related(
+                "images__image"
+            )
+        )
+        if not products:
             self.client.send_text(self.session.phone_number, "No products found for the selected surface type.")
             self._reset()
             self._send_main_menu_message()
@@ -99,4 +102,4 @@ class FindProductFlow(BaseFlow):
             else:
                 self.client.send_text(self.session.phone_number, product_message)
         self._reset()
-        self._send_main_menu_message()
+        send_whatsapp_main_menu.apply_async(args=[self.session.phone_number, self.MAIN_MENU_TEXT], countdown=2)

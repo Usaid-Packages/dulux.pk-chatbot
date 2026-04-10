@@ -11,6 +11,7 @@ from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_flows import WarrantyRegistrationFlowService
+from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
@@ -643,7 +644,8 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "affected_area")
         self.assertIn("valid positive area", self.client.text_messages[-1]["text"])
 
-    def test_find_product_flow_end_to_end(self):
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    def test_find_product_flow_end_to_end(self, mocked_send_main_menu):
         product = create_product(name="Flow Product")
         surface_type = create_surface_type(environment="EXTERIOR")
         create_product_surface_mapping(product=product, surface_type=surface_type)
@@ -662,7 +664,11 @@ class FlowTests(TestCase):
         self.assertIn("*Features:* Durable finish", self.client.images[0]["caption"])
         self.assertIn("*Coverage details:* 100 sqft per liter", self.client.images[0]["caption"])
         self.assertIn("*URL:* https://example.com/products/test", self.client.images[0]["caption"])
-        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
+        self.assertNotIn("How can I assist you?", self.client.text_messages[-1]["text"])
+        mocked_send_main_menu.assert_called_once()
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
+        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")
