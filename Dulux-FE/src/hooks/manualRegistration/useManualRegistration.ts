@@ -3,12 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import {
-  MANUAL_REGISTRATION_DEFAULT_VALUES,
-  MANUAL_REGISTRATION_STEP_FIELDS,
-  MANUAL_REGISTRATION_STEPS,
-  ROUTES,
-} from '#/constants';
+import { MANUAL_REGISTRATION_STEP_FIELDS, MANUAL_REGISTRATION_STEPS, ROUTES } from '#/constants';
 import { useCreateManualRegistrationMutation } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues, ManualRegistrationStepId } from '#/types/manualRegistration';
 import { getApiErrorMessage } from '#/utils';
@@ -117,13 +112,9 @@ export const useManualRegistration = (): UseManualRegistrationResult => {
 
   const submitRegistration = (values: ManualRegistrationFormValues): void => {
     createMutation.mutate(values, {
-      onSuccess: result => {
-        setSubmissionResult(result);
-        setSubmissionState({ status: 'success', errorMessage: null });
-        setCompletedSteps([]);
-        form.reset(MANUAL_REGISTRATION_DEFAULT_VALUES);
+      onSuccess: () => {
         toast.success('Manual registration submitted successfully.');
-        navigate(ROUTES.REGISTRATIONS);
+        navigate(ROUTES.REGISTRATIONS, { replace: true });
       },
       onError: error => {
         const errorMessage = getApiErrorMessage(error);

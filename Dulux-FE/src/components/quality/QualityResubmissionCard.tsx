@@ -36,7 +36,7 @@ export const QualityResubmissionCard = ({ latestResubmission }: QualityResubmiss
     }));
 
   return (
-    <section className='space-y-3 rounded-2xl border border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] p-4'>
+    <section className='space-y-3 rounded-2xl border border-primary/15 bg-white p-4'>
       <div className='space-y-1'>
         <h2 className='text-md font-semibold text-text-primary'>Latest Resubmission</h2>
         <p className='text-xs text-text-muted'>

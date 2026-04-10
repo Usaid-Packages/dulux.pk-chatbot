@@ -67,7 +67,9 @@ export const InvoicesStep = (): JSX.Element => {
       </header>
 
       <label className='space-y-2'>
-        <span className='text-sm font-medium text-text-primary'>Invoice Files</span>
+        <span className='text-sm font-medium text-text-primary'>
+          Invoice Files <span className='text-destructive'>*</span>
+        </span>
         <Input type='file' accept='.jpg,.jpeg,.png' multiple onChange={handleInvoicesChange} />
         <p className='text-xs text-text-muted'>You can select multiple invoices in one go.</p>
       </label>

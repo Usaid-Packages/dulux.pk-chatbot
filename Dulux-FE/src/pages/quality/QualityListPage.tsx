@@ -1,18 +1,23 @@
 import type { JSX } from 'react';
+import { useMemo, useState } from 'react';
 
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
-import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
+import {
+  Button,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+  Input,
+  Skeleton,
+} from '#/components/ui';
 import { useQualityQueue } from '#/hooks/quality';
 import { cn } from '#/utils';
 
 const PAGE_SIZE = 10;
 
-const STAT_CARD_STYLES = [
-  '',
-  'border-purple-300/60 bg-[linear-gradient(140deg,#f8f2ff_0%,#f0e3ff_100%)]',
-  '',
-  '',
-] as const;
+const STAT_CARD_STYLES = ['', '', '', ''] as const;
 
 /**
  * QualityListPage renders the quality review queue with status tabs and summary stats.
@@ -21,9 +26,24 @@ const STAT_CARD_STYLES = [
  */
 export const QualityListPage = (): JSX.Element => {
   const { qualityQueueQuery, cardCountsQuery, filters, setStatusFilter, setPage } = useQualityQueue();
+  const [searchValue, setSearchValue] = useState<string>('');
 
   const queueData = qualityQueueQuery.data;
   const queueItems = queueData?.items ?? [];
+  const filteredQueueItems = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return queueItems;
+    }
+
+    return queueItems.filter(item => {
+      return (
+        item.claimNumber.toLowerCase().includes(normalizedSearch) ||
+        item.customerName.toLowerCase().includes(normalizedSearch) ||
+        item.city.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [queueItems, searchValue]);
   const totalItems = queueData?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 
@@ -41,20 +61,6 @@ export const QualityListPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
-        />
-        <div className='relative'>
-          <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Quality Operations</p>
-          <h2 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>Quality Review Queue</h2>
-          <p className='text-sm text-blue-50/90'>
-            Track QA workload and move claims through technical assessment faster.
-          </p>
-        </div>
-      </header>
-
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total In Queue', value: cardCountsQuery.data?.totalInQueue ?? 0 },
@@ -69,26 +75,36 @@ export const QualityListPage = (): JSX.Element => {
         ))}
       </section>
 
-      <section className='wf-tabs-panel border-primary/15 bg-white/80 shadow-[0_10px_24px_rgba(19,87,167,0.08)] backdrop-blur'>
-        <div className='flex flex-wrap gap-2'>
-          {QUALITY_STATUS_TABS.map(tab => {
-            const isActive = filters.status === tab.value;
+      <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+        <div className='flex items-center gap-3 overflow-x-auto'>
+          <div className='flex min-w-0 flex-1 items-center gap-2 overflow-x-auto'>
+            {QUALITY_STATUS_TABS.map(tab => {
+              const isActive = filters.status === tab.value;
 
-            const handleTabClick = (): void => {
-              setStatusFilter(tab.value);
-            };
+              const handleTabClick = (): void => {
+                setStatusFilter(tab.value);
+              };
 
-            return (
-              <button
-                key={tab.value}
-                type='button'
-                className={cn('wf-filter-tab', isActive ? 'wf-filter-tab-active' : '')}
-                onClick={handleTabClick}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={tab.value}
+                  type='button'
+                  className={cn('wf-filter-tab shrink-0', isActive ? 'wf-filter-tab-active' : '')}
+                  onClick={handleTabClick}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <Input
+            type='search'
+            value={searchValue}
+            onChange={event => setSearchValue(event.target.value)}
+            placeholder='Search by claim id, customer, or city'
+            className='h-10 w-[240px] min-w-[240px] rounded-xl border-primary/25 bg-white'
+            aria-label='Search quality queue'
+          />
         </div>
       </section>
 
@@ -109,7 +125,7 @@ export const QualityListPage = (): JSX.Element => {
         </Empty>
       ) : null}
 
-      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && queueItems.length === 0 ? (
+      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && filteredQueueItems.length === 0 ? (
         <Empty>
           <EmptyContent>
             <EmptyHeader>
@@ -120,9 +136,9 @@ export const QualityListPage = (): JSX.Element => {
         </Empty>
       ) : null}
 
-      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && queueItems.length > 0 ? (
+      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && filteredQueueItems.length > 0 ? (
         <>
-          <QualityQueueTable items={queueItems} />
+          <QualityQueueTable items={filteredQueueItems} />
           <div className='wf-pagination-panel'>
             <p className='text-sm text-text-muted'>
               Page {filters.page} of {totalPages}

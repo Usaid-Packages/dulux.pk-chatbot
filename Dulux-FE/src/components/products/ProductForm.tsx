@@ -342,7 +342,7 @@ export const ProductForm = ({
   };
 
   return (
-    <section className='wf-card wf-card-p6 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+    <section className='wf-card wf-card-p6 border-primary/15 bg-white'>
       <header className='mb-5 space-y-1'>
         <p className='text-xs font-semibold uppercase tracking-[2px] text-primary'>Product Editor</p>
         <h2 className='text-xl font-extrabold tracking-tight text-text-primary'>{title}</h2>
@@ -353,7 +353,7 @@ export const ProductForm = ({
         <div className='grid gap-4 md:grid-cols-2'>
           <div className='space-y-2'>
             <label htmlFor='product-name' className='text-sm font-medium text-text-primary'>
-              Product Name
+              Product Name <span className='text-destructive'>*</span>
             </label>
             <Input
               id='product-name'
@@ -367,7 +367,7 @@ export const ProductForm = ({
 
           <div className='space-y-2'>
             <label htmlFor='product-type' className='text-sm font-medium text-text-primary'>
-              Product Type
+              Product Type <span className='text-destructive'>*</span>
             </label>
             <Controller
               control={control}
@@ -392,7 +392,7 @@ export const ProductForm = ({
 
           <div className='space-y-2'>
             <label htmlFor='product-warranty' className='text-sm font-medium text-text-primary'>
-              Warranty (Years)
+              Warranty (Years) <span className='text-destructive'>*</span>
             </label>
             <Input
               id='product-warranty'
@@ -436,7 +436,7 @@ export const ProductForm = ({
 
         <div className='space-y-2'>
           <label htmlFor='product-url' className='text-sm font-medium text-text-primary'>
-            Product URL
+            Product URL <span className='text-destructive'>*</span>
           </label>
           <Input
             id='product-url'
@@ -451,7 +451,7 @@ export const ProductForm = ({
 
         <div className='space-y-2'>
           <label htmlFor='product-coverage' className='text-sm font-medium text-text-primary'>
-            Coverage Details
+            Coverage Details <span className='text-destructive'>*</span>
           </label>
           <Textarea
             id='product-coverage'
@@ -467,7 +467,7 @@ export const ProductForm = ({
 
         <div className='space-y-2'>
           <label htmlFor='product-features' className='text-sm font-medium text-text-primary'>
-            Key Features
+            Key Features <span className='text-destructive'>*</span>
           </label>
           <Textarea
             id='product-features'
@@ -531,7 +531,9 @@ export const ProductForm = ({
         </div>
 
         <fieldset className='space-y-3'>
-          <legend className='text-sm font-medium text-text-primary'>Surface Mapping</legend>
+          <legend className='text-sm font-medium text-text-primary'>
+            Surface Mapping <span className='text-destructive'>*</span>
+          </legend>
 
           <div className='space-y-4'>
             <MultiSelectDropdown

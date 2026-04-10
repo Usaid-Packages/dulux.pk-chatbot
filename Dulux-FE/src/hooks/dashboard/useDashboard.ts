@@ -1,3 +1,5 @@
+import { normalizeAppUserRole } from '#/constants';
+import { useAuthContext } from '#/context';
 import { useDashboardAnalyticsQuery, useDashboardSummaryQuery } from '#/data-layer/dashboard';
 import type { DashboardAnalyticsModel, DashboardFlowCardModel } from '#/types/dashboard.types';
 import { getApiErrorMessage } from '#/utils';
@@ -19,10 +21,12 @@ const EMPTY_ANALYTICS: DashboardAnalyticsModel = {
 };
 
 export const useDashboard = (): UseDashboardResult => {
+  const { user } = useAuthContext();
   const summaryQuery = useDashboardSummaryQuery();
   const analyticsQuery = useDashboardAnalyticsQuery();
+  const normalizedRole = normalizeAppUserRole(user?.role);
 
-  const flowCards = summaryQuery.data ? mapDashboardCards(summaryQuery.data) : [];
+  const flowCards = summaryQuery.data ? mapDashboardCards(summaryQuery.data, normalizedRole) : [];
   const analytics = analyticsQuery.data ?? EMPTY_ANALYTICS;
   const combinedError = summaryQuery.error ?? analyticsQuery.error;
   const isError = summaryQuery.isError || analyticsQuery.isError;

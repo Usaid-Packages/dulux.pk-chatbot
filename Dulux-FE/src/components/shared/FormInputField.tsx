@@ -43,7 +43,7 @@ export const FormInputField = ({
   return (
     <div className='space-y-2'>
       <label htmlFor={id} className='block text-sm font-medium text-foreground'>
-        {label}
+        {label} <span className='text-destructive'>*</span>
       </label>
       <div className='relative'>
         <Input

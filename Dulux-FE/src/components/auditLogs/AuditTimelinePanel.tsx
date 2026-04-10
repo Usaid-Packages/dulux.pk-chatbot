@@ -30,8 +30,6 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
 });
 
 const LONG_TEXT_LIMIT = 180;
-const MAX_FIELD_CHIPS = 6;
-const MAX_CHANGES_PREVIEW = 5;
 const STATE_CHANGE_FIELDS = new Set(['state', 'workflow_state', 'workflowState', 'status']);
 type StatusBadgeVariant = 'default' | 'pending' | 'approved' | 'qaApproved' | 'rejected' | 'info' | 'resolved';
 
@@ -52,7 +50,55 @@ const formatFieldLabel = (fieldName: string): string => {
     .replace(/\b\w/g, letter => letter.toUpperCase());
 };
 
-const formatDiffValue = (value: unknown): string => {
+const isRecordValue = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+};
+
+const isDateField = (fieldName: string): boolean => {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.endsWith('_at') || normalized.endsWith('at');
+};
+
+const isActorField = (fieldName: string): boolean => {
+  const normalized = fieldName.trim().toLowerCase();
+  return normalized.endsWith('_by') || normalized.endsWith('by');
+};
+
+const formatUserReference = (value: unknown): string | null => {
+  if (!isRecordValue(value)) {
+    return null;
+  }
+
+  const display = typeof value.display === 'string' && value.display.trim().length > 0 ? value.display.trim() : null;
+  const email = typeof value.email === 'string' && value.email.trim().length > 0 ? value.email.trim() : null;
+  const role = typeof value.role === 'string' && value.role.trim().length > 0 ? value.role.trim() : null;
+
+  if (!display && !email) {
+    return null;
+  }
+
+  const identity = display ?? email ?? 'Unknown';
+  if (!role) {
+    return identity;
+  }
+
+  return `${identity} (${role})`;
+};
+
+const formatDateValue = (value: unknown): string | null => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return formatDateTime(value);
+};
+
+const formatDiffValue = (fieldName: string, value: unknown): string => {
   if (value === null) {
     return 'null';
   }
@@ -62,11 +108,25 @@ const formatDiffValue = (value: unknown): string => {
   }
 
   if (typeof value === 'string') {
+    if (isDateField(fieldName)) {
+      const formattedDate = formatDateValue(value);
+      if (formattedDate) {
+        return formattedDate;
+      }
+    }
+
     return value.length > 0 ? value : '""';
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
+  }
+
+  if (isActorField(fieldName)) {
+    const formattedUserReference = formatUserReference(value);
+    if (formattedUserReference) {
+      return formattedUserReference;
+    }
   }
 
   if (Array.isArray(value) || typeof value === 'object') {
@@ -80,8 +140,8 @@ const formatDiffValue = (value: unknown): string => {
   return String(value);
 };
 
-const getCompactValue = (value: unknown): string => {
-  const formattedValue = formatDiffValue(value);
+const getCompactValue = (fieldName: string, value: unknown): string => {
+  const formattedValue = formatDiffValue(fieldName, value);
   return formattedValue.length > LONG_TEXT_LIMIT ? `${formattedValue.slice(0, LONG_TEXT_LIMIT)}...` : formattedValue;
 };
 
@@ -150,10 +210,10 @@ const getStateVariant = (token: string): StatusBadgeVariant => {
 };
 
 const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
-  const fullBefore = formatDiffValue(beforeValue);
-  const fullAfter = formatDiffValue(afterValue);
-  const compactBefore = getCompactValue(beforeValue);
-  const compactAfter = getCompactValue(afterValue);
+  const fullBefore = formatDiffValue(fieldName, beforeValue);
+  const fullAfter = formatDiffValue(fieldName, afterValue);
+  const compactBefore = getCompactValue(fieldName, beforeValue);
+  const compactAfter = getCompactValue(fieldName, afterValue);
   const beforeStateToken = normalizeStateToken(beforeValue);
   const afterStateToken = normalizeStateToken(afterValue);
   const isStateChange = STATE_CHANGE_FIELDS.has(fieldName) && Boolean(beforeStateToken) && Boolean(afterStateToken);
@@ -256,7 +316,11 @@ export const AuditTimelinePanel = ({
         <div className='mt-3 max-h-[34rem] space-y-3 overflow-y-auto pr-1'>
           {timelineItems.map(item => {
             const changeEntries = item.changes ? Object.entries(item.changes) : [];
-            const previewEntries = changeEntries.slice(0, MAX_CHANGES_PREVIEW);
+            const stateChangeEntry = changeEntries.find(([fieldName]) => STATE_CHANGE_FIELDS.has(fieldName));
+            const detailChangeEntries = changeEntries.filter(([fieldName]) => !STATE_CHANGE_FIELDS.has(fieldName));
+            const beforeStateToken = normalizeStateToken(stateChangeEntry?.[1].before);
+            const afterStateToken = normalizeStateToken(stateChangeEntry?.[1].after);
+            const hasStateTransition = Boolean(beforeStateToken) && Boolean(afterStateToken);
 
             return (
               <article
@@ -264,63 +328,71 @@ export const AuditTimelinePanel = ({
                 className='rounded-xl border border-primary/15 bg-white/95 p-3 shadow-[0_6px_16px_rgba(19,87,167,0.08)]'
               >
                 <div className='flex items-start justify-between gap-2'>
-                  <p className='text-sm font-semibold leading-5 text-text-primary'>{item.eventType}</p>
+                  <div className='min-w-0 space-y-1'>
+                    <p className='text-sm font-semibold leading-5 text-text-primary'>{item.eventType}</p>
+                    <p className='flex items-center gap-1.5 text-[11px] text-text-muted'>
+                      <UserRound className='h-3 w-3' />
+                      <span className='truncate'>{item.user}</span>
+                    </p>
+                  </div>
                   <Badge className={cn('border text-[10px]', ACTION_THEME_CLASS_BY_TYPE[item.action])}>
                     {item.action}
                   </Badge>
                 </div>
 
-                <div className='mt-2 grid gap-1 text-[11px] text-text-muted md:grid-cols-2'>
-                  <p className='flex items-center gap-1.5'>
-                    <UserRound className='h-3 w-3' />
-                    <span className='truncate'>{item.user}</span>
-                  </p>
-                  <p className='flex items-start gap-1.5'>
-                    <Mail className='h-3 w-3' />
-                    <span className='min-w-0 break-all text-text-primary'>
-                      <span className='font-semibold text-text-muted'>Email:</span> {item.actorEmail}
-                    </span>
-                  </p>
-                  <p className='flex items-center gap-1.5'>
-                    <Clock3 className='h-3 w-3' />
-                    {formatDateTime(item.performedAt)}
-                  </p>
-                  {item.registrationNumber ? (
-                    <p className='font-medium text-text-primary'>Reg #: {item.registrationNumber}</p>
+                {hasStateTransition ? (
+                  <div className='mt-2 inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-surface-muted/40 px-2 py-1 text-xs'>
+                    <span className='font-semibold text-text-muted'>State:</span>
+                    <Badge variant={getStateVariant(beforeStateToken ?? '')}>
+                      {getStateLabel(beforeStateToken ?? '')}
+                    </Badge>
+                    <span className='text-primary'>{'\u2192'}</span>
+                    <Badge variant={getStateVariant(afterStateToken ?? '')}>
+                      {getStateLabel(afterStateToken ?? '')}
+                    </Badge>
+                  </div>
+                ) : null}
+
+                <div className='mt-3 space-y-2 rounded-xl border border-primary/20 bg-white p-3'>
+                  <div className='grid gap-1 text-[11px] text-text-muted md:grid-cols-2'>
+                    <p className='flex items-start gap-1.5'>
+                      <Mail className='h-3 w-3' />
+                      <span className='min-w-0 break-all text-text-primary'>
+                        <span className='font-semibold text-text-muted'>Email:</span> {item.actorEmail}
+                      </span>
+                    </p>
+                    <p className='flex items-center gap-1.5'>
+                      <Clock3 className='h-3 w-3' />
+                      {formatDateTime(item.performedAt)}
+                    </p>
+                    {item.registrationNumber ? (
+                      <p className='font-medium text-text-primary'>Reg #: {item.registrationNumber}</p>
+                    ) : null}
+                  </div>
+
+                  {item.updatedFields.length > 0 ? (
+                    <div className='mt-2 flex flex-wrap gap-1'>
+                      {item.updatedFields.map(fieldName => (
+                        <Badge
+                          key={`${item.id}-${fieldName}`}
+                          className='border border-primary/25 bg-primary/5 px-2 py-[2px] text-[10px] text-primary'
+                        >
+                          {formatFieldLabel(fieldName)}
+                        </Badge>
+                      ))}
+                    </div>
                   ) : null}
+
+                  {detailChangeEntries.length > 0 ? (
+                    <div className='mt-2 space-y-2'>
+                      {detailChangeEntries.map(([fieldName, change]) =>
+                        renderArrowChange(fieldName, change.before, change.after, item.id)
+                      )}
+                    </div>
+                  ) : (
+                    <p className='text-xs text-text-muted'>No field-level changes available.</p>
+                  )}
                 </div>
-
-                {item.updatedFields.length > 0 ? (
-                  <div className='mt-2 flex flex-wrap gap-1'>
-                    {item.updatedFields.slice(0, MAX_FIELD_CHIPS).map(fieldName => (
-                      <Badge
-                        key={`${item.id}-${fieldName}`}
-                        className='border border-primary/25 bg-primary/5 px-2 py-[2px] text-[10px] text-primary'
-                      >
-                        {formatFieldLabel(fieldName)}
-                      </Badge>
-                    ))}
-                    {item.updatedFields.length > MAX_FIELD_CHIPS ? (
-                      <Badge className='border border-primary/25 bg-primary/5 px-2 py-[2px] text-[10px] text-primary'>
-                        +{item.updatedFields.length - MAX_FIELD_CHIPS}
-                      </Badge>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {previewEntries.length > 0 ? (
-                  <div className='mt-2 space-y-2'>
-                    {previewEntries.map(([fieldName, change]) =>
-                      renderArrowChange(fieldName, change.before, change.after, item.id)
-                    )}
-
-                    {changeEntries.length > previewEntries.length ? (
-                      <p className='text-[11px] font-medium text-text-muted'>
-                        +{changeEntries.length - previewEntries.length} more field changes
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
               </article>
             );
           })}

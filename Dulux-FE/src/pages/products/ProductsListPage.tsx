@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
@@ -20,7 +20,6 @@ import {
   SelectValue,
   Skeleton,
 } from '#/components/ui';
-import { ROUTES } from '#/constants';
 import {
   useCreateSurfaceTypeMutation,
   useDeleteSurfaceTypeMutation,
@@ -88,8 +87,6 @@ const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number>
 };
 
 export const ProductsListPage = (): JSX.Element => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get('tab');
@@ -212,10 +209,6 @@ export const ProductsListPage = (): JSX.Element => {
       nextParams.set('tab', tab);
       return nextParams;
     });
-  };
-
-  const handleGoToProductCreate = (): void => {
-    navigate(`${ROUTES.PRODUCT_NEW}${location.search}`);
   };
 
   const handleProductSearchChange = (value: string): void => {
@@ -345,19 +338,7 @@ export const ProductsListPage = (): JSX.Element => {
 
   return (
     <section className='space-y-4'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
-        />
-        <div className='relative space-y-1'>
-          <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Catalog Operations</p>
-          <h2 className='text-2xl font-extrabold tracking-tight text-white'>Product Catalog</h2>
-          <p className='text-sm text-blue-50/90'>Manage products and surface types from one catalog view.</p>
-        </div>
-      </header>
-
-      <section className='wf-tabs-panel border-primary/15 bg-white/80 shadow-[0_10px_24px_rgba(19,87,167,0.08)] backdrop-blur'>
+      <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='flex flex-wrap gap-2'>
           <button
             type='button'
@@ -378,8 +359,8 @@ export const ProductsListPage = (): JSX.Element => {
 
       {activeTab === 'products' ? (
         <>
-          <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
-            <div className='grid items-center gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]'>
+          <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+            <div className='grid items-center gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]'>
               <Input
                 type='search'
                 value={productSearch}
@@ -419,15 +400,6 @@ export const ProductsListPage = (): JSX.Element => {
                   <SelectItem value='-name'>Name (Z-A)</SelectItem>
                 </SelectContent>
               </Select>
-              <div className='flex h-11 items-center justify-end'>
-                <Button
-                  type='button'
-                  className='h-11 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] px-5 text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
-                  onClick={handleGoToProductCreate}
-                >
-                  Add Product
-                </Button>
-              </div>
             </div>
           </section>
 
@@ -493,7 +465,7 @@ export const ProductsListPage = (): JSX.Element => {
         </>
       ) : (
         <>
-          <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+          <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
             <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-[2fr_1fr_auto]'>
               <Input
                 type='search'

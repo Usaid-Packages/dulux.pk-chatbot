@@ -1,5 +1,6 @@
-import type { JSX } from 'react';
-import { useState } from 'react';
+import * as React from 'react';
+
+import { useSearchParams } from 'react-router-dom';
 
 import { AddClaimModal, CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
 import {
@@ -25,19 +26,15 @@ import { cn } from '#/utils';
 
 const PAGE_SIZE = 10;
 
-const STAT_CARD_STYLES = [
-  '',
-  'border-amber-300/60 bg-[linear-gradient(140deg,#fff9ef_0%,#fff2d8_100%)]',
-  '',
-  '',
-] as const;
+const STAT_CARD_STYLES = ['', '', '', ''] as const;
 
 /**
  * ClaimsListPage renders the end-to-end claims queue with filtering, tabs, stats, and pagination.
  *
  * @returns Claims list page.
  */
-export const ClaimsListPage = (): JSX.Element => {
+export const ClaimsListPage = (): React.JSX.Element => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     claimsQuery,
     cardCountsQuery,
@@ -49,7 +46,8 @@ export const ClaimsListPage = (): JSX.Element => {
     handleCreateClaim,
     isCreateClaimPending,
   } = useClaims();
-  const [isAddClaimModalOpen, setAddClaimModalOpen] = useState(false);
+  const [isAddClaimModalOpen, setAddClaimModalOpen] = React.useState(false);
+  const shouldOpenCreateModal = searchParams.get('createClaim') === '1';
 
   const claimsData = claimsQuery.data;
   const claimsItems = claimsData?.items ?? [];
@@ -68,9 +66,22 @@ export const ClaimsListPage = (): JSX.Element => {
     }
   };
 
-  const openAddClaimModal = (): void => setAddClaimModalOpen(true);
+  const closeAddClaimModal = (): void => {
+    setAddClaimModalOpen(false);
+    if (shouldOpenCreateModal) {
+      setSearchParams(previous => {
+        const nextParams = new URLSearchParams(previous);
+        nextParams.delete('createClaim');
+        return nextParams;
+      });
+    }
+  };
 
-  const closeAddClaimModal = (): void => setAddClaimModalOpen(false);
+  React.useEffect(() => {
+    if (shouldOpenCreateModal) {
+      setAddClaimModalOpen(true);
+    }
+  }, [shouldOpenCreateModal]);
 
   const submitAddClaim = (payload: CreateClaimPayload): void => {
     handleCreateClaim(payload, {
@@ -80,29 +91,6 @@ export const ClaimsListPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
-        />
-        <div className='relative flex flex-wrap items-center justify-between gap-3'>
-          <div>
-            <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Claims Operations</p>
-            <h2 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>Claims</h2>
-            <p className='text-sm text-blue-50/90'>
-              Review incoming claims, route workflows, and resolve with full traceability.
-            </p>
-          </div>
-          <Button
-            type='button'
-            className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
-            onClick={openAddClaimModal}
-          >
-            Add Claim
-          </Button>
-        </div>
-      </header>
-
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total Claims', value: cardCountsQuery.data?.totalClaims ?? 0 },
@@ -117,53 +105,56 @@ export const ClaimsListPage = (): JSX.Element => {
         ))}
       </section>
 
-      <section className='wf-tabs-panel border-primary/15 bg-white/80 shadow-[0_10px_24px_rgba(19,87,167,0.08)] backdrop-blur'>
-        <div className='flex flex-wrap gap-2'>
-          {CLAIM_STATUS_TABS.map(tab => {
-            const isActive = filters.status === tab.value;
-            const handleTabClick = (): void => setStatusFilter(tab.value);
+      <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+        <div className='space-y-3'>
+          <div className='flex items-center gap-3 overflow-x-auto'>
+            <div className='flex min-w-0 flex-1 items-center gap-2 overflow-x-auto'>
+              {CLAIM_STATUS_TABS.map(tab => {
+                const isActive = filters.status === tab.value;
+                const handleTabClick = (): void => setStatusFilter(tab.value);
 
-            return (
-              <button
-                key={tab.value}
-                type='button'
-                className={cn('wf-filter-tab', isActive ? 'wf-filter-tab-active' : '')}
-                onClick={handleTabClick}
+                return (
+                  <button
+                    key={tab.value}
+                    type='button'
+                    className={cn('wf-filter-tab shrink-0', isActive ? 'wf-filter-tab-active' : '')}
+                    onClick={handleTabClick}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className='flex items-center gap-2'>
+              <Input
+                id='claim-search'
+                type='search'
+                placeholder='Search by registration or phone number'
+                value={filters.search ?? ''}
+                className='h-10 w-[220px] min-w-[220px] rounded-xl border-primary/25 bg-white'
+                onChange={event => setSearch(event.target.value)}
+              />
+              <Select
+                value={filters.issueType}
+                onValueChange={value => setIssueTypeFilter(value as (typeof CLAIM_ISSUE_TYPES)[number] | 'all')}
               >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
-        <div className='grid gap-3 md:grid-cols-[2fr_1fr]'>
-          <Input
-            id='claim-search'
-            type='search'
-            placeholder='Search by registration or phone number'
-            value={filters.search ?? ''}
-            className='h-11 rounded-xl border-primary/25 bg-white'
-            onChange={event => setSearch(event.target.value)}
-          />
-
-          <Select
-            value={filters.issueType}
-            onValueChange={value => setIssueTypeFilter(value as (typeof CLAIM_ISSUE_TYPES)[number] | 'all')}
-          >
-            <SelectTrigger id='claim-issue-type' className='h-11 rounded-xl border-primary/25 bg-white'>
-              <SelectValue placeholder='All issue types' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All issue types</SelectItem>
-              {CLAIM_ISSUE_TYPES.map(issueType => (
-                <SelectItem key={issueType} value={issueType}>
-                  {getClaimIssueTypeLabel(issueType)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                <SelectTrigger
+                  id='claim-issue-type'
+                  className='h-10 w-[180px] min-w-[180px] rounded-xl border-primary/25 bg-white'
+                >
+                  <SelectValue placeholder='All issue types' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All issue types</SelectItem>
+                  {CLAIM_ISSUE_TYPES.map(issueType => (
+                    <SelectItem key={issueType} value={issueType}>
+                      {getClaimIssueTypeLabel(issueType)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       </section>
 

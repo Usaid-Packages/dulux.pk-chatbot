@@ -54,36 +54,22 @@ export const AuditLogsPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <header className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
-        />
-        <div className='relative'>
-          <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Administrative Oversight</p>
-          <h2 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>Audit Logs</h2>
-          <p className='text-sm text-blue-50/90'>
-            Review who changed records, when actions happened, and object diffs.
-          </p>
-        </div>
-      </header>
-
       <section className='wf-stat-grid-4'>
         <article className='wf-stat-card border-primary/15 bg-white'>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Logs</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalItems}</p>
         </article>
-        <article className='wf-stat-card border-green-300/60 bg-[linear-gradient(140deg,#ecfff4_0%,#ddf8e9_100%)]'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-green-700'>Create Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-green-900'>{totalCreate}</p>
+        <article className='wf-stat-card border-primary/15 bg-white'>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Create Events</p>
+          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalCreate}</p>
         </article>
-        <article className='wf-stat-card border-sky-300/60 bg-[linear-gradient(140deg,#eff8ff_0%,#dff0ff_100%)]'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-sky-700'>Update Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-sky-900'>{totalUpdate}</p>
+        <article className='wf-stat-card border-primary/15 bg-white'>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Update Events</p>
+          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalUpdate}</p>
         </article>
-        <article className='wf-stat-card border-rose-300/60 bg-[linear-gradient(140deg,#fff2f2_0%,#ffe2e2_100%)]'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-rose-700'>Delete Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-rose-900'>{totalDelete}</p>
+        <article className='wf-stat-card border-primary/15 bg-white'>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Delete Events</p>
+          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalDelete}</p>
         </article>
       </section>
 

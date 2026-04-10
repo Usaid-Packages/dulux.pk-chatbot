@@ -34,7 +34,7 @@ export const ClaimDetailPanel = ({
 }: ClaimDetailPanelProps): JSX.Element => {
   return (
     <section className='space-y-4'>
-      <article className='wf-card wf-card-p4 border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+      <article className='wf-card wf-card-p4 border-primary/15 bg-white'>
         <div className='flex items-start justify-between gap-2'>
           <div>
             <p className='text-[11px] font-semibold uppercase tracking-[1.5px] text-primary'>Claim Profile</p>

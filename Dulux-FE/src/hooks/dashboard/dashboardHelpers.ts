@@ -1,8 +1,19 @@
 import { DASHBOARD_FLOW_CONFIGS } from '#/constants';
+import { APP_USER_ROLES } from '#/constants/authRoles';
+import type { AppUserRole } from '#/constants/authRoles';
 import type { DashboardFlowCardModel, DashboardSummaryResponse } from '#/types/dashboard.types';
 
-export const mapDashboardCards = (summary: DashboardSummaryResponse): DashboardFlowCardModel[] => {
-  return DASHBOARD_FLOW_CONFIGS.map(config => {
+export const mapDashboardCards = (
+  summary: DashboardSummaryResponse,
+  role: AppUserRole | null
+): DashboardFlowCardModel[] => {
+  return DASHBOARD_FLOW_CONFIGS.filter(config => {
+    if (role === APP_USER_ROLES.CS) {
+      return config.id !== 'qualityReview';
+    }
+
+    return true;
+  }).map(config => {
     const liveStats = summary.flows[config.id] ?? config.defaultStats;
 
     return {

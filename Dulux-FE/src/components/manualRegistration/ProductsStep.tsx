@@ -62,7 +62,9 @@ const AdditionalPaintPairFields = ({
 
       <div className='grid gap-4 md:grid-cols-2'>
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Topcoat Product</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Topcoat Product <span className='text-destructive'>*</span>
+          </span>
           <Controller
             control={control}
             name={`additionalPaintPairs.${index}.topcoatProductId`}
@@ -87,7 +89,9 @@ const AdditionalPaintPairFields = ({
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Topcoat Quantity (liters)</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Topcoat Quantity (liters) <span className='text-destructive'>*</span>
+          </span>
           <Input placeholder='e.g. 8 or 8.5' {...register(`additionalPaintPairs.${index}.topcoatQuantity`)} />
           {pairErrors?.topcoatQuantity ? (
             <p className='text-xs text-destructive'>{pairErrors.topcoatQuantity.message}</p>
@@ -213,7 +217,9 @@ export const ProductsStep = (): JSX.Element => {
           <h4 className='text-sm font-semibold text-text-primary'>Paint Pair 1</h4>
           <div className='grid gap-4 md:grid-cols-2'>
             <label className='space-y-2'>
-              <span className='text-sm font-medium text-text-primary'>Topcoat Product</span>
+              <span className='text-sm font-medium text-text-primary'>
+                Topcoat Product <span className='text-destructive'>*</span>
+              </span>
               <Controller
                 control={control}
                 name='topcoatProductId'
@@ -240,7 +246,9 @@ export const ProductsStep = (): JSX.Element => {
             </label>
 
             <label className='space-y-2'>
-              <span className='text-sm font-medium text-text-primary'>Topcoat Quantity (liters)</span>
+              <span className='text-sm font-medium text-text-primary'>
+                Topcoat Quantity (liters) <span className='text-destructive'>*</span>
+              </span>
               <Input placeholder='e.g. 8 or 8.5' {...register('topcoatQuantity')} />
               {errors.topcoatQuantity ? (
                 <p className='text-xs text-destructive'>{errors.topcoatQuantity.message}</p>

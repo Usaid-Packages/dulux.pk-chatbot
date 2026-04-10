@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 
-import dashboardVisual from '#/assets/images/dulux-logo.png';
 import { DashboardGrid, DashboardTrendChart, DashboardWorkloadChart } from '#/components/dashboard';
 import { useDashboard } from '#/hooks';
 
@@ -14,40 +13,6 @@ export const DashboardPage = (): JSX.Element => {
 
   return (
     <div className='mx-auto w-full max-w-[1320px] space-y-6'>
-      <section className='relative overflow-hidden rounded-3xl border border-primary/15 bg-[linear-gradient(125deg,#0d4ea8_0%,#1f75d2_42%,#73bbff_100%)] px-6 py-7 text-white shadow-[0_24px_55px_rgba(20,82,170,0.34)] md:px-8 md:py-8'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.28),transparent_40%)]'
-        />
-
-        <div className='relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between'>
-          <div className='max-w-[720px]'>
-            <p className='text-xs font-semibold uppercase tracking-[2.2px] text-blue-100'>Dulux Operations</p>
-            <h1 className='mt-2 text-3xl font-extrabold leading-tight tracking-tight md:text-[2.15rem]'>
-              Command Center Dashboard
-            </h1>
-            <p className='mt-2 max-w-[620px] text-sm text-blue-50/90 md:text-base'>
-              Your central hub to manage registrations, claims, and customer interactions with speed, accuracy, and
-              consistency.
-            </p>
-            <p className='mt-3 text-xs font-semibold uppercase tracking-[1.8px] text-blue-100'>
-              Live insights for your operations team
-            </p>
-          </div>
-
-          <div className='relative hidden md:block'>
-            <div className='absolute -inset-3 rounded-full bg-white/25 blur-2xl' />
-            <div className='relative rounded-2xl border border-white/60 bg-white/95 p-2 shadow-[0_14px_30px_rgba(9,36,76,0.28)]'>
-              <img
-                src={dashboardVisual}
-                alt='Dulux dashboard visual'
-                className='h-[150px] w-[190px] rounded-xl bg-white object-contain p-2'
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {isError && (
         <section
           role='alert'

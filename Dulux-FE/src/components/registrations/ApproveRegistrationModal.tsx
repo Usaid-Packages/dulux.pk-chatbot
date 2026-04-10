@@ -58,7 +58,7 @@ export const ApproveRegistrationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[680px]'>
+      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[680px]'>
         <DialogHeader>
           <DialogTitle>Approve Registration</DialogTitle>
           <DialogDescription>Add notes and review the email preview before approval.</DialogDescription>

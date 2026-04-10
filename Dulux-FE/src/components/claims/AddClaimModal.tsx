@@ -280,7 +280,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className='border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)]'>
+      <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>Add New Claim</DialogTitle>
           <DialogDescription>
@@ -292,7 +292,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
           <div className='grid gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
               <label htmlFor='claim-registration' className='text-sm font-medium text-text-primary'>
-                Approved Registration
+                Approved Registration <span className='text-destructive'>*</span>
               </label>
               <Controller
                 control={control}
@@ -321,7 +321,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
             <div className='space-y-2'>
               <label htmlFor='claim-issue-type' className='text-sm font-medium text-text-primary'>
-                Issue Type
+                Issue Type <span className='text-destructive'>*</span>
               </label>
               <Controller
                 control={control}
@@ -348,7 +348,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
           <div className='grid gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
               <label htmlFor='claim-topcoat' className='text-sm font-medium text-text-primary'>
-                Topcoat Product
+                Topcoat Product <span className='text-destructive'>*</span>
               </label>
               <Controller
                 control={control}
@@ -436,7 +436,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
           <div className='space-y-2'>
             <label htmlFor='claim-area' className='text-sm font-medium text-text-primary'>
-              Affected Area (sq ft)
+              Affected Area (sq ft) <span className='text-destructive'>*</span>
             </label>
             <Input
               id='claim-area'
@@ -454,7 +454,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
           <div className='space-y-2'>
             <label htmlFor='claim-notes' className='text-sm font-medium text-text-primary'>
-              Notes
+              Notes <span className='text-destructive'>*</span>
             </label>
             <Textarea
               id='claim-notes'
@@ -467,7 +467,9 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
           <div className='grid gap-4 md:grid-cols-3'>
             <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Long Shot</span>
+              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
+                Long Shot <span className='text-destructive'>*</span>
+              </span>
               <Input
                 type='file'
                 className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
@@ -479,7 +481,9 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             </label>
 
             <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Close Shot</span>
+              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
+                Close Shot <span className='text-destructive'>*</span>
+              </span>
               <Input
                 type='file'
                 className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
@@ -493,7 +497,9 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             </label>
 
             <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>Alternate Angle</span>
+              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
+                Alternate Angle <span className='text-destructive'>*</span>
+              </span>
               <Input
                 type='file'
                 className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
