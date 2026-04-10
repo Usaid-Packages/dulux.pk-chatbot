@@ -123,8 +123,8 @@ export const LiveChatPage = (): JSX.Element => {
     <main className='wf-detail-shell flex min-h-[calc(100vh-8.75rem)] flex-col overflow-y-auto pb-4'>
       <ConversationStats stats={conversationStats} />
 
-      <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>
-        <div className='space-y-4'>
+      <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)_minmax(20rem,24rem)]'>
+        <div className='min-w-0 space-y-4'>
           <ConversationListPanel
             items={conversationItems}
             openUnseenThreadIds={openUnseenThreadIds}
@@ -145,7 +145,7 @@ export const LiveChatPage = (): JSX.Element => {
           />
         </div>
 
-        <div className='space-y-4'>
+        <div className='min-w-0 space-y-4'>
           <ChatThreadPanel
             thread={threadQuery.data}
             isLoading={Boolean(selectedThreadId) && threadQuery.isLoading}
@@ -156,7 +156,9 @@ export const LiveChatPage = (): JSX.Element => {
           />
         </div>
 
-        <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
+        <div className='min-w-0 xl:col-span-2 2xl:col-span-1'>
+          <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
+        </div>
       </section>
 
       <ResolveConversationModal

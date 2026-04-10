@@ -539,6 +539,21 @@
 - Rule: For timeline/event cards, render a single source of timestamp truth and avoid repeating the same meta field in
   detail sections.
 
+### 2026-04-10 16:10 - Missed Prettier wrapping in complaints info panel update
+
+- Issue: A complaints panel refactor introduced long inline JSX expressions that failed `prettier/prettier` in lint.
+- Fix: Wrapped long JSX expressions onto multiple lines and reran targeted `yarn eslint` on touched complaints files.
+- Rule: After UI layout edits, run targeted lint immediately and fix Prettier wrapping before final handoff.
+
+### 2026-04-10 16:25 - Info panel was not vertically scrollable on small screens
+
+- Issue: Complaints info panel used wrapper `overflow-hidden`, so content clipped on short-height screens and could not
+  be scrolled.
+- Fix: Added responsive panel constraints with `max-h` + `overflow-y-auto` for smaller screens while keeping desktop
+  behavior (`2xl`) unchanged.
+- Rule: Any fixed-height detail side panel must provide a small-screen vertical scroll fallback to avoid clipped
+  content.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.
