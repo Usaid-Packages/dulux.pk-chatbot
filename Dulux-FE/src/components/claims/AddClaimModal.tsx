@@ -20,6 +20,7 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { useGetRegistrationByIdQuery, useGetRegistrationsQuery } from '#/data-layer/registrations';
 import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.schema';
 import type { CreateClaimPayload } from '#/types/claims.types';
@@ -128,6 +129,8 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
   }, [registrationPaintPairs]);
 
   const selectedTopcoatId = toNumericId(topcoatProductId);
+  const isRegistrationSelected = registrationId.trim().length > 0;
+  const hasTopcoatSelection = topcoatProductId.trim().length > 0;
 
   const basecoatOptions = useMemo(() => {
     if (selectedTopcoatId === null) {
@@ -157,6 +160,8 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
   }, [registrationPaintPairs, selectedTopcoatId]);
 
   const isNoBasecoatFlow = basecoatOptions.hasNoBasecoat && basecoatOptions.items.length === 0;
+  const isTopcoatSelectDisabled = !isRegistrationSelected || registrationDetailQuery.isLoading;
+  const isBasecoatSelectDisabled = !hasTopcoatSelection || isNoBasecoatFlow || registrationDetailQuery.isLoading;
 
   const selectedPaintPairId = useMemo(() => {
     if (!registrationDetailQuery.data) {
@@ -192,23 +197,25 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
   }, [selectedPaintPairId, setValue]);
 
   useEffect(() => {
-    setValue('topcoatProductId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+    setValue('topcoatProductId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
     setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
       shouldDirty: false,
       shouldTouch: false,
-      shouldValidate: true,
+      shouldValidate: false,
     });
-    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
-  }, [registrationId, setValue]);
+    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    clearErrors(['topcoatProductId', 'basecoatProductId', 'paintPairId']);
+  }, [clearErrors, registrationId, setValue]);
 
   useEffect(() => {
     setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
       shouldDirty: false,
       shouldTouch: false,
-      shouldValidate: true,
+      shouldValidate: false,
     });
-    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: true });
-  }, [topcoatProductId, setValue]);
+    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    clearErrors(['basecoatProductId', 'paintPairId']);
+  }, [clearErrors, setValue, topcoatProductId]);
 
   useEffect(() => {
     if (!isNoBasecoatFlow) {
@@ -354,11 +361,17 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
                 control={control}
                 name='topcoatProductId'
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-topcoat'>
+                  <Select
+                    value={field.value}
+                    onValueChange={value => {
+                      field.onChange(value);
+                      clearErrors('topcoatProductId');
+                    }}
+                  >
+                    <SelectTrigger id='claim-topcoat' disabled={isTopcoatSelectDisabled}>
                       <SelectValue
                         placeholder={
-                          registrationId
+                          isRegistrationSelected
                             ? registrationDetailQuery.isLoading
                               ? 'Loading topcoats...'
                               : 'Select topcoat'
@@ -379,6 +392,12 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
               {errors.topcoatProductId ? (
                 <p className='text-xs text-destructive'>{errors.topcoatProductId.message}</p>
               ) : null}
+              {!isRegistrationSelected ? (
+                <p className='text-xs text-text-muted'>Select approved registration first to load topcoat options.</p>
+              ) : null}
+              {isRegistrationSelected && !registrationDetailQuery.isLoading && topcoatOptions.length === 0 ? (
+                <p className='text-xs text-text-muted'>No topcoat is available for the selected registration.</p>
+              ) : null}
             </div>
 
             <div className='space-y-2'>
@@ -390,10 +409,10 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
                 name='basecoatProductId'
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-basecoat' disabled={isNoBasecoatFlow}>
+                    <SelectTrigger id='claim-basecoat' disabled={isBasecoatSelectDisabled}>
                       <SelectValue
                         placeholder={
-                          topcoatProductId
+                          hasTopcoatSelection
                             ? registrationDetailQuery.isLoading
                               ? 'Loading basecoats...'
                               : 'Select basecoat'
@@ -417,10 +436,11 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
               {errors.basecoatProductId ? (
                 <p className='text-xs text-destructive'>{errors.basecoatProductId.message}</p>
               ) : null}
+              {!hasTopcoatSelection ? (
+                <p className='text-xs text-text-muted'>Select topcoat first to enable basecoat.</p>
+              ) : null}
               {isNoBasecoatFlow ? (
-                <p className='text-xs text-text-muted'>
-                  No basecoat is required for this selected topcoat in the approved registration.
-                </p>
+                <p className='text-xs text-text-muted'>No related basecoat found for the selected topcoat.</p>
               ) : null}
             </div>
           </div>
@@ -459,6 +479,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             <Textarea
               id='claim-notes'
               className='rounded-xl border-primary/20 bg-white'
+              maxLength={NOTES_MAX_LENGTH}
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />

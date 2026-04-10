@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
 import { Textarea } from '#/components/ui/Textarea';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { rejectSchema, type RejectFormValues } from '#/schemas/registrations';
 import type { RegistrationDetail } from '#/types/registrations';
 import { createRegistrationRejectedTemplate } from '#/utils';
@@ -74,6 +75,7 @@ export const RejectRegistrationModal = ({
               <Textarea
                 id='reject-notes'
                 rows={4}
+                maxLength={NOTES_MAX_LENGTH}
                 placeholder='Describe what must be corrected...'
                 {...register('notes')}
               />

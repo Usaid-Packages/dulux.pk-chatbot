@@ -40,7 +40,11 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
               <TableCell>
                 <span className='chip-claim'>{claim.claimNumber}</span>
               </TableCell>
-              <TableCell>{claim.customerName || 'N/A'}</TableCell>
+              <TableCell>
+                <span className='block max-w-[220px] truncate' title={claim.customerName || 'N/A'}>
+                  {claim.customerName || 'N/A'}
+                </span>
+              </TableCell>
               <TableCell>
                 <span className='chip-reg'>{claim.registrationId || 'N/A'}</span>
               </TableCell>

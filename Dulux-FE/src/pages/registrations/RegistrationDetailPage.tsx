@@ -172,27 +172,6 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <section className='rounded-2xl border border-border bg-white p-5 md:p-6'>
-        <div className='flex items-start gap-3'>
-          <Button
-            type='button'
-            variant='outline'
-            className='h-10 w-10 rounded-xl p-0'
-            onClick={handleBackToList}
-            aria-label='Back to registrations'
-          >
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <div>
-            <p className='text-xs font-semibold uppercase tracking-[2px] text-text-muted'>Registration Review</p>
-            <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>
-              {registration.customerName}
-            </h1>
-            <p className='text-sm text-text-muted'>Validate proofs, inspect product pairing, and decide next step.</p>
-          </div>
-        </div>
-      </section>
-
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
           <ImagePreviewGallery

@@ -37,10 +37,6 @@ export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardP
           <dt className='text-text-muted'>Purchase Date</dt>
           <dd className='font-medium text-text-primary'>{formatDate(registration.purchaseDate)}</dd>
         </div>
-        <div className='flex justify-between gap-3'>
-          <dt className='text-text-muted'>Dealer</dt>
-          <dd className='font-medium text-text-primary'>{registration.dealerName}</dd>
-        </div>
       </dl>
       {canOpenRegistration ? (
         <Link

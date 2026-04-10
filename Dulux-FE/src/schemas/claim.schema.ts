@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { CLAIM_ISSUE_TYPES, CLAIM_STATUSES, CLAIM_WORKFLOW_STATES } from '#/types/claims.types';
 
 export const claimStatusSchema = z.enum(CLAIM_STATUSES);
@@ -97,23 +98,31 @@ export const createClaimSchema = z.object({
   basecoatProductId: z.string().optional(),
   issueType: z.enum(CLAIM_CREATE_ISSUE_TYPES),
   affectedAreaSqft: z.coerce.number().positive('Affected area must be greater than zero.'),
-  notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
+  notes: z
+    .string()
+    .trim()
+    .min(8, 'Notes must be at least 8 characters.')
+    .max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
   longShotPhoto: z.instanceof(File, { message: 'Long shot photo is required.' }),
   closeShotPhoto: z.instanceof(File, { message: 'Close shot photo is required.' }),
   alternateAnglePhoto: z.instanceof(File, { message: 'Alternate angle photo is required.' }),
 });
 
 export const forwardToQualitySchema = z.object({
-  notes: z.string().trim().min(8, 'Notes must be at least 8 characters.'),
+  notes: z
+    .string()
+    .trim()
+    .min(8, 'Notes must be at least 8 characters.')
+    .max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
 });
 
 export const approveClaimFinalSchema = z.object({
-  notes: z.string().trim().max(500, 'Notes must be 500 characters or fewer.').optional(),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
   voucher: z.instanceof(File, { message: 'Voucher file is required.' }),
 });
 
 export const rejectClaimFinalSchema = z.object({
-  notes: z.string().trim().min(10, 'Final rejection notes are required.').max(500),
+  notes: z.string().trim().min(10, 'Final rejection notes are required.').max(NOTES_MAX_LENGTH),
 });
 
 const OTHER_REQUEST_INFO_ITEM = 'Other';
@@ -122,7 +131,7 @@ export const requestMoreInfoSchema = z
   .object({
     items: z.array(z.string().min(1)).min(1, 'Select at least one item.'),
     otherDetails: z.string().trim().max(200, 'Other details must be 200 characters or fewer.').optional(),
-    note: z.string().trim().max(300, 'Note must be 300 characters or fewer.').optional(),
+    note: z.string().trim().max(NOTES_MAX_LENGTH, `Note must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
   })
   .superRefine((values, ctx) => {
     const isOtherSelected = values.items.includes(OTHER_REQUEST_INFO_ITEM);

@@ -102,7 +102,11 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
                   {registration.registrationCode}
                 </span>
               </TableCell>
-              <TableCell title={registration.customerName}>{truncateCustomerName(registration.customerName)}</TableCell>
+              <TableCell>
+                <span className='block max-w-[220px] truncate' title={registration.customerName}>
+                  {truncateCustomerName(registration.customerName)}
+                </span>
+              </TableCell>
               <TableCell>{registration.phoneNumber}</TableCell>
               <TableCell>
                 <SourceTag source={registration.channel} />

@@ -1,12 +1,12 @@
-import type { ChangeEvent, JSX } from 'react';
-import { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
+import { FileImage, Trash2, UploadCloud } from 'lucide-react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, Input } from '#/components/ui';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
-const getSelectedFiles = (event: ChangeEvent<HTMLInputElement>): File[] => {
+const getSelectedFiles = (event: React.ChangeEvent<HTMLInputElement>): File[] => {
   const selectedFiles = event.currentTarget.files;
   return selectedFiles ? Array.from(selectedFiles) : [];
 };
@@ -16,12 +16,13 @@ const getSelectedFiles = (event: ChangeEvent<HTMLInputElement>): File[] => {
  *
  * @returns Invoice upload step section.
  */
-export const InvoicesStep = (): JSX.Element => {
+export const InvoicesStep = (): React.JSX.Element => {
   const {
     setValue,
     formState: { errors },
     control,
   } = useFormContext<ManualRegistrationFormValues>();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const invoices = useWatch({ control, name: 'invoices' }) ?? [];
   const invoiceItems = useMemo(() => {
     const signatureCounts = new Map<string, number>();
@@ -41,7 +42,11 @@ export const InvoicesStep = (): JSX.Element => {
     ? errors.invoices.find(invoiceError => Boolean(invoiceError?.message))?.message
     : null;
 
-  const handleInvoicesChange = (event: ChangeEvent<HTMLInputElement>): void => {
+  const handleOpenFileSelector = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleInvoicesChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const newlySelectedInvoices = getSelectedFiles(event);
     if (newlySelectedInvoices.length === 0) {
       return;
@@ -63,20 +68,45 @@ export const InvoicesStep = (): JSX.Element => {
     <section className='space-y-4 wf-card wf-card-p5'>
       <header>
         <h3 className='text-lg font-semibold text-text-primary'>Invoices</h3>
-        <p className='text-sm text-text-muted'>Upload one or more clear invoice images for verification.</p>
+        <p className='text-sm text-text-muted'>
+          Upload clear invoice images (JPG or PNG) so the review team can verify the purchase quickly.
+        </p>
       </header>
 
-      <label className='space-y-2'>
-        <span className='text-sm font-medium text-text-primary'>
-          Invoice Files <span className='text-destructive'>*</span>
-        </span>
-        <Input type='file' accept='.jpg,.jpeg,.png' multiple onChange={handleInvoicesChange} />
-        <p className='text-xs text-text-muted'>You can select multiple invoices in one go.</p>
-      </label>
+      <section className='rounded-xl border border-dashed border-primary/40 bg-primary/5 p-5'>
+        <div className='flex flex-col items-center gap-3 text-center'>
+          <span className='rounded-full bg-white p-3 text-primary shadow-sm'>
+            <UploadCloud aria-hidden='true' className='h-6 w-6' />
+          </span>
+          <div className='space-y-1'>
+            <p className='text-sm font-semibold text-text-primary'>
+              Invoice Files <span className='text-destructive'>*</span>
+            </p>
+            <p className='text-xs text-text-muted'>Click to choose one or more images. Max size: 5MB each.</p>
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            className='rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
+            onClick={handleOpenFileSelector}
+          >
+            Select Invoice Images
+          </Button>
+        </div>
+      </section>
+
+      <Input
+        ref={fileInputRef}
+        type='file'
+        accept='.jpg,.jpeg,.png'
+        multiple
+        className='hidden'
+        onChange={handleInvoicesChange}
+      />
 
       {errors.invoices?.message ? <p className='text-xs text-destructive'>{errors.invoices.message}</p> : null}
 
-      <div className='space-y-3 rounded-md border border-border p-4'>
+      <div className='space-y-3 rounded-xl border border-border bg-white p-4'>
         <p className='text-sm font-semibold text-text-primary'>Selected Invoices ({invoices.length})</p>
 
         {invoices.length === 0 ? (
@@ -84,9 +114,24 @@ export const InvoicesStep = (): JSX.Element => {
         ) : (
           <ul className='space-y-2'>
             {invoiceItems.map((item, index) => (
-              <li key={item.key} className='flex items-center justify-between gap-3'>
-                <p className='min-w-0 flex-1 break-all text-xs text-text-muted'>{item.invoice.name}</p>
-                <Button type='button' variant='outline' className='h-8 px-3' onClick={() => handleRemoveInvoice(index)}>
+              <li
+                key={item.key}
+                className='flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3'
+              >
+                <div className='flex min-w-0 flex-1 items-center gap-2'>
+                  <FileImage aria-hidden='true' className='h-4 w-4 shrink-0 text-primary' />
+                  <div className='min-w-0'>
+                    <p className='truncate text-xs font-medium text-text-primary'>{item.invoice.name}</p>
+                    <p className='text-[11px] text-text-muted'>{(item.invoice.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                </div>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='h-8 rounded-lg border-destructive/30 px-2.5 text-destructive hover:bg-destructive/10'
+                  onClick={() => handleRemoveInvoice(index)}
+                >
+                  <Trash2 aria-hidden='true' className='h-3.5 w-3.5' />
                   Remove
                 </Button>
               </li>

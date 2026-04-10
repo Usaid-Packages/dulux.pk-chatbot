@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
 import { Textarea } from '#/components/ui/Textarea';
-import { RESUBMISSION_FIELDS } from '#/constants';
+import { NOTES_MAX_LENGTH, RESUBMISSION_FIELDS } from '#/constants';
 import { resubmissionSchema, type ResubmissionFormValues } from '#/schemas/registrations';
 
 interface ResubmissionModalProps {
@@ -80,6 +80,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
               <Textarea
                 id='resubmission-note'
                 rows={3}
+                maxLength={NOTES_MAX_LENGTH}
                 placeholder='Add a clear note for the customer...'
                 {...register('notes')}
               />

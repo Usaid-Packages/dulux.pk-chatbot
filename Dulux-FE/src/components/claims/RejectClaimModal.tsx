@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { rejectClaimFinalSchema, type RejectClaimFinalFormValues } from '#/schemas/claim.schema';
 import type { ClaimDetail } from '#/types/claims.types';
 import { createClaimRejectedTemplate } from '#/utils';
@@ -81,6 +82,7 @@ export const RejectClaimModal = ({
             <Textarea
               id='reject-notes'
               className='rounded-xl border-primary/20 bg-white'
+              maxLength={NOTES_MAX_LENGTH}
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />

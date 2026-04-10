@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { qualityRequestInfoSchema, type QualityRequestInfoFormValues } from '#/schemas/quality.schema';
 import { QUALITY_REQUEST_INFO_ITEMS } from './constants';
 
@@ -137,6 +138,7 @@ export const RequestInfoQAModal = ({
             <Textarea
               id='qa-request-notes'
               className='rounded-xl border-primary/20 bg-white'
+              maxLength={NOTES_MAX_LENGTH}
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />

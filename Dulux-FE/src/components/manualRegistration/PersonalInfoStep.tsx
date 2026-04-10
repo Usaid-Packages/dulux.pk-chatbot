@@ -6,6 +6,9 @@ import { useFormContext } from 'react-hook-form';
 import { Input } from '#/components/ui';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
+const CITY_MAX_LENGTH = 80;
+const PROVINCE_MAX_LENGTH = 80;
+
 /**
  * PersonalInfoStep renders customer identity and site fields for step 1.
  *
@@ -26,8 +29,8 @@ export const PersonalInfoStep = (): JSX.Element => {
     }
   }, [getValues, setValue]);
 
-  const handlePostalCodeChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = event.currentTarget.value.replace(/[^a-zA-Z0-9-]/g, '');
+  const handleLettersOnlyChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    event.currentTarget.value = event.currentTarget.value.replace(/\d/g, '');
   };
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -85,7 +88,12 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             City <span className='text-destructive'>*</span>
           </span>
-          <Input placeholder='e.g. Lahore' {...register('city')} />
+          <Input
+            placeholder='e.g. Lahore'
+            maxLength={CITY_MAX_LENGTH}
+            {...register('city')}
+            onChange={handleLettersOnlyChange}
+          />
           {errors.city ? <p className='text-xs text-destructive'>{errors.city.message}</p> : null}
         </label>
 
@@ -93,14 +101,13 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Province <span className='text-destructive'>*</span>
           </span>
-          <Input placeholder='e.g. Punjab' {...register('province')} />
+          <Input
+            placeholder='e.g. Punjab'
+            maxLength={PROVINCE_MAX_LENGTH}
+            {...register('province')}
+            onChange={handleLettersOnlyChange}
+          />
           {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
-        </label>
-
-        <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Postal Code (optional)</span>
-          <Input placeholder='e.g. 54000' {...register('postalCode')} onChange={handlePostalCodeChange} />
-          {errors.postalCode ? <p className='text-xs text-destructive'>{errors.postalCode.message}</p> : null}
         </label>
       </div>
 

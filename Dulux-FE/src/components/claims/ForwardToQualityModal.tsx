@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { forwardToQualitySchema, type ForwardToQualityFormValues } from '#/schemas/claim.schema';
 
 interface ForwardToQualityModalProps {
@@ -73,6 +74,7 @@ export const ForwardToQualityModal = ({
             <Textarea
               id='forward-notes'
               className='rounded-xl border-primary/20 bg-white'
+              maxLength={NOTES_MAX_LENGTH}
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />
