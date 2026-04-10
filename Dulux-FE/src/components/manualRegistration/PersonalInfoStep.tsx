@@ -109,15 +109,15 @@ export const PersonalInfoStep = (): JSX.Element => {
           />
           {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
         </label>
-      </div>
 
-      <label className='space-y-2'>
-        <span className='text-sm font-medium text-text-primary'>
-          Site Address <span className='text-destructive'>*</span>
-        </span>
-        <Input placeholder='Street, area, city' {...register('siteAddress')} />
-        {errors.siteAddress ? <p className='text-xs text-destructive'>{errors.siteAddress.message}</p> : null}
-      </label>
+        <label className='space-y-2'>
+          <span className='text-sm font-medium text-text-primary'>
+            Site Address <span className='text-destructive'>*</span>
+          </span>
+          <Input placeholder='Street, area, city' {...register('siteAddress')} />
+          {errors.siteAddress ? <p className='text-xs text-destructive'>{errors.siteAddress.message}</p> : null}
+        </label>
+      </div>
     </section>
   );
 };

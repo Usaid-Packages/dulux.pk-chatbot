@@ -18,6 +18,13 @@ interface DashboardCardProps {
 export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
   const { title, description, stats, to, icon } = flow;
   const Icon = DASHBOARD_ICON_MAP[icon];
+  const statGridClassName = stats.length === 1 ? 'mt-5 grid grid-cols-1 gap-3' : 'mt-5 grid grid-cols-2 gap-3';
+  const statItems = stats.map(stat => (
+    <div key={`${flow.id}-${stat.label}`} className='dashboard-flow-stat-box'>
+      <p className='stat-label'>{stat.label}</p>
+      <p className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>{stat.value}</p>
+    </div>
+  ));
 
   return (
     <article className='h-full'>
@@ -37,16 +44,7 @@ export const DashboardCard = ({ flow }: DashboardCardProps): JSX.Element => {
           <p className='mt-1 text-sm text-text-muted'>{description}</p>
         </div>
 
-        <div className='mt-5 grid grid-cols-2 gap-3'>
-          <div className='dashboard-flow-stat-box'>
-            <p className='stat-label'>{stats[0].label}</p>
-            <p className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>{stats[0].value}</p>
-          </div>
-          <div className='dashboard-flow-stat-box'>
-            <p className='stat-label'>{stats[1].label}</p>
-            <p className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>{stats[1].value}</p>
-          </div>
-        </div>
+        <div className={statGridClassName}>{statItems}</div>
       </Link>
     </article>
   );

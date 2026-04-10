@@ -11,6 +11,7 @@ interface RegistrationDetailPanelProps {
   isApprovePending: boolean;
   isApproveDisabled: boolean;
   isReviewActionDisabled: boolean;
+  isResubmitPending: boolean;
   onOpenApproveModal: () => void;
   onOpenResubmitModal: () => void;
   onOpenRejectModal: () => void;
@@ -44,11 +45,11 @@ const renderExpandableProvince = (value: string): JSX.Element => {
   return (
     <details className='group max-w-[220px] text-right'>
       <summary className='list-none cursor-pointer'>
-        <p className='break-words text-right font-medium text-text-primary'>{truncatedValue}</p>
+        <p className='wrap-break-word text-right font-medium text-text-primary'>{truncatedValue}</p>
         <span className='mt-1 block text-xs font-semibold text-primary group-open:hidden'>Show more</span>
         <span className='mt-1 hidden text-xs font-semibold text-primary group-open:block'>Show less</span>
       </summary>
-      <p className='mt-1 break-words text-right font-medium text-text-primary'>{value}</p>
+      <p className='mt-1 wrap-break-word text-right font-medium text-text-primary'>{value}</p>
     </details>
   );
 };
@@ -64,13 +65,16 @@ export const RegistrationDetailPanel = ({
   isApprovePending,
   isApproveDisabled,
   isReviewActionDisabled,
+  isResubmitPending,
   onOpenApproveModal,
   onOpenResubmitModal,
   onOpenRejectModal,
 }: RegistrationDetailPanelProps): JSX.Element => {
   const isRejected = registration.state === 'REJECTED';
+  const isResubmissionRequested = registration.state === 'RESUBMIT';
   const isApproveActionDisabled = isApprovePending || isApproveDisabled || isRejected;
   const isReviewActionsDisabled = isReviewActionDisabled || isRejected;
+  const isResubmitActionDisabled = isReviewActionsDisabled || isResubmitPending || isResubmissionRequested;
 
   return (
     <section className='space-y-4'>
@@ -153,10 +157,14 @@ export const RegistrationDetailPanel = ({
             type='button'
             variant='outline'
             className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
-            disabled={isReviewActionsDisabled}
+            disabled={isResubmitActionDisabled}
             onClick={onOpenResubmitModal}
           >
-            Request Resubmission
+            {isResubmitPending
+              ? 'Requesting...'
+              : isResubmissionRequested
+                ? 'Resubmission Requested'
+                : 'Request Resubmission'}
           </Button>
           <Button
             type='button'

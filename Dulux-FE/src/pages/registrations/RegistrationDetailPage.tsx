@@ -28,14 +28,14 @@ const DETAIL_TEXT_TRUNCATE_LENGTH = 35;
 
 const renderExpandableText = (value: string): JSX.Element => {
   if (value.length <= DETAIL_TEXT_TRUNCATE_LENGTH) {
-    return <span className='break-words'>{value}</span>;
+    return <span className='wrap-break-word'>{value}</span>;
   }
 
   const truncatedValue = `${value.slice(0, DETAIL_TEXT_TRUNCATE_LENGTH)}...`;
 
   return (
     <details className='group'>
-      <summary className='list-none cursor-pointer break-words'>
+      <summary className='list-none cursor-pointer wrap-break-word'>
         <span>{truncatedValue}</span>
         <span className='ml-2 text-xs font-semibold text-primary group-open:hidden'>Show more</span>
         <span className='ml-2 hidden text-xs font-semibold text-primary group-open:inline'>Show less</span>
@@ -253,6 +253,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
             isApprovePending={isApprovePending}
             isApproveDisabled={registration.state === 'APPROVED'}
             isReviewActionDisabled={registration.state === 'APPROVED'}
+            isResubmitPending={isResubmitPending}
             onOpenApproveModal={openApproveModal}
             onOpenResubmitModal={openResubmissionModal}
             onOpenRejectModal={openRejectModal}
