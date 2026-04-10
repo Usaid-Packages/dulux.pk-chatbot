@@ -31,8 +31,13 @@ const formatTime = (isoDateTime: string): string => {
   }).format(parsed);
 };
 
-const containsReadableText = (value: string): boolean => {
-  return /[A-Za-z]/.test(value);
+const getTicketHeading = (thread: ConversationThread): string => {
+  const normalizedTicketId = thread.ticketId.trim();
+  if (normalizedTicketId.length > 0) {
+    return `Ticket #${normalizedTicketId}`;
+  }
+
+  return `Ticket #${thread.id}`;
 };
 
 /**
@@ -108,7 +113,7 @@ export const ChatThreadPanel = ({
       <header className='space-y-2 border-b border-primary/15 bg-[linear-gradient(180deg,#ffffff_0%,#f3f8ff_100%)] px-4 py-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div>
-            <h2 className='text-base font-semibold text-text-primary'>{threadTitle}</h2>
+            <h2 className='text-base font-semibold text-text-primary'>{getTicketHeading(thread)}</h2>
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>

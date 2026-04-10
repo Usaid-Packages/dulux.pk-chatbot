@@ -36,11 +36,15 @@ interface UseComplaintsResult {
  */
 export const useComplaints = (): UseComplaintsResult => {
   const [filters, setFilters] = useState<ConversationListRequestParams>(DEFAULT_FILTERS);
+  const requestFilters: ConversationListRequestParams = {
+    ...filters,
+    search: filters.search?.trim() || undefined,
+  };
   useComplaintsQueueSocket({ enabled: true });
 
   const conversationsQuery = useQuery<ConversationListResponse, Error>({
-    queryKey: queryKeys.complaints.list(filters),
-    queryFn: () => getConversations(filters),
+    queryKey: queryKeys.complaints.list(requestFilters),
+    queryFn: () => getConversations(requestFilters),
     refetchOnWindowFocus: false,
   });
   const cardCountsQuery = useQuery<LiveChatCardCounts, Error>({
@@ -54,10 +58,9 @@ export const useComplaints = (): UseComplaintsResult => {
   };
 
   const setSearch = (search?: string): void => {
-    const normalized = search?.trim();
     setFilters(previous => ({
       ...previous,
-      search: normalized && normalized.length > 0 ? normalized : undefined,
+      search: search && search.length > 0 ? search : undefined,
       page: 1,
     }));
   };

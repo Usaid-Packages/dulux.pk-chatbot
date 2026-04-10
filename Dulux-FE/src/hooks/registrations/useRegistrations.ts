@@ -100,9 +100,8 @@ export const useRegistrations = (): UseRegistrationsResult => {
   const handleSearchChange = (value: string): void => {
     setSearchParams(previous => {
       const nextParams = new URLSearchParams(previous);
-      const normalizedValue = value.trim();
-      if (normalizedValue.length > 0) {
-        nextParams.set('search', normalizedValue);
+      if (value.length > 0) {
+        nextParams.set('search', value);
       } else {
         nextParams.delete('search');
       }

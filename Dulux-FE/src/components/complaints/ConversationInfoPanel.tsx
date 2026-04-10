@@ -10,6 +10,9 @@ interface ConversationInfoPanelProps {
   onResolve: () => void;
 }
 
+const SUBJECT_PREVIEW_LENGTH = 120;
+const DESCRIPTION_PREVIEW_LENGTH = 220;
+
 const formatDateTime = (isoDateTime?: string): string => {
   if (!isoDateTime) {
     return '--';
@@ -35,6 +38,36 @@ const getInitials = (name: string): string => {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+};
+
+const ExpandableFieldValue = ({ value, previewLength }: { value: string; previewLength: number }): JSX.Element => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const normalizedValue = value.trim().length > 0 ? value : '--';
+
+  if (normalizedValue.length <= previewLength) {
+    return (
+      <span className='min-w-0 break-words font-medium leading-5 text-text-primary [overflow-wrap:anywhere]'>
+        {normalizedValue}
+      </span>
+    );
+  }
+
+  const previewValue = `${normalizedValue.slice(0, previewLength)}...`;
+  const displayedValue = isExpanded ? normalizedValue : previewValue;
+  const toggleLabel = isExpanded ? 'Show less' : 'Show more';
+
+  const handleToggle = (): void => {
+    setIsExpanded(previous => !previous);
+  };
+
+  return (
+    <span className='min-w-0 break-words font-medium leading-5 text-text-primary [overflow-wrap:anywhere]'>
+      {displayedValue}{' '}
+      <button type='button' className='text-xs font-semibold text-primary' onClick={handleToggle}>
+        {toggleLabel}
+      </button>
+    </span>
+  );
 };
 
 /**
@@ -73,7 +106,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
   return (
     <>
-      <aside className='flex h-full min-h-0 w-full max-h-[calc(100vh-10rem)] flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)] 2xl:h-[calc(100vh-16rem)] 2xl:max-h-none'>
+      <aside className='flex min-w-0 max-h-[calc(100vh-16rem)] min-h-[26rem] flex-col gap-4 overflow-hidden rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
         <section className='text-center'>
           <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
             {getInitials(thread.customerName)}
@@ -82,27 +115,33 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           <p className='text-xs text-text-muted'>{thread.customerPhone}</p>
         </section>
 
-        <section className='space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3'>
+        <section className='min-w-0 space-y-2 overflow-hidden rounded-xl border border-primary/15 bg-primary/5 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Details</p>
-          <div className='grid grid-cols-1 gap-x-2 gap-y-1 text-xs sm:grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)]'>
+          <div className='grid max-h-64 grid-cols-[5.5rem_minmax(0,1fr)] gap-2 overflow-y-auto pr-1 text-xs'>
             <span className='text-text-muted'>Ticket</span>
-            <span className='break-words font-medium text-text-primary'>{thread.ticketId}</span>
+            <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
+              {thread.ticketId}
+            </span>
             <span className='text-text-muted'>Submitted</span>
-            <span className='break-words font-medium text-text-primary'>{formatDateTime(thread.submittedAt)}</span>
+            <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
+              {formatDateTime(thread.submittedAt)}
+            </span>
             <span className='text-text-muted'>Subject</span>
-            <span className='break-words font-medium text-text-primary'>{thread.issueType}</span>
+            <ExpandableFieldValue value={thread.issueType} previewLength={SUBJECT_PREVIEW_LENGTH} />
             <span className='text-text-muted'>Description</span>
-            <span className='break-words font-medium text-text-primary'>{thread.description || '--'}</span>
+            <ExpandableFieldValue value={thread.description || '--'} previewLength={DESCRIPTION_PREVIEW_LENGTH} />
             <span className='text-text-muted'>Registration</span>
-            <span className='break-words font-medium text-text-primary'>{thread.registrationId || '--'}</span>
+            <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
+              {thread.registrationId || '--'}
+            </span>
             <span className='text-text-muted'>Status</span>
-            <span className='break-words font-medium text-text-primary'>
+            <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
               {CONVERSATION_STATUS_LABELS[thread.apiStatus]}
             </span>
             <span className='text-text-muted'>Closure Note</span>
-            <span className='break-words font-medium text-text-primary'>{thread.closureNote || '--'}</span>
+            <ExpandableFieldValue value={thread.closureNote || '--'} previewLength={DESCRIPTION_PREVIEW_LENGTH} />
             <span className='text-text-muted'>Closed At</span>
-            <span className='break-words font-medium text-text-primary'>
+            <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
               {formatDateTime(thread.closedAt ?? undefined)}
             </span>
           </div>

@@ -1994,6 +1994,11 @@ export const useChat = (conversationId: string) => {
 - consumes `useChat(conversationId)`
 - renders message list + input
 
+`ChatHeader`
+- render only one primary heading line in thread header
+- heading format must be `Ticket #<ticketId>` (fallback: conversation id)
+- do not render extra secondary metadata text line under the heading
+
 `MessageBubble`
 - pure presentational message rendering
 - style by sender (`agent` vs `customer`)
@@ -4042,3 +4047,61 @@ For product queries/mutations:
 - Keep endpoint ownership in `src/constants/apiEndpoints.ts`.
 - Keep query-key ownership in `src/constants/queryKeys.ts`.
 - Keep API normalization in shared product query helpers.
+
+---
+
+## Step 15: Codebase Audit Status Update (2026-04-10)
+
+This section records an evidence-based implementation audit of the current codebase.  
+Audit scope included routes, pages/components, hooks/data-layer, schemas/constants, and project health checks.
+
+Audit checks executed:
+- `yarn lint` ✅
+- `yarn build` ✅
+- Test file scan (`test/spec/__tests__`) -> no test files found
+
+### 15.1 Completion Matrix (Current State)
+
+| Step | Status | Audit Result |
+| --- | --- | --- |
+| Step 1 (Routing + Access) | ⚠️ Partial | Core routes are implemented (`dashboard`, `registrations`, `claims`, `quality`, `complaints`, `products`, `manual-registration`) in `src/routes/createBrowserRouter.tsx`. `import` and `settings` placeholder routes are not wired yet. |
+| Step 2 (Structure + Ownership) | ✅ Done | Feature-aligned structure is implemented across `src/pages`, `src/components`, `src/hooks`, `src/data-layer`, `src/schemas`, `src/constants`. |
+| Step 3 (Component Tree + Data Flow) | ✅ Done | Module pages and major trees are implemented for Dashboard, Registrations, Claims, Quality, Live Chat, Products, and Manual Registration wizard. |
+| Step 4 (State Strategy) | ✅ Done | React Query + local state + scoped WebSocket state are implemented. No Redux baseline. |
+| Step 5 (API Layer + React Query) | ✅ Done | Endpoint/query-key ownership is in constants, transport is in services, and feature data access uses query/mutation hooks in data-layer. |
+| Step 6 (Forms + Validation) | ✅ Done | `react-hook-form` + Zod schema-driven forms are implemented across auth, registrations, claims, quality, products, and chat compose flows. |
+| Step 7 (Real-time Chat) | ✅ Done | Thread socket + queue socket with retry/backoff, message append, and queue updates are implemented in complaints hooks. |
+| Step 8 (UI Component Library) | ✅ Done | Shared UI primitives exist in `src/components/ui` and are used by feature modules. |
+| Step 9 (Environment Config) | ⚠️ Partial | Env usage exists, but `.env.example` is not present in repo root and should be added to satisfy standards. |
+| Step 10 (Notifications/Toasts) | ✅ Done | Success/error mutation feedback with `react-toastify` is implemented across feature mutations. |
+| Step 11 (Component-level RBAC) | ❌ Pending | Route-level guards exist, but `usePermissions` hook (component-level RBAC API described in this plan) is not implemented. |
+| Step 12 (Standards Compliance Gates) | ⚠️ Partial | Standards docs are present and lint/build pass, but required test coverage and PR template gate are not fully met yet. |
+| Step 13 (Tailwind Design System) | ✅ Done | Tailwind tokenized styling and shared design classes are implemented in current UI and `src/index.css`. |
+| Step 14 (Wireframe Gap Updates) | ⚠️ Partial | Most wireframe-aligned updates are implemented; remaining explicit gaps are listed below. |
+
+### 15.2 Explicit "Done" Items Marked from Recent Updates
+
+- [x] Live chat thread header reduced to a single heading line.
+- [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
+- [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
+- [x] Complaint details panel long-text resilience improved (bounded detail area + internal scroll + show more/less for long fields).
+- [x] Search bars preserve spaces while typing (no premature trim in URL/state setters).
+- [x] Registration detail expandable text placement fixed (`Show more/Show less` always trailing).
+- [x] Manual registration dealer-address validation behavior fixed (input handling + schema message).
+- [x] Surface type `Delete` action removed from product listing table UI.
+
+### 15.3 Remaining Action Items (Not Done Yet)
+
+- [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to align with Step 1/plan scope.
+- [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
+- [ ] Add `.env.example` with required env keys.
+- [ ] Add automated tests for critical paths (currently no test files discovered).
+- [ ] Add `.github/pull_request_template.md` to satisfy required project-file standard.
+
+### 15.4 Evidence References
+
+- Routing: `src/routes/createBrowserRouter.tsx`
+- Navigation/role-driven sidebar: `src/constants/layout/navigation.ts`, `src/components/layout/Sidebar.tsx`
+- Chat architecture: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`
+- Manual registration wizard: `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
+- Audit timeline renderer: `src/components/auditLogs/AuditTimelinePanel.tsx`

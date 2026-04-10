@@ -98,9 +98,8 @@ const manualRegistrationBaseSchema = z.object({
   purchaseDealerAddress: z
     .string()
     .trim()
-    .min(5, 'Dealer address is required.')
-    .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`)
-    .regex(noDigitsPattern, 'Dealer address must not contain numbers.'),
+    .min(5, 'Dealer address must be at least 5 characters.')
+    .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`),
   notes: z.string().trim().max(500, 'Notes must be 500 characters or less.'),
   topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
   topcoatQuantity: z
