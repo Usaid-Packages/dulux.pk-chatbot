@@ -32,13 +32,20 @@ export const ClaimDetailPanel = ({
   canFinalApprove,
   canFinalReject,
 }: ClaimDetailPanelProps): JSX.Element => {
+  const noteItems = [
+    claim.csNotes ? { label: 'CS Note', value: claim.csNotes } : null,
+    claim.qualityNotes ? { label: 'QA Note', value: claim.qualityNotes } : null,
+  ].filter((item): item is { label: string; value: string } => item !== null);
+
   return (
     <section className='space-y-4'>
       <article className='wf-card wf-card-p4 border-primary/15 bg-white'>
         <div className='flex items-start justify-between gap-2'>
-          <div>
+          <div className='min-w-0'>
             <p className='text-[11px] font-semibold uppercase tracking-[1.5px] text-primary'>Claim Profile</p>
-            <h1 className='mt-1 text-lg font-bold text-text-primary'>{claim.customerName}</h1>
+            <h1 className='mt-1 truncate text-lg font-bold text-text-primary' title={claim.customerName}>
+              {claim.customerName}
+            </h1>
             <p className='text-sm text-text-muted'>{claim.phone}</p>
           </div>
           <Badge variant={getStatusVariant(claim.status, claim.workflowState)}>
@@ -71,9 +78,20 @@ export const ClaimDetailPanel = ({
           </div>
         </dl>
 
-        <p className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>
-          {claim.description}
-        </p>
+        <div className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3'>
+          <p className='text-[11px] font-semibold uppercase tracking-[1.2px] text-text-muted'>Notes</p>
+          {noteItems.length > 0 ? (
+            <div className='mt-2 space-y-2'>
+              {noteItems.map(noteItem => (
+                <p key={noteItem.label} className='text-sm text-text-primary'>
+                  <span className='font-semibold text-text-muted'>{noteItem.label}:</span> {noteItem.value}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className='mt-2 text-sm text-text-primary'>{claim.description}</p>
+          )}
+        </div>
       </article>
 
       <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
@@ -110,7 +128,7 @@ export const ClaimDetailPanel = ({
           ) : null}
           {!canSendToQuality && !canFinalApprove && !canFinalReject ? (
             <p className='rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs text-text-muted'>
-              No CS/Admin actions are available for the current claim state.
+              No actions are available for the current claim state.
             </p>
           ) : null}
         </div>

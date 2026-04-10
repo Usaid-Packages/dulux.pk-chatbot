@@ -44,19 +44,17 @@ export const ProductEditPage = (): JSX.Element => {
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const uploadAndAttachImages = async (imageFiles: File[]): Promise<void> => {
-    for (const imageFile of imageFiles) {
-      const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
-      await attachProductImageMutation.mutateAsync({
-        productId,
-        payload: {
-          image_id: imageId,
-        },
-      });
-    }
+  const uploadAndAttachImage = async (imageFile: File): Promise<void> => {
+    const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
+    await attachProductImageMutation.mutateAsync({
+      productId,
+      payload: {
+        image_id: imageId,
+      },
+    });
   };
 
-  const handleSubmit = ({ values, imageFiles }: ProductFormSubmission): void => {
+  const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
     updateProductMutation.mutate(
       {
         id: productId,
@@ -65,8 +63,8 @@ export const ProductEditPage = (): JSX.Element => {
       {
         onSuccess: async () => {
           try {
-            if (imageFiles.length > 0) {
-              await uploadAndAttachImages(imageFiles);
+            if (imageFile) {
+              await uploadAndAttachImage(imageFile);
             }
             toast.success('Product updated successfully.');
           } catch (error) {

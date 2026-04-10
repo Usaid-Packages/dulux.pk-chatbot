@@ -68,6 +68,7 @@ export const ConversationListPanel = ({
       <div className='flex min-h-0 flex-1 flex-col gap-3'>
         <div className='space-y-2 rounded-xl border border-primary/20 bg-white/85 p-3'>
           <Input
+            type='search'
             value={search}
             onChange={event => onSearchChange(event.target.value)}
             placeholder='Search by customer, subject, or phone'

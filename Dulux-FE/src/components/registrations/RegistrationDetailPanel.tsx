@@ -76,9 +76,11 @@ export const RegistrationDetailPanel = ({
     <section className='space-y-4'>
       <article className='wf-card wf-card-p4 border-primary/15 bg-white'>
         <div className='flex items-start justify-between gap-2'>
-          <div>
+          <div className='min-w-0'>
             <p className='text-[11px] font-semibold uppercase tracking-[1.5px] text-primary'>Registration Profile</p>
-            <h1 className='mt-1 text-lg font-bold text-text-primary'>{registration.customerName}</h1>
+            <h1 className='mt-1 truncate text-lg font-bold text-text-primary' title={registration.customerName}>
+              {registration.customerName}
+            </h1>
             <p className='text-sm text-text-muted'>{registration.phoneNumber}</p>
           </div>
           <Badge variant={getBadgeVariant(registration.state)}>{REGISTRATION_STATUS_LABELS[registration.state]}</Badge>

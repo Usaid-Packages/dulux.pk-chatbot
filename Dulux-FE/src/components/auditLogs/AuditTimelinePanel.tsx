@@ -31,6 +31,14 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
 
 const LONG_TEXT_LIMIT = 180;
 const STATE_CHANGE_FIELDS = new Set(['state', 'workflow_state', 'workflowState', 'status']);
+const FIELD_LABEL_OVERRIDES: Record<string, string> = {
+  approved_at: 'Approved at',
+  approvedat: 'Approved at',
+  approved_by: 'Approved by',
+  approvedby: 'Approved by',
+  rejection_fields: 'Rejected Fields',
+  rejectionfields: 'Rejected Fields',
+};
 type StatusBadgeVariant = 'default' | 'pending' | 'approved' | 'qaApproved' | 'rejected' | 'info' | 'resolved';
 
 const formatDateTime = (isoDateTime: string): string => {
@@ -44,10 +52,77 @@ const formatDateTime = (isoDateTime: string): string => {
 };
 
 const formatFieldLabel = (fieldName: string): string => {
-  return fieldName
+  const normalizedFieldName = fieldName.trim();
+  const normalizedKey = normalizedFieldName.replaceAll('_', '').toLowerCase();
+  const overrideLabel =
+    FIELD_LABEL_OVERRIDES[normalizedKey] ?? FIELD_LABEL_OVERRIDES[normalizedFieldName.toLowerCase()];
+
+  if (overrideLabel) {
+    return overrideLabel;
+  }
+
+  return normalizedFieldName
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
     .replaceAll('_', ' ')
     .trim()
     .replace(/\b\w/g, letter => letter.toUpperCase());
+};
+
+interface RejectionFieldChangeItem {
+  fieldName: string;
+  note: string | null;
+}
+
+const isRejectionFieldsField = (fieldName: string): boolean => {
+  const normalizedField = fieldName.trim().toLowerCase();
+  return normalizedField === 'rejection_fields' || normalizedField === 'rejectionfields';
+};
+
+const toRejectionFieldItems = (value: unknown): RejectionFieldChangeItem[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.reduce<RejectionFieldChangeItem[]>((accumulator, item) => {
+    if (!isRecordValue(item)) {
+      return accumulator;
+    }
+
+    const rawFieldName =
+      typeof item.field_name === 'string' && item.field_name.trim().length > 0
+        ? item.field_name.trim()
+        : typeof item.fieldName === 'string' && item.fieldName.trim().length > 0
+          ? item.fieldName.trim()
+          : null;
+
+    if (!rawFieldName) {
+      return accumulator;
+    }
+
+    const note = typeof item.note === 'string' && item.note.trim().length > 0 ? item.note.trim() : null;
+    accumulator.push({
+      fieldName: formatFieldLabel(rawFieldName),
+      note,
+    });
+
+    return accumulator;
+  }, []);
+};
+
+const formatRejectionFieldItems = (items: RejectionFieldChangeItem[]): string => {
+  if (items.length === 0) {
+    return 'None';
+  }
+
+  return items
+    .map(item => {
+      if (!item.note) {
+        return item.fieldName;
+      }
+
+      return `${item.fieldName} (Note: ${item.note})`;
+    })
+    .join(', ');
 };
 
 const isRecordValue = (value: unknown): value is Record<string, unknown> => {
@@ -210,6 +285,26 @@ const getStateVariant = (token: string): StatusBadgeVariant => {
 };
 
 const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
+  if (isRejectionFieldsField(fieldName)) {
+    const beforeItems = toRejectionFieldItems(beforeValue);
+    const afterItems = toRejectionFieldItems(afterValue);
+    const beforeSummary = formatRejectionFieldItems(beforeItems);
+    const afterSummary = formatRejectionFieldItems(afterItems);
+    const compactBefore =
+      beforeSummary.length > LONG_TEXT_LIMIT ? `${beforeSummary.slice(0, LONG_TEXT_LIMIT)}...` : beforeSummary;
+    const compactAfter =
+      afterSummary.length > LONG_TEXT_LIMIT ? `${afterSummary.slice(0, LONG_TEXT_LIMIT)}...` : afterSummary;
+
+    return (
+      <p key={`${id}-${fieldName}`} className='text-xs text-text-primary'>
+        <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+        <span title={beforeSummary}>{compactBefore}</span>
+        <span className='mx-1 text-primary'>{'\u2192'}</span>
+        <span title={afterSummary}>{compactAfter}</span>
+      </p>
+    );
+  }
+
   const fullBefore = formatDiffValue(fieldName, beforeValue);
   const fullAfter = formatDiffValue(fieldName, afterValue);
   const compactBefore = getCompactValue(fieldName, beforeValue);
@@ -219,10 +314,7 @@ const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: 
   const isStateChange = STATE_CHANGE_FIELDS.has(fieldName) && Boolean(beforeStateToken) && Boolean(afterStateToken);
 
   return (
-    <p
-      key={`${id}-${fieldName}`}
-      className='rounded-md border border-border/70 bg-surface-muted/40 px-2 py-1.5 text-xs text-text-primary'
-    >
+    <p key={`${id}-${fieldName}`} className='text-xs text-text-primary'>
       <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>
       {isStateChange ? (
         <span className='ml-1 inline-flex items-center gap-1.5 align-middle'>
@@ -330,9 +422,20 @@ export const AuditTimelinePanel = ({
                 <div className='flex items-start justify-between gap-2'>
                   <div className='min-w-0 space-y-1'>
                     <p className='text-sm font-semibold leading-5 text-text-primary'>{item.eventType}</p>
-                    <p className='flex items-center gap-1.5 text-[11px] text-text-muted'>
-                      <UserRound className='h-3 w-3' />
+                    <p className='flex flex-wrap items-center gap-1.5 text-[11px] text-text-muted'>
+                      <UserRound className='h-3 w-3 shrink-0' />
                       <span className='truncate'>{item.user}</span>
+                      <span className='inline-flex min-w-0 items-center gap-1 text-text-muted/90'>
+                        <Mail className='h-3 w-3 shrink-0' />
+                        <span className='truncate'>{item.actorEmail}</span>
+                      </span>
+                    </p>
+                    <p className='flex items-center gap-1.5 text-[11px] text-text-muted'>
+                      <Clock3 className='h-3 w-3 shrink-0' />
+                      <span>
+                        <span className='font-semibold text-text-muted'>Performed at:</span>{' '}
+                        {formatDateTime(item.performedAt)}
+                      </span>
                     </p>
                   </div>
                   <Badge className={cn('border text-[10px]', ACTION_THEME_CLASS_BY_TYPE[item.action])}>
@@ -353,18 +456,8 @@ export const AuditTimelinePanel = ({
                   </div>
                 ) : null}
 
-                <div className='mt-3 space-y-2 rounded-xl border border-primary/20 bg-white p-3'>
+                <div className='mt-3 space-y-2 rounded-xl bg-white'>
                   <div className='grid gap-1 text-[11px] text-text-muted md:grid-cols-2'>
-                    <p className='flex items-start gap-1.5'>
-                      <Mail className='h-3 w-3' />
-                      <span className='min-w-0 break-all text-text-primary'>
-                        <span className='font-semibold text-text-muted'>Email:</span> {item.actorEmail}
-                      </span>
-                    </p>
-                    <p className='flex items-center gap-1.5'>
-                      <Clock3 className='h-3 w-3' />
-                      {formatDateTime(item.performedAt)}
-                    </p>
                     {item.registrationNumber ? (
                       <p className='font-medium text-text-primary'>Reg #: {item.registrationNumber}</p>
                     ) : null}

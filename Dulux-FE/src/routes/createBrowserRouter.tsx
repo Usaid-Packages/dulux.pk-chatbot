@@ -63,7 +63,7 @@ export const router = createBrowserRouter(
           <Route index element={<RegistrationsListPage />} />
           <Route path=':id' element={<RegistrationDetailPage />} />
         </Route>
-        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.QUALITY]} />}>
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.QUALITY]} />}>
           <Route path={ROUTES.QUALITY}>
             <Route index element={<QualityListPage />} />
             <Route path=':id' element={<QualityDetailPage />} />

@@ -8,7 +8,7 @@ export const mapDashboardCards = (
   role: AppUserRole | null
 ): DashboardFlowCardModel[] => {
   return DASHBOARD_FLOW_CONFIGS.filter(config => {
-    if (role === APP_USER_ROLES.CS) {
+    if (role === APP_USER_ROLES.CS || role === APP_USER_ROLES.ADMIN) {
       return config.id !== 'qualityReview';
     }
 

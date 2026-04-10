@@ -523,6 +523,22 @@
   `#/constants`.
 - Rule: Keep shared/reusable constants in `src/constants/**`; do not declare these constants inside feature components.
 
+### 2026-04-10 14:44 - Claims pending filter mapped to wrong backend workflow state
+
+- Issue: Claims list `Pending` filter mapped to `SUBMITTED`, which did not match active CS review queue behavior and
+  returned empty results in real usage.
+- Fix: Updated pending status mapping to request `IN_REVIEW` for claims list filtering.
+- Rule: Keep UI filter-to-API state mappings aligned with live workflow transitions (especially auto-transitioned
+  `SUBMITTED -> IN_REVIEW`) and verify with actual endpoint behavior.
+
+### 2026-04-10 14:56 - Timeline timestamp rendered twice in event card
+
+- Issue: Timeline event UI showed time in both header metadata (`Performed at`) and lower details block, creating
+  duplicate timestamp noise.
+- Fix: Removed the lower duplicate timestamp line and kept only the `Performed at` value in header metadata.
+- Rule: For timeline/event cards, render a single source of timestamp truth and avoid repeating the same meta field in
+  detail sections.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

@@ -22,6 +22,12 @@ const getSurfaceEnvironmentBadgeClassName = (environment: Product['surfaceTypes'
     : 'border border-productType-basecoat-text/25 bg-productType-basecoat-bg text-productType-basecoat-text';
 };
 
+const getSurfaceEnvironmentShortLabel = (
+  environment: Product['surfaceTypes'][number]['environment']
+): 'INT' | 'EXT' => {
+  return environment === 'INTERIOR' ? 'INT' : 'EXT';
+};
+
 const renderSurfaceTypes = (product: Product): JSX.Element => {
   if (product.surfaceTypes.length === 0) {
     return <span className='text-xs text-text-muted'>N/A</span>;
@@ -40,7 +46,7 @@ const renderSurfaceTypes = (product: Product): JSX.Element => {
               surfaceType.environment
             )}`}
           >
-            {surfaceType.environment === 'INTERIOR' ? 'Interior' : 'Exterior'}
+            {getSurfaceEnvironmentShortLabel(surfaceType.environment)}
           </span>
         </span>
       ))}
