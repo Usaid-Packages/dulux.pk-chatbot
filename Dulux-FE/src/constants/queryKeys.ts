@@ -40,6 +40,7 @@ export const queryKeys = {
     all: ['audit-logs'] as const,
     list: (filters: Record<string, unknown>) => ['audit-logs', 'list', filters] as const,
     detail: (id: string) => ['audit-logs', 'detail', id] as const,
+    timeline: (type: string, objectId: string) => ['audit-logs', 'timeline', type, objectId] as const,
   },
   dashboard: {
     all: ['dashboard'] as const,

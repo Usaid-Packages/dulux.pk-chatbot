@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { ClaimTimeline, ClaimWorkflowCard, LinkedRegistrationCard } from '#/components/claims';
+import { AuditTimelinePanel } from '#/components/auditLogs';
+import { ClaimWorkflowCard, LinkedRegistrationCard } from '#/components/claims';
 import {
   ApproveClaimModal,
   QualityAgentNotesCard,
@@ -195,7 +196,13 @@ export const QualityDetailPage = (): JSX.Element => {
           <QualityEvidencePhotos photos={claim.evidencePhotos} />
           <QualityResubmissionCard latestResubmission={claim.latestResubmission} />
           <LinkedRegistrationCard registration={claim.linkedRegistration} />
-          <ClaimTimeline timeline={claim.timeline} />
+          <AuditTimelinePanel
+            type='quality'
+            objectId={claimId}
+            title='Latest Timeline Changes'
+            subtitle='Detailed admin activity log'
+            maxItems={6}
+          />
         </div>
 
         <div className='space-y-4'>

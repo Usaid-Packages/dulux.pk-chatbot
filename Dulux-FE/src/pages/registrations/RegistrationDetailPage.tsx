@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { AuditTimelinePanel } from '#/components/auditLogs';
 import {
   ApproveRegistrationModal,
   RegistrationDetailPanel,
@@ -259,6 +260,14 @@ export const RegistrationDetailPage = (): JSX.Element => {
               </div>
             </dl>
           </article>
+
+          <AuditTimelinePanel
+            type='registration'
+            objectId={String(registration.id)}
+            title='Latest Timeline Changes'
+            subtitle='Detailed admin activity log'
+            maxItems={6}
+          />
         </div>
 
         <div className='space-y-4'>

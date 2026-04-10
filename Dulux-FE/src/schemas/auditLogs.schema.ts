@@ -37,3 +37,24 @@ export const auditLogListResponseSchema = z.object({
   pageSize: z.number().int().positive(),
   items: auditLogListItemSchema.array(),
 });
+
+export const auditTimelineChangeSchema = z.object({
+  before: z.unknown(),
+  after: z.unknown(),
+});
+
+export const auditTimelineItemSchema = z.object({
+  id: z.number().int().nonnegative(),
+  user: z.string().trim().min(1),
+  actorEmail: z.string().trim().min(1),
+  action: auditLogActionSchema,
+  eventType: z.string().trim().min(1),
+  performedAt: z.string().trim().min(1),
+  updatedFields: z.array(z.string().trim().min(1)),
+  changes: z.record(z.string(), auditTimelineChangeSchema).nullable(),
+  registrationNumber: z.string().trim().min(1).nullable(),
+});
+
+export const auditTimelineResponseSchema = z.object({
+  results: z.array(auditTimelineItemSchema),
+});

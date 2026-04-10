@@ -60,5 +60,6 @@ export const apiEndpoints = {
   auditLogs: {
     list: `${API_AUDIT_LOGS_V1}/`,
     detail: (id: string): string => `${API_AUDIT_LOGS_V1}/${id}/`,
+    timeline: `${API_AUDIT_LOGS_V1}/timeline/`,
   },
 } as const;

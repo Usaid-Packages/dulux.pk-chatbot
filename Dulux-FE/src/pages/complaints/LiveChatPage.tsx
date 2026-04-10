@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { AuditTimelinePanel } from '#/components/auditLogs';
 import {
   ChatThreadPanel,
   ConversationInfoPanel,
@@ -137,26 +138,37 @@ export const LiveChatPage = (): JSX.Element => {
       <ConversationStats stats={conversationStats} />
 
       <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>
-        <ConversationListPanel
-          items={conversationItems}
-          openUnseenThreadIds={openUnseenThreadIds}
-          isLoading={conversationsQuery.isLoading}
-          status={filters.status}
-          search={filters.search ?? ''}
-          selectedThreadId={selectedThreadId}
-          onStatusChange={setStatusFilter}
-          onSearchChange={setSearch}
-          onThreadSelect={handleThreadSelect}
-        />
+        <div className='space-y-4'>
+          <ConversationListPanel
+            items={conversationItems}
+            openUnseenThreadIds={openUnseenThreadIds}
+            isLoading={conversationsQuery.isLoading}
+            status={filters.status}
+            search={filters.search ?? ''}
+            selectedThreadId={selectedThreadId}
+            onStatusChange={setStatusFilter}
+            onSearchChange={setSearch}
+            onThreadSelect={handleThreadSelect}
+          />
+          <AuditTimelinePanel
+            type='complaint'
+            objectId={threadId}
+            title='Latest Timeline Changes'
+            subtitle='Detailed admin activity log'
+            maxItems={6}
+          />
+        </div>
 
-        <ChatThreadPanel
-          thread={threadQuery.data}
-          isLoading={Boolean(selectedThreadId) && threadQuery.isLoading}
-          isError={Boolean(selectedThreadId) && threadQuery.isError}
-          errorMessage={threadQuery.error?.message}
-          isSending={isMessageSending}
-          onSendMessage={sendMessage}
-        />
+        <div className='space-y-4'>
+          <ChatThreadPanel
+            thread={threadQuery.data}
+            isLoading={Boolean(selectedThreadId) && threadQuery.isLoading}
+            isError={Boolean(selectedThreadId) && threadQuery.isError}
+            errorMessage={threadQuery.error?.message}
+            isSending={isMessageSending}
+            onSendMessage={sendMessage}
+          />
+        </div>
 
         <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
       </section>

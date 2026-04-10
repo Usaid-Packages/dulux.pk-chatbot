@@ -16,7 +16,6 @@ export const ROUTES = {
   COMPLAINTS: '/complaints',
   COMPLAINT_THREAD: (id: string): string => `/complaints/${id}`,
   PRODUCTS: '/products',
-  AUDIT_LOGS: '/audit-logs',
   PRODUCT_NEW: '/products/new',
   PRODUCT_EDIT: (id: string): string => `/products/${id}/edit`,
   IMPORT: '/import',

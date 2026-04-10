@@ -7,6 +7,7 @@ export type AuditLogAction = (typeof AUDIT_LOG_ACTIONS)[number];
 export type AuditLogActionFilter = (typeof AUDIT_LOG_ACTION_FILTERS)[number];
 export type AuditLogOrderingField = (typeof AUDIT_LOG_ORDERING_FIELDS)[number];
 export type AuditLogOrdering = AuditLogOrderingField | `-${AuditLogOrderingField}`;
+export type AuditTimelineTargetType = 'registration' | 'claim' | 'quality' | 'complaint';
 
 export interface AuditLogOrderingOption {
   label: string;
@@ -112,4 +113,41 @@ export interface AuditLogListApiQuery extends Record<string, string | number> {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+}
+
+export interface AuditTimelineChange {
+  before: unknown;
+  after: unknown;
+}
+
+export interface AuditTimelineItem {
+  id: number;
+  user: string;
+  actorEmail: string;
+  action: AuditLogAction;
+  eventType: string;
+  performedAt: string;
+  updatedFields: string[];
+  changes: Record<string, AuditTimelineChange> | null;
+  registrationNumber: string | null;
+}
+
+export interface AuditTimelineResponse {
+  results: AuditTimelineItem[];
+}
+
+export interface AuditTimelineApiItem extends Record<string, unknown> {
+  id?: number;
+  user?: string;
+  actor_email?: string;
+  action?: unknown;
+  event_type?: string;
+  performed_at?: string;
+  updated_fields?: unknown;
+  changes?: unknown;
+  registration_number?: string | null;
+}
+
+export interface AuditTimelineApiResponse extends Record<string, unknown> {
+  results?: unknown;
 }

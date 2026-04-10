@@ -23,6 +23,8 @@ import type {
   AuditLogApiListResponse,
   AuditLogDetail,
   AuditLogListResponse,
+  AuditTimelineApiResponse,
+  AuditTimelineResponse,
 } from '#/types/auditLogs';
 import type { ApiErrorShape } from '#/types/common/error.types';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
@@ -613,5 +615,81 @@ export const normalizeAuditLogDetailResponse = (response: AuditLogApiDetailRespo
     changes: normalizeAuditChanges(response.changes),
     beforeData: isRecordValue(response.beforeData) ? response.beforeData : null,
     afterData: isRecordValue(response.afterData) ? response.afterData : null,
+  };
+};
+
+const readStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map(item => (typeof item === 'string' ? item.trim() : '')).filter(item => item.length > 0);
+};
+
+const normalizeAuditTimelineChanges = (value: unknown): Record<string, { before: unknown; after: unknown }> | null => {
+  if (!isRecordValue(value)) {
+    return null;
+  }
+
+  const normalizedEntries = Object.entries(value).reduce<Record<string, { before: unknown; after: unknown }>>(
+    (accumulator, [fieldName, fieldValue]) => {
+      if (!isRecordValue(fieldValue)) {
+        return accumulator;
+      }
+
+      accumulator[fieldName] = {
+        before: fieldValue.before,
+        after: fieldValue.after,
+      };
+
+      return accumulator;
+    },
+    {}
+  );
+
+  return Object.keys(normalizedEntries).length > 0 ? normalizedEntries : null;
+};
+
+export const normalizeAuditTimelineResponse = (response: AuditTimelineApiResponse): AuditTimelineResponse => {
+  const rawResults = Array.isArray(response.results) ? response.results : [];
+
+  return {
+    results: rawResults.map(item => {
+      const typedItem = isRecordValue(item) ? item : {};
+      const registrationNumber =
+        typedItem.registration_number === undefined || typedItem.registration_number === null
+          ? null
+          : String(typedItem.registration_number).trim().length > 0
+            ? String(typedItem.registration_number).trim()
+            : null;
+      const actorEmail =
+        typeof typedItem.actor_email === 'string' && typedItem.actor_email.trim().length > 0
+          ? typedItem.actor_email.trim()
+          : typeof typedItem.actorEmail === 'string' && typedItem.actorEmail.trim().length > 0
+            ? typedItem.actorEmail.trim()
+            : 'Unknown';
+      const user =
+        typeof typedItem.user === 'string' && typedItem.user.trim().length > 0 ? typedItem.user.trim() : actorEmail;
+      const eventType =
+        typeof typedItem.event_type === 'string' && typedItem.event_type.trim().length > 0
+          ? typedItem.event_type.trim()
+          : 'Timeline event';
+      const performedAt =
+        typeof typedItem.performed_at === 'string' && typedItem.performed_at.trim().length > 0
+          ? typedItem.performed_at
+          : new Date().toISOString();
+
+      return {
+        id: typeof typedItem.id === 'number' && Number.isFinite(typedItem.id) ? typedItem.id : 0,
+        user,
+        actorEmail,
+        action: normalizeAuditLogAction(typedItem.action),
+        eventType,
+        performedAt,
+        updatedFields: readStringArray(typedItem.updated_fields),
+        changes: normalizeAuditTimelineChanges(typedItem.changes),
+        registrationNumber,
+      };
+    }),
   };
 };

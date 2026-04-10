@@ -6,7 +6,6 @@ import { Navigate, Route, createBrowserRouter, createRoutesFromElements } from '
 import { AppLayout, ManualRegistrationLayout } from '#/components/layout';
 import { APP_USER_ROLES, ROUTES, getHomeRouteByRole } from '#/constants';
 import { useAuthContext } from '#/context';
-import { AuditLogsPage } from '#/pages/auditLogs';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '#/pages/auth';
 import { ClaimDetailPage, ClaimsListPage } from '#/pages/claims';
 import { LiveChatPage } from '#/pages/complaints';
@@ -19,7 +18,6 @@ import {
   RegistrationDetailPage,
   RegistrationsListPage,
 } from '#/pages/registrations';
-import { AdminRoute } from '#/routes/AdminRoute';
 import { PrivateRoute } from '#/routes/PrivateRoute';
 import { RoleRoute } from '#/routes/RoleRoute';
 
@@ -84,9 +82,6 @@ export const router = createBrowserRouter(
           <Route index element={<ProductsListPage />} />
           <Route path='new' element={<ProductCreatePage />} />
           <Route path=':id/edit' element={<ProductEditPage />} />
-        </Route>
-        <Route element={<AdminRoute />}>
-          <Route path={ROUTES.AUDIT_LOGS} element={<AuditLogsPage />} />
         </Route>
       </Route>
 
