@@ -73,7 +73,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
   return (
     <>
-      <aside className='flex max-h-[calc(100vh-16rem)] min-h-[26rem] flex-col gap-4 rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <aside className='flex h-full min-h-0 w-full max-h-[calc(100vh-10rem)] flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)] 2xl:h-[calc(100vh-16rem)] 2xl:max-h-none'>
         <section className='text-center'>
           <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
             {getInitials(thread.customerName)}
@@ -84,27 +84,31 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
         <section className='space-y-2 rounded-xl border border-primary/15 bg-primary/5 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Details</p>
-          <div className='grid grid-cols-2 gap-2 text-xs'>
+          <div className='grid grid-cols-1 gap-x-2 gap-y-1 text-xs sm:grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)]'>
             <span className='text-text-muted'>Ticket</span>
-            <span className='font-medium text-text-primary'>{thread.ticketId}</span>
+            <span className='break-words font-medium text-text-primary'>{thread.ticketId}</span>
             <span className='text-text-muted'>Submitted</span>
-            <span className='font-medium text-text-primary'>{formatDateTime(thread.submittedAt)}</span>
+            <span className='break-words font-medium text-text-primary'>{formatDateTime(thread.submittedAt)}</span>
             <span className='text-text-muted'>Subject</span>
-            <span className='font-medium text-text-primary'>{thread.issueType}</span>
+            <span className='break-words font-medium text-text-primary'>{thread.issueType}</span>
             <span className='text-text-muted'>Description</span>
-            <span className='font-medium text-text-primary'>{thread.description || '--'}</span>
+            <span className='break-words font-medium text-text-primary'>{thread.description || '--'}</span>
             <span className='text-text-muted'>Registration</span>
-            <span className='font-medium text-text-primary'>{thread.registrationId || '--'}</span>
+            <span className='break-words font-medium text-text-primary'>{thread.registrationId || '--'}</span>
             <span className='text-text-muted'>Status</span>
-            <span className='font-medium text-text-primary'>{CONVERSATION_STATUS_LABELS[thread.apiStatus]}</span>
+            <span className='break-words font-medium text-text-primary'>
+              {CONVERSATION_STATUS_LABELS[thread.apiStatus]}
+            </span>
             <span className='text-text-muted'>Closure Note</span>
-            <span className='font-medium text-text-primary'>{thread.closureNote || '--'}</span>
+            <span className='break-words font-medium text-text-primary'>{thread.closureNote || '--'}</span>
             <span className='text-text-muted'>Closed At</span>
-            <span className='font-medium text-text-primary'>{formatDateTime(thread.closedAt ?? undefined)}</span>
+            <span className='break-words font-medium text-text-primary'>
+              {formatDateTime(thread.closedAt ?? undefined)}
+            </span>
           </div>
         </section>
 
-        <section className='flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
+        <section className='min-h-[9rem] flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
           {thread.complaintImages.length === 0 ? (
             <p className='text-xs text-text-muted'>No images</p>

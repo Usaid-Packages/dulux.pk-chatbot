@@ -26,9 +26,9 @@ export const ConversationStats = ({ stats }: ConversationStatsProps): JSX.Elemen
   ];
 
   return (
-    <section className='wf-stat-grid-4'>
+    <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
       {items.map((card, index) => (
-        <article key={card.label} className={`wf-stat-card ${STAT_CARD_STYLES[index]}`}>
+        <article key={card.label} className={`wf-stat-card h-full ${STAT_CARD_STYLES[index]}`}>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
         </article>
