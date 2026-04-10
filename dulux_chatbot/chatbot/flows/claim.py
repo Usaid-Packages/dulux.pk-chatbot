@@ -228,3 +228,4 @@ class ClaimFlow(BaseFlow):
         self.session.flow = None
         self.session.current_step = "menu"
         self.session.session_data = {}
+        self._send_main_menu_message()

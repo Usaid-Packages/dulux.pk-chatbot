@@ -154,6 +154,7 @@ class ClaimResubmissionFlow(BaseFlow):
             self.session.phone_number,
             "Thank you. Your additional claim details have been received and sent back to the Quality team.",
         )
+        self._send_main_menu_message()
 
     def _quality_item_label(self, required_item: str) -> str:
         try:

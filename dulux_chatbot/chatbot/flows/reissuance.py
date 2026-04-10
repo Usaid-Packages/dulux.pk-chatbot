@@ -107,3 +107,4 @@ class ReissuanceFlow(BaseFlow):
             "Your warranty certificate",
         )
         self._reset()
+        self._send_main_menu_message()

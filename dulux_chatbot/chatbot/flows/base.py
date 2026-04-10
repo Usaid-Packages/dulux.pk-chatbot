@@ -14,6 +14,14 @@ class BaseFlow(ABC):
     TEXT_BACK_COMMANDS = {"BACK"}
     TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
     IMAGE_UPLOAD_NOTE = "Note : Please add one Invoice image at a time"
+    MAIN_MENU_TEXT = (
+        "How can I assist you? Reply with:\n"
+        "1. Warranty Registration\n"
+        "2. Warranty Claim\n"
+        "3. Find a Product\n"
+        "4. Raise a Complaint\n"
+        "5. Certificate Reissuance"
+    )
 
     def __init__(self, session, client):
         self.session = session
@@ -123,10 +131,10 @@ class BaseFlow(ABC):
 
     def _go_main_menu(self) -> None:
         self._reset()
-        self.client.send_text(
-            self.session.phone_number,
-            "How can I assist you? Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
-        )
+        self._send_main_menu_message()
+
+    def _send_main_menu_message(self) -> None:
+        self.client.send_text(self.session.phone_number, self.MAIN_MENU_TEXT)
 
     def _send_validation_error(self, text: str) -> None:
         self._send_step_prompt(text)

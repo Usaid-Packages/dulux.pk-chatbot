@@ -155,6 +155,7 @@ class FlowTests(TestCase):
         )
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
 
     def test_registration_flow_rejects_invalid_purchase_date(self):
         self.dispatch_text("1")
@@ -541,6 +542,7 @@ class FlowTests(TestCase):
         self.assertEqual(claim.state, ClaimState.SUBMITTED)
         self.assertEqual(claim.images.count(), 3)
         self.assertIsNone(self.session.flow)
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
 
     def test_claim_flow_image_prompt_includes_note(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
@@ -660,6 +662,7 @@ class FlowTests(TestCase):
         self.assertIn("*Features:* Durable finish", self.client.images[0]["caption"])
         self.assertIn("*Coverage details:* 100 sqft per liter", self.client.images[0]["caption"])
         self.assertIn("*URL:* https://example.com/products/test", self.client.images[0]["caption"])
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")
@@ -699,8 +702,9 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.documents), 1)
         self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
         )
 
     def test_claim_flow_success_message_uses_registration_number(self):
@@ -722,8 +726,9 @@ class FlowTests(TestCase):
         claim = WarrantyClaim.objects.get(registration=registration, paint_pair=paint_pair)
         self.assertIn(
             f"Claim submitted successfully for Registration number: {registration.registration_code}",
-            self.client.text_messages[-1]["text"],
+            self.client.text_messages[-2]["text"],
         )
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertEqual(claim.registration.registration_code, registration.registration_code)
 
     def test_reissuance_flow_generates_and_sends_certificate_when_missing(self):
@@ -738,8 +743,9 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.documents), 1)
         self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
         )
 
     def test_reissuance_flow_normalizes_local_phone_number_to_ninety_two_format(self):
@@ -803,8 +809,9 @@ class FlowTests(TestCase):
         self.assertEqual(len(self.client.documents), 1)
         self.assertIn("older_certificate", self.client.documents[0]["document_url"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
         )
+        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
 
     def test_reissuance_flow_rejects_invalid_registration_selection(self):
         create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)

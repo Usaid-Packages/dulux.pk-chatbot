@@ -90,7 +90,14 @@ def dispatch(session, message: dict, client) -> None:
 def _send_main_menu(phone_number: str, client) -> None:
     client.send_text(
         phone_number,
-        "How can I assist you? Reply with:\n1. Warranty Registration\n2. Warranty Claim\n3. Find a Product\n4. Raise a Complaint\n5. Certificate Reissuance",
+        (
+            "How can I assist you? Reply with:\n"
+            "1. Warranty Registration\n"
+            "2. Warranty Claim\n"
+            "3. Find a Product\n"
+            "4. Raise a Complaint\n"
+            "5. Certificate Reissuance"
+        ),
     )
 
 

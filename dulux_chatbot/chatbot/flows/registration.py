@@ -376,6 +376,7 @@ class RegistrationFlow(BaseFlow):
             ),
         )
         self._reset()
+        self._send_main_menu_message()
 
     def _advance_resubmit_after_current_step(self, current_step: str) -> bool:
         session_data = self.session.session_data or {}
@@ -430,6 +431,7 @@ class RegistrationFlow(BaseFlow):
             "Your updated warranty registration details have been submitted successfully.",
         )
         self._reset()
+        self._send_main_menu_message()
 
     def _build_paint_pairs_payload(self, data: dict) -> list[dict]:
         paint_pairs = []

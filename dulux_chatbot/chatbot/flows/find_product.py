@@ -85,6 +85,7 @@ class FindProductFlow(BaseFlow):
         if not products.exists():
             self.client.send_text(self.session.phone_number, "No products found for the selected surface type.")
             self._reset()
+            self._send_main_menu_message()
             return
         for product in products:
             product_message = self._format_product_message(product=product)
@@ -98,3 +99,4 @@ class FindProductFlow(BaseFlow):
             else:
                 self.client.send_text(self.session.phone_number, product_message)
         self._reset()
+        self._send_main_menu_message()

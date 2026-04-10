@@ -2,6 +2,7 @@ from io import BytesIO
 from pathlib import Path
 
 from django.core.files.base import ContentFile
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -134,7 +135,7 @@ def _build_customer_details(registration, styles: dict[str, ParagraphStyle]) -> 
         f"<b>Customer Name :</b> {registration.customer_name}",
         f"<b>Mobile No. :</b> {registration.phone_number}",
         f"<b>Site Address :</b> {registration.site_address}",
-        f"<b>Purchase Date :</b> {registration.purchase_date.strftime('%d/%m/%Y')}",
+        f"<b>Issue Date :</b> {timezone.localdate().strftime('%d/%m/%Y')}",
     ]
     return [Paragraph(line, styles["detail"]) for line in detail_lines]
 
@@ -145,6 +146,7 @@ def _build_product_table(title: str, rows: list[dict[str, str]], styles: dict[st
             Paragraph("<b>Sr.N<br/>o</b>", styles["table_header"]),
             Paragraph("<b>Name</b>", styles["table_header"]),
             Paragraph("<b>Quantity</b>", styles["table_header"]),
+            Paragraph("<b>No. of Years<br/>Warranty</b>", styles["table_header"]),
         ]
     ]
 
@@ -154,12 +156,13 @@ def _build_product_table(title: str, rows: list[dict[str, str]], styles: dict[st
                 Paragraph(str(index), styles["table_cell"]),
                 Paragraph(row["name"], styles["table_cell_left"]),
                 Paragraph(row["quantity"], styles["table_cell"]),
+                Paragraph(row["warranty_years"], styles["table_cell"]),
             ]
         )
 
     table = Table(
         table_rows,
-        colWidths=[18 * mm, CONTENT_WIDTH - (64 * mm), 46 * mm],
+        colWidths=[18 * mm, CONTENT_WIDTH - (98 * mm), 38 * mm, 42 * mm],
         repeatRows=1,
         hAlign="LEFT",
     )
@@ -217,10 +220,9 @@ def _build_registration_box(registration, styles: dict[str, ParagraphStyle]) -> 
     return KeepTogether([Spacer(1, 1 * mm), table])
 
 
-def _build_product_rows(registration) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+def _build_product_rows(registration) -> list[dict[str, str]]:
     paint_pairs = list(registration.paint_pairs.select_related("topcoat", "basecoat").all())
     topcoat_rows: list[dict[str, str]] = []
-    basecoat_rows: list[dict[str, str]] = []
 
     for paint_pair in paint_pairs:
         if paint_pair.topcoat_id:
@@ -228,25 +230,17 @@ def _build_product_rows(registration) -> tuple[list[dict[str, str]], list[dict[s
                 {
                     "name": paint_pair.topcoat.name,
                     "quantity": str(paint_pair.topcoat_quantity),
+                    "warranty_years": str(paint_pair.topcoat.warranty_years),
                 }
             )
-
-        if paint_pair.basecoat_id and paint_pair.basecoat_quantity is not None:
-            basecoat_rows.append(
-                {
-                    "name": paint_pair.basecoat.name,
-                    "quantity": str(paint_pair.basecoat_quantity),
-                }
-            )
-
-    return topcoat_rows, basecoat_rows
+    return topcoat_rows
 
 
 def generate_warranty_certificate(registration):
     registration = registration.__class__.objects.prefetch_related("paint_pairs__topcoat", "paint_pairs__basecoat").get(
         pk=registration.pk
     )
-    topcoat_rows, basecoat_rows = _build_product_rows(registration)
+    topcoat_rows = _build_product_rows(registration)
     styles = _build_story_styles()
 
     buffer = BytesIO()
@@ -267,9 +261,6 @@ def generate_warranty_certificate(registration):
     ]
 
     story.extend(_build_product_table("Top Coat Details", topcoat_rows, styles))
-
-    if basecoat_rows:
-        story.extend(_build_product_table("Base Coat Details", basecoat_rows, styles))
 
     story.append(_build_registration_box(registration, styles))
     story.extend([PageBreak(), Spacer(1, 1 * mm)])
