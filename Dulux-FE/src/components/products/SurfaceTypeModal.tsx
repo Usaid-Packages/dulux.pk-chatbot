@@ -20,6 +20,7 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
+import { SURFACE_TYPE_FORM_MAX_LENGTHS } from '#/constants';
 import { surfaceTypeFormSchema, type SurfaceTypeFormSchemaValues } from '#/schemas/products';
 import { productEnvironments, type SurfaceTypeFormValues } from '#/types/products';
 
@@ -96,9 +97,11 @@ export const SurfaceTypeModal = ({
               id='surface-name'
               className='rounded-xl border-primary/20 bg-white'
               placeholder='e.g. Concrete, Plaster, Tile...'
+              maxLength={SURFACE_TYPE_FORM_MAX_LENGTHS.name}
               {...register('name')}
               aria-invalid={Boolean(errors.name)}
             />
+            <p className='text-xs text-text-muted'>Maximum {SURFACE_TYPE_FORM_MAX_LENGTHS.name} characters allowed.</p>
             {errors.name ? <p className='text-xs text-destructive'>{errors.name.message}</p> : null}
           </div>
 

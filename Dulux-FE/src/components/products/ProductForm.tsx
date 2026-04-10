@@ -36,6 +36,7 @@ interface ProductFormProps {
   description: string;
   submitLabel: string;
   isSubmitting: boolean;
+  useSplitLongFieldLayout?: boolean;
   initialValues?: ProductFormValues;
   initialImages?: ProductImage[];
   surfaceTypes: SurfaceType[];
@@ -180,6 +181,7 @@ export const ProductForm = ({
   description,
   submitLabel,
   isSubmitting,
+  useSplitLongFieldLayout = false,
   initialValues,
   initialImages = [],
   surfaceTypes,
@@ -208,7 +210,7 @@ export const ProductForm = ({
   const [exteriorSurfaceSearch, setExteriorSurfaceSearch] = useState<string>('');
   const [linkedBasecoatSearch, setLinkedBasecoatSearch] = useState<string>('');
   const [activeDropdown, setActiveDropdown] = useState<'interior' | 'exterior' | 'basecoat' | null>(null);
-  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imageValidationError, setImageValidationError] = useState<string | null>(null);
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
@@ -265,7 +267,7 @@ export const ProductForm = ({
   const handleFormSubmit = (values: ProductFormSchemaValues): void => {
     onSubmit({
       values,
-      imageFiles: selectedImageFiles,
+      imageFile: selectedImageFile,
     });
   };
 
@@ -310,30 +312,42 @@ export const ProductForm = ({
 
   const handleImageFilesChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const fileList = event.currentTarget.files;
-    if (!fileList) {
-      setSelectedImageFiles([]);
+    if (!fileList || fileList.length === 0) {
+      setSelectedImageFile(null);
       setImageValidationError(null);
       return;
     }
 
-    const files = Array.from(fileList);
-    const invalidType = files.find(file => {
-      return !PRODUCT_IMAGE_ALLOWED_FILE_TYPES.includes(file.type as (typeof PRODUCT_IMAGE_ALLOWED_FILE_TYPES)[number]);
-    });
-    if (invalidType) {
-      setSelectedImageFiles([]);
+    if (initialImages.length > 0) {
+      setSelectedImageFile(null);
+      setImageValidationError('Remove the current image before uploading a new one.');
+      return;
+    }
+
+    if (fileList.length > 1) {
+      setSelectedImageFile(null);
+      setImageValidationError('Only one image can be uploaded per product.');
+      return;
+    }
+
+    const selectedFile = fileList[0];
+    const isValidType = PRODUCT_IMAGE_ALLOWED_FILE_TYPES.includes(
+      selectedFile.type as (typeof PRODUCT_IMAGE_ALLOWED_FILE_TYPES)[number]
+    );
+
+    if (!isValidType) {
+      setSelectedImageFile(null);
       setImageValidationError('Only JPG, PNG, and WEBP images are allowed.');
       return;
     }
 
-    const invalidSize = files.find(file => file.size > PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES);
-    if (invalidSize) {
-      setSelectedImageFiles([]);
-      setImageValidationError('Each image must be 5MB or smaller.');
+    if (selectedFile.size > PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES) {
+      setSelectedImageFile(null);
+      setImageValidationError('The image must be 5MB or smaller.');
       return;
     }
 
-    setSelectedImageFiles(files);
+    setSelectedImageFile(selectedFile);
     setImageValidationError(null);
   };
 
@@ -449,57 +463,64 @@ export const ProductForm = ({
           {errors.webpageUrl ? <p className='text-xs text-destructive'>{errors.webpageUrl.message}</p> : null}
         </div>
 
-        <div className='space-y-2'>
-          <label htmlFor='product-coverage' className='text-sm font-medium text-text-primary'>
-            Coverage Details <span className='text-destructive'>*</span>
-          </label>
-          <Textarea
-            id='product-coverage'
-            rows={3}
-            className='rounded-xl border-primary/20 bg-white'
-            placeholder='e.g. 100 sq ft per liter on smooth plaster'
-            maxLength={PRODUCT_FORM_MAX_LENGTHS.coverageDetails}
-            {...register('coverageDetails')}
-            aria-invalid={Boolean(errors.coverageDetails)}
-          />
-          {errors.coverageDetails ? <p className='text-xs text-destructive'>{errors.coverageDetails.message}</p> : null}
-        </div>
+        <div className={useSplitLongFieldLayout ? 'grid gap-4 lg:grid-cols-2' : 'space-y-5'}>
+          <div className='space-y-2'>
+            <label htmlFor='product-coverage' className='text-sm font-medium text-text-primary'>
+              Coverage Details <span className='text-destructive'>*</span>
+            </label>
+            <Textarea
+              id='product-coverage'
+              rows={3}
+              className='rounded-xl border-primary/20 bg-white'
+              placeholder='e.g. 100 sq ft per liter on smooth plaster'
+              maxLength={PRODUCT_FORM_MAX_LENGTHS.coverageDetails}
+              {...register('coverageDetails')}
+              aria-invalid={Boolean(errors.coverageDetails)}
+            />
+            {errors.coverageDetails ? (
+              <p className='text-xs text-destructive'>{errors.coverageDetails.message}</p>
+            ) : null}
+          </div>
 
-        <div className='space-y-2'>
-          <label htmlFor='product-features' className='text-sm font-medium text-text-primary'>
-            Key Features <span className='text-destructive'>*</span>
-          </label>
-          <Textarea
-            id='product-features'
-            rows={4}
-            className='rounded-xl border-primary/20 bg-white'
-            placeholder='Describe key features and customer value'
-            maxLength={PRODUCT_FORM_MAX_LENGTHS.features}
-            {...register('features')}
-            aria-invalid={Boolean(errors.features)}
-          />
-          {errors.features ? <p className='text-xs text-destructive'>{errors.features.message}</p> : null}
+          <div className='space-y-2'>
+            <label htmlFor='product-features' className='text-sm font-medium text-text-primary'>
+              Key Features <span className='text-destructive'>*</span>
+            </label>
+            <Textarea
+              id='product-features'
+              rows={4}
+              className='rounded-xl border-primary/20 bg-white'
+              placeholder='Describe key features and customer value'
+              maxLength={PRODUCT_FORM_MAX_LENGTHS.features}
+              {...register('features')}
+              aria-invalid={Boolean(errors.features)}
+            />
+            {errors.features ? <p className='text-xs text-destructive'>{errors.features.message}</p> : null}
+          </div>
         </div>
 
         <div className='space-y-3 rounded-xl border border-primary/20 bg-white/85 p-4'>
           <div>
-            <p className='text-sm font-medium text-text-primary'>Product Images</p>
-            <p className='text-xs text-text-muted'>Upload one or more product images (JPG, PNG, WEBP. Max 5MB each).</p>
+            <p className='text-sm font-medium text-text-primary'>
+              Product Images <span className='text-destructive'>*</span>
+            </p>
+            <p className='text-xs text-text-muted'>Upload one product image (JPG, PNG, WEBP. Max 5MB).</p>
           </div>
           <Input
             type='file'
             accept='image/jpeg,image/png,image/webp'
-            multiple
             className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
+            disabled={initialImages.length > 0 || isImageActionPending}
             onChange={handleImageFilesChange}
           />
-          {selectedImageFiles.length > 0 ? (
-            <p className='text-xs text-text-muted'>{selectedImageFiles.length} image(s) selected for upload.</p>
+          {selectedImageFile ? (
+            <p className='text-xs text-text-muted'>Selected image: {selectedImageFile.name}</p>
           ) : null}
           {imageValidationError ? <p className='text-xs text-destructive'>{imageValidationError}</p> : null}
           {initialImages.length > 0 ? (
             <div className='space-y-2'>
-              <p className='text-xs font-medium uppercase tracking-[1.2px] text-text-muted'>Current Images</p>
+              <p className='text-xs font-medium uppercase tracking-[1.2px] text-text-muted'>Current Image</p>
+              <p className='text-xs text-text-muted'>Remove the current image before uploading a replacement.</p>
               <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
                 {initialImages.map(productImage => {
                   const imageUrl = productImage.image.url || productImage.image.image;

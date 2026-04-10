@@ -3,6 +3,10 @@ export const PRODUCT_FORM_MAX_LENGTHS = {
   features: 500,
 } as const;
 
+export const SURFACE_TYPE_FORM_MAX_LENGTHS = {
+  name: 100,
+} as const;
+
 export const PRODUCT_STATUS_OPTIONS = [
   { label: 'Active', value: 'active' },
   { label: 'Inactive', value: 'inactive' },

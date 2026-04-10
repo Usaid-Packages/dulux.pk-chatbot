@@ -131,9 +131,11 @@ export const QualityDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <section className='wf-card wf-card-p4 border-primary/15 bg-white'>
             <div className='flex items-start justify-between gap-2'>
-              <div>
+              <div className='min-w-0'>
                 <p className='text-[11px] font-semibold uppercase tracking-[1.5px] text-primary'>Claim Profile</p>
-                <h1 className='text-lg font-bold text-text-primary'>{claim.customerName}</h1>
+                <h1 className='truncate text-lg font-bold text-text-primary' title={claim.customerName}>
+                  {claim.customerName}
+                </h1>
                 <p className='text-sm text-text-muted'>{claim.phone}</p>
               </div>
               <span className='chip-claim'>{claim.claimNumber}</span>

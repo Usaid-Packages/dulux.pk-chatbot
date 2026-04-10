@@ -42,7 +42,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     label: 'Quality Review',
     path: ROUTES.QUALITY,
     group: 'Warranty',
-    allowedRoles: ['admin', 'quality'],
+    allowedRoles: ['quality'],
   },
   {
     icon: 'MessageSquareText',

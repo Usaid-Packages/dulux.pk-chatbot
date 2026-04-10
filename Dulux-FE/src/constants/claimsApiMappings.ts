@@ -39,7 +39,7 @@ const WORKFLOW_STATE_MAP: Record<string, ClaimWorkflowState> = {
 };
 
 const UI_STATUS_TO_API_MAP: Record<Exclude<ClaimListStatusFilter, 'all'>, string> = {
-  pending: 'SUBMITTED',
+  pending: 'IN_REVIEW',
   forwarded: 'QA_REVIEW',
   approved: 'APPROVED',
   rejected: 'REJECTED',

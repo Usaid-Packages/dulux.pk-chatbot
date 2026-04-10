@@ -37,24 +37,22 @@ export const ProductCreatePage = (): JSX.Element => {
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const uploadAndAttachImages = async (productId: string, imageFiles: File[]): Promise<void> => {
-    for (const imageFile of imageFiles) {
-      const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
-      await attachProductImageMutation.mutateAsync({
-        productId,
-        payload: {
-          image_id: imageId,
-        },
-      });
-    }
+  const uploadAndAttachImage = async (productId: string, imageFile: File): Promise<void> => {
+    const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
+    await attachProductImageMutation.mutateAsync({
+      productId,
+      payload: {
+        image_id: imageId,
+      },
+    });
   };
 
-  const handleSubmit = ({ values, imageFiles }: ProductFormSubmission): void => {
+  const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
     createProductMutation.mutate(mapProductFormValuesToPayload(values), {
       onSuccess: async createdProduct => {
         try {
-          if (imageFiles.length > 0) {
-            await uploadAndAttachImages(String(createdProduct.id), imageFiles);
+          if (imageFile) {
+            await uploadAndAttachImage(String(createdProduct.id), imageFile);
           }
           toast.success('Product created successfully.');
         } catch (error) {
@@ -101,6 +99,7 @@ export const ProductCreatePage = (): JSX.Element => {
       isSubmitting={
         createProductMutation.isPending || uploadProductImageMutation.isPending || attachProductImageMutation.isPending
       }
+      useSplitLongFieldLayout
       surfaceTypes={surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES}
       basecoatOptions={basecoatOptionsQuery.data?.results ?? EMPTY_BASECOAT_OPTIONS}
       onSubmit={handleSubmit}

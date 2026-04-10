@@ -17,6 +17,10 @@ const getBreadcrumb = (pathName: string): string | null => {
 };
 
 const getBackRoute = (pathName: string): string | null => {
+  if (pathName.startsWith(ROUTES.MANUAL_REGISTRATION_ROOT)) {
+    return ROUTES.REGISTRATIONS;
+  }
+
   if (pathName.startsWith(`${ROUTES.REGISTRATIONS}/`)) {
     return ROUTES.REGISTRATIONS;
   }

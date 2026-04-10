@@ -133,7 +133,7 @@ export interface ProductFormValues {
 
 export interface ProductFormSubmission {
   values: ProductFormValues;
-  imageFiles: File[];
+  imageFile: File | null;
 }
 
 export interface SurfaceTypeFormValues {
