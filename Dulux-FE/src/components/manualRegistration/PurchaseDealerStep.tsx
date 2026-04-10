@@ -79,7 +79,9 @@ export const PurchaseDealerStep = (): JSX.Element => {
 
       <div className='grid gap-4 md:grid-cols-2'>
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Purchase Date</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Purchase Date <span className='text-destructive'>*</span>
+          </span>
           <Controller
             name='purchaseDate'
             control={control}
@@ -161,7 +163,9 @@ export const PurchaseDealerStep = (): JSX.Element => {
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Dealer Name</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Dealer Name <span className='text-destructive'>*</span>
+          </span>
           <Input
             placeholder='e.g. Color World Traders'
             maxLength={DEALER_NAME_MAX_LENGTH}
@@ -171,7 +175,9 @@ export const PurchaseDealerStep = (): JSX.Element => {
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Dealer City</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Dealer City <span className='text-destructive'>*</span>
+          </span>
           <Input placeholder='e.g. Karachi' maxLength={DEALER_CITY_MAX_LENGTH} {...register('purchaseDealerCity')} />
           {errors.purchaseDealerCity ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerCity.message}</p>
@@ -179,7 +185,9 @@ export const PurchaseDealerStep = (): JSX.Element => {
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Dealer Address</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Dealer Address <span className='text-destructive'>*</span>
+          </span>
           <Input
             placeholder='Street, area, city'
             maxLength={DEALER_ADDRESS_MAX_LENGTH}

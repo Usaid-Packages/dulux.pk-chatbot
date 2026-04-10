@@ -734,7 +734,7 @@
   }
 
   .wf-card {
-    @apply rounded-2xl border border-border bg-surface shadow-[0_12px_34px_rgba(19,87,168,0.08)];
+    @apply rounded-2xl border border-border bg-white shadow-[0_12px_34px_rgba(19,87,168,0.08)];
   }
 
   .wf-card-p2 {
@@ -774,7 +774,7 @@
   }
 
   .wf-stat-card {
-    @apply rounded-2xl border border-border bg-surface p-4 shadow-[0_10px_24px_rgba(20,88,169,0.08)];
+    @apply rounded-2xl border border-border bg-white p-4 shadow-[0_10px_24px_rgba(20,88,169,0.08)];
   }
 
   .wf-stat-card-highlight-amber {
@@ -786,7 +786,7 @@
   }
 
   .wf-toolbar-panel {
-    @apply rounded-2xl border border-border bg-surface p-4;
+    @apply rounded-2xl border border-border bg-white p-4;
   }
 
   .wf-toolbar-panel-contrast {
@@ -794,7 +794,7 @@
   }
 
   .wf-tabs-panel {
-    @apply rounded-2xl border border-border bg-surface p-2;
+    @apply rounded-2xl border border-border bg-white p-2;
   }
 
   .wf-tabs-panel-contrast {
@@ -802,7 +802,7 @@
   }
 
   .wf-pagination-panel {
-    @apply flex items-center justify-between rounded-2xl border border-border bg-surface p-4;
+    @apply flex items-center justify-between rounded-2xl border border-border bg-white p-4;
   }
 
   .wf-list-shell {
@@ -886,7 +886,7 @@
   }
 
   .card {
-    @apply rounded-2xl border border-border bg-surface p-5 shadow-[0_12px_28px_rgba(20,87,167,0.08)];
+    @apply rounded-2xl border border-border bg-white p-5 shadow-[0_12px_28px_rgba(20,87,167,0.08)];
   }
 
   .card-title {

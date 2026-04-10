@@ -19,7 +19,7 @@ export const RegistrationFilters = ({ searchValue, onSearchChange }: Registratio
   };
 
   return (
-    <section className='wf-toolbar-panel border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+    <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
       <div className='grid gap-3 md:grid-cols-1'>
         <Input
           type='search'

@@ -64,7 +64,7 @@ export const ConversationListPanel = ({
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
   return (
-    <section className='flex h-[calc(100vh-16rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+    <section className='flex h-[calc(100vh-16rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-white p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
       <div className='flex min-h-0 flex-1 flex-col gap-3'>
         <div className='space-y-2 rounded-xl border border-primary/20 bg-white/85 p-3'>
           <Input

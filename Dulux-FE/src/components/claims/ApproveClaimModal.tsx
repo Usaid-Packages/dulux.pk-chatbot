@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { useRef } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -39,6 +40,7 @@ export const ApproveClaimModal = ({
   onClose,
   onSubmit,
 }: ApproveClaimModalProps): JSX.Element => {
+  const voucherInputRef = useRef<HTMLInputElement | null>(null);
   const {
     handleSubmit,
     register,
@@ -54,6 +56,7 @@ export const ApproveClaimModal = ({
   });
 
   const notes = watch('notes') ?? '';
+  const voucher = watch('voucher');
   const previewHtml = createClaimApprovedTemplate(claim, notes.trim() || 'Claim approved after final review.');
 
   const handleOpenChange = (open: boolean): void => {
@@ -69,7 +72,7 @@ export const ApproveClaimModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[700px]'>
+      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>Final Approve Claim</DialogTitle>
           <DialogDescription>
@@ -94,27 +97,40 @@ export const ApproveClaimModal = ({
 
             <div className='space-y-2'>
               <label htmlFor='claim-voucher-file' className='text-sm font-medium text-text-primary'>
-                Voucher File
+                Voucher File <span className='text-destructive'>*</span>
               </label>
               <Controller
                 name='voucher'
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    id='claim-voucher-file'
-                    type='file'
-                    accept='.pdf,.png,.jpg,.jpeg'
-                    onChange={event => {
-                      const voucherFile = event.target.files?.[0];
-                      if (!voucherFile) {
-                        return;
-                      }
-                      field.onChange(voucherFile);
-                    }}
-                    onBlur={field.onBlur}
-                  />
+                  <>
+                    <Input
+                      id='claim-voucher-file'
+                      ref={voucherInputRef}
+                      type='file'
+                      className='sr-only'
+                      accept='.pdf,.png,.jpg,.jpeg'
+                      onChange={event => {
+                        const voucherFile = event.target.files?.[0];
+                        if (!voucherFile) {
+                          return;
+                        }
+                        field.onChange(voucherFile);
+                      }}
+                      onBlur={field.onBlur}
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='w-full justify-start rounded-xl border-primary/20 bg-white'
+                      onClick={() => voucherInputRef.current?.click()}
+                    >
+                      {voucher ? 'Change voucher file' : 'Upload voucher file'}
+                    </Button>
+                  </>
                 )}
               />
+              {voucher ? <p className='text-xs text-text-muted'>Selected: {voucher.name}</p> : null}
               {errors.voucher ? <p className='text-xs text-destructive'>{errors.voucher.message}</p> : null}
             </div>
 

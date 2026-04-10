@@ -67,7 +67,7 @@ export const RejectClaimQAModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[700px]'>
+      <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[700px]'>
         <DialogHeader>
           <DialogTitle>Reject Claim (Quality)</DialogTitle>
           <DialogDescription>Provide technical reason and notes before rejection.</DialogDescription>

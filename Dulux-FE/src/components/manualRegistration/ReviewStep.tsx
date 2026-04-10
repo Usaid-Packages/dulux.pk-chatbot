@@ -8,10 +8,14 @@ import { useGetManualRegistrationProductsQuery } from '#/data-layer/registration
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const renderReviewRow = (label: string, value?: string): JSX.Element => {
+  const normalizedValue = value?.trim() || '—';
+
   return (
     <div key={label} className='rounded-md border border-border bg-surface-subtle p-3'>
       <p className='text-xs uppercase tracking-wide text-text-muted'>{label}</p>
-      <p className='mt-1 break-words text-sm font-medium text-text-primary'>{value ?? '—'}</p>
+      <p className='mt-1 line-clamp-3 break-words text-sm font-medium text-text-primary' title={normalizedValue}>
+        {normalizedValue}
+      </p>
     </div>
   );
 };
@@ -73,7 +77,7 @@ export const ReviewStep = (): JSX.Element => {
 
       <div className='space-y-3'>
         <h4 className='text-sm font-semibold text-text-primary'>Personal Information</h4>
-        <div className='grid gap-3 md:grid-cols-2'>
+        <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
           {renderReviewRow('Customer Name', values.customerName)}
           {renderReviewRow('Phone Number', values.phoneNumber)}
           {renderReviewRow('Email', values.email)}
@@ -86,7 +90,7 @@ export const ReviewStep = (): JSX.Element => {
 
       <div className='space-y-3'>
         <h4 className='text-sm font-semibold text-text-primary'>Purchase & Dealer</h4>
-        <div className='grid gap-3 md:grid-cols-2'>
+        <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
           {renderReviewRow('Purchase Date', values.purchaseDate)}
           {renderReviewRow('Dealer Name', values.purchaseDealer)}
           {renderReviewRow('Dealer City', values.purchaseDealerCity)}
@@ -98,7 +102,7 @@ export const ReviewStep = (): JSX.Element => {
       <div className='space-y-3'>
         <h4 className='text-sm font-semibold text-text-primary'>Products & Invoices</h4>
         <div className='space-y-3'>
-          <div className='grid gap-3 md:grid-cols-2'>
+          <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
             {renderReviewRow('Topcoat Product', topcoatProductLabel)}
             {renderReviewRow('Topcoat Quantity', values.topcoatQuantity)}
             {renderReviewRow('Basecoat Product', basecoatProductLabel || '--')}
@@ -135,7 +139,7 @@ export const ReviewStep = (): JSX.Element => {
                 className='space-y-2 rounded-md border border-border p-3'
               >
                 <p className='text-sm font-semibold text-text-primary'>Paint Pair {index + 2}</p>
-                <div className='grid gap-3 md:grid-cols-2'>
+                <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
                   {renderReviewRow('Topcoat Product', pairTopcoatLabel)}
                   {renderReviewRow('Topcoat Quantity', pair.topcoatQuantity)}
                   {renderReviewRow('Basecoat Product', pairBasecoatLabel)}

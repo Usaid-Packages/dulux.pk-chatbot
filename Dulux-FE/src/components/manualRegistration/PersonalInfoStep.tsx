@@ -53,13 +53,17 @@ export const PersonalInfoStep = (): JSX.Element => {
 
       <div className='grid gap-4 md:grid-cols-2'>
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Customer Name</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Customer Name <span className='text-destructive'>*</span>
+          </span>
           <Input placeholder='e.g. Ahmed Raza' {...register('customerName')} />
           {errors.customerName ? <p className='text-xs text-destructive'>{errors.customerName.message}</p> : null}
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Phone Number</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Phone Number <span className='text-destructive'>*</span>
+          </span>
           <Input
             placeholder='92XXXXXXXXXX'
             {...register('phoneNumber')}
@@ -70,19 +74,25 @@ export const PersonalInfoStep = (): JSX.Element => {
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Email</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Email <span className='text-destructive'>*</span>
+          </span>
           <Input type='email' placeholder='customer@example.com' {...register('email')} />
           {errors.email ? <p className='text-xs text-destructive'>{errors.email.message}</p> : null}
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>City</span>
+          <span className='text-sm font-medium text-text-primary'>
+            City <span className='text-destructive'>*</span>
+          </span>
           <Input placeholder='e.g. Lahore' {...register('city')} />
           {errors.city ? <p className='text-xs text-destructive'>{errors.city.message}</p> : null}
         </label>
 
         <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>Province</span>
+          <span className='text-sm font-medium text-text-primary'>
+            Province <span className='text-destructive'>*</span>
+          </span>
           <Input placeholder='e.g. Punjab' {...register('province')} />
           {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
         </label>
@@ -95,7 +105,9 @@ export const PersonalInfoStep = (): JSX.Element => {
       </div>
 
       <label className='space-y-2'>
-        <span className='text-sm font-medium text-text-primary'>Site Address</span>
+        <span className='text-sm font-medium text-text-primary'>
+          Site Address <span className='text-destructive'>*</span>
+        </span>
         <Input placeholder='Street, area, city' {...register('siteAddress')} />
         {errors.siteAddress ? <p className='text-xs text-destructive'>{errors.siteAddress.message}</p> : null}
       </label>

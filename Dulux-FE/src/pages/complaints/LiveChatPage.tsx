@@ -121,20 +121,6 @@ export const LiveChatPage = (): JSX.Element => {
 
   return (
     <main className='wf-detail-shell flex min-h-[calc(100vh-8.75rem)] flex-col overflow-y-auto pb-4'>
-      <section className='relative overflow-hidden rounded-3xl border border-primary/20 bg-[linear-gradient(120deg,#0d4ea8_0%,#2a7ddb_45%,#7fc5ff_100%)] p-5 text-white md:p-6'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_8%,rgba(255,255,255,0.32),transparent_42%)]'
-        />
-        <div className='relative'>
-          <p className='text-xs font-semibold uppercase tracking-[2px] text-blue-100'>Live Support Operations</p>
-          <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-white'>Live Chat</h1>
-          <p className='text-sm text-blue-50/90'>
-            Manage customer conversations in real time with better visibility and faster resolution.
-          </p>
-        </div>
-      </section>
-
       <ConversationStats stats={conversationStats} />
 
       <section className='grid min-h-0 flex-1 gap-4 xl:grid-cols-[340px_1fr_300px]'>

@@ -47,7 +47,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
 
   return (
     <Dialog open={isOpen} onOpenChange={handleModalClose}>
-      <DialogContent className='flex max-h-[78vh] flex-col overflow-hidden border-primary/20 bg-[linear-gradient(170deg,#ffffff_0%,#f1f7ff_100%)] sm:max-w-[520px]'>
+      <DialogContent className='flex max-h-[78vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[520px]'>
         <DialogHeader>
           <DialogTitle>Request Resubmission</DialogTitle>
           <DialogDescription>Select the fields that need correction and add notes for the customer.</DialogDescription>
