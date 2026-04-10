@@ -50,7 +50,7 @@ class WarrantyCertificateTests(TestCase):
 
     def test_generate_warranty_certificate_uses_second_page_when_footer_does_not_fit(self):
         registration = create_registration()
-        for _ in range(12):
+        for _ in range(2):
             topcoat = create_product(name=f"Warranty Topcoat {_}", product_type=ProductType.TOPCOAT, warranty_years=5)
             basecoat = create_product(
                 name=f"Warranty Basecoat {_}", product_type=ProductType.BASECOAT, warranty_years=3

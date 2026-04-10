@@ -284,16 +284,6 @@ def generate_warranty_certificate(registration):
     styles = _build_story_styles()
 
     buffer = BytesIO()
-    document = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        topMargin=FIRST_PAGE_TOP_MARGIN,
-        bottomMargin=FIRST_PAGE_BOTTOM_MARGIN,
-        leftMargin=PAGE_HORIZONTAL_MARGIN,
-        rightMargin=PAGE_HORIZONTAL_MARGIN,
-        pageCompression=0,
-    )
-
     story = [
         Spacer(1, 8 * mm),
         *_build_customer_details(registration, styles),
@@ -305,7 +295,17 @@ def generate_warranty_certificate(registration):
     story.extend(_build_registration_box(registration, styles))
     first_page_content_height = _estimate_story_height(story)
     first_page_height_with_footer = A4[1] - FIRST_PAGE_TOP_MARGIN - PAGE_TWO_FOOTER_HEIGHT
-    include_footer_on_first_page = first_page_content_height <= first_page_height_with_footer
+    include_footer_on_first_page = len(topcoat_rows) <= 1 and first_page_content_height <= first_page_height_with_footer
+
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=FIRST_PAGE_TOP_MARGIN,
+        bottomMargin=PAGE_TWO_FOOTER_HEIGHT if include_footer_on_first_page else FIRST_PAGE_BOTTOM_MARGIN,
+        leftMargin=PAGE_HORIZONTAL_MARGIN,
+        rightMargin=PAGE_HORIZONTAL_MARGIN,
+        pageCompression=0,
+    )
 
     if not include_footer_on_first_page:
         story.extend([PageBreak(), Spacer(1, 1 * mm)])
