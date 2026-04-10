@@ -41,7 +41,7 @@ export interface DashboardFlowCardModel {
   to: string;
   description: string;
   screens: number;
-  stats: [DashboardStatItem, DashboardStatItem];
+  stats: DashboardStatItem[];
 }
 
 export interface DashboardTrendPoint {
