@@ -41,7 +41,7 @@ export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
   ManualRegistrationStepId,
   readonly (keyof ManualRegistrationFormValues)[]
 > = {
-  1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress', 'postalCode'],
+  1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress'],
   2: ['purchaseDate', 'purchaseDealer', 'purchaseDealerCity', 'purchaseDealerAddress', 'notes'],
   3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity', 'additionalPaintPairs'],
   4: ['invoices'],

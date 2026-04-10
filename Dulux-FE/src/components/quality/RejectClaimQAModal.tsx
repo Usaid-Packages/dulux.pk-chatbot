@@ -18,6 +18,7 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { qualityRejectSchema, type QualityRejectFormValues } from '#/schemas/quality.schema';
 import { QUALITY_REJECTION_REASONS } from './constants';
 
@@ -109,6 +110,7 @@ export const RejectClaimQAModal = ({
               <Textarea
                 id='qa-technical-notes'
                 className='rounded-xl border-primary/20 bg-white'
+                maxLength={NOTES_MAX_LENGTH}
                 {...register('technicalNotes')}
                 aria-invalid={Boolean(errors.technicalNotes)}
               />

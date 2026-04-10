@@ -10,3 +10,4 @@ export const DEFAULT_API_ERROR_MESSAGE = 'Something went wrong. Please try again
 
 export const EMAIL = 'email';
 export const PASSWORD = 'password';
+export const NOTES_MAX_LENGTH = 500;

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
-import { queryKeys } from '#/constants';
+import { NOTES_MAX_LENGTH, queryKeys } from '#/constants';
 import { useAuthContext } from '#/context';
 import {
   useCloseConversationMutation,
@@ -106,6 +106,10 @@ export const useComplaintThread = (threadId: string): UseComplaintThreadResult =
     const normalizedClosureNote = closureNote.trim();
     if (normalizedClosureNote.length === 0) {
       toast.error('Closure note is required.');
+      return;
+    }
+    if (normalizedClosureNote.length > NOTES_MAX_LENGTH) {
+      toast.error(`Closure note must be ${NOTES_MAX_LENGTH} characters or fewer.`);
       return;
     }
 

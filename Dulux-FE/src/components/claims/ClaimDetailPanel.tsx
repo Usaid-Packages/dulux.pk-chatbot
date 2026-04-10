@@ -65,10 +65,6 @@ export const ClaimDetailPanel = ({
             <dt className='text-text-muted'>Topcoat</dt>
             <dd className='font-medium text-text-primary'>{claim.topcoat}</dd>
           </div>
-          <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
-            <dt className='text-text-muted'>Batch Number</dt>
-            <dd className='font-medium text-text-primary'>{claim.batchNumber}</dd>
-          </div>
           <div className='flex justify-between gap-3'>
             <dt className='text-text-muted'>Submitted</dt>
             <dd className='font-medium text-text-primary'>{formatDate(claim.submittedAt)}</dd>

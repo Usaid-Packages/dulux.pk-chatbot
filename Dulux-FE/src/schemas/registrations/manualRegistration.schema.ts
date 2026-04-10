@@ -4,6 +4,9 @@ import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SI
 
 const quantityPattern = /^\d+(\.\d{1,2})?$/;
 const pakistanPhoneInputPattern = /^923\d{9}$/;
+const noDigitsPattern = /^[^\d]*$/;
+const CITY_MAX_LENGTH = 80;
+const PROVINCE_MAX_LENGTH = 80;
 const DEALER_NAME_MAX_LENGTH = 120;
 const DEALER_CITY_MAX_LENGTH = 80;
 const DEALER_ADDRESS_MAX_LENGTH = 180;
@@ -56,8 +59,18 @@ const manualRegistrationBaseSchema = z.object({
       message: 'Phone number must be in 923XXXXXXXXX format.',
     }),
   email: z.string().trim().min(1, 'Email is required.').pipe(z.email('Please enter a valid email address.')),
-  city: z.string().trim().min(2, 'City is required.'),
-  province: z.string().trim().min(2, 'Province is required.'),
+  city: z
+    .string()
+    .trim()
+    .min(2, 'City is required.')
+    .max(CITY_MAX_LENGTH, `City must be ${CITY_MAX_LENGTH} characters or less.`)
+    .regex(noDigitsPattern, 'City must not contain numbers.'),
+  province: z
+    .string()
+    .trim()
+    .min(2, 'Province is required.')
+    .max(PROVINCE_MAX_LENGTH, `Province must be ${PROVINCE_MAX_LENGTH} characters or less.`)
+    .regex(noDigitsPattern, 'Province must not contain numbers.'),
   siteAddress: z.string().trim().min(5, 'Site address is required.'),
   postalCode: z
     .string()
@@ -74,17 +87,20 @@ const manualRegistrationBaseSchema = z.object({
     .string()
     .trim()
     .min(2, 'Dealer name is required.')
-    .max(DEALER_NAME_MAX_LENGTH, `Dealer name must be ${DEALER_NAME_MAX_LENGTH} characters or less.`),
+    .max(DEALER_NAME_MAX_LENGTH, `Dealer name must be ${DEALER_NAME_MAX_LENGTH} characters or less.`)
+    .regex(noDigitsPattern, 'Dealer name must not contain numbers.'),
   purchaseDealerCity: z
     .string()
     .trim()
     .min(2, 'Dealer city is required.')
-    .max(DEALER_CITY_MAX_LENGTH, `Dealer city must be ${DEALER_CITY_MAX_LENGTH} characters or less.`),
+    .max(DEALER_CITY_MAX_LENGTH, `Dealer city must be ${DEALER_CITY_MAX_LENGTH} characters or less.`)
+    .regex(noDigitsPattern, 'Dealer city must not contain numbers.'),
   purchaseDealerAddress: z
     .string()
     .trim()
     .min(5, 'Dealer address is required.')
-    .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`),
+    .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`)
+    .regex(noDigitsPattern, 'Dealer address must not contain numbers.'),
   notes: z.string().trim().max(500, 'Notes must be 500 characters or less.'),
   topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
   topcoatQuantity: z
@@ -147,7 +163,6 @@ export const manualRegistrationStep1Schema = manualRegistrationBaseSchema.pick({
   city: true,
   province: true,
   siteAddress: true,
-  postalCode: true,
 });
 
 export const manualRegistrationStep2Schema = manualRegistrationBaseSchema.pick({

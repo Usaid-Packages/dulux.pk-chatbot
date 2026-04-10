@@ -38,9 +38,13 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
           {items.map(item => (
             <TableRow key={item.id}>
               <TableCell>
-                <span className='chip-claim'>{item.claimNumber}</span>
+                <span className='chip-claim'>{item.id}</span>
               </TableCell>
-              <TableCell>{item.customerName}</TableCell>
+              <TableCell>
+                <span className='block max-w-[220px] truncate' title={item.customerName}>
+                  {item.customerName}
+                </span>
+              </TableCell>
               <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
               <TableCell>{item.forwardedBy}</TableCell>
               <TableCell>{formatDate(item.submittedAt)}</TableCell>

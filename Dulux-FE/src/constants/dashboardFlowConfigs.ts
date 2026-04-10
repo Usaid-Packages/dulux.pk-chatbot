@@ -22,7 +22,7 @@ export const DASHBOARD_FLOW_CONFIGS: DashboardFlowConfig[] = [
     description: 'Create and manage registrations through a guided 5-step process.',
     defaultStats: {
       screens: 6,
-      primaryStat: { label: 'Drafts', value: 7 },
+      primaryStat: { label: 'In Progress', value: 7 },
       secondaryStat: { label: 'Submitted Today', value: 5 },
     },
   },

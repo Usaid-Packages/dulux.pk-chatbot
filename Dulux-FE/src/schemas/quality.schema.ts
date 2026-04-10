@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { claimDetailSchema, claimStatusSchema, claimWorkflowStateSchema } from '#/schemas/claim.schema';
 import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quality.types';
 
@@ -61,21 +62,29 @@ export const qualityDetailSchema = claimDetailSchema.extend({
 });
 
 export const qualityApproveSchema = z.object({
-  technicalNotes: z.string().trim().min(10, 'Technical notes must be at least 10 characters.'),
+  technicalNotes: z
+    .string()
+    .trim()
+    .min(10, 'Technical notes must be at least 10 characters.')
+    .max(NOTES_MAX_LENGTH, `Technical notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
 });
 
 export const qualityRejectSchema = z.object({
   technicalReason: z.enum(QUALITY_TECHNICAL_REASONS, {
     message: 'Technical reason is required.',
   }),
-  technicalNotes: z.string().trim().min(10, 'Technical notes must be at least 10 characters.'),
+  technicalNotes: z
+    .string()
+    .trim()
+    .min(10, 'Technical notes must be at least 10 characters.')
+    .max(NOTES_MAX_LENGTH, `Technical notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
 });
 
 export const qualityRequestInfoSchema = z
   .object({
     requiredItems: z.array(z.enum(QUALITY_REQUIRED_ITEMS)).min(1, 'Select at least one required item.'),
     otherText: z.string().trim().max(300, 'Other details must be 300 characters or fewer.').optional(),
-    notes: z.string().trim().max(300, 'Notes must be 300 characters or fewer.').optional(),
+    notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
   })
   .superRefine((values, ctx) => {
     const hasOtherItem = values.requiredItems.includes('OTHER');

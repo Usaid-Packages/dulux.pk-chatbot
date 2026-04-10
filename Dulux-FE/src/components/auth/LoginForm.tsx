@@ -2,11 +2,9 @@ import type { JSX } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
 
 import { FormInputField } from '#/components/shared';
 import { Button } from '#/components/ui/Button';
-import { ROUTES } from '#/constants';
 import { authFormFields } from '#/constants/forms/authFormFields';
 import type { LoginFormValues } from '#/schemas/authSchemas';
 import { loginSchema } from '#/schemas/authSchemas';
@@ -53,14 +51,6 @@ export const LoginForm = ({ isSubmitting, onSubmit }: LoginFormProps): JSX.Eleme
           registration={register(passwordField.name)}
           error={errors[passwordField.name]}
         />
-      </div>
-      <div className='flex items-center justify-end'>
-        <Link
-          className='text-sm font-semibold text-primary underline-offset-2 hover:underline'
-          to={ROUTES.FORGOT_PASSWORD}
-        >
-          Forgot password?
-        </Link>
       </div>
       <Button
         className='h-11 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_28px_rgba(24,102,198,0.35)] hover:brightness-105'

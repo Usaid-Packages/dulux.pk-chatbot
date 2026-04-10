@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import { requestMoreInfoSchema, type RequestMoreInfoFormValues } from '#/schemas/claim.schema';
 import { REQUEST_INFO_ITEMS } from './constants';
 
@@ -139,6 +140,7 @@ export const RequestMoreInfoModal = ({
             <Textarea
               id='request-note'
               className='rounded-xl border-primary/20 bg-white'
+              maxLength={NOTES_MAX_LENGTH}
               {...register('note')}
               aria-invalid={Boolean(errors.note)}
             />

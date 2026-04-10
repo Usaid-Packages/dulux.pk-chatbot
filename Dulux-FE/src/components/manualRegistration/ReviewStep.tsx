@@ -83,7 +83,6 @@ export const ReviewStep = (): JSX.Element => {
           {renderReviewRow('Email', values.email)}
           {renderReviewRow('City', values.city)}
           {renderReviewRow('Province', values.province)}
-          {renderReviewRow('Postal Code', values.postalCode || '--')}
           {renderReviewRow('Site Address', values.siteAddress)}
         </div>
       </div>

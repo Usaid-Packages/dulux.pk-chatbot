@@ -107,25 +107,6 @@ export const ClaimDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <section className='rounded-2xl border border-border bg-white p-5 md:p-6'>
-        <div className='flex items-start gap-3'>
-          <Button
-            type='button'
-            variant='outline'
-            className='h-10 w-10 rounded-xl p-0'
-            onClick={handleBackClick}
-            aria-label='Back to claims'
-          >
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <div>
-            <p className='text-xs font-semibold uppercase tracking-[2px] text-text-muted'>Claim Review</p>
-            <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>{claim.customerName}</h1>
-            <p className='text-sm text-text-muted'>Inspect evidence, trace workflow, and finalize claim actions.</p>
-          </div>
-        </div>
-      </section>
-
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
           <ClaimImages photos={claim.evidencePhotos} />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { JSX } from 'react';
+import type { ChangeEvent, JSX } from 'react';
 
 import { format, parseISO, subDays } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Input, Textarea } from '#/components/ui';
 import { Calendar } from '#/components/ui/Calendar';
+import { NOTES_MAX_LENGTH } from '#/constants';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const DATE_FORMAT = 'yyyy-MM-dd';
@@ -30,6 +31,10 @@ const formatPurchaseDate = (value: Date | undefined): string => {
   }
 
   return format(value, DATE_FORMAT);
+};
+
+const handleLettersOnlyChange = (event: ChangeEvent<HTMLInputElement>): void => {
+  event.currentTarget.value = event.currentTarget.value.replace(/\d/g, '');
 };
 
 /**
@@ -170,6 +175,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
             placeholder='e.g. Color World Traders'
             maxLength={DEALER_NAME_MAX_LENGTH}
             {...register('purchaseDealer')}
+            onChange={handleLettersOnlyChange}
           />
           {errors.purchaseDealer ? <p className='text-xs text-destructive'>{errors.purchaseDealer.message}</p> : null}
         </label>
@@ -178,7 +184,12 @@ export const PurchaseDealerStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Dealer City <span className='text-destructive'>*</span>
           </span>
-          <Input placeholder='e.g. Karachi' maxLength={DEALER_CITY_MAX_LENGTH} {...register('purchaseDealerCity')} />
+          <Input
+            placeholder='e.g. Karachi'
+            maxLength={DEALER_CITY_MAX_LENGTH}
+            {...register('purchaseDealerCity')}
+            onChange={handleLettersOnlyChange}
+          />
           {errors.purchaseDealerCity ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerCity.message}</p>
           ) : null}
@@ -192,6 +203,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
             placeholder='Street, area, city'
             maxLength={DEALER_ADDRESS_MAX_LENGTH}
             {...register('purchaseDealerAddress')}
+            onChange={handleLettersOnlyChange}
           />
           {errors.purchaseDealerAddress ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerAddress.message}</p>
@@ -201,7 +213,12 @@ export const PurchaseDealerStep = (): JSX.Element => {
 
       <label className='space-y-2'>
         <span className='text-sm font-medium text-text-primary'>Internal Notes (optional)</span>
-        <Textarea rows={4} placeholder='Notes for internal review...' {...register('notes')} />
+        <Textarea
+          rows={4}
+          maxLength={NOTES_MAX_LENGTH}
+          placeholder='Notes for internal review...'
+          {...register('notes')}
+        />
         {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
       </label>
     </section>

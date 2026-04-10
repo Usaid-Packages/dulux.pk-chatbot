@@ -127,25 +127,6 @@ export const QualityDetailPage = (): JSX.Element => {
 
   return (
     <main className='space-y-4'>
-      <section className='rounded-2xl border border-border bg-white p-5 md:p-6'>
-        <div className='flex items-start gap-3'>
-          <Button
-            type='button'
-            variant='outline'
-            className='h-10 w-10 rounded-xl p-0'
-            onClick={handleBackClick}
-            aria-label='Back to quality queue'
-          >
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <div>
-            <p className='text-xs font-semibold uppercase tracking-[2px] text-text-muted'>Quality Assessment</p>
-            <h1 className='mt-1 text-2xl font-extrabold tracking-tight text-text-primary'>{claim.customerName}</h1>
-            <p className='text-sm text-text-muted'>Conduct technical review and submit final quality decision.</p>
-          </div>
-        </div>
-      </section>
-
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
           <section className='wf-card wf-card-p4 border-primary/15 bg-white'>
@@ -170,10 +151,6 @@ export const QualityDetailPage = (): JSX.Element => {
               <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
                 <dt className='text-text-muted'>Topcoat</dt>
                 <dd className='font-medium text-text-primary'>{claim.topcoat}</dd>
-              </div>
-              <div className='flex justify-between gap-3'>
-                <dt className='text-text-muted'>Batch Number</dt>
-                <dd className='font-medium text-text-primary'>{claim.batchNumber}</dd>
               </div>
             </dl>
 
