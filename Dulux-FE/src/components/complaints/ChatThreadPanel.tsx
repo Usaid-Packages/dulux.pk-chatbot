@@ -31,6 +31,15 @@ const formatTime = (isoDateTime: string): string => {
   }).format(parsed);
 };
 
+const getTicketHeading = (thread: ConversationThread): string => {
+  const normalizedTicketId = thread.ticketId.trim();
+  if (normalizedTicketId.length > 0) {
+    return `Ticket #${normalizedTicketId}`;
+  }
+
+  return `Ticket #${thread.id}`;
+};
+
 /**
  * ChatThreadPanel renders selected conversation messages and message composer.
  *
@@ -99,10 +108,7 @@ export const ChatThreadPanel = ({
       <header className='space-y-2 border-b border-primary/15 bg-[linear-gradient(180deg,#ffffff_0%,#f3f8ff_100%)] px-4 py-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div>
-            <h2 className='text-base font-semibold text-text-primary'>{thread.customerName}</h2>
-            <p className='text-xs text-text-muted'>
-              {thread.claimNumber} · {thread.registrationId} · {thread.customerPhone}
-            </p>
+            <h2 className='text-base font-semibold text-text-primary'>{getTicketHeading(thread)}</h2>
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>

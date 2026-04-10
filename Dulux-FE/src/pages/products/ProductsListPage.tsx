@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
+import { ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
 import {
   Button,
   Empty,
@@ -22,7 +22,6 @@ import {
 } from '#/components/ui';
 import {
   useCreateSurfaceTypeMutation,
-  useDeleteSurfaceTypeMutation,
   useGetProductsQuery,
   useGetSurfaceTypesQuery,
   useUpdateSurfaceTypeMutation,
@@ -118,8 +117,6 @@ export const ProductsListPage = (): JSX.Element => {
     parsePageFromSearchParam(searchParams.get('surfacePage'))
   );
 
-  const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
-
   const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = useState<boolean>(false);
   const [surfaceTypeEditTarget, setSurfaceTypeEditTarget] = useState<SurfaceType | null>(null);
 
@@ -143,7 +140,6 @@ export const ProductsListPage = (): JSX.Element => {
 
   const createSurfaceTypeMutation = useCreateSurfaceTypeMutation();
   const updateSurfaceTypeMutation = useUpdateSurfaceTypeMutation();
-  const deleteSurfaceTypeMutation = useDeleteSurfaceTypeMutation();
 
   const products = productQuery.data?.results ?? EMPTY_PRODUCTS;
   const surfaceTypes = surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES;
@@ -286,30 +282,6 @@ export const ProductsListPage = (): JSX.Element => {
   const handleSurfaceEnvironmentFilterChange = (value: string): void => {
     setSurfaceEnvironmentFilter(value as SurfaceEnvironmentFilter);
     setSurfacePage(FIRST_PAGE);
-  };
-
-  const requestSurfaceTypeDelete = (surfaceType: SurfaceType): void => {
-    setSurfaceTypeDeleteTarget(surfaceType);
-  };
-
-  const closeSurfaceTypeDeleteModal = (): void => {
-    setSurfaceTypeDeleteTarget(null);
-  };
-
-  const confirmDeleteSurfaceType = (): void => {
-    if (!surfaceTypeDeleteTarget) {
-      return;
-    }
-
-    deleteSurfaceTypeMutation.mutate(String(surfaceTypeDeleteTarget.id), {
-      onSuccess: () => {
-        toast.success('Surface type deleted successfully.');
-        closeSurfaceTypeDeleteModal();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
   };
 
   const goToProductNextPage = (): void => {
@@ -533,7 +505,6 @@ export const ProductsListPage = (): JSX.Element => {
                 surfaceTypes={surfaceTypes}
                 linkedProductCountMap={linkedProductCountMap}
                 onEdit={openEditSurfaceTypeModal}
-                onDelete={requestSurfaceTypeDelete}
               />
 
               <section className='wf-pagination-panel'>
@@ -582,19 +553,6 @@ export const ProductsListPage = (): JSX.Element => {
         submitLabel={surfaceTypeEditTarget ? 'Save Changes' : 'Add Surface Type'}
         onClose={closeSurfaceTypeModal}
         onSubmit={submitSurfaceType}
-      />
-
-      <DeleteConfirmModal
-        isOpen={Boolean(surfaceTypeDeleteTarget)}
-        isSubmitting={deleteSurfaceTypeMutation.isPending}
-        title='Delete Surface Type'
-        description={
-          surfaceTypeDeleteTarget
-            ? `Are you sure you want to delete "${surfaceTypeDeleteTarget.name}"? This action cannot be undone.`
-            : 'Are you sure you want to delete this surface type?'
-        }
-        onClose={closeSurfaceTypeDeleteModal}
-        onConfirm={confirmDeleteSurfaceType}
       />
     </section>
   );

@@ -143,7 +143,18 @@ export const useAuditLogs = (): UseAuditLogsResult => {
   };
 
   const setSearch = (search: string): void => {
-    updateSearchParam('search', search);
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+
+      if (search.length > 0) {
+        nextParams.set('search', search);
+      } else {
+        nextParams.delete('search');
+      }
+
+      nextParams.set('page', String(DEFAULT_PAGE));
+      return nextParams;
+    });
   };
 
   const setPage = (nextPage: number): void => {

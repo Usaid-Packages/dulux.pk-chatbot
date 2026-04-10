@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { useState } from 'react';
 
 import { Badge, Button } from '#/components/ui';
 import { REGISTRATION_STATUS_LABELS } from '#/constants';
@@ -35,22 +36,28 @@ const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | '
   return 'pending';
 };
 
-const renderExpandableProvince = (value: string): JSX.Element => {
+const ExpandableProvinceValue = ({ value }: { value: string }): JSX.Element => {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
   if (value.length <= PROVINCE_TEXT_TRUNCATE_LENGTH) {
     return <span>{value}</span>;
   }
 
   const truncatedValue = `${value.slice(0, PROVINCE_TEXT_TRUNCATE_LENGTH)}...`;
+  const displayedValue = isExpanded ? value : truncatedValue;
+  const toggleLabel = isExpanded ? 'Show less' : 'Show more';
+
+  const handleToggle = (): void => {
+    setIsExpanded(previous => !previous);
+  };
 
   return (
-    <details className='group max-w-[220px] text-right'>
-      <summary className='list-none cursor-pointer'>
-        <p className='wrap-break-word text-right font-medium text-text-primary'>{truncatedValue}</p>
-        <span className='mt-1 block text-xs font-semibold text-primary group-open:hidden'>Show more</span>
-        <span className='mt-1 hidden text-xs font-semibold text-primary group-open:block'>Show less</span>
-      </summary>
-      <p className='mt-1 wrap-break-word text-right font-medium text-text-primary'>{value}</p>
-    </details>
+    <div className='max-w-[220px] text-right'>
+      <p className='wrap-break-word text-right font-medium text-text-primary'>{displayedValue}</p>
+      <button type='button' className='mt-1 text-xs font-semibold text-primary' onClick={handleToggle}>
+        {toggleLabel}
+      </button>
+    </div>
   );
 };
 
@@ -115,7 +122,9 @@ export const RegistrationDetailPanel = ({
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>Province</dt>
-            <dd>{renderExpandableProvince(registration.province)}</dd>
+            <dd>
+              <ExpandableProvinceValue value={registration.province} />
+            </dd>
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>Site Address</dt>

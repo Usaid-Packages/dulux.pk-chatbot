@@ -65,24 +65,29 @@ export const useClaims = (): UseClaimsResult => {
       ? (issueTypeParam as 'all' | ClaimIssueType)
       : DEFAULT_FILTERS.issueType;
 
-    const searchValue = searchParams.get('search')?.trim();
+    const searchValue = searchParams.get('search');
+    const normalizedSearchValue = searchValue?.trim();
     const pageParam = Number.parseInt(searchParams.get('page') ?? String(DEFAULT_FILTERS.page), 10);
 
     return {
       status,
       issueType,
-      search: searchValue && searchValue.length > 0 ? searchValue : undefined,
+      search: normalizedSearchValue && normalizedSearchValue.length > 0 ? (searchValue ?? undefined) : undefined,
       page: Number.isFinite(pageParam) && pageParam > 0 ? pageParam : DEFAULT_FILTERS.page,
       pageSize: DEFAULT_FILTERS.pageSize,
     };
   };
 
   const filters = createFiltersFromSearchParams();
+  const requestFilters: ClaimsListRequestParams = {
+    ...filters,
+    search: filters.search?.trim() || undefined,
+  };
   const createClaimMutation = useCreateClaimMutation();
 
   const claimsQuery = useQuery<ClaimsListResponse, Error>({
-    queryKey: queryKeys.claims.list(filters),
-    queryFn: () => getClaims(filters),
+    queryKey: queryKeys.claims.list(requestFilters),
+    queryFn: () => getClaims(requestFilters),
   });
   const cardCountsQuery = useQuery<ClaimsCardCounts, Error>({
     queryKey: queryKeys.claims.cardCounts,
@@ -108,11 +113,10 @@ export const useClaims = (): UseClaimsResult => {
   };
 
   const setSearch = (search?: string): void => {
-    const normalizedSearch = search?.trim();
     setSearchParams(previous => {
       const nextParams = new URLSearchParams(previous);
-      if (normalizedSearch && normalizedSearch.length > 0) {
-        nextParams.set('search', normalizedSearch);
+      if (search && search.length > 0) {
+        nextParams.set('search', search);
       } else {
         nextParams.delete('search');
       }

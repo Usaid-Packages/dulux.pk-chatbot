@@ -61,6 +61,8 @@
   so long content does not break layout.
 - Keep reusable domain constants in `src/constants/**` (not inside page/component files). Components should consume
   exported constants and avoid local constant duplication for shared config.
+- Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id)
+  and must not include any secondary metadata paragraph under the heading unless explicitly requested.
 
 ## Mistake Log (Short)
 
@@ -538,6 +540,32 @@
 - Fix: Removed the lower duplicate timestamp line and kept only the `Performed at` value in header metadata.
 - Rule: For timeline/event cards, render a single source of timestamp truth and avoid repeating the same meta field in
   detail sections.
+
+### 2026-04-10 19:25 - Registration detail runtime break after expandable-text refactor
+
+- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage
+  was left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
+  `/app/registrations/:id`.
+- Fix: Replaced the stale province call site with `<ExpandableDetailText value={registration.province} />` and reran
+  targeted lint.
+- Rule: After helper/component renames in a page, run a symbol-level search for old identifiers and verify no stale
+  references remain before handoff.
+
+### 2026-04-10 19:58 - Reintroduced removed secondary line in live chat thread header
+
+- Issue: Live chat thread header still rendered the secondary metadata line (`claimNumber · registrationId · customerPhone`)
+  even after the user requested only the `h2` heading remain.
+- Fix: Removed the secondary paragraph from `ChatThreadPanel` header and kept only customer name heading + status/channel badges.
+- Rule: When user explicitly asks to remove specific UI text blocks, treat those blocks as hard-removed and do not
+  reintroduce them in later UI refinements unless asked.
+
+### 2026-04-10 20:12 - Live chat heading label not aligned to ticket-id requirement
+
+- Issue: Live chat `h2` still showed customer name after user asked to retain only heading and align that heading to
+  ticket id.
+- Fix: Updated `ChatThreadPanel` heading to render `Ticket #<ticketId>` with fallback to conversation id.
+- Rule: When a heading format is explicitly requested, lock the exact text pattern in component logic and preserve it
+  across future UI passes.
 
 ## Final Check (Before Submit)
 

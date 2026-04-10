@@ -31,6 +31,8 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
 
 const LONG_TEXT_LIMIT = 180;
 const STATE_CHANGE_FIELDS = new Set(['state', 'workflow_state', 'workflowState', 'status']);
+const IMAGE_CHANGE_FIELDS = new Set(['images', 'image_ids', 'imageids']);
+const ASSIGNEE_CHANGE_FIELDS = new Set(['assigned_to', 'assignedto']);
 const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   approved_at: 'Approved at',
   approvedat: 'Approved at',
@@ -71,6 +73,11 @@ const formatFieldLabel = (fieldName: string): string => {
 interface RejectionFieldChangeItem {
   fieldName: string;
   note: string | null;
+}
+
+interface TimelineImagePreviewItem {
+  id: string;
+  url: string;
 }
 
 const isRejectionFieldsField = (fieldName: string): boolean => {
@@ -129,6 +136,10 @@ const isRecordValue = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
+const toFieldLookupKey = (fieldName: string): string => {
+  return fieldName.trim().replaceAll('_', '').toLowerCase();
+};
+
 const isDateField = (fieldName: string): boolean => {
   const normalized = fieldName.trim().toLowerCase();
   return normalized.endsWith('_at') || normalized.endsWith('at');
@@ -137,6 +148,21 @@ const isDateField = (fieldName: string): boolean => {
 const isActorField = (fieldName: string): boolean => {
   const normalized = fieldName.trim().toLowerCase();
   return normalized.endsWith('_by') || normalized.endsWith('by');
+};
+
+const isImageChangeField = (fieldName: string): boolean => {
+  return IMAGE_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const isAssigneeChangeField = (fieldName: string): boolean => {
+  return ASSIGNEE_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const formatTokenLabel = (value: string): string => {
+  return value
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, letter => letter.toUpperCase());
 };
 
 const formatUserReference = (value: unknown): string | null => {
@@ -157,7 +183,133 @@ const formatUserReference = (value: unknown): string | null => {
     return identity;
   }
 
-  return `${identity} (${role})`;
+  return `${identity} (${formatTokenLabel(role)})`;
+};
+
+const getNumericIdFromUnknown = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsedNumber = Number(value);
+    if (Number.isFinite(parsedNumber)) {
+      return parsedNumber;
+    }
+  }
+
+  return null;
+};
+
+const getImageIdFromItem = (item: unknown): number | null => {
+  if (!isRecordValue(item)) {
+    return null;
+  }
+
+  const directImageId = getNumericIdFromUnknown(item.image_id ?? item.imageId);
+  if (directImageId !== null) {
+    return directImageId;
+  }
+
+  const nestedImageId = isRecordValue(item.image) ? getNumericIdFromUnknown(item.image.id) : null;
+  if (nestedImageId !== null) {
+    return nestedImageId;
+  }
+
+  return getNumericIdFromUnknown(item.id);
+};
+
+const getImageUrlFromItem = (item: unknown): string | null => {
+  if (!isRecordValue(item)) {
+    return null;
+  }
+
+  if (typeof item.image_url === 'string' && item.image_url.trim().length > 0) {
+    return item.image_url.trim();
+  }
+
+  if (typeof item.imageUrl === 'string' && item.imageUrl.trim().length > 0) {
+    return item.imageUrl.trim();
+  }
+
+  if (typeof item.url === 'string' && item.url.trim().length > 0) {
+    return item.url.trim();
+  }
+
+  if (isRecordValue(item.image)) {
+    if (typeof item.image.image === 'string' && item.image.image.trim().length > 0) {
+      return item.image.image.trim();
+    }
+
+    if (typeof item.image.url === 'string' && item.image.url.trim().length > 0) {
+      return item.image.url.trim();
+    }
+  }
+
+  return null;
+};
+
+const toTimelineImagePreviewItems = (value: unknown): TimelineImagePreviewItem[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const previewMap = new Map<string, TimelineImagePreviewItem>();
+
+  value.forEach((item, index) => {
+    const imageUrl = getImageUrlFromItem(item);
+    if (!imageUrl) {
+      return;
+    }
+
+    const imageId = getImageIdFromItem(item);
+    const normalizedId = imageId !== null ? String(imageId) : `image-${index + 1}`;
+    const mapKey = `${normalizedId}-${imageUrl}`;
+
+    if (!previewMap.has(mapKey)) {
+      previewMap.set(mapKey, {
+        id: normalizedId,
+        url: imageUrl,
+      });
+    }
+  });
+
+  return Array.from(previewMap.values());
+};
+
+const formatImageIdsValue = (value: unknown): string => {
+  if (value === null) {
+    return 'No images';
+  }
+
+  if (!Array.isArray(value) || value.length === 0) {
+    return 'No images';
+  }
+
+  const imageIds = value.reduce<number[]>((accumulator, item) => {
+    const imageId = getImageIdFromItem(item);
+    if (imageId !== null) {
+      accumulator.push(imageId);
+      return accumulator;
+    }
+
+    const numericValue = getNumericIdFromUnknown(item);
+    if (numericValue !== null) {
+      accumulator.push(numericValue);
+    }
+
+    return accumulator;
+  }, []);
+
+  if (imageIds.length > 0) {
+    return `[${imageIds.join(', ')}]`;
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '[Unserializable value]';
+  }
 };
 
 const formatDateValue = (value: unknown): string | null => {
@@ -175,7 +327,7 @@ const formatDateValue = (value: unknown): string | null => {
 
 const formatDiffValue = (fieldName: string, value: unknown): string => {
   if (value === null) {
-    return 'null';
+    return '—';
   }
 
   if (value === undefined) {
@@ -195,6 +347,15 @@ const formatDiffValue = (fieldName: string, value: unknown): string => {
 
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
+  }
+
+  if (isAssigneeChangeField(fieldName)) {
+    const formattedAssignee = formatUserReference(value);
+    return formattedAssignee ?? '—';
+  }
+
+  if (isImageChangeField(fieldName)) {
+    return formatImageIdsValue(value);
   }
 
   if (isActorField(fieldName)) {
@@ -284,7 +445,65 @@ const getStateVariant = (token: string): StatusBadgeVariant => {
   return 'default';
 };
 
+const renderImagePreviewRow = (heading: string, previewItems: TimelineImagePreviewItem[], key: string): JSX.Element => {
+  if (previewItems.length === 0) {
+    return (
+      <div key={key} className='space-y-1'>
+        <p className='text-[11px] font-semibold text-text-muted'>{heading}</p>
+        <p className='text-xs text-text-muted'>No images</p>
+      </div>
+    );
+  }
+
+  return (
+    <div key={key} className='space-y-1'>
+      <p className='text-[11px] font-semibold text-text-muted'>{heading}</p>
+      <div className='flex flex-wrap gap-2'>
+        {previewItems.map(item => (
+          <a
+            key={`${key}-${item.id}-${item.url}`}
+            href={item.url}
+            target='_blank'
+            rel='noreferrer'
+            className='inline-flex'
+            title={`Image ${item.id}`}
+          >
+            <img
+              src={item.url}
+              alt={`Image ${item.id}`}
+              className='h-14 w-14 rounded-lg border border-primary/15 bg-surface-subtle object-cover'
+              loading='lazy'
+            />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
+  if (isImageChangeField(fieldName)) {
+    const beforeSummary = formatImageIdsValue(beforeValue);
+    const afterSummary = formatImageIdsValue(afterValue);
+    const beforePreviewItems = toTimelineImagePreviewItems(beforeValue);
+    const afterPreviewItems = toTimelineImagePreviewItems(afterValue);
+
+    return (
+      <div key={`${id}-${fieldName}`} className='space-y-2'>
+        <p className='text-xs text-text-primary'>
+          <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+          <span>{beforeSummary}</span>
+          <span className='mx-1 text-primary'>{'\u2192'}</span>
+          <span>{afterSummary}</span>
+        </p>
+        <div className='grid gap-3 sm:grid-cols-2'>
+          {renderImagePreviewRow('Before', beforePreviewItems, `${id}-${fieldName}-before`)}
+          {renderImagePreviewRow('After', afterPreviewItems, `${id}-${fieldName}-after`)}
+        </div>
+      </div>
+    );
+  }
+
   if (isRejectionFieldsField(fieldName)) {
     const beforeItems = toRejectionFieldItems(beforeValue);
     const afterItems = toRejectionFieldItems(afterValue);
@@ -407,7 +626,9 @@ export const AuditTimelinePanel = ({
       ) : (
         <div className='mt-3 max-h-[34rem] space-y-3 overflow-y-auto pr-1'>
           {timelineItems.map(item => {
-            const changeEntries = item.changes ? Object.entries(item.changes) : [];
+            const changeEntries = item.changes
+              ? Object.entries(item.changes).filter(([fieldName]) => !isImageChangeField(fieldName))
+              : [];
             const stateChangeEntry = changeEntries.find(([fieldName]) => STATE_CHANGE_FIELDS.has(fieldName));
             const detailChangeEntries = changeEntries.filter(([fieldName]) => !STATE_CHANGE_FIELDS.has(fieldName));
             const beforeStateToken = normalizeStateToken(stateChangeEntry?.[1].before);
@@ -463,16 +684,18 @@ export const AuditTimelinePanel = ({
                     ) : null}
                   </div>
 
-                  {item.updatedFields.length > 0 ? (
+                  {item.updatedFields.filter(fieldName => !isImageChangeField(fieldName)).length > 0 ? (
                     <div className='mt-2 flex flex-wrap gap-1'>
-                      {item.updatedFields.map(fieldName => (
-                        <Badge
-                          key={`${item.id}-${fieldName}`}
-                          className='border border-primary/25 bg-primary/5 px-2 py-[2px] text-[10px] text-primary'
-                        >
-                          {formatFieldLabel(fieldName)}
-                        </Badge>
-                      ))}
+                      {item.updatedFields
+                        .filter(fieldName => !isImageChangeField(fieldName))
+                        .map(fieldName => (
+                          <Badge
+                            key={`${item.id}-${fieldName}`}
+                            className='border border-primary/25 bg-primary/5 px-2 py-[2px] text-[10px] text-primary'
+                          >
+                            {formatFieldLabel(fieldName)}
+                          </Badge>
+                        ))}
                     </div>
                   ) : null}
 

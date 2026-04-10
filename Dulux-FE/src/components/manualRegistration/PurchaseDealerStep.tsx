@@ -203,7 +203,6 @@ export const PurchaseDealerStep = (): JSX.Element => {
             placeholder='Street, area, city'
             maxLength={DEALER_ADDRESS_MAX_LENGTH}
             {...register('purchaseDealerAddress')}
-            onChange={handleLettersOnlyChange}
           />
           {errors.purchaseDealerAddress ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerAddress.message}</p>
