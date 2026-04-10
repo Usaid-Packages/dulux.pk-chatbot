@@ -65,7 +65,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
   if (!thread) {
     return (
-      <aside className='flex h-[calc(100vh-16rem)] flex-col rounded-2xl border border-primary/15 bg-white/95 p-4 text-sm text-text-muted shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <aside className='flex min-h-40 flex-col rounded-2xl border border-primary/15 bg-white/95 p-4 text-sm text-text-muted shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
         Customer details appear here after selecting a conversation.
       </aside>
     );
@@ -73,7 +73,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
   return (
     <>
-      <aside className='flex h-[calc(100vh-16rem)] flex-col gap-4 rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <aside className='flex max-h-[calc(100vh-16rem)] min-h-[26rem] flex-col gap-4 rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
         <section className='text-center'>
           <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
             {getInitials(thread.customerName)}

@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { AuditTimelinePanel } from '#/components/auditLogs';
 import {
   ApproveClaimModal,
   ClaimDetailPanel,
   ClaimImages,
-  ClaimTimeline,
   ClaimWorkflowCard,
   ForwardToQualityModal,
   LinkedRegistrationCard,
@@ -134,7 +134,13 @@ export const ClaimDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <ClaimImages photos={claim.evidencePhotos} />
           <LinkedRegistrationCard registration={claim.linkedRegistration} />
-          <ClaimTimeline timeline={claim.timeline} />
+          <AuditTimelinePanel
+            type='claim'
+            objectId={claimId}
+            title='Latest Timeline Changes'
+            subtitle='Detailed admin activity log'
+            maxItems={6}
+          />
         </div>
 
         <div className='space-y-4'>
