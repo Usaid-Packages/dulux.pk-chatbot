@@ -5,8 +5,10 @@ from celery import shared_task
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import ClaimState, QualityDecisionType, QualityRequiredItem, RegistrationState
 from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
 from dulux_chatbot.warranty.resubmission import (
@@ -122,6 +124,7 @@ def send_registration_status_notification(registration_id: int, notification_tem
             "warranty_certificate.pdf",
             caption="warranty_certificate.pdf",
         )
+        send_whatsapp_main_menu.apply_async(args=[registration.phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
 
 
 @shared_task
@@ -171,6 +174,10 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
             claim.voucher.url,
             "claim_voucher.pdf",
             caption="claim_voucher.pdf",
+        )
+        send_whatsapp_main_menu.apply_async(
+            args=[claim.registration.phone_number, BaseFlow.MAIN_MENU_TEXT],
+            countdown=2,
         )
 
 

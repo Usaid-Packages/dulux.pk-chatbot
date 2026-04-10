@@ -1,4 +1,5 @@
 from dulux_chatbot.chatbot.flows.base import BaseFlow
+from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import RegistrationState
 from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
@@ -107,4 +108,4 @@ class ReissuanceFlow(BaseFlow):
             "Your warranty certificate",
         )
         self._reset()
-        self._send_main_menu_message()
+        send_whatsapp_main_menu.apply_async(args=[self.session.phone_number, self.MAIN_MENU_TEXT], countdown=2)

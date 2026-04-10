@@ -1021,9 +1021,15 @@ class ClaimResubmissionSerializerTests(TestCase):
 
 
 class WarrantyRegistrationNotificationTaskTests(TestCase):
+    @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
-    def test_send_registration_status_notification_for_approved_registration(self, certificate_mock, client_mock):
+    def test_send_registration_status_notification_for_approved_registration(
+        self,
+        certificate_mock,
+        client_mock,
+        delayed_menu_mock,
+    ):
         registration = create_registration(state=RegistrationState.APPROVED)
         certificate_mock.return_value = ContentFile(b"approved-pdf", name="approved_certificate.pdf")
         notification_template = build_notification_template(title="Approved From UI")
@@ -1049,6 +1055,9 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
         )
         self.assertEqual(whatsapp_client.send_document.call_args.args[2], "warranty_certificate.pdf")
         self.assertEqual(whatsapp_client.send_document.call_args.kwargs["caption"], "warranty_certificate.pdf")
+        delayed_menu_mock.assert_called_once()
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
 
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
@@ -1080,8 +1089,9 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
 
 
 class WarrantyClaimNotificationTaskTests(TestCase):
+    @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
-    def test_send_claim_status_notification_for_approved_claim(self, client_mock):
+    def test_send_claim_status_notification_for_approved_claim(self, client_mock, delayed_menu_mock):
         registration = create_registration(state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)
         claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.APPROVED)
@@ -1102,6 +1112,9 @@ class WarrantyClaimNotificationTaskTests(TestCase):
             f"Your claim for registration: {registration.registration_code} is approved.",
         )
         self.assertEqual(whatsapp_client.send_document.call_args.kwargs["caption"], "claim_voucher.pdf")
+        delayed_menu_mock.assert_called_once()
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
 
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     def test_send_claim_status_notification_for_rejected_claim(self, client_mock):

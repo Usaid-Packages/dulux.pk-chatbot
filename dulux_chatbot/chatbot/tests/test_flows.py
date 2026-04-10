@@ -692,7 +692,8 @@ class FlowTests(TestCase):
         complaint.refresh_from_db()
         self.assertEqual(complaint.images.count(), 2)
 
-    def test_reissuance_flow_end_to_end(self):
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    def test_reissuance_flow_end_to_end(self, mocked_send_main_menu):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         registration.warranty_certificate.save(
             "certificate.txt",
@@ -708,10 +709,13 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.documents), 1)
         self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
-        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
         )
+        mocked_send_main_menu.assert_called_once()
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
+        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
 
     def test_claim_flow_success_message_uses_registration_number(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
@@ -737,7 +741,8 @@ class FlowTests(TestCase):
         self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertEqual(claim.registration.registration_code, registration.registration_code)
 
-    def test_reissuance_flow_generates_and_sends_certificate_when_missing(self):
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    def test_reissuance_flow_generates_and_sends_certificate_when_missing(self, mocked_send_main_menu):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         create_paint_pair(registration=registration)
 
@@ -749,10 +754,13 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(len(self.client.documents), 1)
         self.assertEqual(self.client.documents[0]["filename"], "warranty_certificate.pdf")
-        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
         )
+        mocked_send_main_menu.assert_called_once()
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
+        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
 
     def test_reissuance_flow_normalizes_local_phone_number_to_ninety_two_format(self):
         registration = create_registration(phone_number="923001234567", state=RegistrationState.APPROVED)
@@ -793,7 +801,8 @@ class FlowTests(TestCase):
         self.assertIn(second_registration.registration_code, self.client.text_messages[-1]["text"])
         self.assertIn(first_registration.purchase_date.strftime("%d/%m/%Y"), self.client.text_messages[-1]["text"])
 
-    def test_reissuance_flow_sends_selected_certificate_when_multiple_registrations_exist(self):
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    def test_reissuance_flow_sends_selected_certificate_when_multiple_registrations_exist(self, mocked_send_main_menu):
         older_registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
         older_registration.warranty_certificate.save(
             "older_certificate.pdf",
@@ -815,9 +824,12 @@ class FlowTests(TestCase):
         self.assertEqual(len(self.client.documents), 1)
         self.assertIn("older_certificate", self.client.documents[0]["document_url"])
         self.assertIn(
-            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-2]["text"]
+            "Please wait while we send your selected warranty certificate.", self.client.text_messages[-1]["text"]
         )
-        self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
+        mocked_send_main_menu.assert_called_once()
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
+        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
+        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
 
     def test_reissuance_flow_rejects_invalid_registration_selection(self):
         create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
