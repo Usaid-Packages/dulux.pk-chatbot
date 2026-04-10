@@ -1,7 +1,6 @@
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from dulux_chatbot.audit_logs.api.v1.serializers import (
     AuditLogDetailSerializer,
@@ -31,7 +30,8 @@ class AuditLogDetailAPIView(generics.RetrieveAPIView):
     queryset = AuditLog.objects.select_related("actor", "content_type").order_by("-created", "-id")
 
 
-class AuditLogTimelineAPIView(APIView):
+class AuditLogTimelineAPIView(generics.GenericAPIView):
+    serializer_class = AuditLogTimelineQuerySerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
     TYPE_TO_MODEL_LABEL = {
         "registration": "warranty.WarrantyRegistration",
@@ -39,8 +39,8 @@ class AuditLogTimelineAPIView(APIView):
         "complaint": "complaints.Complaint",
     }
 
-    def get(self, request, *args, **kwargs):
-        serializer = AuditLogTimelineQuerySerializer(data=request.query_params)
+    def get_queryset(self):
+        serializer = self.get_serializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         timeline_type = serializer.validated_data["type"]
         object_id = serializer.validated_data["object_id"]
@@ -59,6 +59,8 @@ class AuditLogTimelineAPIView(APIView):
                 model_label=self.TYPE_TO_MODEL_LABEL[timeline_type],
                 object_id=str(object_id),
             )
+        return queryset.order_by("created", "id")
 
-        timeline_data = AuditLogTimelineItemSerializer(queryset.order_by("created", "id"), many=True).data
-        return Response({"results": timeline_data}, status=status.HTTP_200_OK)
+    def get(self, request, *args, **kwargs):
+        timeline_data = AuditLogTimelineItemSerializer(self.get_queryset(), many=True).data
+        return Response({"results": timeline_data})
