@@ -147,7 +147,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           </div>
         </section>
 
-        <section className='flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
+        <section className='min-h-[9rem] flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
           {thread.complaintImages.length === 0 ? (
             <p className='text-xs text-text-muted'>No images</p>
