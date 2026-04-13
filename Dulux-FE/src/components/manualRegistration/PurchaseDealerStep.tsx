@@ -48,6 +48,11 @@ export const PurchaseDealerStep = (): JSX.Element => {
     register,
     formState: { errors },
   } = useFormContext<ManualRegistrationFormValues>();
+  const purchaseDateField = register('purchaseDate');
+  const purchaseDealerField = register('purchaseDealer');
+  const purchaseDealerCityField = register('purchaseDealerCity');
+  const purchaseDealerAddressField = register('purchaseDealerAddress');
+  const notesField = register('notes');
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarWrapperRef = useRef<HTMLDivElement | null>(null);
   const today = new Date();
@@ -74,6 +79,16 @@ export const PurchaseDealerStep = (): JSX.Element => {
       window.removeEventListener('touchstart', handleOutsidePointerDown);
     };
   }, [isCalendarOpen]);
+
+  const handlePurchaseDealerChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    purchaseDealerField.onChange(event);
+  };
+
+  const handlePurchaseDealerCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    purchaseDealerCityField.onChange(event);
+  };
 
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
@@ -114,7 +129,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
                       className='cursor-pointer px-3 py-2.5 pr-11'
                       onClick={handleOpenCalendar}
                       onFocus={handleOpenCalendar}
-                      onBlur={field.onBlur}
+                      onBlur={purchaseDateField.onBlur}
                     />
                     <button
                       type='button'
@@ -174,8 +189,8 @@ export const PurchaseDealerStep = (): JSX.Element => {
           <Input
             placeholder='e.g. Color World Traders'
             maxLength={DEALER_NAME_MAX_LENGTH}
-            {...register('purchaseDealer')}
-            onChange={handleLettersOnlyChange}
+            {...purchaseDealerField}
+            onChange={handlePurchaseDealerChange}
           />
           {errors.purchaseDealer ? <p className='text-xs text-destructive'>{errors.purchaseDealer.message}</p> : null}
         </label>
@@ -187,8 +202,8 @@ export const PurchaseDealerStep = (): JSX.Element => {
           <Input
             placeholder='e.g. Karachi'
             maxLength={DEALER_CITY_MAX_LENGTH}
-            {...register('purchaseDealerCity')}
-            onChange={handleLettersOnlyChange}
+            {...purchaseDealerCityField}
+            onChange={handlePurchaseDealerCityChange}
           />
           {errors.purchaseDealerCity ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerCity.message}</p>
@@ -202,7 +217,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
           <Input
             placeholder='Street, area, city'
             maxLength={DEALER_ADDRESS_MAX_LENGTH}
-            {...register('purchaseDealerAddress')}
+            {...purchaseDealerAddressField}
           />
           {errors.purchaseDealerAddress ? (
             <p className='text-xs text-destructive'>{errors.purchaseDealerAddress.message}</p>
@@ -212,12 +227,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
 
       <label className='space-y-2'>
         <span className='text-sm font-medium text-text-primary'>Internal Notes (optional)</span>
-        <Textarea
-          rows={4}
-          maxLength={NOTES_MAX_LENGTH}
-          placeholder='Notes for internal review...'
-          {...register('notes')}
-        />
+        <Textarea rows={4} maxLength={NOTES_MAX_LENGTH} placeholder='Notes for internal review...' {...notesField} />
         {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
       </label>
     </section>

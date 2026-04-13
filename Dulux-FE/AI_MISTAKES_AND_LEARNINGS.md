@@ -629,6 +629,24 @@
 - Rule: For optional numeric fields in RHF+Zod flows, treat `''` and `NaN` explicitly as empty before numeric
   validation; do not rely on outer `.optional()` around `z.coerce.number()` for this pattern.
 
+### 2026-04-13 - Manual registration step errors persisted after autofill-corrected values
+
+- Issue: Wizard used `mode: onTouched`, so after a failed Next validation, browser/autofill updates could leave stale
+  field errors visible until Next was clicked again.
+- Fix: Switched manual registration form to `mode: onChange` + `reValidateMode: onChange` and cleared current-step
+  errors before moving to the next step.
+- Rule: In multi-step RHF flows with autofill-heavy inputs, use change-based revalidation so corrected values clear
+  stale errors immediately instead of waiting for another submit/next attempt.
+
+### 2026-04-13 - City/dealer-city inputs sanitized characters but skipped RHF state updates
+
+- Issue: Manual registration `City`/`Dealer City` custom `onChange` handlers sanitized values but overrode
+  `register(...).onChange`, so React Hook Form did not receive updates reliably and stale error state required extra
+  Next clicks.
+- Fix: Composed custom input handlers with RHF field handlers (`field.onChange(event)`) for sanitized fields.
+- Rule: Any input using `register(...)` with custom `onChange` must always call the original RHF `onChange` so form
+  state, validation, and navigation stay in sync.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

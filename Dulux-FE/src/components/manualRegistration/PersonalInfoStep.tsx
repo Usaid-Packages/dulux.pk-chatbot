@@ -22,6 +22,11 @@ export const PersonalInfoStep = (): JSX.Element => {
     setValue,
     formState: { errors },
   } = useFormContext<ManualRegistrationFormValues>();
+  const customerNameField = register('customerName');
+  const phoneNumberField = register('phoneNumber');
+  const emailField = register('email');
+  const cityField = register('city');
+  const siteAddressField = register('siteAddress');
 
   useEffect(() => {
     const currentPhone = getValues('phoneNumber');
@@ -40,12 +45,19 @@ export const PersonalInfoStep = (): JSX.Element => {
     const normalizedLocalPart = withoutPrefix.startsWith('3') ? withoutPrefix : `3${withoutPrefix}`;
     const limitedLocalPart = normalizedLocalPart.slice(0, 10);
     event.currentTarget.value = `92${limitedLocalPart}`;
+    phoneNumberField.onChange(event);
   };
 
   const handlePhoneNumberFocus = (event: FocusEvent<HTMLInputElement>): void => {
     if (!event.currentTarget.value) {
       event.currentTarget.value = '92';
+      setValue('phoneNumber', '92', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     }
+  };
+
+  const handleCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    cityField.onChange(event);
   };
 
   return (
@@ -60,7 +72,7 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Customer Name <span className='text-destructive'>*</span>
           </span>
-          <Input placeholder='e.g. Ahmed Raza' {...register('customerName')} />
+          <Input placeholder='e.g. Ahmed Raza' {...customerNameField} />
           {errors.customerName ? <p className='text-xs text-destructive'>{errors.customerName.message}</p> : null}
         </label>
 
@@ -70,7 +82,7 @@ export const PersonalInfoStep = (): JSX.Element => {
           </span>
           <Input
             placeholder='92XXXXXXXXXX'
-            {...register('phoneNumber')}
+            {...phoneNumberField}
             onChange={handlePhoneNumberChange}
             onFocus={handlePhoneNumberFocus}
           />
@@ -81,7 +93,7 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Email <span className='text-destructive'>*</span>
           </span>
-          <Input type='email' placeholder='customer@example.com' {...register('email')} />
+          <Input type='email' placeholder='customer@example.com' {...emailField} />
           {errors.email ? <p className='text-xs text-destructive'>{errors.email.message}</p> : null}
         </label>
 
@@ -89,12 +101,7 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             City <span className='text-destructive'>*</span>
           </span>
-          <Input
-            placeholder='e.g. Lahore'
-            maxLength={CITY_MAX_LENGTH}
-            {...register('city')}
-            onChange={handleLettersOnlyChange}
-          />
+          <Input placeholder='e.g. Lahore' maxLength={CITY_MAX_LENGTH} {...cityField} onChange={handleCityChange} />
           {errors.city ? <p className='text-xs text-destructive'>{errors.city.message}</p> : null}
         </label>
 
@@ -127,7 +134,7 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Site Address <span className='text-destructive'>*</span>
           </span>
-          <Input placeholder='Street, area, city' {...register('siteAddress')} />
+          <Input placeholder='Street, area, city' {...siteAddressField} />
           {errors.siteAddress ? <p className='text-xs text-destructive'>{errors.siteAddress.message}</p> : null}
         </label>
       </div>
