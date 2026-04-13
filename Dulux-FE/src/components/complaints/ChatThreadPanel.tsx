@@ -55,11 +55,6 @@ export const ChatThreadPanel = ({
   onSendMessage,
 }: ChatThreadPanelProps): JSX.Element => {
   const messageListRef = useRef<HTMLDivElement | null>(null);
-  const threadTitle = thread
-    ? containsReadableText(thread.customerName)
-      ? thread.customerName
-      : `Ticket #${thread.ticketId}`
-    : '';
 
   useEffect(() => {
     if (!messageListRef.current) {
