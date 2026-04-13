@@ -102,6 +102,8 @@ export const useManualRegistration = (): UseManualRegistrationResult => {
       return;
     }
 
+    form.clearErrors(fields);
+
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps([...completedSteps, currentStep]);
     }

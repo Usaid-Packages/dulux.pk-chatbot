@@ -36,7 +36,8 @@ export const ManualRegistrationLayout = (): JSX.Element => {
 
   const form = useForm<ManualRegistrationFormValues>({
     resolver: zodResolver(manualRegistrationSchema),
-    mode: 'onTouched',
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: MANUAL_REGISTRATION_DEFAULT_VALUES,
   });
 

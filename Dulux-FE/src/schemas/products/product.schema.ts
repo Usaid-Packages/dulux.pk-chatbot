@@ -24,7 +24,7 @@ export const productFormSchema = z
       }
 
       return value;
-    }, z.number().int().min(1, 'Warranty years must be at least 1.').optional()),
+    }, z.number().int().min(0, 'Warranty years must be 0 or greater.').optional()),
     coverageDetails: z
       .string()
       .trim()
