@@ -158,6 +158,41 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("How can I assist you?", self.client.text_messages[-1]["text"])
 
+    def test_registration_flow_only_lists_products_with_warranty_years_more_than_zero(self):
+        create_product(name="Zero Year Topcoat", warranty_years=0)
+        topcoat = create_product(name="One Year Topcoat", warranty_years=1)
+        create_product_basecoat(
+            topcoat=topcoat,
+            basecoat=create_product(name="Zero Year Basecoat", product_type="BASECOAT", warranty_years=0),
+        )
+        create_product_basecoat(
+            topcoat=topcoat,
+            basecoat=create_product(name="One Year Basecoat", product_type="BASECOAT", warranty_years=1),
+        )
+
+        self.dispatch_text("1")
+        self.dispatch_text("YES")
+        self.dispatch_text("Customer Name")
+        self.dispatch_text("customer@example.com")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Sindh")
+        self.dispatch_text("123 Street")
+        self.dispatch_text(str(date.today() - timedelta(days=1)))
+        self.dispatch_text("Dealer")
+        self.dispatch_text("Karachi")
+        self.dispatch_text("Dealer Address")
+
+        self.assertEqual(self.session.current_step, "topcoat_select")
+        self.assertIn("One Year Topcoat", self.client.text_messages[-1]["text"])
+        self.assertNotIn("Zero Year Topcoat", self.client.text_messages[-1]["text"])
+
+        self.dispatch_text("1")
+        self.dispatch_text("10.00")
+
+        self.assertEqual(self.session.current_step, "basecoat_select")
+        self.assertIn("One Year Basecoat", self.client.text_messages[-1]["text"])
+        self.assertNotIn("Zero Year Basecoat", self.client.text_messages[-1]["text"])
+
     def test_registration_flow_rejects_invalid_purchase_date(self):
         self.dispatch_text("1")
         self.dispatch_text("YES")

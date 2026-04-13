@@ -63,6 +63,39 @@ class ProductAPITests(TestCase):
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["name"], "Inactive Basecoat")
 
+    def test_warranty_option_list_only_returns_active_products_with_warranty_years(self):
+        topcoat = create_product(name="Warranty Option Topcoat", warranty_years=5, is_active=True)
+        linked_basecoat = create_product(
+            name="Warranty Option Basecoat",
+            product_type=ProductType.BASECOAT,
+            warranty_years=3,
+            is_active=True,
+        )
+        create_product(name="Zero Warranty Product", warranty_years=0, is_active=True)
+        create_product(name="Inactive Warranty Product", warranty_years=5, is_active=False)
+        create_product(
+            name="Unlinked Warranty Basecoat",
+            product_type=ProductType.BASECOAT,
+            warranty_years=3,
+            is_active=True,
+        )
+        create_product_basecoat(topcoat=topcoat, basecoat=linked_basecoat)
+        self.client.force_authenticate(user=self.cs_user)
+
+        all_response = self.client.get(reverse("product_warranty_option_list"))
+        response = self.client.get(
+            reverse("product_warranty_option_list"),
+            {"product_type": ProductType.BASECOAT, "topcoat_id": topcoat.id},
+        )
+
+        self.assertEqual(all_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(all_response.data["count"], 3)
+        self.assertNotIn("Zero Warranty Product", [item["name"] for item in all_response.data["results"]])
+        self.assertNotIn("Inactive Warranty Product", [item["name"] for item in all_response.data["results"]])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], linked_basecoat.id)
+
     def test_search_by_name(self):
         create_product(name="Dulux Inspire Interior")
         create_product(name="Dulux Weather Shield Max")

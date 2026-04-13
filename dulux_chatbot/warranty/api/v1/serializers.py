@@ -256,8 +256,14 @@ class RegistrationPaintPairWriteSerializer(serializers.Serializer):
         if topcoat.product_type != ProductType.TOPCOAT or not topcoat.is_active:
             raise serializers.ValidationError({"topcoat": "Topcoat must be an active TOPCOAT product."})
 
+        if topcoat.warranty_years <= 0:
+            raise serializers.ValidationError({"topcoat": "Topcoat warranty years must be greater than 0."})
+
         if basecoat is not None and (basecoat.product_type != ProductType.BASECOAT or not basecoat.is_active):
             raise serializers.ValidationError({"basecoat": "Basecoat must be an active BASECOAT product."})
+
+        if basecoat is not None and basecoat.warranty_years <= 0:
+            raise serializers.ValidationError({"basecoat": "Basecoat warranty years must be greater than 0."})
 
         if basecoat is not None and not topcoat.basecoats.filter(pk=basecoat.pk).exists():
             raise serializers.ValidationError({"basecoat": "Basecoat must be linked to the selected topcoat product."})
@@ -703,6 +709,10 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         paint_pair = attrs["paint_pair"]
         if paint_pair.registration_id != registration.id:
             raise serializers.ValidationError({"paint_pair": "Paint pair must belong to the selected registration."})
+        if paint_pair.topcoat.warranty_years <= 0:
+            raise serializers.ValidationError({"paint_pair": "Claim product warranty years must be greater than 0."})
+        if paint_pair.basecoat is not None and paint_pair.basecoat.warranty_years <= 0:
+            raise serializers.ValidationError({"paint_pair": "Claim product warranty years must be greater than 0."})
         if WarrantyClaim.objects.filter(
             registration=registration,
             paint_pair=paint_pair,

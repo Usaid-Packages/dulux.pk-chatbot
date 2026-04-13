@@ -73,6 +73,18 @@ class ProductBasecoatSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ProductWarrantyOptionQuerySerializer(serializers.Serializer):
+    product_type = serializers.ChoiceField(choices=ProductType.choices, required=False)
+    topcoat_id = serializers.IntegerField(min_value=1, required=False)
+
+
+class ProductWarrantyOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ("id", "name", "product_type", "warranty_years", "is_active")
+        read_only_fields = fields
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """
     Requires `prefetch_related("images__image", "surface_mappings__surface_type", "basecoat_mappings__basecoat")`

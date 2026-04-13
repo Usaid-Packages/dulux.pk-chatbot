@@ -2,6 +2,7 @@ from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 
 from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_delete
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
@@ -9,6 +10,8 @@ from dulux_chatbot.products.api.v1.serializers import (
     ProductBasecoatSerializer,
     ProductImageSerializer,
     ProductSerializer,
+    ProductWarrantyOptionQuerySerializer,
+    ProductWarrantyOptionSerializer,
     SurfaceTypeSerializer,
 )
 from dulux_chatbot.products.choices import ProductType
@@ -82,6 +85,23 @@ class ProductBasecoatListAPIView(generics.ListAPIView):
         if product.product_type != ProductType.TOPCOAT:
             raise ValidationError({"detail": "Basecoat list is only available for TOPCOAT products."})
         return Product.objects.filter(topcoat_mappings__topcoat=product).order_by("name")
+
+
+class ProductWarrantyOptionListAPIView(generics.ListAPIView):
+    serializer_class = ProductWarrantyOptionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        serializer = ProductWarrantyOptionQuerySerializer(data=self.request.query_params)
+        serializer.is_valid(raise_exception=True)
+        queryset = Product.objects.filter(is_active=True, warranty_years__gt=0).order_by("name")
+        product_type = serializer.validated_data.get("product_type")
+        topcoat_id = serializer.validated_data.get("topcoat_id")
+        if product_type:
+            queryset = queryset.filter(product_type=product_type)
+        if topcoat_id:
+            queryset = queryset.filter(topcoat_mappings__topcoat_id=topcoat_id)
+        return queryset
 
 
 class ProductImageListCreateAPIView(generics.ListCreateAPIView):

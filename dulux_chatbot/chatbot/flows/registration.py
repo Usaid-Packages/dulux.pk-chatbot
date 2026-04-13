@@ -18,6 +18,9 @@ from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
 
 
+MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS = 0
+
+
 class RegistrationFlow(BaseFlow):
     initial_step = "consent"
 
@@ -52,7 +55,13 @@ class RegistrationFlow(BaseFlow):
         self._send_step_prompt("Please share dealer address.")
 
     def prompt_topcoat_select(self) -> None:
-        topcoats = list(Product.objects.filter(product_type=ProductType.TOPCOAT, is_active=True).order_by("name"))
+        topcoats = list(
+            Product.objects.filter(
+                product_type=ProductType.TOPCOAT,
+                is_active=True,
+                warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
+            ).order_by("name")
+        )
         if not topcoats:
             self._send_validation_error("No active topcoat products are available right now.")
             return
@@ -68,7 +77,11 @@ class RegistrationFlow(BaseFlow):
     def prompt_basecoat_select(self) -> None:
         current_topcoat_id = (self.session.session_data or {}).get("current_topcoat_id")
         linked_basecoats = list(
-            Product.objects.filter(topcoat_mappings__topcoat_id=current_topcoat_id, is_active=True).order_by("name")
+            Product.objects.filter(
+                topcoat_mappings__topcoat_id=current_topcoat_id,
+                is_active=True,
+                warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
+            ).order_by("name")
         )
         if not linked_basecoats:
             self._set_choice_options("basecoat_options", [])

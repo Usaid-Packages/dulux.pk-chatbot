@@ -155,7 +155,12 @@ class WarrantyRegistrationRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         "paint_pairs__basecoat",
         "invoices__image",
     )
-    permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
+
+    def get_permissions(self):
+        permissions = super().get_permissions()
+        if self.request.method in {"PUT", "PATCH"}:
+            permissions.append(IsCSAgentOrAdmin())
+        return permissions
 
     def get_serializer_class(self):
         if self.request.method in {"PUT", "PATCH"}:

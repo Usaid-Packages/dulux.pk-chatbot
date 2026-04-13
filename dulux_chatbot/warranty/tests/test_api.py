@@ -72,6 +72,15 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
 
+    def test_authenticated_user_can_get_registration_detail(self):
+        registration = create_registration()
+        self.client.force_authenticate(user=create_quality_user())
+
+        response = self.client.get(reverse("registration_detail", kwargs={"pk": registration.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], registration.id)
+
     def test_create_registration_with_paint_pairs(self):
         image = create_image()
         topcoat = create_product(name="API Topcoat")
@@ -108,6 +117,77 @@ class WarrantyRegistrationAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_registration_rejects_zero_warranty_topcoat(self):
+        topcoat = create_product(name="Zero Warranty Topcoat", warranty_years=0)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "channel": RegistrationChannel.WEB,
+                "customer_name": "Customer Name",
+                "phone_number": "923001010101",
+                "email": "customer@example.com",
+                "city": "Karachi",
+                "province": "Sindh",
+                "site_address": "123 Street",
+                "purchase_date": str(date.today() - timedelta(days=1)),
+                "purchase_dealer": "Dealer",
+                "purchase_dealer_city": "Karachi",
+                "purchase_dealer_address": "Dealer Address",
+                "postal_code": "75000",
+                "notes": "",
+                "paint_pairs": [{"topcoat": topcoat.id, "topcoat_quantity": "10.00"}],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["paint_pairs"][0]["topcoat"][0],
+            "Topcoat warranty years must be greater than 0.",
+        )
+
+    def test_create_registration_rejects_zero_warranty_basecoat(self):
+        topcoat = create_product(name="Warranty Topcoat", warranty_years=5)
+        basecoat = create_product(name="Zero Warranty Basecoat", product_type="BASECOAT", warranty_years=0)
+        create_product_basecoat(topcoat=topcoat, basecoat=basecoat)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "channel": RegistrationChannel.WEB,
+                "customer_name": "Customer Name",
+                "phone_number": "923001010101",
+                "email": "customer@example.com",
+                "city": "Karachi",
+                "province": "Sindh",
+                "site_address": "123 Street",
+                "purchase_date": str(date.today() - timedelta(days=1)),
+                "purchase_dealer": "Dealer",
+                "purchase_dealer_city": "Karachi",
+                "purchase_dealer_address": "Dealer Address",
+                "postal_code": "75000",
+                "notes": "",
+                "paint_pairs": [
+                    {
+                        "topcoat": topcoat.id,
+                        "topcoat_quantity": "10.00",
+                        "basecoat": basecoat.id,
+                        "basecoat_quantity": "5.00",
+                    }
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["paint_pairs"][0]["basecoat"][0],
+            "Basecoat warranty years must be greater than 0.",
+        )
 
     def test_create_registration_with_future_purchase_date_returns_400(self):
         topcoat = create_product(name="Future Topcoat")
@@ -446,6 +526,33 @@ class WarrantyClaimAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_claim_rejects_zero_warranty_product(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        topcoat = create_product(name="Claim Zero Warranty Topcoat", warranty_years=0)
+        paint_pair = create_paint_pair(registration=registration, topcoat=topcoat)
+        images = [create_image(image_name=f"claim-zero/{index}.jpg") for index in range(3)]
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["paint_pair"][0], "Claim product warranty years must be greater than 0.")
 
     def test_claim_transition_approve_requires_qa_approved_state(self):
         registration = create_registration(state=RegistrationState.APPROVED)
