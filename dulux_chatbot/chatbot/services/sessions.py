@@ -17,3 +17,19 @@ def activate_complaint_chat_session(*, phone_number: str, complaint_id: int) -> 
         defaults=session_defaults,
     )
     return session
+
+
+def end_complaint_chat_session(*, phone_number: str, complaint_id: int) -> None:
+    target_phone_number = str(phone_number or "").strip()
+    session = WhatsAppSession.objects.filter(
+        phone_number=target_phone_number,
+        flow=FlowType.COMPLAINT,
+        session_data__complaint_id=complaint_id,
+    ).first()
+    if session is None:
+        return
+    session.flow = None
+    session.current_step = "menu"
+    session.session_data = {}
+    session.last_activity = timezone.now()
+    session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])

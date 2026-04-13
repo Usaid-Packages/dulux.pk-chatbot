@@ -119,6 +119,72 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_resolve_complaint_ends_matching_whatsapp_session(self):
+        complaint = create_complaint(status=ComplaintStatus.IN_PROGRESS, phone_number="923214840045")
+        WhatsAppSession.objects.create(
+            phone_number=complaint.phone_number,
+            flow=FlowType.COMPLAINT,
+            current_step="chat",
+            session_data={"complaint_id": complaint.id},
+        )
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "RESOLVE"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session = WhatsAppSession.objects.get(phone_number=complaint.phone_number)
+        self.assertIsNone(session.flow)
+        self.assertEqual(session.current_step, "menu")
+        self.assertEqual(session.session_data, {})
+
+    def test_close_complaint_ends_matching_whatsapp_session(self):
+        complaint = create_complaint(status=ComplaintStatus.RESOLVED, phone_number="923214840046")
+        WhatsAppSession.objects.create(
+            phone_number=complaint.phone_number,
+            flow=FlowType.COMPLAINT,
+            current_step="chat",
+            session_data={"complaint_id": complaint.id},
+        )
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "CLOSE", "closure_note": "Complaint has been resolved."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session = WhatsAppSession.objects.get(phone_number=complaint.phone_number)
+        self.assertIsNone(session.flow)
+        self.assertEqual(session.current_step, "menu")
+        self.assertEqual(session.session_data, {})
+
+    def test_resolve_complaint_does_not_end_different_complaint_session(self):
+        complaint = create_complaint(status=ComplaintStatus.IN_PROGRESS, phone_number="923214840047")
+        WhatsAppSession.objects.create(
+            phone_number=complaint.phone_number,
+            flow=FlowType.COMPLAINT,
+            current_step="chat",
+            session_data={"complaint_id": complaint.id + 1},
+        )
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "RESOLVE"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session = WhatsAppSession.objects.get(phone_number=complaint.phone_number)
+        self.assertEqual(session.flow, FlowType.COMPLAINT)
+        self.assertEqual(session.current_step, "chat")
+        self.assertEqual(session.session_data, {"complaint_id": complaint.id + 1})
+
     @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
     def test_list_and_create_messages(self, send_text_mock):
         complaint = create_complaint()

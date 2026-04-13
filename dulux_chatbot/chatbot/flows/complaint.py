@@ -101,7 +101,8 @@ class ComplaintFlow(BaseFlow):
             self.session.phone_number,
             (
                 "Complaint created successfully. Customer Support Representative will contact you soon. "
-                "Please wait for a minute or two."
+                "Please wait for a minute or two. You can continue sending messages here and they will go directly "
+                "to customer support. Write MAIN MENU if you want to return to the main menu."
             ),
         )
         self._advance_to("chat")

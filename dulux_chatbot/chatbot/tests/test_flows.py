@@ -719,6 +719,8 @@ class FlowTests(TestCase):
         self.assertEqual(complaint.images.count(), 1)
         self.assertEqual(complaint.messages.count(), 1)
         self.assertEqual(self.session.current_step, "chat")
+        self.assertIn("they will go directly to customer support", self.client.text_messages[-1]["text"])
+        self.assertIn("Write MAIN MENU", self.client.text_messages[-1]["text"])
 
         self.dispatch_text("Need an urgent update")
         self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
@@ -726,6 +728,35 @@ class FlowTests(TestCase):
         self.dispatch_image("complaint-chat-media-1")
         complaint.refresh_from_db()
         self.assertEqual(complaint.images.count(), 2)
+
+    def test_complaint_chat_session_expires_after_24_hours(self):
+        self.dispatch_text("4")
+        self.dispatch_text("Paint damaged")
+        self.dispatch_text("The wall finish is damaged.")
+        self.dispatch_text("DONE")
+
+        complaint = Complaint.objects.get(phone_number=self.phone_number)
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(
+            last_activity=timezone.now() - timedelta(hours=23, minutes=59)
+        )
+        self.session.refresh_from_db()
+
+        self.dispatch_text("Still need support")
+
+        self.assertEqual(self.session.flow, "COMPLAINT")
+        self.assertEqual(self.session.current_step, "chat")
+        self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
+
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(
+            last_activity=timezone.now() - timedelta(hours=24, minutes=1)
+        )
+        self.session.refresh_from_db()
+
+        self.dispatch_text("Still there?")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
 
     @patch.object(send_whatsapp_main_menu, "apply_async")
     def test_reissuance_flow_end_to_end(self, mocked_send_main_menu):

@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from dulux_chatbot.audit_logs.choices import AuditAction
 from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_event, log_update
+from dulux_chatbot.chatbot.services.sessions import end_complaint_chat_session
 from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
@@ -244,6 +245,9 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
             instance.images.all().delete()
             for image_data in images:
                 ComplaintImage.objects.create(complaint=instance, **image_data)
+
+        if action in {"RESOLVE", "CLOSE"}:
+            end_complaint_chat_session(phone_number=instance.phone_number, complaint_id=instance.id)
 
         log_update(
             actor=actor,

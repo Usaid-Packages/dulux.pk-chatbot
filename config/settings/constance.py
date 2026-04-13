@@ -12,5 +12,9 @@ CONSTANCE_CONFIG = {
         5,
         "Minutes before an inactive WhatsApp chatbot session resets to the main menu",
     ),
+    "WHATSAPP_COMPLAINT_SESSION_TIMEOUT_MINUTES": (
+        1440,
+        "Minutes before an inactive WhatsApp complaint chat session resets to the main menu",
+    ),
     "REGISTRATION_PURCHASE_DAYS_LIMIT": (60, "Max days prior to registration that purchase date is accepted"),
 }

@@ -107,4 +107,9 @@ def _session_expired(*, session, now) -> bool:
     last_activity = session.last_activity
     if last_activity is None:
         return False
-    return now - last_activity > timedelta(minutes=config.WHATSAPP_SESSION_TIMEOUT_MINUTES)
+    timeout = (
+        timedelta(minutes=config.WHATSAPP_COMPLAINT_SESSION_TIMEOUT_MINUTES)
+        if session.flow == FlowType.COMPLAINT
+        else timedelta(minutes=config.WHATSAPP_SESSION_TIMEOUT_MINUTES)
+    )
+    return now - last_activity > timeout
