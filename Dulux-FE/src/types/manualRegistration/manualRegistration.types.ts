@@ -10,6 +10,7 @@ export interface ManualRegistrationStep {
 export interface ManualRegistrationProductOption {
   id: string;
   label: string;
+  warrantyYears?: number;
   linkedBasecoats?: ManualRegistrationProductOption[];
 }
 

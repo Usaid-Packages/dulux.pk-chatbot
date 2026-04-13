@@ -1,29 +1,42 @@
-import type { JSX } from 'react';
-import { useEffect } from 'react';
+import type { JSX, UIEvent } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
-import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
+import { REGISTRATION_PRODUCT_TYPES } from '#/constants';
+import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues, ManualRegistrationProductOption } from '#/types/manualRegistration';
 
 interface AdditionalPaintPairFieldsProps {
   index: number;
   pairId: string;
   topcoatProducts: ManualRegistrationProductOption[];
-  allBasecoatProducts: ManualRegistrationProductOption[];
-  topcoatBasecoatMap: Record<string, ManualRegistrationProductOption[]>;
-  isProductsLoading: boolean;
+  isTopcoatLoading: boolean;
+  isTopcoatFetchingNextPage: boolean;
+  topcoatHasNextPage: boolean;
+  onTopcoatScroll: (event: UIEvent<HTMLDivElement>) => void;
   onRemove: () => void;
 }
+
+const SCROLL_BOTTOM_THRESHOLD_PX = 24;
+
+const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
+  if (typeof product.warrantyYears === 'number' && product.warrantyYears > 0) {
+    return `${product.label} (${product.warrantyYears} year warranty)`;
+  }
+
+  return product.label;
+};
 
 const AdditionalPaintPairFields = ({
   index,
   pairId,
   topcoatProducts,
-  allBasecoatProducts,
-  topcoatBasecoatMap,
-  isProductsLoading,
+  isTopcoatLoading,
+  isTopcoatFetchingNextPage,
+  topcoatHasNextPage,
+  onTopcoatScroll,
   onRemove,
 }: AdditionalPaintPairFieldsProps): JSX.Element => {
   const {
@@ -35,9 +48,28 @@ const AdditionalPaintPairFields = ({
 
   const selectedTopcoat = useWatch({ control, name: `additionalPaintPairs.${index}.topcoatProductId` });
   const selectedBasecoat = useWatch({ control, name: `additionalPaintPairs.${index}.basecoatProductId` });
+  const basecoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+    REGISTRATION_PRODUCT_TYPES.BASECOAT,
+    selectedTopcoat
+  );
   const hasBasecoat = Boolean(selectedBasecoat);
-  const basecoatProducts = selectedTopcoat ? (topcoatBasecoatMap[selectedTopcoat] ?? []) : allBasecoatProducts;
+  const basecoatProducts = basecoatQuery.options;
   const pairErrors = errors.additionalPaintPairs?.[index];
+
+  const handleBasecoatScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>): void => {
+      const scrollTarget = event.currentTarget;
+      const reachedBottom =
+        scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+      if (!reachedBottom || !basecoatQuery.hasNextPage || basecoatQuery.isFetchingNextPage) {
+        return;
+      }
+
+      void basecoatQuery.fetchNextPage();
+    },
+    [basecoatQuery]
+  );
 
   useEffect(() => {
     if (!selectedBasecoat) {
@@ -69,16 +101,26 @@ const AdditionalPaintPairFields = ({
             control={control}
             name={`additionalPaintPairs.${index}.topcoatProductId`}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} disabled={isProductsLoading}>
+              <Select value={field.value} onValueChange={field.onChange} disabled={isTopcoatLoading}>
                 <SelectTrigger aria-label='Select topcoat product'>
                   <SelectValue placeholder='Select topcoat product' />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onScroll={onTopcoatScroll}>
                   {topcoatProducts.map(product => (
                     <SelectItem key={product.id} value={product.id}>
-                      {product.label}
+                      {getProductOptionLabel(product)}
                     </SelectItem>
                   ))}
+                  {isTopcoatFetchingNextPage ? (
+                    <SelectItem value={`__loading_topcoats_${index}`} disabled>
+                      Loading more topcoats...
+                    </SelectItem>
+                  ) : null}
+                  {topcoatHasNextPage ? (
+                    <SelectItem value={`__scroll_topcoat_more_${index}`} disabled>
+                      Scroll to load more topcoats
+                    </SelectItem>
+                  ) : null}
                 </SelectContent>
               </Select>
             )}
@@ -107,25 +149,39 @@ const AdditionalPaintPairFields = ({
               <Select
                 value={field.value}
                 onValueChange={field.onChange}
-                disabled={isProductsLoading || !selectedTopcoat}
+                disabled={isTopcoatLoading || !selectedTopcoat || basecoatQuery.isLoading}
               >
                 <SelectTrigger aria-label='Select basecoat product'>
                   <SelectValue placeholder='Select basecoat product' />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onScroll={handleBasecoatScroll}>
                   {!selectedTopcoat ? (
                     <SelectItem value={`__select_topcoat_first__${index}`} disabled>
                       Select a topcoat first
                     </SelectItem>
+                  ) : basecoatQuery.isLoading ? (
+                    <SelectItem value={`__loading_basecoats_${index}`} disabled>
+                      Loading basecoats...
+                    </SelectItem>
                   ) : basecoatProducts.length > 0 ? (
                     basecoatProducts.map(product => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.label}
+                        {getProductOptionLabel(product)}
                       </SelectItem>
                     ))
                   ) : selectedTopcoat ? (
                     <SelectItem value={`__no_basecoat_available__${index}`} disabled>
                       No basecoat available for selected topcoat
+                    </SelectItem>
+                  ) : null}
+                  {basecoatQuery.isFetchingNextPage ? (
+                    <SelectItem value={`__loading_more_basecoats_${index}`} disabled>
+                      Loading more basecoats...
+                    </SelectItem>
+                  ) : null}
+                  {basecoatQuery.hasNextPage ? (
+                    <SelectItem value={`__scroll_basecoat_more_${index}`} disabled>
+                      Scroll to load more basecoats
                     </SelectItem>
                   ) : null}
                 </SelectContent>
@@ -171,18 +227,48 @@ export const ProductsStep = (): JSX.Element => {
     name: 'additionalPaintPairs',
   });
 
-  const manualProductsQuery = useGetManualRegistrationProductsQuery();
+  const topcoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(REGISTRATION_PRODUCT_TYPES.TOPCOAT);
 
   const selectedTopcoat = useWatch({ control, name: 'topcoatProductId' });
   const selectedBasecoat = useWatch({ control, name: 'basecoatProductId' });
+  const basecoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+    REGISTRATION_PRODUCT_TYPES.BASECOAT,
+    selectedTopcoat
+  );
   const hasBasecoat = Boolean(selectedBasecoat);
-  const topcoatProducts = manualProductsQuery.data?.topcoatProducts ?? [];
-  const allBasecoatProducts = manualProductsQuery.data?.basecoatProducts ?? [];
-  const topcoatBasecoatMap = Object.fromEntries(
-    topcoatProducts.map(product => [product.id, product.linkedBasecoats ?? []])
-  ) as Record<string, ManualRegistrationProductOption[]>;
-  const basecoatProducts = selectedTopcoat ? (topcoatBasecoatMap[selectedTopcoat] ?? []) : allBasecoatProducts;
-  const productLoadError = manualProductsQuery.error?.message ?? 'Unable to load product options.';
+  const topcoatProducts = topcoatQuery.options;
+  const basecoatProducts = basecoatQuery.options;
+  const productLoadError = topcoatQuery.error?.message ?? 'Unable to load product options.';
+
+  const handleTopcoatScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>): void => {
+      const scrollTarget = event.currentTarget;
+      const reachedBottom =
+        scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+      if (!reachedBottom || !topcoatQuery.hasNextPage || topcoatQuery.isFetchingNextPage) {
+        return;
+      }
+
+      void topcoatQuery.fetchNextPage();
+    },
+    [topcoatQuery]
+  );
+
+  const handleBasecoatScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>): void => {
+      const scrollTarget = event.currentTarget;
+      const reachedBottom =
+        scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+      if (!reachedBottom || !basecoatQuery.hasNextPage || basecoatQuery.isFetchingNextPage) {
+        return;
+      }
+
+      void basecoatQuery.fetchNextPage();
+    },
+    [basecoatQuery]
+  );
 
   const appendPaintPair = (): void => {
     append({
@@ -224,22 +310,32 @@ export const ProductsStep = (): JSX.Element => {
                 control={control}
                 name='topcoatProductId'
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={manualProductsQuery.isLoading}>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={topcoatQuery.isLoading}>
                     <SelectTrigger aria-label='Select topcoat product'>
                       <SelectValue placeholder='Select topcoat product' />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent onScroll={handleTopcoatScroll}>
                       {topcoatProducts.map(product => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.label}
+                          {getProductOptionLabel(product)}
                         </SelectItem>
                       ))}
+                      {topcoatQuery.isFetchingNextPage ? (
+                        <SelectItem value='__loading_topcoats' disabled>
+                          Loading more topcoats...
+                        </SelectItem>
+                      ) : null}
+                      {topcoatQuery.hasNextPage ? (
+                        <SelectItem value='__scroll_topcoat_more' disabled>
+                          Scroll to load more topcoats
+                        </SelectItem>
+                      ) : null}
                     </SelectContent>
                   </Select>
                 )}
               />
-              {manualProductsQuery.isLoading ? <p className='text-xs text-text-muted'>Loading products...</p> : null}
-              {manualProductsQuery.isError ? <p className='text-xs text-destructive'>{productLoadError}</p> : null}
+              {topcoatQuery.isLoading ? <p className='text-xs text-text-muted'>Loading products...</p> : null}
+              {topcoatQuery.isError ? <p className='text-xs text-destructive'>{productLoadError}</p> : null}
               {errors.topcoatProductId ? (
                 <p className='text-xs text-destructive'>{errors.topcoatProductId.message}</p>
               ) : null}
@@ -264,25 +360,39 @@ export const ProductsStep = (): JSX.Element => {
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={manualProductsQuery.isLoading || !selectedTopcoat}
+                    disabled={topcoatQuery.isLoading || !selectedTopcoat || basecoatQuery.isLoading}
                   >
                     <SelectTrigger aria-label='Select basecoat product'>
                       <SelectValue placeholder='Select basecoat product' />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent onScroll={handleBasecoatScroll}>
                       {!selectedTopcoat ? (
                         <SelectItem value='__select_topcoat_first__' disabled>
                           Select a topcoat first
                         </SelectItem>
+                      ) : basecoatQuery.isLoading ? (
+                        <SelectItem value='__loading_basecoats' disabled>
+                          Loading basecoats...
+                        </SelectItem>
                       ) : basecoatProducts.length > 0 ? (
                         basecoatProducts.map(product => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.label}
+                            {getProductOptionLabel(product)}
                           </SelectItem>
                         ))
                       ) : selectedTopcoat ? (
                         <SelectItem value='__no_basecoat_available__' disabled>
                           No basecoat available for selected topcoat
+                        </SelectItem>
+                      ) : null}
+                      {basecoatQuery.isFetchingNextPage ? (
+                        <SelectItem value='__loading_more_basecoats' disabled>
+                          Loading more basecoats...
+                        </SelectItem>
+                      ) : null}
+                      {basecoatQuery.hasNextPage ? (
+                        <SelectItem value='__scroll_basecoat_more' disabled>
+                          Scroll to load more basecoats
                         </SelectItem>
                       ) : null}
                     </SelectContent>
@@ -310,9 +420,10 @@ export const ProductsStep = (): JSX.Element => {
             index={index}
             pairId={field.id}
             topcoatProducts={topcoatProducts}
-            allBasecoatProducts={allBasecoatProducts}
-            topcoatBasecoatMap={topcoatBasecoatMap}
-            isProductsLoading={manualProductsQuery.isLoading}
+            isTopcoatLoading={topcoatQuery.isLoading}
+            isTopcoatFetchingNextPage={topcoatQuery.isFetchingNextPage}
+            topcoatHasNextPage={topcoatQuery.hasNextPage}
+            onTopcoatScroll={handleTopcoatScroll}
             onRemove={() => remove(index)}
           />
         ))}

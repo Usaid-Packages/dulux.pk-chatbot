@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 
-import { apiEndpoints, queryKeys, REGISTRATION_PRODUCT_TYPES } from '#/constants';
+import { apiEndpoints, GET, queryKeys, REGISTRATION_PRODUCT_TYPES } from '#/constants';
 import { performRequest } from '#/services';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { ProductType } from '#/types/products';
@@ -9,17 +9,26 @@ import type { ProductType } from '#/types/products';
 interface ManualRegistrationProductApiItem {
   id?: number;
   name?: string;
-  basecoats?: ManualRegistrationProductApiItem[];
+  productType?: ProductType;
+  product_type?: ProductType;
+  warrantyYears?: number;
+  warranty_years?: number;
+  isActive?: boolean;
+  is_active?: boolean;
 }
 
 interface ManualRegistrationProductsApiResponse {
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   results?: ManualRegistrationProductApiItem[];
 }
 
-interface ManualRegistrationProductsParams extends Record<string, unknown> {
-  productType: ProductType;
-  isActive: boolean;
-  ordering: string;
+interface ManualRegistrationWarrantyOptionsParams extends Record<string, unknown> {
+  product_type: ProductType;
+  topcoat_id?: number;
+  page?: number;
+  page_size?: number;
 }
 
 export interface ManualRegistrationProductsResult {
@@ -28,37 +37,80 @@ export interface ManualRegistrationProductsResult {
 }
 
 const MANUAL_PRODUCTS_STALE_TIME_MS = 0;
+const MAX_WARRANTY_OPTIONS_PAGES = 50;
 
-const toManualProductOptions = (
-  response: ManualRegistrationProductsApiResponse | undefined
-): ManualRegistrationProductOption[] => {
-  return (response?.results ?? [])
-    .filter(product => typeof product.id === 'number' && typeof product.name === 'string' && product.name.trim() !== '')
+const getWarrantyYears = (product: ManualRegistrationProductApiItem): number | undefined => {
+  return product.warrantyYears ?? product.warranty_years;
+};
+
+const toManualProductOptions = (products: ManualRegistrationProductApiItem[]): ManualRegistrationProductOption[] => {
+  return products
+    .filter(
+      product =>
+        typeof product.id === 'number' &&
+        typeof product.name === 'string' &&
+        product.name.trim() !== '' &&
+        typeof getWarrantyYears(product) === 'number' &&
+        (getWarrantyYears(product) ?? 0) > 0
+    )
     .map(product => ({
       id: String(product.id),
       label: product.name ?? '',
-      linkedBasecoats: (product.basecoats ?? [])
-        .filter(
-          basecoat =>
-            typeof basecoat.id === 'number' && typeof basecoat.name === 'string' && basecoat.name.trim() !== ''
-        )
-        .map(basecoat => ({
-          id: String(basecoat.id),
-          label: basecoat.name ?? '',
-        })),
+      warrantyYears: getWarrantyYears(product),
     }));
 };
 
-const getProductParams = (productType: ProductType): ManualRegistrationProductsParams => {
-  return {
-    productType,
-    isActive: true,
-    ordering: 'name',
-  };
+const mergeUniqueBasecoatOptions = (
+  existingOptions: ManualRegistrationProductOption[],
+  nextOptions: ManualRegistrationProductOption[]
+): ManualRegistrationProductOption[] => {
+  const merged = new Map<string, ManualRegistrationProductOption>();
+
+  existingOptions.forEach(option => {
+    merged.set(option.id, option);
+  });
+
+  nextOptions.forEach(option => {
+    merged.set(option.id, option);
+  });
+
+  return Array.from(merged.values());
+};
+
+const fetchWarrantyOptions = async (
+  params: ManualRegistrationWarrantyOptionsParams
+): Promise<ManualRegistrationProductsApiResponse> => {
+  return performRequest<ManualRegistrationProductsApiResponse, undefined, ManualRegistrationWarrantyOptionsParams>({
+    method: GET,
+    url: apiEndpoints.products.warrantyOptions,
+    params,
+  });
+};
+
+const fetchAllWarrantyOptions = async (
+  params: Omit<ManualRegistrationWarrantyOptionsParams, 'page'>
+): Promise<ManualRegistrationProductApiItem[]> => {
+  const products: ManualRegistrationProductApiItem[] = [];
+  let currentPage = 1;
+  let hasMorePages = true;
+
+  while (hasMorePages && currentPage <= MAX_WARRANTY_OPTIONS_PAGES) {
+    const response = await fetchWarrantyOptions({
+      ...params,
+      page: currentPage,
+    });
+
+    products.push(...(response.results ?? []));
+
+    hasMorePages = Boolean(response.next);
+    currentPage += 1;
+  }
+
+  return products;
 };
 
 /**
- * Fetches active topcoat/basecoat options for manual registration wizard step 3.
+ * Fetches eligible topcoat/basecoat options for manual registration wizard step 3.
  *
  * @returns React Query result containing product options grouped by type.
  */
@@ -66,22 +118,44 @@ export const useGetManualRegistrationProductsQuery = (): UseQueryResult<ManualRe
   return useQuery<ManualRegistrationProductsResult, Error>({
     queryKey: queryKeys.registrations.manualProducts,
     queryFn: async (): Promise<ManualRegistrationProductsResult> => {
-      const [topcoatResponse, basecoatResponse] = await Promise.all([
-        performRequest<ManualRegistrationProductsApiResponse, undefined, ManualRegistrationProductsParams>({
-          method: 'get',
-          url: apiEndpoints.products.list,
-          params: getProductParams(REGISTRATION_PRODUCT_TYPES.TOPCOAT),
-        }),
-        performRequest<ManualRegistrationProductsApiResponse, undefined, ManualRegistrationProductsParams>({
-          method: 'get',
-          url: apiEndpoints.products.list,
-          params: getProductParams(REGISTRATION_PRODUCT_TYPES.BASECOAT),
-        }),
-      ]);
+      const topcoatApiItems = await fetchAllWarrantyOptions({
+        product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+      });
+
+      const topcoatProducts = toManualProductOptions(topcoatApiItems);
+
+      const topcoatProductsWithBasecoats = await Promise.all(
+        topcoatProducts.map(async topcoat => {
+          const parsedTopcoatId = Number.parseInt(topcoat.id, 10);
+          if (!Number.isFinite(parsedTopcoatId) || parsedTopcoatId <= 0) {
+            return {
+              ...topcoat,
+              linkedBasecoats: [],
+            };
+          }
+
+          const basecoatApiItems = await fetchAllWarrantyOptions({
+            product_type: REGISTRATION_PRODUCT_TYPES.BASECOAT,
+            topcoat_id: parsedTopcoatId,
+          });
+
+          return {
+            ...topcoat,
+            linkedBasecoats: toManualProductOptions(basecoatApiItems),
+          };
+        })
+      );
+
+      const basecoatProducts = topcoatProductsWithBasecoats.reduce<ManualRegistrationProductOption[]>(
+        (accumulator, topcoat) => {
+          return mergeUniqueBasecoatOptions(accumulator, topcoat.linkedBasecoats ?? []);
+        },
+        []
+      );
 
       return {
-        topcoatProducts: toManualProductOptions(topcoatResponse),
-        basecoatProducts: toManualProductOptions(basecoatResponse),
+        topcoatProducts: topcoatProductsWithBasecoats,
+        basecoatProducts,
       };
     },
     staleTime: MANUAL_PRODUCTS_STALE_TIME_MS,
