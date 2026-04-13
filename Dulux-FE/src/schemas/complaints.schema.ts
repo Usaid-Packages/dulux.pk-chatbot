@@ -32,9 +32,12 @@ export const chatMessageSchema = z.object({
 export const complaintApiMessageSchema = z.object({
   id: z.union([z.string(), z.number()]),
   sender: z.string().optional(),
-  text: z.string().trim().min(1),
+  text: z.string().optional(),
   created: z.string().min(1).optional(),
   createdAt: z.string().min(1).optional(),
+  attachments: z.array(z.unknown()).optional(),
+  images: z.array(z.unknown()).optional(),
+  image: z.unknown().optional(),
 });
 
 export const complaintQueueSocketEventSchema = z.object({
@@ -103,7 +106,7 @@ export const conversationListResponseSchema = z.object({
 });
 
 export const sendMessageSchema = z.object({
-  message: z.string().trim().min(1, 'Message is required.').max(1000, 'Message is too long.'),
+  message: z.string().trim().min(1, 'Message is required.'),
 });
 
 export type SendMessageFormValues = z.infer<typeof sendMessageSchema>;

@@ -3,8 +3,8 @@ import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quali
 
 export const QUALITY_STATUS_TABS: ReadonlyArray<{ value: QualityQueueStatusFilter; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'forwarded', label: 'Awaiting Review' },
-  { value: 'infoRequested', label: 'Info Requested' },
+  { value: 'forwarded', label: 'QA Review' },
+  { value: 'infoRequested', label: 'Resubmit' },
   { value: 'resolved', label: 'Resolved' },
 ];
 

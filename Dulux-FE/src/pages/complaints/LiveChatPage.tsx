@@ -136,13 +136,6 @@ export const LiveChatPage = (): JSX.Element => {
             onSearchChange={setSearch}
             onThreadSelect={handleThreadSelect}
           />
-          <AuditTimelinePanel
-            type='complaint'
-            objectId={threadId}
-            title='Latest Timeline Changes'
-            subtitle='Detailed admin activity log'
-            maxItems={6}
-          />
         </div>
 
         <div className='min-w-0 space-y-4'>
@@ -156,8 +149,15 @@ export const LiveChatPage = (): JSX.Element => {
           />
         </div>
 
-        <div className='min-w-0 xl:col-span-2 2xl:col-span-1'>
+        <div className='min-w-0 space-y-4 xl:col-span-2 2xl:col-span-1'>
           <ConversationInfoPanel thread={threadQuery.data} onResolve={handleResolveConversation} />
+          <AuditTimelinePanel
+            type='complaint'
+            objectId={threadId}
+            title='Latest Timeline Changes'
+            subtitle='Detailed admin activity log'
+            maxItems={6}
+          />
         </div>
       </section>
 

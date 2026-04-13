@@ -112,7 +112,6 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
             {getInitials(thread.customerName)}
           </div>
           <h3 className='mt-2 text-base font-semibold text-text-primary'>{thread.customerName}</h3>
-          <p className='text-xs text-text-muted'>{thread.customerPhone}</p>
         </section>
 
         <section className='min-w-0 space-y-2 overflow-hidden rounded-xl border border-primary/15 bg-primary/5 p-3'>
@@ -152,19 +151,19 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           {thread.complaintImages.length === 0 ? (
             <p className='text-xs text-text-muted'>No images</p>
           ) : (
-            <div className='grid grid-cols-2 gap-2'>
+            <div className='grid grid-cols-2 justify-items-center gap-2 sm:justify-items-stretch'>
               {thread.complaintImages.map(image => (
                 <button
                   key={image.id}
                   type='button'
-                  className='rounded-xl border border-primary/20 bg-surface-muted p-1 transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                  className='w-24 rounded-xl border border-primary/20 bg-surface-muted p-1 transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-full'
                   data-image-id={image.id}
                   onClick={handleImagePreviewClick}
                 >
                   <img
                     src={image.url}
                     alt={image.name}
-                    className='h-24 w-full rounded-lg object-contain'
+                    className='h-20 w-full rounded-lg object-contain sm:h-24'
                     loading='lazy'
                   />
                 </button>

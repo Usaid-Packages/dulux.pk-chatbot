@@ -1,13 +1,13 @@
 import type { ChangeEvent, FocusEvent, JSX } from 'react';
 import { useEffect } from 'react';
 
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
-import { Input } from '#/components/ui';
+import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
+import { MANUAL_REGISTRATION_PROVINCE_OPTIONS } from '#/constants';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const CITY_MAX_LENGTH = 80;
-const PROVINCE_MAX_LENGTH = 80;
 
 /**
  * PersonalInfoStep renders customer identity and site fields for step 1.
@@ -16,6 +16,7 @@ const PROVINCE_MAX_LENGTH = 80;
  */
 export const PersonalInfoStep = (): JSX.Element => {
   const {
+    control,
     getValues,
     register,
     setValue,
@@ -101,11 +102,23 @@ export const PersonalInfoStep = (): JSX.Element => {
           <span className='text-sm font-medium text-text-primary'>
             Province <span className='text-destructive'>*</span>
           </span>
-          <Input
-            placeholder='e.g. Punjab'
-            maxLength={PROVINCE_MAX_LENGTH}
-            {...register('province')}
-            onChange={handleLettersOnlyChange}
+          <Controller
+            control={control}
+            name='province'
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger aria-label='Select province'>
+                  <SelectValue placeholder='Select province' />
+                </SelectTrigger>
+                <SelectContent>
+                  {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
+                    <SelectItem key={province} value={province}>
+                      {province}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           />
           {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
         </label>

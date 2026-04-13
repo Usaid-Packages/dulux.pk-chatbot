@@ -23,7 +23,7 @@ export const CLAIM_ISSUE_TYPES = [
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 export type ClaimWorkflowState = (typeof CLAIM_WORKFLOW_STATES)[number];
 export type ClaimIssueType = (typeof CLAIM_ISSUE_TYPES)[number];
-export type ClaimListStatusFilter = 'all' | ClaimStatus;
+export type ClaimListStatusFilter = 'all' | ClaimStatus | 'submitted' | 'inReview';
 
 export interface ClaimTimelineItem {
   id: string;

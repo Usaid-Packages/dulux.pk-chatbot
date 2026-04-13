@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import { Badge, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
-import type { ConversationThread } from '#/types/complaints';
+import type { ChatAttachment, ConversationThread } from '#/types/complaints';
 import { cn } from '#/utils';
 import { CONVERSATION_CHANNEL_LABELS, CONVERSATION_STATUS_CLASSNAMES, CONVERSATION_STATUS_LABELS } from './constants';
 import { MessageComposer } from './MessageComposer';
@@ -38,6 +38,13 @@ const getTicketHeading = (thread: ConversationThread): string => {
   }
 
   return `Ticket #${thread.id}`;
+};
+
+const IMAGE_ATTACHMENT_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.avif'] as const;
+
+const isImageAttachment = (attachment: ChatAttachment): boolean => {
+  const combinedValue = `${attachment.name} ${attachment.url}`.toLowerCase();
+  return IMAGE_ATTACHMENT_EXTENSIONS.some(extension => combinedValue.includes(extension));
 };
 
 /**
@@ -141,6 +148,32 @@ export const ChatThreadPanel = ({
               )}
             >
               <p>{message.text}</p>
+              {message.attachments && message.attachments.length > 0 ? (
+                <div className='mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3'>
+                  {message.attachments.map(attachment => (
+                    <a
+                      key={`${message.id}-${attachment.id}`}
+                      href={attachment.url}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='group block overflow-hidden rounded-lg border border-primary/20 bg-white/80'
+                    >
+                      {isImageAttachment(attachment) ? (
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name}
+                          loading='lazy'
+                          className='h-24 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]'
+                        />
+                      ) : (
+                        <div className='flex h-24 items-center justify-center px-2 text-center text-xs text-text-muted'>
+                          Open attachment
+                        </div>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               <p className={cn('mt-1 text-[11px]', isCustomerMessage ? 'text-text-hint' : 'text-chat-agentTimeColor')}>
                 {message.senderName} · {formatTime(message.createdAt)}
               </p>

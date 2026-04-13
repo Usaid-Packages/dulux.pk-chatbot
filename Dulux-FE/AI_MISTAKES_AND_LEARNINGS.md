@@ -258,6 +258,22 @@
 - Rule: When build errors mention CSS syntax in shared styles, verify surrounding selector blocks for unmatched braces
   before assuming feature code regressions.
 
+### 2026-04-13 - RHF controller wiring miss during input-to-select refactor
+
+- Issue: While converting manual registration `province` from `<Input>` to `Controller` + `Select`, `control` was not
+  initially destructured from `useFormContext`, causing a compile-time reference error.
+- Fix: Added `control` to form-context destructuring before finalizing and verified with targeted ESLint run.
+- Rule: Every `Controller` refactor must include a quick checklist: `control` is in scope, `name` matches schema, and
+  `onValueChange` is wired to `field.onChange`.
+
+### 2026-04-13 - Nullish + ternary expression formatting caused syntax churn
+
+- Issue: A combined `??` + ternary expression in `src/utils/helperFunctions.ts` triggered Prettier errors and briefly
+  introduced an unbalanced expression while refactoring.
+- Fix: Replaced the nested expression with an intermediate variable (`nestedImageId`) and simpler fallback chain.
+- Rule: When `??` appears inside ternary branches, prefer intermediate variables over compact one-liners to avoid
+  formatter conflicts and accidental syntax breaks.
+
 ### 2026-04-03 20:25 - `import/order` crash on new complaints/live-chat module files
 
 - Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added complaints module

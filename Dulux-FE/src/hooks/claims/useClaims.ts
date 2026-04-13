@@ -25,6 +25,8 @@ const DEFAULT_FILTERS: ClaimsListRequestParams = {
 
 const CLAIM_STATUS_FILTER_VALUES: readonly ClaimListStatusFilter[] = [
   'all',
+  'submitted',
+  'inReview',
   'pending',
   'forwarded',
   'approved',

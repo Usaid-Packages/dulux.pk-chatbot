@@ -29,6 +29,7 @@ import type {
 import type { ApiErrorShape } from '#/types/common/error.types';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
 import type {
+  ChatAttachment,
   ChatMessage,
   ComplaintApiMessage,
   ComplaintApiStatus,
@@ -226,6 +227,158 @@ const toAbsoluteBackendUrl = (urlValue: string): string => {
   }
 };
 
+const isRecordValue = (value: unknown): value is Record<string, unknown> => {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+};
+
+const toNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+};
+
+const toAttachmentIdString = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim();
+    return trimmedValue.length > 0 ? trimmedValue : null;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return null;
+};
+
+const getAttachmentUrlFromRecord = (value: Record<string, unknown>): string | null => {
+  const directUrl =
+    toNonEmptyString(value.url) ??
+    toNonEmptyString(value.imageUrl) ??
+    toNonEmptyString(value.image_url) ??
+    toNonEmptyString(value.file) ??
+    toNonEmptyString(value.fileUrl) ??
+    toNonEmptyString(value.file_url) ??
+    toNonEmptyString(value.image);
+  if (directUrl) {
+    return toAbsoluteBackendUrl(directUrl);
+  }
+
+  if (isRecordValue(value.image)) {
+    const nestedUrl = toNonEmptyString(value.image.url) ?? toNonEmptyString(value.image.image);
+    if (nestedUrl) {
+      return toAbsoluteBackendUrl(nestedUrl);
+    }
+  }
+
+  return null;
+};
+
+const normalizeMessageAttachment = (value: unknown, fallbackId: string): ChatAttachment | null => {
+  if (typeof value === 'string') {
+    const normalizedUrl = toAbsoluteBackendUrl(value);
+    if (normalizedUrl.length === 0) {
+      return null;
+    }
+
+    return {
+      id: fallbackId,
+      name: `attachment-${fallbackId}`,
+      url: normalizedUrl,
+    };
+  }
+
+  if (!isRecordValue(value)) {
+    return null;
+  }
+
+  const normalizedUrl = getAttachmentUrlFromRecord(value);
+  if (!normalizedUrl) {
+    return null;
+  }
+
+  const nestedImageObject = isRecordValue(value.image) ? value.image : null;
+  const nestedImageId = nestedImageObject
+    ? (toAttachmentIdString(nestedImageObject.id) ??
+      toAttachmentIdString(nestedImageObject.imageId) ??
+      toAttachmentIdString(nestedImageObject.image_id))
+    : null;
+  const normalizedId =
+    toAttachmentIdString(value.id) ??
+    toAttachmentIdString(value.imageId) ??
+    toAttachmentIdString(value.image_id) ??
+    nestedImageId ??
+    fallbackId;
+
+  const normalizedName =
+    toNonEmptyString(value.name) ??
+    toNonEmptyString(value.fileName) ??
+    toNonEmptyString(value.file_name) ??
+    toNonEmptyString(value.title) ??
+    `attachment-${normalizedId}`;
+
+  return {
+    id: normalizedId,
+    name: normalizedName,
+    url: normalizedUrl,
+  };
+};
+
+const getMessageAttachmentCandidates = (message: ComplaintApiMessage): unknown[] => {
+  const candidates: unknown[] = [];
+
+  const optionalArrays = [message.attachments, message.images];
+  optionalArrays.forEach(arrayValue => {
+    if (Array.isArray(arrayValue)) {
+      candidates.push(...arrayValue);
+    }
+  });
+
+  const optionalSingles = [
+    message.image,
+    message.attachment,
+    message.file,
+    message.media,
+    message.photo,
+    message.document,
+  ];
+  optionalSingles.forEach(item => {
+    if (item !== undefined && item !== null) {
+      candidates.push(item);
+    }
+  });
+
+  return candidates;
+};
+
+const normalizeMessageAttachments = (message: ComplaintApiMessage): ChatAttachment[] => {
+  const candidates = getMessageAttachmentCandidates(message);
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  const normalizedAttachments = candidates.reduce<ChatAttachment[]>((attachments, candidate, index) => {
+    const fallbackId = `${String(message.id)}-${index + 1}`;
+    const normalizedAttachment = normalizeMessageAttachment(candidate, fallbackId);
+    if (!normalizedAttachment) {
+      return attachments;
+    }
+
+    const duplicateAttachment = attachments.some(
+      attachment => attachment.id === normalizedAttachment.id && attachment.url === normalizedAttachment.url
+    );
+    if (!duplicateAttachment) {
+      attachments.push(normalizedAttachment);
+    }
+
+    return attachments;
+  }, []);
+
+  return normalizedAttachments;
+};
+
 const getMessageKindFromSender = (sender?: string): ChatMessage['kind'] => {
   const normalizedSender = sender?.trim().toUpperCase();
   if (normalizedSender === CUSTOMER_SENDER) {
@@ -254,7 +407,10 @@ const getSenderNameFromKind = (kind: ChatMessage['kind']): string => {
 export const normalizeComplaintApiMessage = (response: ComplaintApiMessage, threadId: string): ChatMessage => {
   const kind = getMessageKindFromSender(response.sender ?? DEFAULT_SOCKET_SENDER);
   const createdAt = response.createdAt ?? response.created ?? new Date().toISOString();
-  const normalizedText = response.text.trim();
+  const normalizedAttachments = normalizeMessageAttachments(response);
+  const rawText = typeof response.text === 'string' ? response.text.trim() : '';
+  const normalizedText =
+    rawText.length > 0 ? rawText : normalizedAttachments.length > 0 ? 'Image attachment' : 'Message';
 
   return {
     id: String(response.id),
@@ -263,6 +419,7 @@ export const normalizeComplaintApiMessage = (response: ComplaintApiMessage, thre
     senderName: getSenderNameFromKind(kind),
     text: normalizedText,
     createdAt,
+    attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
   };
 };
 
@@ -278,7 +435,7 @@ export const appendMessageToConversationThread = (
   return {
     ...previousThread,
     messages: [...previousThread.messages, message],
-    lastMessagePreview: message.text,
+    lastMessagePreview: message.text.trim().length > 0 ? message.text : 'Image attachment',
     lastMessageAt: message.createdAt,
   };
 };
@@ -520,10 +677,23 @@ export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiRes
     lastMessagePreview: latestMessage?.text ?? response.subject,
     lastMessageAt: latestMessage?.createdAt ?? response.modified ?? response.created ?? submittedAt,
     lastResolvedAt: response.closedAt ?? undefined,
-    messages: normalizedMessages.map(message => ({
-      ...message,
-      attachments: message === normalizedMessages[0] ? attachments : undefined,
-    })),
+    messages:
+      normalizedMessages.length > 0
+        ? normalizedMessages.map((message, index) => {
+            if ((message.attachments?.length ?? 0) > 0) {
+              return message;
+            }
+
+            if (index !== 0 || attachments.length === 0) {
+              return message;
+            }
+
+            return {
+              ...message,
+              attachments,
+            };
+          })
+        : normalizedMessages,
   };
 };
 
@@ -531,10 +701,6 @@ const AUDIT_LOG_ACTION_VALUES = ['CREATE', 'UPDATE', 'DELETE'] as const;
 
 const isAuditLogAction = (value: unknown): value is AuditLogDetail['action'] => {
   return typeof value === 'string' && AUDIT_LOG_ACTION_VALUES.includes(value as AuditLogDetail['action']);
-};
-
-const isRecordValue = (value: unknown): value is Record<string, unknown> => {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 };
 
 const normalizeAuditLogAction = (value: unknown): AuditLogDetail['action'] => {

@@ -2,11 +2,12 @@ import type { ClaimListStatusFilter } from '#/types/claims.types';
 
 export const CLAIM_STATUS_TABS: ReadonlyArray<{ value: ClaimListStatusFilter; label: string }> = [
   { value: 'all', label: 'All' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'forwarded', label: 'Forwarded' },
+  { value: 'submitted', label: 'Pending' },
+  { value: 'inReview', label: 'In Review' },
+  { value: 'forwarded', label: 'QA Review' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
-  { value: 'infoRequested', label: 'Info Requested' },
+  { value: 'infoRequested', label: 'Resubmit' },
 ];
 
 export const CLAIM_REJECTION_REASONS = [
