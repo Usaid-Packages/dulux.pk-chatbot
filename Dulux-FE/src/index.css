@@ -802,11 +802,19 @@
   }
 
   .wf-pagination-panel {
-    @apply flex items-center justify-between rounded-2xl border border-border bg-white p-4;
+    @apply mt-auto flex flex-col gap-3 rounded-2xl border border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .wf-pagination-panel > p {
+    @apply text-center sm:text-left;
+  }
+
+  .wf-pagination-panel > div > button {
+    @apply flex-1 sm:flex-none;
   }
 
   .wf-list-shell {
-    @apply space-y-5;
+    @apply flex h-full min-h-full flex-1 flex-col gap-5;
   }
 
   .wf-detail-shell {

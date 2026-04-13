@@ -106,7 +106,7 @@ export const RegistrationsListPage = (): JSX.Element => {
         <p className='text-sm text-text-muted'>
           Page {currentPage} of {totalPages}
         </p>
-        <div className='flex gap-2'>
+        <div className='flex w-full gap-2 sm:w-auto'>
           <Button type='button' variant='outline' disabled={!hasPreviousPage || isLoading} onClick={goToPreviousPage}>
             Previous
           </Button>

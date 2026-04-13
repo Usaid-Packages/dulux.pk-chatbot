@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { NOTES_MAX_LENGTH } from '#/constants';
+
 export const resubmissionFieldSchema = z.enum([
   'customer_name',
   'email',
@@ -16,7 +18,7 @@ export const resubmissionFieldSchema = z.enum([
 
 export const resubmissionSchema = z.object({
   fields: z.array(resubmissionFieldSchema).min(1, 'Select at least one field'),
-  notes: z.string().max(500, 'Notes must be 500 characters or less'),
+  notes: z.string().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or less`),
 });
 
 export type ResubmissionFormValues = z.infer<typeof resubmissionSchema>;

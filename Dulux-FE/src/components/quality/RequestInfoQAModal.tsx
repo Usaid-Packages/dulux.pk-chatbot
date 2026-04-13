@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { qualityRequestInfoSchema, type QualityRequestInfoFormValues } from '#/schemas/quality.schema';
 import { QUALITY_REQUEST_INFO_ITEMS } from './constants';
 
@@ -142,6 +142,7 @@ export const RequestInfoQAModal = ({
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />
+            <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 

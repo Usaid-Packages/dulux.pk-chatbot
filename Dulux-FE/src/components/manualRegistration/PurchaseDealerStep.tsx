@@ -7,7 +7,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Input, Textarea } from '#/components/ui';
 import { Calendar } from '#/components/ui/Calendar';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const DATE_FORMAT = 'yyyy-MM-dd';
@@ -228,6 +228,7 @@ export const PurchaseDealerStep = (): JSX.Element => {
       <label className='space-y-2'>
         <span className='text-sm font-medium text-text-primary'>Internal Notes (optional)</span>
         <Textarea rows={4} maxLength={NOTES_MAX_LENGTH} placeholder='Notes for internal review...' {...notesField} />
+        <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
         {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
       </label>
     </section>

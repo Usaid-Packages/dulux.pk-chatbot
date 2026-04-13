@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
 import { Textarea } from '#/components/ui/Textarea';
-import { NOTES_MAX_LENGTH, RESUBMISSION_FIELDS } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT, RESUBMISSION_FIELDS } from '#/constants';
 import { resubmissionSchema, type ResubmissionFormValues } from '#/schemas/registrations';
 
 interface ResubmissionModalProps {
@@ -86,6 +86,7 @@ export const ResubmissionModal = ({ isOpen, isSubmitting, onClose, onSubmit }: R
                 placeholder='Add a clear note for the customer...'
                 {...register('notes')}
               />
+              <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
               {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
             </div>
           </div>

@@ -63,6 +63,8 @@
   exported constants and avoid local constant duplication for shared config.
 - Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id)
   and must not include any secondary metadata paragraph under the heading unless explicitly requested.
+- Do not define per-item wrapper handlers inside `.map()` render blocks for tables/lists; keep action handlers at
+  component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
 
 ## Mistake Log (Short)
 
@@ -646,6 +648,56 @@
 - Fix: Composed custom input handlers with RHF field handlers (`field.onChange(event)`) for sanitized fields.
 - Rule: Any input using `register(...)` with custom `onChange` must always call the original RHF `onChange` so form
   state, validation, and navigation stay in sync.
+
+### 2026-04-13 - Surface type row actions used wrapper handlers inside render loop
+
+- Issue: `SurfaceTypeTable.tsx` created `handleEditClick` / `handleDeleteClick` inside the `.map()` row render, adding
+  avoidable per-row JS wrappers in the render path.
+- Fix: Moved row action handling to a component-level named handler and passed row identity via `data-*` attributes.
+- Rule: In mapped table/list rows, avoid creating per-item wrapper handlers in render; prefer one component-scoped named
+  handler that resolves the target item safely.
+
+### 2026-04-13 - Notes character-limit messaging was inconsistent across forms
+
+- Issue: Some note/technical-note fields enforced `maxLength={500}` but did not show explicit helper copy, and several
+  registration schemas used hardcoded `500` instead of the shared notes-limit constant.
+- Fix: Added shared `NOTES_MAX_LENGTH_HELPER_TEXT` and rendered it for all note textareas; replaced hardcoded schema
+  values with `NOTES_MAX_LENGTH`.
+- Rule: For every notes input, enforce limit from `NOTES_MAX_LENGTH` and show a visible helper note so users know the
+  500-character cap before submission.
+
+### 2026-04-13 - Pagination anchored with sticky instead of true bottom layout
+
+- Issue: Using `sticky bottom-0` for `.wf-pagination-panel` did not guarantee bottom placement on short pages, so
+  pagination appeared immediately after content instead of at page bottom.
+- Fix: Switched to layout-based anchoring with full-height flex containers (`PageWrapper` + `.wf-list-shell`) and kept
+  pagination panel on `mt-auto` for consistent bottom placement.
+- Rule: For bottom-anchored footer/pagination UI, prefer full-height flex layout + `mt-auto` over sticky positioning.
+
+### 2026-04-13 - Pagination needed hybrid anchoring (layout + sticky) for list-heavy pages
+
+- Issue: Layout-only anchoring (`mt-auto`) put pagination at page bottom on short pages, but in long list/table views it
+  still rendered right after the table instead of remaining at the viewport bottom.
+- Fix: Applied hybrid behavior on `.wf-pagination-panel`: keep `mt-auto` with full-height flex layout and add
+  `sticky bottom-0` for viewport-bottom anchoring during list scrolling.
+- Rule: For paginated list pages, use hybrid anchoring (`mt-auto` + `sticky bottom-0`) so pagination is bottom-aligned
+  on short pages and stays pinned at viewport bottom on long pages.
+
+### 2026-04-13 - Final pagination behavior requires non-sticky flow for short screens
+
+- Issue: Sticky pagination kept the panel pinned on short-height screens, but required UX is to keep pagination in
+  normal flow after table content on short screens while still bottom-aligning on large screens.
+- Fix: Removed sticky positioning from `.wf-pagination-panel` and enforced full-height flex growth on wrapper/list
+  containers (`PageWrapper` + `.wf-list-shell`) so `mt-auto` handles large-screen bottom alignment naturally.
+- Rule: For this project's list pages, do not use sticky pagination; use container flex growth plus `mt-auto` so small
+  screens remain content-flow and large screens bottom-align.
+
+### 2026-04-13 - Product page missed shared list-shell container
+
+- Issue: Products module root used `space-y-4` instead of shared `wf-list-shell`, so pagination bottom-alignment rules
+  were not applied consistently there.
+- Fix: Switched Products page root container to `wf-list-shell` (with `gap-4` to preserve visual spacing).
+- Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is consistent.
 
 ## Final Check (Before Submit)
 

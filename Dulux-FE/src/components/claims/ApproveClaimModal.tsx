@@ -15,7 +15,7 @@ import {
   Input,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { approveClaimFinalSchema, type ApproveClaimFinalFormValues } from '#/schemas/claim.schema';
 import type { ClaimDetail } from '#/types/claims.types';
 import { createClaimApprovedTemplate } from '#/utils';
@@ -94,6 +94,7 @@ export const ApproveClaimModal = ({
                 {...register('notes')}
                 aria-invalid={Boolean(errors.notes)}
               />
+              <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
               {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
             </div>
 
