@@ -54,6 +54,11 @@ export const queryKeys = {
     detail: (id: string): readonly ['registration', string] => ['registration', id] as const,
     manualCreate: ['registrations', 'manual-create'] as const,
     manualProducts: ['registrations', 'manual-products'] as const,
+    manualWarrantyOptions: (
+      productType: 'TOPCOAT' | 'BASECOAT',
+      topcoatId?: string
+    ): readonly ['registrations', 'manual-products', 'warranty-options', 'TOPCOAT' | 'BASECOAT', string] =>
+      ['registrations', 'manual-products', 'warranty-options', productType, topcoatId ?? ''] as const,
   },
   products: {
     all: ['products'] as const,

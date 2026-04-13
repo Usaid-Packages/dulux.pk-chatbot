@@ -583,6 +583,25 @@
 - Rule: When a heading format is explicitly requested, lock the exact text pattern in component logic and preserve it
   across future UI passes.
 
+### 2026-04-13 - Warranty options parser assumed snake_case after axios camel-case transform
+
+- Issue: Manual registration Step 3 product options parser read `warranty_years`/`product_type` only, while
+  `axiosInstance` converts API responses to camelCase (`warrantyYears`/`productType`), causing topcoat/basecoat option
+  filtering to fail and dropdowns to appear incomplete/empty.
+- Fix: Updated parser to support transformed response keys safely and added full pagination handling (`next` page loop)
+  for warranty-options endpoint results.
+- Rule: For all data-layer mappers, always account for global response case-transform behavior before enforcing field
+  filters, and fetch all paginated pages when dropdown completeness depends on full option sets.
+
+### 2026-04-13 - Implemented API pagination but initially missed dropdown infinite-scroll UX
+
+- Issue: Warranty-options integration first solved paginated API completeness via internal prefetch, but did not expose
+  true UI infinite-scroll behavior in Select dropdowns as requested.
+- Fix: Added infinite-query hooks with page-based fetching and wired `SelectContent` scroll-to-bottom handlers for
+  topcoat/basecoat dropdowns in manual registration Step 3.
+- Rule: If the requirement explicitly says UI infinite scroll, implement scroll-triggered next-page loading in the
+  component interaction layer, not just background pagination in data fetchers.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.
