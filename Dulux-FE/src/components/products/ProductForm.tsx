@@ -134,7 +134,7 @@ const MultiSelectDropdown = ({
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
-          <div className='max-h-[8.5rem] space-y-2 overflow-y-auto pr-1'>
+          <div className='max-h-34 space-y-2 overflow-y-auto pr-1'>
             {options.map(option => {
               const isSelected = selectedIds.includes(option.id);
 
@@ -412,7 +412,7 @@ export const ProductForm = ({
             <Input
               id='product-warranty'
               type='number'
-              min={1}
+              min={0}
               className='rounded-xl border-primary/20 bg-white'
               placeholder={
                 selectedProductType === 'TOPCOAT' ? 'Enter warranty years' : 'Optional for basecoat products'
