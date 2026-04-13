@@ -602,6 +602,33 @@
 - Rule: If the requirement explicitly says UI infinite scroll, implement scroll-triggered next-page loading in the
   component interaction layer, not just background pagination in data fetchers.
 
+### 2026-04-13 - Registration detail back route ignored quality-origin context
+
+- Issue: Opening registration detail from quality flow still used generic registrations back route, which sent quality
+  users to `/registrations` (an unauthorized area), and action controls remained visible for quality reviewer role.
+- Fix: Passed safe `backTo` route state when opening linked registration from quality detail, made header/detail back
+  handling prefer that state route, and hid registration action center/modals for quality reviewers.
+- Rule: For cross-module deep links, always carry and honor origin return context and gate action panels by role on
+  detail pages.
+
+### 2026-04-13 - Product form placeholder formatting churn during conditional warranty update
+
+- Issue: Warranty placeholder conditional in `ProductForm.tsx` was reformatted in a way that repeatedly failed
+  `prettier/prettier` lint.
+- Fix: Rewrote the placeholder ternary using Prettier-compatible line wrapping and reran targeted ESLint.
+- Rule: After UI copy/layout updates in JSX attributes, run targeted lint immediately and match formatter-driven line
+  wrapping to avoid avoidable churn.
+
+### 2026-04-13 - Basecoat optional warranty schema still surfaced NaN validation error
+
+- Issue: Initial optional-warranty schema used `z.preprocess(..., z.coerce.number(...)).optional()`, which could still
+  coerce preprocessed `undefined` to `NaN` and throw `Invalid input: expected number, received NaN` for basecoat submit.
+- Fix: Reworked parsing to normalize empty/`NaN` values before validation and parse against
+  `z.number().int().min(1).optional()` so basecoat can submit without warranty while topcoat is still enforced in
+  `superRefine`.
+- Rule: For optional numeric fields in RHF+Zod flows, treat `''` and `NaN` explicitly as empty before numeric
+  validation; do not rely on outer `.optional()` around `z.coerce.number()` for this pattern.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

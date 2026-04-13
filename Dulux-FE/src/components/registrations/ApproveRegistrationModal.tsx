@@ -62,13 +62,13 @@ export const ApproveRegistrationModal = ({
       <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[680px]'>
         <DialogHeader>
           <DialogTitle>Approve Registration</DialogTitle>
-          <DialogDescription>Add notes and review the email preview before approval.</DialogDescription>
+          <DialogDescription>Add optional notes and review the email preview before approval.</DialogDescription>
         </DialogHeader>
         <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
           <div className='min-h-0 flex-1 space-y-4 overflow-y-auto pr-1'>
             <div className='space-y-2'>
               <label htmlFor='approve-notes' className='block text-sm font-medium text-text-primary'>
-                Notes
+                Notes (Optional)
               </label>
               <Textarea
                 id='approve-notes'

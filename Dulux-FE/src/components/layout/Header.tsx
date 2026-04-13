@@ -16,13 +16,29 @@ const getBreadcrumb = (pathName: string): string | null => {
   return null;
 };
 
-const getBackRoute = (pathName: string): string | null => {
+const getStateBackRoute = (state: unknown): string | null => {
+  if (!state || typeof state !== 'object') {
+    return null;
+  }
+
+  const backTo = (state as { backTo?: unknown }).backTo;
+
+  if (typeof backTo !== 'string' || backTo.trim().length === 0 || !backTo.startsWith('/')) {
+    return null;
+  }
+
+  return backTo;
+};
+
+const getBackRoute = (pathName: string, state: unknown): string | null => {
+  const stateBackRoute = getStateBackRoute(state);
+
   if (pathName.startsWith(ROUTES.MANUAL_REGISTRATION_ROOT)) {
     return ROUTES.REGISTRATIONS;
   }
 
   if (pathName.startsWith(`${ROUTES.REGISTRATIONS}/`)) {
-    return ROUTES.REGISTRATIONS;
+    return stateBackRoute ?? ROUTES.REGISTRATIONS;
   }
 
   if (pathName.startsWith(`${ROUTES.CLAIMS}/`)) {
@@ -50,7 +66,7 @@ export const Header = (): JSX.Element => {
   const location = useLocation();
   const title = getHeaderTitle(location.pathname);
   const breadcrumb = getBreadcrumb(location.pathname);
-  const backRoute = getBackRoute(location.pathname);
+  const backRoute = getBackRoute(location.pathname, location.state);
   const isRegistrationsRoute = location.pathname === ROUTES.REGISTRATIONS;
   const isClaimsRoute = location.pathname === ROUTES.CLAIMS;
   const isProductsRoute = location.pathname === ROUTES.PRODUCTS;

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { ROUTES } from '#/constants';
 import type { LinkedRegistrationSummary } from '#/types/claims.types';
@@ -17,7 +17,10 @@ interface LinkedRegistrationCardProps {
  * @returns Registration summary card.
  */
 export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardProps): JSX.Element => {
+  const location = useLocation();
   const canOpenRegistration = registration.registrationRecordId !== 'N/A';
+  const registrationDetailPath = ROUTES.REGISTRATION_DETAIL(registration.registrationRecordId);
+  const backToPath = `${location.pathname}${location.search}`;
 
   return (
     <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
@@ -41,7 +44,8 @@ export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardP
       {canOpenRegistration ? (
         <Link
           className='mt-3 inline-block text-sm font-semibold text-primary hover:underline'
-          to={ROUTES.REGISTRATION_DETAIL(registration.registrationRecordId)}
+          to={registrationDetailPath}
+          state={{ backTo: backToPath }}
         >
           Open registration
         </Link>

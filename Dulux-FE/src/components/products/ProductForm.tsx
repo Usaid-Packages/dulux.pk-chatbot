@@ -406,14 +406,17 @@ export const ProductForm = ({
 
           <div className='space-y-2'>
             <label htmlFor='product-warranty' className='text-sm font-medium text-text-primary'>
-              Warranty (Years) <span className='text-destructive'>*</span>
+              Warranty (Years)
+              {selectedProductType === 'TOPCOAT' ? <span className='text-destructive'>*</span> : null}
             </label>
             <Input
               id='product-warranty'
               type='number'
               min={1}
               className='rounded-xl border-primary/20 bg-white'
-              placeholder='Enter warranty years'
+              placeholder={
+                selectedProductType === 'TOPCOAT' ? 'Enter warranty years' : 'Optional for basecoat products'
+              }
               {...register('warrantyYears')}
               aria-invalid={Boolean(errors.warrantyYears)}
             />
