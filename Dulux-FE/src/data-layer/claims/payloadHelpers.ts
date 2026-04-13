@@ -15,7 +15,7 @@ export const toCreateClaimPayload = (
   paint_pair: payload.paintPair,
   issue_type: payload.issueType,
   affected_area_sqft: payload.affectedAreaSqft,
-  notes: payload.notes,
+  notes: payload.notes?.trim() ?? '',
   images: [
     {
       image_id: imageIds.longShotImageId,
@@ -32,7 +32,7 @@ export const toCreateClaimPayload = (
   ],
 });
 
-export const toSendToQualityNotes = (payload: SendToQualityPayload): string => payload.notes;
+export const toSendToQualityNotes = (payload: SendToQualityPayload): string => payload.notes?.trim() ?? '';
 
 export const toRequestMoreInfoNotes = (payload: RequestMoreInfoPayload): string => {
   const formattedItems = payload.items.map(item => `- ${item}`).join('\n');

@@ -276,7 +276,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
       paintPair: paintPairNumericId,
       issueType: values.issueType,
       affectedAreaSqft: String(values.affectedAreaSqft),
-      notes: values.notes.trim(),
+      notes: values.notes?.trim() ?? '',
       photos: {
         longShot: values.longShotPhoto,
         closeShot: values.closeShotPhoto,
@@ -474,7 +474,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
 
           <div className='space-y-2'>
             <label htmlFor='claim-notes' className='text-sm font-medium text-text-primary'>
-              Notes <span className='text-destructive'>*</span>
+              Notes
             </label>
             <Textarea
               id='claim-notes'

@@ -112,7 +112,7 @@ export interface CreateClaimPayload extends Record<string, unknown> {
   paintPair: number;
   issueType: string;
   affectedAreaSqft: string;
-  notes: string;
+  notes?: string;
   photos: {
     longShot: File;
     closeShot: File;
@@ -129,7 +129,7 @@ export interface ApproveClaimPayload extends Record<string, unknown> {
 
 export interface SendToQualityPayload extends Record<string, unknown> {
   id: string;
-  notes: string;
+  notes?: string;
 }
 
 export interface RejectClaimPayload extends Record<string, unknown> {

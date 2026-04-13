@@ -98,22 +98,14 @@ export const createClaimSchema = z.object({
   basecoatProductId: z.string().optional(),
   issueType: z.enum(CLAIM_CREATE_ISSUE_TYPES),
   affectedAreaSqft: z.coerce.number().positive('Affected area must be greater than zero.'),
-  notes: z
-    .string()
-    .trim()
-    .min(8, 'Notes must be at least 8 characters.')
-    .max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
   longShotPhoto: z.instanceof(File, { message: 'Long shot photo is required.' }),
   closeShotPhoto: z.instanceof(File, { message: 'Close shot photo is required.' }),
   alternateAnglePhoto: z.instanceof(File, { message: 'Alternate angle photo is required.' }),
 });
 
 export const forwardToQualitySchema = z.object({
-  notes: z
-    .string()
-    .trim()
-    .min(8, 'Notes must be at least 8 characters.')
-    .max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
 });
 
 export const approveClaimFinalSchema = z.object({
