@@ -92,7 +92,7 @@ export interface SurfaceTypeQueryParams extends Record<string, unknown> {
 export interface ProductMutationPayload extends Record<string, unknown> {
   name: string;
   product_type: ProductType;
-  warranty_years: number;
+  warranty_years?: number;
   features: string;
   coverage_details: string;
   webpage_url: string;
@@ -122,7 +122,7 @@ export interface RemoveProductImagePayload extends Record<string, unknown> {
 export interface ProductFormValues {
   name: string;
   productType: ProductType;
-  warrantyYears: number;
+  warrantyYears?: number;
   coverageDetails: string;
   webpageUrl: string;
   features: string;

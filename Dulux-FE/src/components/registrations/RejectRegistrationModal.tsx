@@ -62,15 +62,13 @@ export const RejectRegistrationModal = ({
       <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[680px]'>
         <DialogHeader>
           <DialogTitle>Reject Registration</DialogTitle>
-          <DialogDescription>
-            Provide notes for the customer explaining why this registration was rejected.
-          </DialogDescription>
+          <DialogDescription>Provide optional notes for the customer about this rejection.</DialogDescription>
         </DialogHeader>
         <form className='flex min-h-0 flex-1 flex-col' onSubmit={handleSubmit(handleFormSubmit)}>
           <div className='min-h-0 flex-1 space-y-4 overflow-y-auto pr-1'>
             <div className='space-y-2'>
               <label htmlFor='reject-notes' className='block text-sm font-medium text-text-primary'>
-                Notes
+                Notes (Optional)
               </label>
               <Textarea
                 id='reject-notes'

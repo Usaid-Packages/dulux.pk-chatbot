@@ -10,6 +10,9 @@ import type { ApproveFormValues, RejectFormValues, ResubmissionFormValues } from
 import type { RegistrationDetail } from '#/types/registrations';
 import { createRegistrationApprovedTemplate, createRegistrationRejectedTemplate, getApiErrorMessage } from '#/utils';
 
+const APPROVAL_TEMPLATE_FALLBACK_NOTE = 'Approval confirmed.';
+const REJECTION_TEMPLATE_FALLBACK_NOTE = 'Rejected after review.';
+
 export interface UseRegistrationDetailResult {
   isLoading: boolean;
   isError: boolean;
@@ -43,11 +46,14 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
       return;
     }
 
+    const normalizedNotes = values.notes.trim();
+    const templateNotes = normalizedNotes || APPROVAL_TEMPLATE_FALLBACK_NOTE;
+
     approveMutation.mutate(
       {
         id: registrationId,
-        notes: values.notes,
-        notificationTemplate: createRegistrationApprovedTemplate(registration, values.notes),
+        notes: normalizedNotes,
+        notificationTemplate: createRegistrationApprovedTemplate(registration, templateNotes),
       },
       {
         onSuccess: () => {
@@ -70,11 +76,14 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
       return;
     }
 
+    const normalizedNotes = values.notes.trim();
+    const templateNotes = normalizedNotes || REJECTION_TEMPLATE_FALLBACK_NOTE;
+
     rejectMutation.mutate(
       {
         id: registrationId,
-        notes: values.notes,
-        notificationTemplate: createRegistrationRejectedTemplate(registration, values.notes),
+        notes: normalizedNotes,
+        notificationTemplate: createRegistrationRejectedTemplate(registration, templateNotes),
       },
       {
         onSuccess: () => {
@@ -91,11 +100,13 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
   };
 
   const handleResubmitRegistration = (values: ResubmissionFormValues, onSuccess?: () => void): void => {
+    const normalizedNotes = values.notes.trim();
+
     resubmitMutation.mutate(
       {
         id: registrationId,
         fields: values.fields,
-        notes: values.notes,
+        notes: normalizedNotes,
       },
       {
         onSuccess: () => {

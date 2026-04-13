@@ -21,7 +21,8 @@ import {
   ImagePreviewGallery,
   Skeleton,
 } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { APP_USER_ROLES, ROUTES, normalizeAppUserRole } from '#/constants';
+import { useAuthContext } from '#/context';
 import { useRegistrationDetail } from '#/hooks/registrations';
 
 const DETAIL_TEXT_TRUNCATE_LENGTH = 35;
@@ -60,6 +61,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const { user } = useAuthContext();
 
   const registrationId = id ?? '';
   const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
@@ -79,7 +81,28 @@ export const RegistrationDetailPage = (): JSX.Element => {
     resubmitRegistration,
   } = useRegistrationDetail(registrationId);
 
+  const normalizedRole = normalizeAppUserRole(user?.role);
+  const isQualityReviewer = normalizedRole === APP_USER_ROLES.QUALITY;
+  const backToPathFromState =
+    typeof location.state === 'object' &&
+    location.state &&
+    'backTo' in location.state &&
+    typeof (location.state as { backTo?: unknown }).backTo === 'string' &&
+    (location.state as { backTo?: string }).backTo?.startsWith('/')
+      ? (location.state as { backTo: string }).backTo
+      : null;
+
   const handleBackToList = (): void => {
+    if (backToPathFromState) {
+      navigate(backToPathFromState);
+      return;
+    }
+
+    if (isQualityReviewer) {
+      navigate(`${ROUTES.QUALITY}${location.search}`);
+      return;
+    }
+
     navigate(`${ROUTES.REGISTRATIONS}${location.search}`);
   };
 
@@ -260,6 +283,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
         <div className='space-y-4'>
           <RegistrationDetailPanel
             registration={registration}
+            showActionCenter={!isQualityReviewer}
             isApprovePending={isApprovePending}
             isApproveDisabled={registration.state === 'APPROVED'}
             isReviewActionDisabled={registration.state === 'APPROVED'}
@@ -271,28 +295,34 @@ export const RegistrationDetailPage = (): JSX.Element => {
         </div>
       </section>
 
-      <ApproveRegistrationModal
-        isOpen={isApproveModalOpen}
-        isSubmitting={isApprovePending}
-        registration={registration}
-        onClose={closeApproveModal}
-        onSubmit={handleApproveSubmit}
-      />
+      {!isQualityReviewer ? (
+        <ApproveRegistrationModal
+          isOpen={isApproveModalOpen}
+          isSubmitting={isApprovePending}
+          registration={registration}
+          onClose={closeApproveModal}
+          onSubmit={handleApproveSubmit}
+        />
+      ) : null}
 
-      <ResubmissionModal
-        isOpen={isResubmissionModalOpen}
-        isSubmitting={isResubmitPending}
-        onClose={closeResubmissionModal}
-        onSubmit={handleResubmissionSubmit}
-      />
+      {!isQualityReviewer ? (
+        <ResubmissionModal
+          isOpen={isResubmissionModalOpen}
+          isSubmitting={isResubmitPending}
+          onClose={closeResubmissionModal}
+          onSubmit={handleResubmissionSubmit}
+        />
+      ) : null}
 
-      <RejectRegistrationModal
-        isOpen={isRejectModalOpen}
-        isSubmitting={isRejectPending}
-        registration={registration}
-        onClose={closeRejectModal}
-        onSubmit={handleRejectSubmit}
-      />
+      {!isQualityReviewer ? (
+        <RejectRegistrationModal
+          isOpen={isRejectModalOpen}
+          isSubmitting={isRejectPending}
+          registration={registration}
+          onClose={closeRejectModal}
+          onSubmit={handleRejectSubmit}
+        />
+      ) : null}
     </main>
   );
 };

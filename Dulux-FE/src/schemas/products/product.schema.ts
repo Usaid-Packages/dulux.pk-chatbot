@@ -9,7 +9,22 @@ export const productFormSchema = z
   .object({
     name: z.string().trim().min(1, 'Product name is required.'),
     productType: productTypeSchema,
-    warrantyYears: z.coerce.number().int().min(1, 'Warranty years must be at least 1.'),
+    warrantyYears: z.preprocess(value => {
+      if (value === '' || value === null || value === undefined) {
+        return undefined;
+      }
+
+      if (typeof value === 'number' && Number.isNaN(value)) {
+        return undefined;
+      }
+
+      if (typeof value === 'string') {
+        const parsedValue = Number(value);
+        return Number.isNaN(parsedValue) ? value : parsedValue;
+      }
+
+      return value;
+    }, z.number().int().min(1, 'Warranty years must be at least 1.').optional()),
     coverageDetails: z
       .string()
       .trim()
@@ -32,6 +47,14 @@ export const productFormSchema = z
     basecoatIds: z.array(z.number().int().positive()).default([]),
   })
   .superRefine((values, context) => {
+    if (values.productType === 'TOPCOAT' && values.warrantyYears === undefined) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['warrantyYears'],
+        message: 'Warranty years are required for TOPCOAT products.',
+      });
+    }
+
     if (values.productType !== 'TOPCOAT' && values.basecoatIds.length > 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

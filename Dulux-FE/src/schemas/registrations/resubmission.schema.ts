@@ -16,7 +16,7 @@ export const resubmissionFieldSchema = z.enum([
 
 export const resubmissionSchema = z.object({
   fields: z.array(resubmissionFieldSchema).min(1, 'Select at least one field'),
-  notes: z.string().min(1, 'Notes are required').max(500, 'Notes must be 500 characters or less'),
+  notes: z.string().max(500, 'Notes must be 500 characters or less'),
 });
 
 export type ResubmissionFormValues = z.infer<typeof resubmissionSchema>;

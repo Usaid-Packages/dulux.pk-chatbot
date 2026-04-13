@@ -9,6 +9,7 @@ import { SourceTag } from './SourceTag';
 
 interface RegistrationDetailPanelProps {
   registration: RegistrationDetail;
+  showActionCenter: boolean;
   isApprovePending: boolean;
   isApproveDisabled: boolean;
   isReviewActionDisabled: boolean;
@@ -69,6 +70,7 @@ const ExpandableProvinceValue = ({ value }: { value: string }): JSX.Element => {
  */
 export const RegistrationDetailPanel = ({
   registration,
+  showActionCenter,
   isApprovePending,
   isApproveDisabled,
   isReviewActionDisabled,
@@ -150,42 +152,44 @@ export const RegistrationDetailPanel = ({
         </p>
       </article>
 
-      <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
-        <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
-        <p className='mt-1 text-sm text-text-muted'>Move registration to next workflow step.</p>
-        <div className='mt-4 space-y-2'>
-          <Button
-            type='button'
-            className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
-            disabled={isApproveActionDisabled}
-            onClick={onOpenApproveModal}
-          >
-            {isApprovePending ? 'Approving...' : isRejected ? 'Rejected' : isApproveDisabled ? 'Approved' : 'Approve'}
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
-            disabled={isResubmitActionDisabled}
-            onClick={onOpenResubmitModal}
-          >
-            {isResubmitPending
-              ? 'Requesting...'
-              : isResubmissionRequested
-                ? 'Resubmission Requested'
-                : 'Request Resubmission'}
-          </Button>
-          <Button
-            type='button'
-            variant='destructive'
-            className='h-10 w-full rounded-xl'
-            disabled={isReviewActionsDisabled}
-            onClick={onOpenRejectModal}
-          >
-            Reject Registration
-          </Button>
-        </div>
-      </article>
+      {showActionCenter ? (
+        <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
+          <h2 className='text-md font-semibold text-text-primary'>Action Center</h2>
+          <p className='mt-1 text-sm text-text-muted'>Move registration to next workflow step.</p>
+          <div className='mt-4 space-y-2'>
+            <Button
+              type='button'
+              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              disabled={isApproveActionDisabled}
+              onClick={onOpenApproveModal}
+            >
+              {isApprovePending ? 'Approving...' : isRejected ? 'Rejected' : isApproveDisabled ? 'Approved' : 'Approve'}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              className='h-10 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-primary/10'
+              disabled={isResubmitActionDisabled}
+              onClick={onOpenResubmitModal}
+            >
+              {isResubmitPending
+                ? 'Requesting...'
+                : isResubmissionRequested
+                  ? 'Resubmission Requested'
+                  : 'Request Resubmission'}
+            </Button>
+            <Button
+              type='button'
+              variant='destructive'
+              className='h-10 w-full rounded-xl'
+              disabled={isReviewActionsDisabled}
+              onClick={onOpenRejectModal}
+            >
+              Reject Registration
+            </Button>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 };
