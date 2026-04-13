@@ -21,7 +21,9 @@ export const PageWrapper = ({ children, pathname }: PageWrapperProps): React.JSX
 
   return (
     <main ref={containerRef} className='relative flex-1 overflow-y-auto px-4 pb-6 pt-5 md:px-6 md:pb-8 md:pt-6'>
-      <div className='relative mx-auto w-full max-w-[1360px] min-[1440px]:max-w-[1240px]'>{children}</div>
+      <div className='relative mx-auto flex h-full min-h-full w-full max-w-[1360px] flex-col min-[1440px]:max-w-[1240px]'>
+        {children}
+      </div>
     </main>
   );
 };

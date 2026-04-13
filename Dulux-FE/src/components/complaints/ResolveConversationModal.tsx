@@ -11,7 +11,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 
 interface ResolveConversationModalProps {
   isOpen: boolean;
@@ -68,6 +68,7 @@ export const ResolveConversationModal = ({
             onChange={event => setClosureNote(event.target.value)}
             placeholder='Issue resolved and confirmed by customer.'
           />
+          <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
         </div>
 
         <DialogFooter>

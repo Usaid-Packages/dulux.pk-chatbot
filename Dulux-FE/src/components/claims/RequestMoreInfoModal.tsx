@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { requestMoreInfoSchema, type RequestMoreInfoFormValues } from '#/schemas/claim.schema';
 import { REQUEST_INFO_ITEMS } from './constants';
 
@@ -144,6 +144,7 @@ export const RequestMoreInfoModal = ({
               {...register('note')}
               aria-invalid={Boolean(errors.note)}
             />
+            <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
             {errors.note ? <p className='text-xs text-destructive'>{errors.note.message}</p> : null}
           </div>
           <DialogFooter>

@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { qualityApproveSchema, type QualityApproveFormValues } from '#/schemas/quality.schema';
 
 interface ApproveClaimModalProps {
@@ -74,6 +74,7 @@ export const ApproveClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: A
                 {...register('technicalNotes')}
                 aria-invalid={Boolean(errors.technicalNotes)}
               />
+              <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
               {errors.technicalNotes ? (
                 <p className='text-xs text-destructive'>{errors.technicalNotes.message}</p>
               ) : null}

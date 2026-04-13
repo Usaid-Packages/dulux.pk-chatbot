@@ -122,7 +122,7 @@ export const AuditLogsPage = (): JSX.Element => {
             <p className='text-sm text-text-muted'>
               Page {filters.page} of {totalPages}
             </p>
-            <div className='flex gap-2'>
+            <div className='flex w-full gap-2 sm:w-auto'>
               <Button type='button' variant='outline' onClick={handlePreviousPage} disabled={filters.page <= 1}>
                 Previous
               </Button>

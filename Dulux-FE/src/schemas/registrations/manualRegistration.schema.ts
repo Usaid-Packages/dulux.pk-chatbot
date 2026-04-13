@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
+import {
+  MANUAL_REGISTRATION_ALLOWED_FILE_TYPES,
+  MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES,
+  NOTES_MAX_LENGTH,
+} from '#/constants';
 
 const quantityPattern = /^\d+(\.\d{1,2})?$/;
 const pakistanPhoneInputPattern = /^923\d{9}$/;
@@ -100,7 +104,7 @@ const manualRegistrationBaseSchema = z.object({
     .trim()
     .min(5, 'Dealer address must be at least 5 characters.')
     .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`),
-  notes: z.string().trim().max(500, 'Notes must be 500 characters or less.'),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or less.`),
   topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
   topcoatQuantity: z
     .string()

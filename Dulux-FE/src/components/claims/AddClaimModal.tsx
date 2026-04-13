@@ -20,7 +20,7 @@ import {
   SelectValue,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { useGetRegistrationByIdQuery, useGetRegistrationsQuery } from '#/data-layer/registrations';
 import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.schema';
 import type { CreateClaimPayload } from '#/types/claims.types';
@@ -483,6 +483,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
               {...register('notes')}
               aria-invalid={Boolean(errors.notes)}
             />
+            <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
             {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
           </div>
 

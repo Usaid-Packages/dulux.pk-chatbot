@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
 import { Textarea } from '#/components/ui/Textarea';
-import { NOTES_MAX_LENGTH } from '#/constants';
+import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import { approveSchema, type ApproveFormValues } from '#/schemas/registrations';
 import type { RegistrationDetail } from '#/types/registrations';
 import { createRegistrationApprovedTemplate } from '#/utils';
@@ -77,6 +77,7 @@ export const ApproveRegistrationModal = ({
                 placeholder='Add approval context for the customer...'
                 {...register('notes')}
               />
+              <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
               {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
             </div>
 

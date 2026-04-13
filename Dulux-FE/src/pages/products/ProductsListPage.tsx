@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
+import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
 import {
   Button,
   Empty,
@@ -22,6 +22,7 @@ import {
 } from '#/components/ui';
 import {
   useCreateSurfaceTypeMutation,
+  useDeleteSurfaceTypeMutation,
   useGetProductsQuery,
   useGetSurfaceTypesQuery,
   useUpdateSurfaceTypeMutation,
@@ -119,6 +120,7 @@ export const ProductsListPage = (): JSX.Element => {
 
   const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = useState<boolean>(false);
   const [surfaceTypeEditTarget, setSurfaceTypeEditTarget] = useState<SurfaceType | null>(null);
+  const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
 
   const productQuery = useGetProductsQuery({
     search: productSearch.trim() || undefined,
@@ -139,6 +141,7 @@ export const ProductsListPage = (): JSX.Element => {
   const surfaceTypesQuery = useGetSurfaceTypesQuery(surfaceTypeParams);
 
   const createSurfaceTypeMutation = useCreateSurfaceTypeMutation();
+  const deleteSurfaceTypeMutation = useDeleteSurfaceTypeMutation();
   const updateSurfaceTypeMutation = useUpdateSurfaceTypeMutation();
 
   const products = productQuery.data?.results ?? EMPTY_PRODUCTS;
@@ -199,6 +202,18 @@ export const ProductsListPage = (): JSX.Element => {
     surfaceSearch,
   ]);
 
+  useEffect(() => {
+    if (!productQuery.isLoading && !productQuery.isError && productPage > productTotalPages) {
+      setProductPage(productTotalPages);
+    }
+  }, [productPage, productQuery.isError, productQuery.isLoading, productTotalPages]);
+
+  useEffect(() => {
+    if (!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfacePage > surfaceTypeTotalPages) {
+      setSurfacePage(surfaceTypeTotalPages);
+    }
+  }, [surfacePage, surfaceTypeTotalPages, surfaceTypesQuery.isError, surfaceTypesQuery.isLoading]);
+
   const setTab = (tab: ProductTab): void => {
     setSearchParams(previous => {
       const nextParams = new URLSearchParams(previous);
@@ -242,6 +257,14 @@ export const ProductsListPage = (): JSX.Element => {
     setSurfaceTypeEditTarget(null);
   };
 
+  const openDeleteSurfaceTypeModal = (surfaceType: SurfaceType): void => {
+    setSurfaceTypeDeleteTarget(surfaceType);
+  };
+
+  const closeDeleteSurfaceTypeModal = (): void => {
+    setSurfaceTypeDeleteTarget(null);
+  };
+
   const submitSurfaceType = (values: SurfaceTypeFormValues): void => {
     if (surfaceTypeEditTarget) {
       updateSurfaceTypeMutation.mutate(
@@ -267,6 +290,22 @@ export const ProductsListPage = (): JSX.Element => {
       onSuccess: () => {
         toast.success('Surface type created successfully.');
         closeSurfaceTypeModal();
+      },
+      onError: error => {
+        toast.error(getApiErrorMessage(error));
+      },
+    });
+  };
+
+  const handleDeleteSurfaceType = (): void => {
+    if (!surfaceTypeDeleteTarget) {
+      return;
+    }
+
+    deleteSurfaceTypeMutation.mutate(String(surfaceTypeDeleteTarget.id), {
+      onSuccess: () => {
+        toast.success('Surface type deleted successfully.');
+        closeDeleteSurfaceTypeModal();
       },
       onError: error => {
         toast.error(getApiErrorMessage(error));
@@ -309,7 +348,7 @@ export const ProductsListPage = (): JSX.Element => {
   };
 
   return (
-    <section className='space-y-4'>
+    <section className='wf-list-shell gap-4'>
       <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='flex flex-wrap gap-2'>
           <button
@@ -413,7 +452,7 @@ export const ProductsListPage = (): JSX.Element => {
                 <p className='text-sm text-text-muted'>
                   Page {productPage} of {productTotalPages}
                 </p>
-                <div className='flex gap-2'>
+                <div className='flex w-full gap-2 sm:w-auto'>
                   <Button
                     type='button'
                     variant='outline'
@@ -505,13 +544,14 @@ export const ProductsListPage = (): JSX.Element => {
                 surfaceTypes={surfaceTypes}
                 linkedProductCountMap={linkedProductCountMap}
                 onEdit={openEditSurfaceTypeModal}
+                onDelete={openDeleteSurfaceTypeModal}
               />
 
               <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>
                   Page {surfacePage} of {surfaceTypeTotalPages}
                 </p>
-                <div className='flex gap-2'>
+                <div className='flex w-full gap-2 sm:w-auto'>
                   <Button
                     type='button'
                     variant='outline'
@@ -553,6 +593,20 @@ export const ProductsListPage = (): JSX.Element => {
         submitLabel={surfaceTypeEditTarget ? 'Save Changes' : 'Add Surface Type'}
         onClose={closeSurfaceTypeModal}
         onSubmit={submitSurfaceType}
+      />
+
+      <DeleteConfirmModal
+        isOpen={Boolean(surfaceTypeDeleteTarget)}
+        isSubmitting={deleteSurfaceTypeMutation.isPending}
+        title='Delete Surface Type'
+        description={
+          surfaceTypeDeleteTarget
+            ? `Are you sure you want to delete "${surfaceTypeDeleteTarget.name}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this surface type?'
+        }
+        confirmLabel='Delete Surface Type'
+        onClose={closeDeleteSurfaceTypeModal}
+        onConfirm={handleDeleteSurfaceType}
       />
     </section>
   );
