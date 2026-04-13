@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { RegistrationTable } from '#/components/registrations';
 import { Button, Input } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { REGISTRATION_FILTER_TAB_LABELS, ROUTES } from '#/constants';
 import { useRegistrations } from '#/hooks/registrations';
 import { registrationFilterTabs } from '#/types/registrations';
 import { cn } from '#/utils';
@@ -79,7 +79,7 @@ export const RegistrationsListPage = (): JSX.Element => {
                 onClick={handleTabClick}
                 className={cn('wf-filter-tab shrink-0', tab === activeTab ? 'wf-filter-tab-active' : '')}
               >
-                {tab}
+                {REGISTRATION_FILTER_TAB_LABELS[tab]}
               </button>
             ))}
           </div>

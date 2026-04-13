@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 
+import { getClaimWorkflowStateLabel, toApiClaimWorkflowState } from '#/constants';
 import type { ClaimStatus } from '#/types/claims.types';
 
 interface ClaimWorkflowCardProps {
@@ -8,18 +9,6 @@ interface ClaimWorkflowCardProps {
 }
 
 const WORKFLOW_STEPS = ['CS Review', 'Quality Review', 'Resolution'] as const;
-const WORKFLOW_STATE_LABELS: Record<string, string> = {
-  SUBMITTED: 'Submitted',
-  IN_REVIEW: 'In Review',
-  QA_REVIEW: 'QA Review',
-  QA_APPROVED: 'QA Approved',
-  QA_REJECT: 'QA Rejected',
-  QA_REJECTED: 'QA Rejected',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  RESUBMIT: 'Resubmit',
-  RESOLVED: 'Resolved',
-};
 
 const getStepStyles = (status: ClaimStatus) => {
   const resolutionPalette =
@@ -101,10 +90,8 @@ export const ClaimWorkflowCard = ({ status, workflowState }: ClaimWorkflowCardPr
   const currentStep = getCurrentStep(status);
   const stepStyles = getStepStyles(status);
   const stateValue = workflowState ?? status;
-  const normalizedState = stateValue.toUpperCase();
-  const stateLabel =
-    WORKFLOW_STATE_LABELS[normalizedState] ??
-    stateValue.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
+  const normalizedState = toApiClaimWorkflowState(stateValue);
+  const stateLabel = getClaimWorkflowStateLabel(normalizedState);
 
   return (
     <section className='wf-card wf-card-p4 border-primary/15 bg-white/95'>

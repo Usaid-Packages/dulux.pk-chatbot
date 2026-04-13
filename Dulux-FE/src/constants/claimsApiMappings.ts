@@ -39,6 +39,8 @@ const WORKFLOW_STATE_MAP: Record<string, ClaimWorkflowState> = {
 };
 
 const UI_STATUS_TO_API_MAP: Record<Exclude<ClaimListStatusFilter, 'all'>, string> = {
+  submitted: 'SUBMITTED',
+  inReview: 'IN_REVIEW',
   pending: 'IN_REVIEW',
   forwarded: 'QA_REVIEW',
   approved: 'APPROVED',
@@ -67,6 +69,18 @@ const ISSUE_TYPE_LABELS: Record<ClaimIssueType, string> = {
   OTHERS: 'Others',
 };
 
+const CLAIM_WORKFLOW_STATE_LABELS: Record<ClaimWorkflowState, string> = {
+  SUBMITTED: 'Pending',
+  IN_REVIEW: 'In Review',
+  QA_REVIEW: 'QA Review',
+  QA_APPROVED: 'QA Approved',
+  QA_REJECTED: 'QA Rejected',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  RESUBMIT: 'Resubmit',
+  RESOLVED: 'Resolved',
+};
+
 export const toUiClaimIssueType = (issueType: string): ClaimIssueType => ISSUE_TYPE_TO_UI_MAP[issueType] ?? 'OTHERS';
 
 export const getClaimIssueTypeLabel = (issueType: string): string => {
@@ -81,6 +95,10 @@ export const toUiClaimStatus = (status: string): ClaimListItem['status'] =>
 
 export const toApiClaimWorkflowState = (state: string): ClaimWorkflowState =>
   WORKFLOW_STATE_MAP[normalizeEnumKey(state)] ?? 'IN_REVIEW';
+
+export const getClaimWorkflowStateLabel = (workflowState: ClaimWorkflowState): string => {
+  return CLAIM_WORKFLOW_STATE_LABELS[workflowState];
+};
 
 export const toClaimsStateFilter = (status: ClaimListStatusFilter): string | undefined => {
   if (status === 'all') {

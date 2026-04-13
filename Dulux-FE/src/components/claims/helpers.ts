@@ -1,4 +1,5 @@
 import type { BadgeProps } from '#/components/ui/Badge';
+import { getClaimWorkflowStateLabel } from '#/constants';
 import type { ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
 import { formatDisplayDate, formatDisplayDateTime } from '#/utils';
 
@@ -28,21 +29,21 @@ export const formatDateTime = (dateValue: string): string => {
   return formatDisplayDateTime(dateValue);
 };
 
-const WORKFLOW_STATUS_LABELS: Partial<Record<ClaimWorkflowState, string>> = {
-  QA_APPROVED: 'QA Approved',
-  QA_REJECTED: 'QA Rejected',
-};
-
-const WORKFLOW_STATUS_VARIANTS: Partial<Record<ClaimWorkflowState, NonNullable<BadgeProps['variant']>>> = {
+const WORKFLOW_STATUS_VARIANTS: Record<ClaimWorkflowState, NonNullable<BadgeProps['variant']>> = {
+  SUBMITTED: 'pending',
+  IN_REVIEW: 'pending',
+  QA_REVIEW: 'forwarded',
   QA_APPROVED: 'qaApproved',
+  QA_REJECTED: 'rejected',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  RESUBMIT: 'info',
+  RESOLVED: 'resolved',
 };
 
 export const getStatusLabel = (status: ClaimStatus, workflowState?: ClaimWorkflowState): string => {
   if (workflowState) {
-    const workflowLabel = WORKFLOW_STATUS_LABELS[workflowState];
-    if (workflowLabel) {
-      return workflowLabel;
-    }
+    return getClaimWorkflowStateLabel(workflowState);
   }
 
   return STATUS_LABELS[status];
@@ -53,10 +54,7 @@ export const getStatusVariant = (
   workflowState?: ClaimWorkflowState
 ): NonNullable<BadgeProps['variant']> => {
   if (workflowState) {
-    const workflowVariant = WORKFLOW_STATUS_VARIANTS[workflowState];
-    if (workflowVariant) {
-      return workflowVariant;
-    }
+    return WORKFLOW_STATUS_VARIANTS[workflowState];
   }
 
   return STATUS_VARIANTS[status];

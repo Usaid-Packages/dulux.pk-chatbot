@@ -28,12 +28,20 @@ export const REGISTRATION_TAB_TO_STATUS: Record<RegistrationFilterTab, Registrat
   Resubmission: 'RESUBMIT',
 };
 
+export const REGISTRATION_FILTER_TAB_LABELS: Record<RegistrationFilterTab, string> = {
+  All: 'All',
+  Pending: 'Pending',
+  Approved: 'Approved',
+  Rejected: 'Rejected',
+  Resubmission: 'Resubmit',
+};
+
 export const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   SUBMITTED: 'Pending',
   IN_PROGRESS: 'In Progress',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
-  RESUBMIT: 'Resubmission',
+  RESUBMIT: 'Resubmit',
 };
 
 export const REGISTRATION_CHANNEL_LABELS: Record<string, string> = {
