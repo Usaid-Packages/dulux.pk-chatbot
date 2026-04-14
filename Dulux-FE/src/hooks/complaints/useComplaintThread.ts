@@ -104,10 +104,6 @@ export const useComplaintThread = (threadId: string): UseComplaintThreadResult =
     }
 
     const normalizedClosureNote = closureNote.trim();
-    if (normalizedClosureNote.length === 0) {
-      toast.error('Closure note is required.');
-      return;
-    }
     if (normalizedClosureNote.length > NOTES_MAX_LENGTH) {
       toast.error(`Closure note must be ${NOTES_MAX_LENGTH} characters or fewer.`);
       return;
@@ -116,7 +112,7 @@ export const useComplaintThread = (threadId: string): UseComplaintThreadResult =
     const continueClose = (): void => {
       const payload: CloseConversationPayload = {
         threadId,
-        closureNote: normalizedClosureNote,
+        ...(normalizedClosureNote.length > 0 ? { closureNote: normalizedClosureNote } : {}),
       };
       closeConversationMutation.mutate(payload, {
         onSuccess: () => {

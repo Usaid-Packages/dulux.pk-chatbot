@@ -1,5 +1,4 @@
-import type { JSX } from 'react';
-import { useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
 import {
@@ -12,7 +11,7 @@ import {
   Input,
   Skeleton,
 } from '#/components/ui';
-import { useQualityQueue } from '#/hooks/quality';
+import { useDebouncedValue, useQualityQueue } from '#/hooks';
 import { cn } from '#/utils';
 
 const PAGE_SIZE = 10;
@@ -24,14 +23,15 @@ const STAT_CARD_STYLES = ['', '', '', ''] as const;
  *
  * @returns Quality list page.
  */
-export const QualityListPage = (): JSX.Element => {
+export const QualityListPage = (): React.JSX.Element => {
   const { qualityQueueQuery, cardCountsQuery, filters, setStatusFilter, setPage } = useQualityQueue();
-  const [searchValue, setSearchValue] = useState<string>('');
+  const [searchValue, setSearchValue] = React.useState<string>('');
+  const debouncedSearchValue = useDebouncedValue(searchValue);
 
   const queueData = qualityQueueQuery.data;
   const queueItems = queueData?.items ?? [];
-  const filteredQueueItems = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase();
+  const filteredQueueItems = React.useMemo(() => {
+    const normalizedSearch = debouncedSearchValue.trim().toLowerCase();
     if (!normalizedSearch) {
       return queueItems;
     }
@@ -43,7 +43,7 @@ export const QualityListPage = (): JSX.Element => {
         item.city.toLowerCase().includes(normalizedSearch)
       );
     });
-  }, [queueItems, searchValue]);
+  }, [debouncedSearchValue, queueItems]);
   const totalItems = queueData?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
 

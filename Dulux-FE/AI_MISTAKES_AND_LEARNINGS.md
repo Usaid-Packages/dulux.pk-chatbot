@@ -779,6 +779,33 @@
 - Rule: In correction/resubmission forms, show backend review notes in an explicit, visually distinct callout near each
   field instead of plain inline text.
 
+### 2026-04-14 - Missed lint pass after resubmission UI refactor
+
+- Issue: After refactoring resubmission modal fields to manual-registration style controls, an unused `Textarea` import
+  and one unformatted JSX line were left in the file, failing targeted ESLint.
+- Fix: Removed unused import and aligned JSX formatting to Prettier output, then reran targeted lint.
+- Rule: After any UI refactor in large form files, run immediate targeted lint and clear import/format errors before
+  proceeding to additional changes.
+
+### 2026-04-14 - Debounce rollout lint run hit known `import/order` plugin crash again
+
+- Issue: During search debounce updates across multiple pages/hooks, standard targeted ESLint crashed on
+  `import/order` for touched page files (`ProductsListPage.tsx`, `QualityListPage.tsx`) with the known plugin/runtime
+  incompatibility.
+- Fix: Kept source/config unchanged per project policy and completed verification with command-level
+  `--rule "import/order: off"` for touched files.
+- Rule: When this known crash blocks verification on touched files, avoid source/config bypasses and use temporary
+  command-level rule disable only for lint execution, while keeping import shape clean.
+
+### 2026-04-14 - `import/order` crash avoided by stable hooks-barrel import path
+
+- Issue: Direct deep-hook imports introduced in page files during debounce rollout (`#/hooks/useDebouncedValue`) still
+  triggered `import/order` crash path in this toolchain despite seemingly correct ordering.
+- Fix: Exported debounce hook from `src/hooks/index.ts` and switched page/component imports to `#/hooks` barrel usage;
+  reran ESLint with `import/order` enabled and confirmed clean.
+- Rule: For shared hooks used across pages/components, prefer `#/hooks` barrel imports over deep hook paths to reduce
+  import-order plugin instability in this repo setup.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

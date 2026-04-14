@@ -5,6 +5,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 
 import { queryKeys } from '#/constants';
 import { getConversations, getLiveChatCardCounts } from '#/data-layer/complaints';
+import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
   ConversationListRequestParams,
   ConversationListResponse,
@@ -36,9 +37,10 @@ interface UseComplaintsResult {
  */
 export const useComplaints = (): UseComplaintsResult => {
   const [filters, setFilters] = useState<ConversationListRequestParams>(DEFAULT_FILTERS);
+  const debouncedSearch = useDebouncedValue(filters.search ?? '');
   const requestFilters: ConversationListRequestParams = {
     ...filters,
-    search: filters.search?.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
   };
   useComplaintsQueueSocket({ enabled: true });
 

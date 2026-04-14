@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
 import { getClaimCardCounts, getClaims, useCreateClaimMutation } from '#/data-layer/claims';
+import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
   ClaimsCardCounts,
   ClaimIssueType,
@@ -81,9 +82,10 @@ export const useClaims = (): UseClaimsResult => {
   };
 
   const filters = createFiltersFromSearchParams();
+  const debouncedSearch = useDebouncedValue(filters.search ?? '');
   const requestFilters: ClaimsListRequestParams = {
     ...filters,
-    search: filters.search?.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
   };
   const createClaimMutation = useCreateClaimMutation();
 

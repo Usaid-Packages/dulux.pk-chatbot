@@ -1,4 +1,5 @@
-import type { ChangeEvent, JSX, MouseEvent } from 'react';
+import type { ChangeEvent, FocusEvent, JSX, MouseEvent } from 'react';
+import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Info } from 'lucide-react';
@@ -12,11 +13,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
-import { Textarea } from '#/components/ui/Textarea';
-import { REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { MANUAL_REGISTRATION_PROVINCE_OPTIONS, REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { resubmitUpdateSchema, type ResubmitUpdateFormValues } from '#/schemas/registrations';
+import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail, RegistrationRejectionField } from '#/types/registrations';
 
 interface ResubmitUpdateModalProps {
@@ -91,6 +98,36 @@ const formatNoteTimestamp = (value: string): string => {
   }).format(parsedDate);
 };
 
+const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
+  if (typeof product.warrantyYears === 'number' && product.warrantyYears > 0) {
+    return `${product.label} (${product.warrantyYears} year warranty)`;
+  }
+
+  return product.label;
+};
+
+const mergeUniqueProductOptions = (
+  primaryOptions: ManualRegistrationProductOption[],
+  fallbackOptions: ManualRegistrationProductOption[]
+): ManualRegistrationProductOption[] => {
+  const optionMap = new Map<string, ManualRegistrationProductOption>();
+
+  fallbackOptions.forEach(option => {
+    optionMap.set(option.id, option);
+  });
+
+  primaryOptions.forEach(option => {
+    optionMap.set(option.id, option);
+  });
+
+  return Array.from(optionMap.values());
+};
+
+const CITY_MAX_LENGTH = 80;
+const DEALER_NAME_MAX_LENGTH = 120;
+const DEALER_CITY_MAX_LENGTH = 80;
+const DEALER_ADDRESS_MAX_LENGTH = 180;
+
 /**
  * ResubmitUpdateModal renders editable fields requested in registration RESUBMIT state.
  *
@@ -104,6 +141,14 @@ export const ResubmitUpdateModal = ({
   onClose,
   onSubmit,
 }: ResubmitUpdateModalProps): JSX.Element => {
+  const manualProductsQuery = useGetManualRegistrationProductsQuery();
+  const topcoatProducts = mergeUniqueProductOptions(
+    manualProductsQuery.data?.topcoatProducts ?? [],
+    registration.paintPairs.map(pair => ({
+      id: String(pair.topcoat.id),
+      label: pair.topcoat.name,
+    }))
+  );
   const requestedFieldNames = getRequestedFieldNames(registration.rejectionFields);
   const defaultPaintPairs =
     registration.paintPairs.length > 0
@@ -124,9 +169,12 @@ export const ResubmitUpdateModal = ({
 
   const {
     control,
+    getValues,
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ResubmitUpdateFormValues>({
     resolver: zodResolver(resubmitUpdateSchema),
@@ -151,6 +199,90 @@ export const ResubmitUpdateModal = ({
     control,
     name: 'paintPairs',
   });
+  const watchedPaintPairs = watch('paintPairs') ?? [];
+  const customerNameField = register('customerName');
+  const phoneNumberField = register('phoneNumber');
+  const emailField = register('email');
+  const cityField = register('city');
+  const siteAddressField = register('siteAddress');
+  const purchaseDealerField = register('purchaseDealer');
+  const purchaseDealerCityField = register('purchaseDealerCity');
+  const purchaseDealerAddressField = register('purchaseDealerAddress');
+  const postalCodeField = register('postalCode');
+
+  useEffect(() => {
+    const currentPhone = getValues('phoneNumber');
+    if (!currentPhone) {
+      setValue('phoneNumber', '92', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    }
+  }, [getValues, setValue]);
+
+  const handleLettersOnlyChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    event.currentTarget.value = event.currentTarget.value.replace(/\d/g, '');
+  };
+
+  const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const digitsOnly = event.currentTarget.value.replace(/\D/g, '');
+    const withoutPrefix = digitsOnly.startsWith('92') ? digitsOnly.slice(2) : digitsOnly;
+    const normalizedLocalPart = withoutPrefix.startsWith('3') ? withoutPrefix : `3${withoutPrefix}`;
+    const limitedLocalPart = normalizedLocalPart.slice(0, 10);
+    event.currentTarget.value = `92${limitedLocalPart}`;
+    phoneNumberField.onChange(event);
+  };
+
+  const handlePhoneNumberFocus = (event: FocusEvent<HTMLInputElement>): void => {
+    if (!event.currentTarget.value) {
+      event.currentTarget.value = '92';
+      setValue('phoneNumber', '92', { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+    }
+  };
+
+  const handleCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    cityField.onChange(event);
+  };
+
+  const handlePurchaseDealerChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    purchaseDealerField.onChange(event);
+  };
+
+  const handlePurchaseDealerCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    handleLettersOnlyChange(event);
+    purchaseDealerCityField.onChange(event);
+  };
+
+  useEffect(() => {
+    if (topcoatProducts.length === 0) {
+      return;
+    }
+
+    watchedPaintPairs.forEach((paintPair, index) => {
+      const selectedTopcoatId = paintPair.topcoatId.trim();
+      const selectedBasecoatId = paintPair.basecoatId.trim();
+
+      if (!selectedTopcoatId || !selectedBasecoatId) {
+        return;
+      }
+
+      const matchedTopcoat = topcoatProducts.find(product => product.id === selectedTopcoatId);
+      const linkedBasecoatOptions = mergeUniqueProductOptions(
+        matchedTopcoat?.linkedBasecoats ?? [],
+        registration.paintPairs
+          .filter(pair => String(pair.topcoat.id) === selectedTopcoatId && pair.basecoat !== null)
+          .map(pair => ({
+            id: String(pair.basecoat?.id ?? ''),
+            label: pair.basecoat?.name ?? '',
+          }))
+          .filter(option => option.id.length > 0 && option.label.length > 0)
+      );
+      const linkedBasecoatIds = new Set(linkedBasecoatOptions.map(basecoat => basecoat.id));
+      if (!linkedBasecoatIds.has(selectedBasecoatId)) {
+        setValue(`paintPairs.${index}.basecoatId`, '', { shouldValidate: true });
+        setValue(`paintPairs.${index}.basecoatQuantity`, '', { shouldValidate: true });
+      }
+    });
+  }, [registration.paintPairs, setValue, topcoatProducts, watchedPaintPairs]);
 
   const handleModalClose = (): void => {
     reset();
@@ -219,7 +351,7 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('customer_name') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Full Name</label>
-                <Input {...register('customerName')} />
+                <Input placeholder='e.g. Ahmed Raza' {...customerNameField} />
                 {errors.customerName ? (
                   <p className='mt-1 text-xs text-destructive'>{errors.customerName.message}</p>
                 ) : null}
@@ -230,7 +362,12 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('phone_number') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Phone Number</label>
-                <Input {...register('phoneNumber')} />
+                <Input
+                  placeholder='92XXXXXXXXXX'
+                  {...phoneNumberField}
+                  onChange={handlePhoneNumberChange}
+                  onFocus={handlePhoneNumberFocus}
+                />
                 {errors.phoneNumber ? (
                   <p className='mt-1 text-xs text-destructive'>{errors.phoneNumber.message}</p>
                 ) : null}
@@ -241,7 +378,7 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('email') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Email</label>
-                <Input type='email' {...register('email')} />
+                <Input type='email' placeholder='customer@example.com' {...emailField} />
                 {errors.email ? <p className='mt-1 text-xs text-destructive'>{errors.email.message}</p> : null}
                 {renderFieldNote('email')}
               </div>
@@ -250,7 +387,12 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('city') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>City</label>
-                <Input {...register('city')} />
+                <Input
+                  placeholder='e.g. Lahore'
+                  maxLength={CITY_MAX_LENGTH}
+                  {...cityField}
+                  onChange={handleCityChange}
+                />
                 {renderFieldNote('city')}
               </div>
             ) : null}
@@ -258,7 +400,25 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('province') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Province</label>
-                <Input {...register('province')} />
+                <Controller
+                  control={control}
+                  name='province'
+                  render={({ field: provinceField }) => (
+                    <Select value={provinceField.value ?? ''} onValueChange={provinceField.onChange}>
+                      <SelectTrigger aria-label='Select province'>
+                        <SelectValue placeholder='Select province' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
+                          <SelectItem key={province} value={province}>
+                            {province}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.province ? <p className='mt-1 text-xs text-destructive'>{errors.province.message}</p> : null}
                 {renderFieldNote('province')}
               </div>
             ) : null}
@@ -266,7 +426,7 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('site_address') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Site Address</label>
-                <Textarea rows={2} {...register('siteAddress')} />
+                <Input placeholder='Street, area, city' {...siteAddressField} />
                 {renderFieldNote('site_address')}
               </div>
             ) : null}
@@ -282,7 +442,12 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('purchase_dealer') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Dealer Name</label>
-                <Input {...register('purchaseDealer')} />
+                <Input
+                  placeholder='e.g. Color World Traders'
+                  maxLength={DEALER_NAME_MAX_LENGTH}
+                  {...purchaseDealerField}
+                  onChange={handlePurchaseDealerChange}
+                />
                 {renderFieldNote('purchase_dealer')}
               </div>
             ) : null}
@@ -290,7 +455,12 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('purchase_dealer_city') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Dealer City</label>
-                <Input {...register('purchaseDealerCity')} />
+                <Input
+                  placeholder='e.g. Karachi'
+                  maxLength={DEALER_CITY_MAX_LENGTH}
+                  {...purchaseDealerCityField}
+                  onChange={handlePurchaseDealerCityChange}
+                />
                 {renderFieldNote('purchase_dealer_city')}
               </div>
             ) : null}
@@ -298,7 +468,11 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('purchase_dealer_address') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Dealer Address</label>
-                <Textarea rows={2} {...register('purchaseDealerAddress')} />
+                <Input
+                  placeholder='Street, area, city'
+                  maxLength={DEALER_ADDRESS_MAX_LENGTH}
+                  {...purchaseDealerAddressField}
+                />
                 {renderFieldNote('purchase_dealer_address')}
               </div>
             ) : null}
@@ -306,7 +480,7 @@ export const ResubmitUpdateModal = ({
             {requestedFieldNames.includes('postal_code') ? (
               <div>
                 <label className='text-sm font-medium text-text-primary'>Postal Code</label>
-                <Input {...register('postalCode')} />
+                <Input {...postalCodeField} />
                 {renderFieldNote('postal_code')}
               </div>
             ) : null}
@@ -317,8 +491,34 @@ export const ResubmitUpdateModal = ({
                 {fields.map((field, index) => (
                   <div key={field.id} className='grid gap-2 rounded-lg border border-primary/10 p-2 md:grid-cols-2'>
                     <div>
-                      <label className='text-xs font-medium text-text-muted'>Topcoat ID</label>
-                      <Input {...register(`paintPairs.${index}.topcoatId`)} />
+                      <label className='text-xs font-medium text-text-muted'>Topcoat</label>
+                      <Controller
+                        control={control}
+                        name={`paintPairs.${index}.topcoatId`}
+                        render={({ field: paintPairField }) => (
+                          <Select
+                            value={paintPairField.value}
+                            onValueChange={paintPairField.onChange}
+                            disabled={manualProductsQuery.isLoading}
+                          >
+                            <SelectTrigger aria-label='Select topcoat product'>
+                              <SelectValue placeholder='Select topcoat product' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {topcoatProducts.map(product => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  {getProductOptionLabel(product)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {manualProductsQuery.isError ? (
+                        <p className='mt-1 text-xs text-destructive'>
+                          {manualProductsQuery.error?.message ?? 'Unable to load topcoat products.'}
+                        </p>
+                      ) : null}
                       {errors.paintPairs?.[index]?.topcoatId ? (
                         <p className='mt-1 text-xs text-destructive'>{errors.paintPairs[index]?.topcoatId?.message}</p>
                       ) : null}
@@ -333,12 +533,64 @@ export const ResubmitUpdateModal = ({
                       ) : null}
                     </div>
                     <div>
-                      <label className='text-xs font-medium text-text-muted'>Basecoat ID (Optional)</label>
-                      <Input {...register(`paintPairs.${index}.basecoatId`)} />
+                      <label className='text-xs font-medium text-text-muted'>Basecoat (Optional)</label>
+                      <Controller
+                        control={control}
+                        name={`paintPairs.${index}.basecoatId`}
+                        render={({ field: paintPairField }) => {
+                          const selectedTopcoatId = watchedPaintPairs[index]?.topcoatId?.trim() ?? '';
+                          const selectedTopcoat = topcoatProducts.find(product => product.id === selectedTopcoatId);
+                          const basecoatOptions = mergeUniqueProductOptions(
+                            selectedTopcoat?.linkedBasecoats ?? [],
+                            registration.paintPairs
+                              .filter(pair => String(pair.topcoat.id) === selectedTopcoatId && pair.basecoat !== null)
+                              .map(pair => ({
+                                id: String(pair.basecoat?.id ?? ''),
+                                label: pair.basecoat?.name ?? '',
+                              }))
+                              .filter(option => option.id.length > 0 && option.label.length > 0)
+                          );
+
+                          return (
+                            <Select
+                              value={paintPairField.value}
+                              onValueChange={paintPairField.onChange}
+                              disabled={manualProductsQuery.isLoading || !selectedTopcoatId}
+                            >
+                              <SelectTrigger aria-label='Select basecoat product'>
+                                <SelectValue placeholder='Select basecoat product' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {!selectedTopcoatId ? (
+                                  <SelectItem value={`__select_topcoat_first__${index}`} disabled>
+                                    Select a topcoat first
+                                  </SelectItem>
+                                ) : basecoatOptions.length > 0 ? (
+                                  basecoatOptions.map(product => (
+                                    <SelectItem key={product.id} value={product.id}>
+                                      {getProductOptionLabel(product)}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value={`__no_basecoat_available__${index}`} disabled>
+                                    No basecoat available for selected topcoat
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          );
+                        }}
+                      />
+                      {errors.paintPairs?.[index]?.basecoatId ? (
+                        <p className='mt-1 text-xs text-destructive'>{errors.paintPairs[index]?.basecoatId?.message}</p>
+                      ) : null}
                     </div>
                     <div>
                       <label className='text-xs font-medium text-text-muted'>Basecoat Quantity (Optional)</label>
-                      <Input {...register(`paintPairs.${index}.basecoatQuantity`)} />
+                      <Input
+                        {...register(`paintPairs.${index}.basecoatQuantity`)}
+                        disabled={!watchedPaintPairs[index]?.basecoatId}
+                      />
                       {errors.paintPairs?.[index]?.basecoatQuantity ? (
                         <p className='mt-1 text-xs text-destructive'>
                           {errors.paintPairs[index]?.basecoatQuantity?.message}

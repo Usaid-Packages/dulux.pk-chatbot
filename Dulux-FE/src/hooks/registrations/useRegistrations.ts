@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys, REGISTRATION_TAB_TO_STATUS } from '#/constants';
 import { getRegistrationCardCounts, useGetRegistrationsQuery } from '#/data-layer/registrations';
+import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import { registrationFilterTabs } from '#/types/registrations';
 import type {
   RegistrationCardCounts,
@@ -67,6 +68,7 @@ export const useRegistrations = (): UseRegistrationsResult => {
   const activeTab = isRegistrationFilterTab(activeTabParam) ? activeTabParam : DEFAULT_TAB;
 
   const searchValue = searchParams.get('search') ?? '';
+  const debouncedSearchValue = useDebouncedValue(searchValue);
   const statusParam = searchParams.get('status');
   const statusValue: RegistrationStatus | 'ALL' =
     statusParam === 'ALL' ? 'ALL' : isRegistrationStatus(statusParam) ? statusParam : 'ALL';
@@ -80,7 +82,7 @@ export const useRegistrations = (): UseRegistrationsResult => {
   const queryResult = useGetRegistrationsQuery({
     page: currentPage,
     page_size: REGISTRATIONS_PAGE_SIZE,
-    search: searchValue.trim() || undefined,
+    search: debouncedSearchValue.trim() || undefined,
     state: effectiveStateFilter,
   });
   const cardCountsQuery = useQuery<RegistrationCardCounts, Error>({

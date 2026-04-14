@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys } from '#/constants';
 import { getAuditLogDetail, getAuditLogs } from '#/data-layer/auditLogs';
+import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
   AuditLogActionFilter,
   AuditLogDetail,
@@ -82,10 +83,15 @@ export const useAuditLogs = (): UseAuditLogsResult => {
     search: searchParams.get('search') ?? '',
     ordering: resolveOrdering(searchParams.get('ordering')),
   };
+  const debouncedSearch = useDebouncedValue(filters.search);
+  const requestFilters: AuditLogListFilters = {
+    ...filters,
+    search: debouncedSearch,
+  };
 
   const auditLogsQuery = useQuery<AuditLogListResponse, Error>({
-    queryKey: queryKeys.auditLogs.list(filters),
-    queryFn: () => getAuditLogs(filters),
+    queryKey: queryKeys.auditLogs.list(requestFilters),
+    queryFn: () => getAuditLogs(requestFilters),
   });
 
   const detailQuery = useQuery<AuditLogDetail, Error>({

@@ -21,6 +21,7 @@ import {
   PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES,
   PRODUCT_STATUS_OPTIONS,
 } from '#/constants';
+import { useDebouncedValue } from '#/hooks';
 import { productFormSchema, type ProductFormSchemaValues } from '#/schemas/products';
 import { productTypes } from '#/types/products';
 import type {
@@ -212,14 +213,17 @@ export const ProductForm = ({
   const [interiorSurfaceSearch, setInteriorSurfaceSearch] = useState<string>('');
   const [exteriorSurfaceSearch, setExteriorSurfaceSearch] = useState<string>('');
   const [linkedBasecoatSearch, setLinkedBasecoatSearch] = useState<string>('');
+  const debouncedInteriorSurfaceSearch = useDebouncedValue(interiorSurfaceSearch);
+  const debouncedExteriorSurfaceSearch = useDebouncedValue(exteriorSurfaceSearch);
+  const debouncedLinkedBasecoatSearch = useDebouncedValue(linkedBasecoatSearch);
   const [activeDropdown, setActiveDropdown] = useState<'interior' | 'exterior' | 'basecoat' | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imageValidationError, setImageValidationError] = useState<string | null>(null);
   const interiorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'INTERIOR');
   const exteriorSurfaceTypes = getSurfaceGroup(surfaceTypes, 'EXTERIOR');
-  const normalizedInteriorSearch = interiorSurfaceSearch.trim().toLowerCase();
-  const normalizedExteriorSearch = exteriorSurfaceSearch.trim().toLowerCase();
-  const normalizedBasecoatSearch = linkedBasecoatSearch.trim().toLowerCase();
+  const normalizedInteriorSearch = debouncedInteriorSurfaceSearch.trim().toLowerCase();
+  const normalizedExteriorSearch = debouncedExteriorSurfaceSearch.trim().toLowerCase();
+  const normalizedBasecoatSearch = debouncedLinkedBasecoatSearch.trim().toLowerCase();
 
   const filteredInteriorSurfaceTypes = useMemo(() => {
     if (!normalizedInteriorSearch) {
