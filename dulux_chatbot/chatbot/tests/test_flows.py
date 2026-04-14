@@ -778,6 +778,52 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
 
+    def test_complaint_chat_reminds_user_after_one_hour_gap(self):
+        self.dispatch_text("4")
+        self.dispatch_text("Paint damaged")
+        self.dispatch_text("The wall finish is damaged.")
+        self.dispatch_text("DONE")
+
+        complaint = Complaint.objects.get(phone_number=self.phone_number)
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(last_activity=timezone.now() - timedelta(hours=2))
+        self.session.refresh_from_db()
+
+        self.dispatch_text("Still need support")
+
+        self.assertEqual(self.session.flow, "COMPLAINT")
+        self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
+        self.assertIn("subject: Paint damaged", self.client.text_messages[-1]["text"])
+        self.assertIn("press 00 or type MAIN MENU", self.client.text_messages[-1]["text"])
+
+    def test_main_menu_command_takes_priority_over_complaint_chat(self):
+        self.dispatch_text("4")
+        self.dispatch_text("Paint damaged")
+        self.dispatch_text("The wall finish is damaged.")
+        self.dispatch_text("DONE")
+
+        complaint = Complaint.objects.get(phone_number=self.phone_number)
+        self.dispatch_text("MAIN MENU")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 1)
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+
+    @patch("dulux_chatbot.chatbot.tasks.WhatsAppClient")
+    def test_send_main_menu_task_resets_active_session(self, client_mock):
+        self.session.flow = "COMPLAINT"
+        self.session.current_step = "chat"
+        self.session.session_data = {"complaint_id": 123}
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        send_whatsapp_main_menu(self.phone_number, "Main menu")
+
+        self.session.refresh_from_db()
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(self.session.session_data, {})
+        client_mock.return_value.send_text.assert_called_once_with(self.phone_number, "Main menu")
+
     @patch.object(send_whatsapp_main_menu, "apply_async")
     def test_reissuance_flow_end_to_end(self, mocked_send_main_menu):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)

@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.models import WhatsAppSession
+from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
 from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import ClaimState, QualityDecisionType, QualityRequiredItem, RegistrationState
@@ -116,6 +117,7 @@ def send_registration_status_notification(registration_id: int, notification_tem
 
     whatsapp_message = notification_content["whatsapp_message"]
     client = WhatsAppClient()
+    reset_whatsapp_session_to_main_menu(phone_number=registration.phone_number)
     client.send_text(registration.phone_number, whatsapp_message)
     if should_send_certificate and registration.warranty_certificate:
         client.send_document(
@@ -124,7 +126,7 @@ def send_registration_status_notification(registration_id: int, notification_tem
             "warranty_certificate.pdf",
             caption="warranty_certificate.pdf",
         )
-        send_whatsapp_main_menu.apply_async(args=[registration.phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
+    send_whatsapp_main_menu.apply_async(args=[registration.phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
 
 
 @shared_task
@@ -167,6 +169,7 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
 
     whatsapp_message = _build_claim_status_whatsapp_message(claim=claim)
     client = WhatsAppClient()
+    reset_whatsapp_session_to_main_menu(phone_number=claim.registration.phone_number)
     client.send_text(claim.registration.phone_number, whatsapp_message)
     if claim.state == ClaimState.APPROVED and claim.voucher:
         client.send_document(
@@ -175,10 +178,10 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
             "claim_voucher.pdf",
             caption="claim_voucher.pdf",
         )
-        send_whatsapp_main_menu.apply_async(
-            args=[claim.registration.phone_number, BaseFlow.MAIN_MENU_TEXT],
-            countdown=2,
-        )
+    send_whatsapp_main_menu.apply_async(
+        args=[claim.registration.phone_number, BaseFlow.MAIN_MENU_TEXT],
+        countdown=2,
+    )
 
 
 @shared_task

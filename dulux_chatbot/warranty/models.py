@@ -18,7 +18,7 @@ from dulux_chatbot.warranty.choices import (
 
 
 class WarrantyRegistration(TimeStampedModel):
-    registration_code = models.CharField(max_length=6, unique=True, editable=False)
+    registration_code = models.CharField(max_length=10, unique=True, editable=False)
     channel = models.CharField(max_length=10, choices=RegistrationChannel.choices, default=RegistrationChannel.WHATSAPP)
     state = models.CharField(max_length=20, choices=RegistrationState.choices, default=RegistrationState.SUBMITTED)
     customer_name = models.CharField(max_length=255)
@@ -28,9 +28,9 @@ class WarrantyRegistration(TimeStampedModel):
     province = models.CharField(max_length=100, blank=True)
     site_address = models.TextField()
     purchase_date = models.DateField()
-    purchase_dealer = models.CharField(max_length=255)
-    purchase_dealer_city = models.CharField(max_length=100)
-    purchase_dealer_address = models.TextField()
+    purchase_dealer = models.CharField(max_length=255, blank=True)
+    purchase_dealer_city = models.CharField(max_length=100, blank=True)
+    purchase_dealer_address = models.TextField(blank=True)
     postal_code = models.CharField(max_length=20, blank=True)
     notes = models.TextField(blank=True)
     approved_by = models.ForeignKey(

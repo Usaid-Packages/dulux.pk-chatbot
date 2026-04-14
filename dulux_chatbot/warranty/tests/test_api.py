@@ -1311,9 +1311,15 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
         self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
         self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
 
+    @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
-    def test_send_registration_status_notification_for_rejected_registration(self, certificate_mock, client_mock):
+    def test_send_registration_status_notification_for_rejected_registration(
+        self,
+        certificate_mock,
+        client_mock,
+        delayed_menu_mock,
+    ):
         registration = create_registration(state=RegistrationState.REJECTED)
         registration.notes = "The purchase invoice details could not be verified."
         registration.save(update_fields=["notes", "modified"])
@@ -1338,6 +1344,9 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
             whatsapp_client.send_text.call_args.args[1],
             f"Your Warranty registration: {registration.registration_code} is rejected.",
         )
+        delayed_menu_mock.assert_called_once()
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
 
 
 class WarrantyClaimNotificationTaskTests(TestCase):
@@ -1368,8 +1377,9 @@ class WarrantyClaimNotificationTaskTests(TestCase):
         self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
         self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
 
+    @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
-    def test_send_claim_status_notification_for_rejected_claim(self, client_mock):
+    def test_send_claim_status_notification_for_rejected_claim(self, client_mock, delayed_menu_mock):
         registration = create_registration(state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)
         claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.REJECTED)
@@ -1386,3 +1396,6 @@ class WarrantyClaimNotificationTaskTests(TestCase):
             whatsapp_client.send_text.call_args.args[1],
             f"Your claim for registration: {registration.registration_code} is rejected.",
         )
+        delayed_menu_mock.assert_called_once()
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
+        self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)

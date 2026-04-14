@@ -19,6 +19,21 @@ def activate_complaint_chat_session(*, phone_number: str, complaint_id: int) -> 
     return session
 
 
+def reset_whatsapp_session_to_main_menu(*, phone_number: str) -> None:
+    target_phone_number = str(phone_number or "").strip()
+    if not target_phone_number:
+        return
+    WhatsAppSession.objects.update_or_create(
+        phone_number=target_phone_number,
+        defaults={
+            "flow": None,
+            "current_step": "menu",
+            "session_data": {},
+            "last_activity": timezone.now(),
+        },
+    )
+
+
 def end_complaint_chat_session(*, phone_number: str, complaint_id: int) -> None:
     target_phone_number = str(phone_number or "").strip()
     session = WhatsAppSession.objects.filter(

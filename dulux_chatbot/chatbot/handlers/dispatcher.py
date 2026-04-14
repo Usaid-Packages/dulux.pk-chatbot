@@ -11,9 +11,12 @@ from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
 from dulux_chatbot.chatbot.flows.find_product import FindProductFlow
 from dulux_chatbot.chatbot.flows.registration import RegistrationFlow
 from dulux_chatbot.chatbot.flows.reissuance import ReissuanceFlow
+from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
+from dulux_chatbot.complaints.models import Complaint
 from dulux_chatbot.warranty.resubmission import fallback_resubmit_message
 
 
+COMPLAINT_CONTEXT_REMINDER_AFTER = timedelta(hours=1)
 MENU_OPTIONS = {
     "1": FlowType.REGISTRATION,
     "2": FlowType.CLAIM,
@@ -43,6 +46,12 @@ FLOW_INITIAL_STEPS = {
 
 def dispatch(session, message: dict, client) -> None:
     now = timezone.now()
+    if _is_main_menu_command(message):
+        reset_whatsapp_session_to_main_menu(phone_number=session.phone_number)
+        session.refresh_from_db(fields=["flow", "current_step", "session_data", "last_activity"])
+        _send_main_menu(session.phone_number, client)
+        return
+
     if _session_expired(session=session, now=now):
         expired_resubmit_session = bool((session.session_data or {}).get("resubmit_registration_id"))
         expired_claim_resubmit_session = bool((session.session_data or {}).get("claim_resubmission_claim_id"))
@@ -60,6 +69,9 @@ def dispatch(session, message: dict, client) -> None:
             )
         _send_main_menu(session.phone_number, client)
         return
+
+    if _should_send_complaint_context_reminder(session=session, now=now):
+        _send_complaint_context_reminder(session=session, client=client)
 
     session.last_activity = now
     session.save(update_fields=["last_activity", "modified"])
@@ -90,6 +102,32 @@ def dispatch(session, message: dict, client) -> None:
 
 def _send_main_menu(phone_number: str, client) -> None:
     client.send_text(phone_number, MAIN_MENU_TEXT)
+
+
+def _is_main_menu_command(message: dict) -> bool:
+    command = str(message.get("interactive_id") or message.get("text") or "").strip()
+    return command == "00" or command.upper() in {"MENU", "MAIN MENU"}
+
+
+def _should_send_complaint_context_reminder(*, session, now) -> bool:
+    if session.flow != FlowType.COMPLAINT or session.current_step != "chat":
+        return False
+    if session.last_activity is None:
+        return False
+    return now - session.last_activity > COMPLAINT_CONTEXT_REMINDER_AFTER
+
+
+def _send_complaint_context_reminder(*, session, client) -> None:
+    complaint_id = (session.session_data or {}).get("complaint_id")
+    complaint = Complaint.objects.filter(pk=complaint_id).only("subject").first()
+    subject = complaint.subject if complaint is not None else "your complaint"
+    client.send_text(
+        session.phone_number,
+        (
+            f"You are currently in the complaint chat for subject: {subject}. "
+            "If you want to go to the main menu, press 00 or type MAIN MENU."
+        ),
+    )
 
 
 def _session_expired(*, session, now) -> bool:
