@@ -10,7 +10,13 @@ from rest_framework.test import APIClient
 from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.complaints.choices import ComplaintStatus
-from dulux_chatbot.complaints.tests.factories import create_chat_message, create_complaint, create_image, create_user
+from dulux_chatbot.complaints.tests.factories import (
+    create_chat_message,
+    create_complaint,
+    create_complaint_image,
+    create_image,
+    create_user,
+)
 from dulux_chatbot.users.choices import UserRole
 from dulux_chatbot.warranty.tests.factories import create_registration
 
@@ -107,7 +113,7 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], ComplaintStatus.IN_PROGRESS)
 
-    def test_close_requires_closure_note(self):
+    def test_close_allows_empty_closure_note(self):
         complaint = create_complaint(status=ComplaintStatus.RESOLVED)
         self.client.force_authenticate(user=self.user)
 
@@ -117,7 +123,8 @@ class ComplaintAPITests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], ComplaintStatus.CLOSED)
 
     def test_resolve_complaint_ends_matching_whatsapp_session(self):
         complaint = create_complaint(status=ComplaintStatus.IN_PROGRESS, phone_number="923214840045")
@@ -198,6 +205,28 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(list_response.status_code, status.HTTP_200_OK)
         self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
         send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
+
+    def test_list_messages_returns_messages_and_images_in_one_list(self):
+        complaint = create_complaint()
+        message = create_chat_message(complaint=complaint, text="Customer support message")
+        complaint_image = create_complaint_image(complaint=complaint)
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        item_types = {item["type"] for item in response.data}
+        self.assertEqual(item_types, {"MESSAGE", "IMAGE"})
+        message_item = next(item for item in response.data if item["type"] == "MESSAGE")
+        image_item = next(item for item in response.data if item["type"] == "IMAGE")
+        self.assertEqual(message_item["id"], message.id)
+        self.assertEqual(message_item["text"], "Customer support message")
+        self.assertIsNone(message_item["image"])
+        self.assertEqual(image_item["id"], complaint_image.id)
+        self.assertEqual(image_item["sender"], "CUSTOMER")
+        self.assertEqual(image_item["image"]["id"], complaint_image.image_id)
 
     @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
     def test_create_message_sends_text_to_whatsapp(self, send_text_mock):

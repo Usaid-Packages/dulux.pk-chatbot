@@ -74,12 +74,27 @@ class WarrantyRegistrationAPITests(TestCase):
 
     def test_authenticated_user_can_get_registration_detail(self):
         registration = create_registration()
+        rejection_field = registration.rejection_fields.create(
+            field_name="email",
+            note="Please provide a valid email.",
+        )
         self.client.force_authenticate(user=create_quality_user())
 
         response = self.client.get(reverse("registration_detail", kwargs={"pk": registration.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], registration.id)
+        self.assertEqual(
+            response.data["rejection_fields"],
+            [
+                {
+                    "id": rejection_field.id,
+                    "field_name": "email",
+                    "note": "Please provide a valid email.",
+                    "created": response.data["rejection_fields"][0]["created"],
+                }
+            ],
+        )
 
     def test_create_registration_with_paint_pairs(self):
         image = create_image()
@@ -313,7 +328,7 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("notification_template", response.data)
 
-    def test_registration_transition_reject_without_notes_returns_400(self):
+    def test_registration_transition_reject_without_notification_template_returns_400(self):
         registration = create_registration()
         self.client.force_authenticate(user=self.cs_user)
 
@@ -324,6 +339,24 @@ class WarrantyRegistrationAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
+    def test_registration_transition_reject_allows_empty_notes(self, delay_mock):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "action": "REJECT",
+                "notification_template": build_notification_template(title="Rejected"),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["state"], RegistrationState.REJECTED)
+        delay_mock.assert_called_once()
 
     @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_resubmit_notification.delay")
     def test_registration_transition_resubmit_triggers_notification_task(self, delay_mock):
@@ -344,7 +377,8 @@ class WarrantyRegistrationAPITests(TestCase):
         delay_mock.assert_called_once_with(registration.id)
 
     def test_registration_update_rejects_replacing_claimed_paint_pairs(self):
-        registration = create_registration(state=RegistrationState.APPROVED)
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="paint_pairs")
         protected_paint_pair = create_paint_pair(registration=registration)
         create_claim(registration=registration, paint_pair=protected_paint_pair, state=ClaimState.SUBMITTED)
         replacement_topcoat = create_product(name="Replacement Topcoat")
@@ -370,7 +404,8 @@ class WarrantyRegistrationAPITests(TestCase):
         )
 
     def test_registration_update_rejects_basecoat_not_linked_to_topcoat(self):
-        registration = create_registration()
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="paint_pairs")
         topcoat = create_product(name="Update Topcoat")
         linked_basecoat = create_product(name="Update Linked Basecoat", product_type="BASECOAT", warranty_years=3)
         invalid_basecoat = create_product(name="Update Invalid Basecoat", product_type="BASECOAT", warranty_years=3)
@@ -396,6 +431,55 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(
             response.data["paint_pairs"][0]["basecoat"][0],
             "Basecoat must be linked to the selected topcoat product.",
+        )
+
+    def test_registration_update_rejects_fields_not_in_rejection_fields(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"city": "Lahore"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"][0],
+            "Only fields requested for resubmission can be updated. Invalid fields: city.",
+        )
+
+    def test_registration_update_allows_fields_in_rejection_fields(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"email": "updated@example.com"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], "updated@example.com")
+        self.assertEqual(response.data["state"], RegistrationState.SUBMITTED)
+
+    def test_registration_update_rejects_mixing_rejected_fields_with_notes(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"email": "updated@example.com", "notes": "Updated note."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"][0],
+            "Registration fields must be updated separately from status, notes, or rejection field updates.",
         )
 
 
@@ -653,6 +737,17 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["state"], ClaimState.QA_APPROVED)
 
+    def test_quality_approve_allows_empty_notes(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REVIEW)
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.post(reverse("claim_quality_approve", kwargs={"pk": claim.pk}), {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["state"], ClaimState.QA_APPROVED)
+
     @patch("dulux_chatbot.warranty.api.v1.serializers.send_claim_status_notification.delay")
     def test_final_approve_uses_claim_patch_from_qa_approved_state(self, delay_mock):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -689,6 +784,28 @@ class WarrantyClaimAPITests(TestCase):
             {
                 "action": "REJECT",
                 "notes": "The claim is outside the warranty scope after QA review.",
+                "notification_template": build_notification_template(title="Claim Rejected"),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["state"], ClaimState.REJECTED)
+        delay_mock.assert_called_once_with(
+            claim.id, notification_template=build_notification_template(title="Claim Rejected")
+        )
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_claim_status_notification.delay")
+    def test_final_reject_allows_empty_notes(self, delay_mock):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REJECTED)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("claim_detail", kwargs={"pk": claim.pk}),
+            {
+                "action": "REJECT",
                 "notification_template": build_notification_template(title="Claim Rejected"),
             },
             format="json",

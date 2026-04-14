@@ -192,9 +192,16 @@ class WarrantyRegistrationListSerializer(serializers.ModelSerializer):
         )
 
 
+class RejectionFieldSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RejectionField
+        fields = ("id", "field_name", "note", "created")
+
+
 class WarrantyRegistrationDetailSerializer(serializers.ModelSerializer):
     paint_pairs = RegistrationPaintPairSerializer(many=True, read_only=True)
     paint_pair_invoices = PaintPairInvoiceSerializer(source="invoices", many=True, read_only=True)
+    rejection_fields = RejectionFieldSerializer(many=True, read_only=True)
     approved_by_email = serializers.SerializerMethodField()
 
     class Meta:
@@ -220,6 +227,7 @@ class WarrantyRegistrationDetailSerializer(serializers.ModelSerializer):
             "approved_by_email",
             "approved_at",
             "warranty_certificate",
+            "rejection_fields",
             "paint_pairs",
             "paint_pair_invoices",
             "created",
@@ -352,6 +360,24 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
 
 
 class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
+    REGISTRATION_FIELD_UPDATE_FIELDS = {
+        "channel",
+        "customer_name",
+        "phone_number",
+        "email",
+        "city",
+        "province",
+        "site_address",
+        "purchase_date",
+        "purchase_dealer",
+        "purchase_dealer_city",
+        "purchase_dealer_address",
+        "postal_code",
+        "paint_pairs",
+        "paint_pair_invoices",
+    }
+    CONTROL_UPDATE_FIELDS = {"action", "notes", "notification_template", "rejection_fields"}
+
     registration_number = serializers.CharField(source="registration_code", read_only=True)
     action = serializers.ChoiceField(
         choices=("APPROVE", "REJECT", "RESUBMIT", "IN_PROGRESS"),
@@ -406,6 +432,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
         action = attrs.get("action")
         notification_template = attrs.get("notification_template")
+        self._validate_rejected_field_update()
         if action is not None:
             current_state = self.instance.state
 
@@ -421,9 +448,6 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
                     {"action": f"Cannot transition registration from {current_state} using {action}."}
                 )
 
-            if action in {"REJECT", "RESUBMIT"} and not attrs.get("notes"):
-                raise serializers.ValidationError({"notes": "Notes are required for reject or resubmit."})
-
             if action in {"APPROVE", "REJECT"}:
                 if not isinstance(notification_template, str) or not notification_template.strip():
                     raise serializers.ValidationError(
@@ -433,6 +457,39 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
                     )
 
         return attrs
+
+    def _validate_rejected_field_update(self) -> None:
+        incoming_fields = set(self.initial_data)
+        registration_update_fields = incoming_fields & self.REGISTRATION_FIELD_UPDATE_FIELDS
+        if not registration_update_fields:
+            return
+
+        mixed_control_fields = incoming_fields & self.CONTROL_UPDATE_FIELDS
+        if mixed_control_fields:
+            raise serializers.ValidationError(
+                {
+                    "detail": (
+                        "Registration fields must be updated separately from status, notes, or rejection field updates."
+                    )
+                }
+            )
+
+        if self.instance.state != RegistrationState.RESUBMIT:
+            raise serializers.ValidationError(
+                {"detail": "Registration fields can only be updated when the registration is in RESUBMIT state."}
+            )
+
+        allowed_fields = set(self.instance.rejection_fields.values_list("field_name", flat=True))
+        disallowed_fields = registration_update_fields - allowed_fields
+        if disallowed_fields:
+            raise serializers.ValidationError(
+                {
+                    "detail": (
+                        "Only fields requested for resubmission can be updated. Invalid fields: "
+                        f"{', '.join(sorted(disallowed_fields))}."
+                    )
+                }
+            )
 
     @transaction.atomic
     def update(self, instance: WarrantyRegistration, validated_data: dict) -> WarrantyRegistration:
@@ -447,6 +504,10 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
         notes = validated_data.get("notes", "").strip()
         if "notes" in validated_data:
             validated_data["notes"] = notes
+
+        has_resubmission_field_update = bool(
+            set(getattr(self, "initial_data", {})) & self.REGISTRATION_FIELD_UPDATE_FIELDS
+        )
 
         for field, value in validated_data.items():
             setattr(instance, field, value)
@@ -463,6 +524,8 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             if action == "APPROVE":
                 instance.approved_by = self.context["request"].user
                 instance.approved_at = timezone.now()
+        elif has_resubmission_field_update:
+            instance.state = RegistrationState.SUBMITTED
 
         instance.save()
 
@@ -784,8 +847,6 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
                     {"action": f"Cannot transition claim from {current_state} using {action}."}
                 )
 
-            if action == "REJECT" and not attrs.get("notes"):
-                raise serializers.ValidationError({"notes": "Notes are required for reject."})
             if action in {"APPROVE", "REJECT"}:
                 if not isinstance(notification_template, str) or not notification_template.strip():
                     raise serializers.ValidationError(
@@ -853,7 +914,7 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
 
 
 class ClaimQualityApproveSerializer(serializers.Serializer):
-    technical_notes = serializers.CharField(min_length=10, max_length=2000)
+    technical_notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
 
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
@@ -868,7 +929,7 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
         request = self.context.get("request")
         actor = getattr(request, "user", None)
         before_data = _build_claim_snapshot(claim)
-        notes = self.validated_data["technical_notes"].strip()
+        notes = self.validated_data.get("technical_notes", "").strip()
         quality_review = ClaimQualityReview.objects.create(
             claim=claim,
             decision_type=QualityDecisionType.QA_APPROVED,
@@ -898,7 +959,7 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
 
 class ClaimQualityRejectSerializer(serializers.Serializer):
     technical_reason = serializers.ChoiceField(choices=QualityTechnicalReason.choices)
-    technical_notes = serializers.CharField(min_length=10, max_length=2000)
+    technical_notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
 
     def validate(self, attrs: dict) -> dict:
         attrs = super().validate(attrs)
@@ -913,7 +974,7 @@ class ClaimQualityRejectSerializer(serializers.Serializer):
         request = self.context.get("request")
         actor = getattr(request, "user", None)
         before_data = _build_claim_snapshot(claim)
-        notes = self.validated_data["technical_notes"].strip()
+        notes = self.validated_data.get("technical_notes", "").strip()
         quality_review = ClaimQualityReview.objects.create(
             claim=claim,
             decision_type=QualityDecisionType.QA_REJECTED,

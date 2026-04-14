@@ -41,6 +41,15 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         fields = ("id", "sender", "text", "created")
 
 
+class ComplaintChatItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    type = serializers.ChoiceField(choices=("MESSAGE", "IMAGE"))
+    sender = serializers.ChoiceField(choices=MessageSender.choices)
+    text = serializers.CharField(allow_blank=True)
+    image = ImageSerializer(required=False, allow_null=True)
+    created = serializers.DateTimeField()
+
+
 class ComplaintListSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
     assigned_to_email = serializers.SerializerMethodField()
@@ -203,9 +212,6 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
 
         if action == "ASSIGN" and attrs.get("assigned_to") is None and self.instance.assigned_to is None:
             raise serializers.ValidationError({"assigned_to": "Assigned user is required for assign action."})
-
-        if action == "CLOSE" and not attrs.get("closure_note") and not self.instance.closure_note:
-            raise serializers.ValidationError({"closure_note": "Closure note is required for close action."})
 
         return attrs
 

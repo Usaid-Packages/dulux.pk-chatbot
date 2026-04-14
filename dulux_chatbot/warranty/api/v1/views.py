@@ -136,6 +136,7 @@ class WarrantyRegistrationListCreateAPIView(generics.ListCreateAPIView):
         "paint_pairs__topcoat",
         "paint_pairs__basecoat",
         "invoices__image",
+        "rejection_fields",
     )
     filterset_fields = ["state", "channel"]
     search_fields = ["registration_code", "phone_number", "customer_name"]
@@ -154,6 +155,7 @@ class WarrantyRegistrationRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         "paint_pairs__topcoat",
         "paint_pairs__basecoat",
         "invoices__image",
+        "rejection_fields",
     )
 
     def get_permissions(self):
