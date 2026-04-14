@@ -20,6 +20,7 @@ export const apiEndpoints = {
     list: `${API_WARRANTY_V1}/claims/`,
     create: `${API_WARRANTY_V1}/claims/`,
     detail: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/`,
+    csrResubmission: (id: string): string => `${API_WARRANTY_V1}/claims/${id}/csr-resubmission/`,
     cardCounts: `${API_WARRANTY_V1}/card-counts/claims/`,
   },
   quality: {

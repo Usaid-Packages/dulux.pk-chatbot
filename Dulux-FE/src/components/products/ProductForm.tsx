@@ -37,6 +37,7 @@ interface ProductFormProps {
   submitLabel: string;
   isSubmitting: boolean;
   useSplitLongFieldLayout?: boolean;
+  defaultBasecoatWarrantyYears?: number;
   initialValues?: ProductFormValues;
   initialImages?: ProductImage[];
   surfaceTypes: SurfaceType[];
@@ -182,6 +183,7 @@ export const ProductForm = ({
   submitLabel,
   isSubmitting,
   useSplitLongFieldLayout = false,
+  defaultBasecoatWarrantyYears,
   initialValues,
   initialImages = [],
   surfaceTypes,
@@ -197,7 +199,8 @@ export const ProductForm = ({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    getValues,
+    formState: { errors, dirtyFields },
   } = useForm<ProductFormSchemaValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: initialValues ?? DEFAULT_VALUES,
@@ -251,6 +254,23 @@ export const ProductForm = ({
       setValue('basecoatIds', [], { shouldValidate: true });
     }
   }, [selectedBasecoatIds, selectedProductType, setValue]);
+
+  useEffect(() => {
+    if (selectedProductType !== 'BASECOAT') {
+      return;
+    }
+
+    if (defaultBasecoatWarrantyYears === undefined || dirtyFields.warrantyYears) {
+      return;
+    }
+
+    const currentWarrantyYears = Number(getValues('warrantyYears'));
+    if (currentWarrantyYears === defaultBasecoatWarrantyYears) {
+      return;
+    }
+
+    setValue('warrantyYears', defaultBasecoatWarrantyYears, { shouldValidate: true });
+  }, [defaultBasecoatWarrantyYears, dirtyFields.warrantyYears, getValues, selectedProductType, setValue]);
 
   const toggleSurfaceSelection = (surfaceTypeId: number, checked: boolean): void => {
     const selectedIds = new Set(selectedSurfaceTypeIds);

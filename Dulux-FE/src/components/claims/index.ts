@@ -3,6 +3,7 @@ export { ApproveClaimModal } from './ApproveClaimModal';
 export { ClaimDetailPanel } from './ClaimDetailPanel';
 export { ClaimImages } from './ClaimImages';
 export { ClaimTimeline } from './ClaimTimeline';
+export { CsrResubmissionModal } from './CsrResubmissionModal';
 export { ClaimWorkflowCard } from './ClaimWorkflowCard';
 export { ClaimsTable } from './ClaimsTable';
 export { ForwardToQualityModal } from './ForwardToQualityModal';

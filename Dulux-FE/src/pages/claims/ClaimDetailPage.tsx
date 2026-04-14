@@ -10,6 +10,7 @@ import {
   ClaimDetailPanel,
   ClaimImages,
   ClaimWorkflowCard,
+  CsrResubmissionModal,
   ForwardToQualityModal,
   LinkedRegistrationCard,
   RejectClaimModal,
@@ -19,6 +20,7 @@ import { ROUTES } from '#/constants';
 import { useClaimDetail } from '#/hooks/claims';
 import type {
   ApproveClaimFinalFormValues,
+  ClaimCsrResubmissionFormValues,
   ForwardToQualityFormValues,
   RejectClaimFinalFormValues,
 } from '#/schemas/claim.schema';
@@ -35,9 +37,17 @@ export const ClaimDetailPage = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { claimQuery, handleApprove, handleReject, handleSendToQuality, isActionPending } = useClaimDetail(claimId);
+  const {
+    claimQuery,
+    handleApprove,
+    handleClaimCsrResubmissionSubmit,
+    handleReject,
+    handleSendToQuality,
+    isActionPending,
+  } = useClaimDetail(claimId);
 
   const [isApproveModalOpen, setApproveModalOpen] = useState(false);
+  const [isCsrResubmissionModalOpen, setCsrResubmissionModalOpen] = useState(false);
   const [isForwardModalOpen, setForwardModalOpen] = useState(false);
   const [isRejectModalOpen, setRejectModalOpen] = useState(false);
 
@@ -46,10 +56,12 @@ export const ClaimDetailPage = (): JSX.Element => {
   };
 
   const openApproveModal = (): void => setApproveModalOpen(true);
+  const openCsrResubmissionModal = (): void => setCsrResubmissionModalOpen(true);
   const openForwardModal = (): void => setForwardModalOpen(true);
   const openRejectModal = (): void => setRejectModalOpen(true);
 
   const closeApproveModal = (): void => setApproveModalOpen(false);
+  const closeCsrResubmissionModal = (): void => setCsrResubmissionModalOpen(false);
   const closeForwardModal = (): void => setForwardModalOpen(false);
   const closeRejectModal = (): void => setRejectModalOpen(false);
 
@@ -66,6 +78,19 @@ export const ClaimDetailPage = (): JSX.Element => {
   const submitReject = (values: RejectClaimFinalFormValues): void => {
     handleReject({ id: claimId, notes: values.notes });
     closeRejectModal();
+  };
+
+  const submitCsrResubmission = (values: ClaimCsrResubmissionFormValues): void => {
+    handleClaimCsrResubmissionSubmit({
+      id: claimId,
+      notes: values.notes,
+      entries: values.entries.map(entry => ({
+        requiredItem: entry.requiredItem,
+        responseText: entry.responseText,
+        imageFile: entry.imageFile,
+      })),
+    });
+    closeCsrResubmissionModal();
   };
 
   if (claimQuery.isLoading) {
@@ -101,6 +126,7 @@ export const ClaimDetailPage = (): JSX.Element => {
   }
 
   const claim = claimQuery.data;
+  const canCsrResubmit = claim.workflowState === 'RESUBMIT';
   const canSendToQuality = claim.workflowState === 'IN_REVIEW';
   const canFinalApprove = claim.workflowState === 'QA_APPROVED';
   const canFinalReject = claim.workflowState === 'QA_REJECTED';
@@ -124,9 +150,11 @@ export const ClaimDetailPage = (): JSX.Element => {
           <ClaimDetailPanel
             claim={claim}
             onOpenApproveModal={openApproveModal}
+            onOpenCsrResubmissionModal={openCsrResubmissionModal}
             onOpenForwardModal={openForwardModal}
             onOpenRejectModal={openRejectModal}
             isActionPending={isActionPending}
+            canCsrResubmit={canCsrResubmit}
             canSendToQuality={canSendToQuality}
             canFinalApprove={canFinalApprove}
             canFinalReject={canFinalReject}
@@ -148,6 +176,14 @@ export const ClaimDetailPage = (): JSX.Element => {
         isSubmitting={isActionPending}
         onClose={closeForwardModal}
         onSubmit={submitForward}
+      />
+
+      <CsrResubmissionModal
+        claimId={claimId}
+        isOpen={isCsrResubmissionModalOpen}
+        isSubmitting={isActionPending}
+        onClose={closeCsrResubmissionModal}
+        onSubmit={submitCsrResubmission}
       />
 
       <RejectClaimModal

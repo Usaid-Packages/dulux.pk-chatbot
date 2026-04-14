@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
@@ -10,13 +11,21 @@ import {
   useMarkClaimInReviewMutation,
   useRejectClaimMutation,
   useSendToQualityMutation,
+  useSubmitClaimCsrResubmissionMutation,
 } from '#/data-layer/claims';
-import type { ApproveClaimPayload, ClaimDetail, RejectClaimPayload, SendToQualityPayload } from '#/types/claims.types';
+import type {
+  ApproveClaimPayload,
+  ClaimCsrResubmissionSubmitPayload,
+  ClaimDetail,
+  RejectClaimPayload,
+  SendToQualityPayload,
+} from '#/types/claims.types';
 import { createClaimApprovedTemplate, createClaimRejectedTemplate, getApiErrorMessage } from '#/utils';
 
 interface UseClaimDetailResult {
   claimQuery: UseQueryResult<ClaimDetail, Error>;
   handleApprove: (payload: ApproveClaimPayload) => void;
+  handleClaimCsrResubmissionSubmit: (payload: ClaimCsrResubmissionSubmitPayload) => void;
   handleReject: (payload: RejectClaimPayload) => void;
   handleSendToQuality: (payload: SendToQualityPayload) => void;
   isActionPending: boolean;
@@ -41,6 +50,7 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   const markInReviewMutation = useMarkClaimInReviewMutation();
   const rejectMutation = useRejectClaimMutation();
   const sendToQualityMutation = useSendToQualityMutation();
+  const submitClaimCsrResubmissionMutation = useSubmitClaimCsrResubmissionMutation();
 
   useEffect(() => {
     hasAttemptedAutoInReviewRef.current = false;
@@ -77,7 +87,8 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
     approveMutation.isPending ||
     markInReviewMutation.isPending ||
     rejectMutation.isPending ||
-    sendToQualityMutation.isPending;
+    sendToQualityMutation.isPending ||
+    submitClaimCsrResubmissionMutation.isPending;
 
   return {
     claimQuery,
@@ -124,6 +135,16 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
           },
         }
       );
+    },
+    handleClaimCsrResubmissionSubmit: payload => {
+      submitClaimCsrResubmissionMutation.mutate(payload, {
+        onSuccess: () => {
+          toast.success('Resubmission submitted and claim moved to QA review.');
+        },
+        onError: error => {
+          toast.error(getApiErrorMessage(error));
+        },
+      });
     },
     handleSendToQuality,
     isActionPending,

@@ -1,7 +1,12 @@
 import { z } from 'zod';
 
 import { NOTES_MAX_LENGTH } from '#/constants';
-import { CLAIM_ISSUE_TYPES, CLAIM_STATUSES, CLAIM_WORKFLOW_STATES } from '#/types/claims.types';
+import {
+  CLAIM_CSR_RESUBMISSION_INPUT_TYPES,
+  CLAIM_ISSUE_TYPES,
+  CLAIM_STATUSES,
+  CLAIM_WORKFLOW_STATES,
+} from '#/types/claims.types';
 
 export const claimStatusSchema = z.enum(CLAIM_STATUSES);
 export const claimWorkflowStateSchema = z.enum(CLAIM_WORKFLOW_STATES);
@@ -136,8 +141,60 @@ export const requestMoreInfoSchema = z
     }
   });
 
+const csrResubmissionRequestedItemSchema = z.object({
+  requiredItem: z.string().min(1),
+  label: z.string().min(1),
+  inputType: z.enum(CLAIM_CSR_RESUBMISSION_INPUT_TYPES),
+  isMultiple: z.boolean(),
+});
+
+export const claimCsrResubmissionRequestSchema = z.object({
+  claimId: z.string().min(1),
+  claimState: claimWorkflowStateSchema,
+  qualityReviewId: z.string().min(1),
+  qualityNotes: z.string(),
+  otherText: z.string(),
+  requestedItems: z.array(csrResubmissionRequestedItemSchema).min(1),
+  created: z.string().min(1),
+});
+
+export const claimCsrResubmissionFormSchema = z
+  .object({
+    notes: z.string().trim().max(2000, 'Notes must be 2000 characters or fewer.').optional(),
+    entries: z
+      .array(
+        z.object({
+          requiredItem: z.string().min(1),
+          inputType: z.enum(CLAIM_CSR_RESUBMISSION_INPUT_TYPES),
+          responseText: z.string().trim().max(2000, 'Response must be 2000 characters or fewer.').optional(),
+          imageFile: z.instanceof(File).optional(),
+        })
+      )
+      .min(1, 'At least one resubmission entry is required.'),
+  })
+  .superRefine((values, context) => {
+    values.entries.forEach((entry, index) => {
+      if (entry.inputType === 'TEXT' && !entry.responseText?.trim()) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['entries', index, 'responseText'],
+          message: 'Response text is required for this field.',
+        });
+      }
+
+      if (entry.inputType === 'IMAGE' && !entry.imageFile) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['entries', index, 'imageFile'],
+          message: 'An image is required for this field.',
+        });
+      }
+    });
+  });
+
 export type CreateClaimFormValues = z.infer<typeof createClaimSchema>;
 export type ForwardToQualityFormValues = z.infer<typeof forwardToQualitySchema>;
 export type ApproveClaimFinalFormValues = z.infer<typeof approveClaimFinalSchema>;
 export type RejectClaimFinalFormValues = z.infer<typeof rejectClaimFinalSchema>;
 export type RequestMoreInfoFormValues = z.infer<typeof requestMoreInfoSchema>;
+export type ClaimCsrResubmissionFormValues = z.infer<typeof claimCsrResubmissionFormSchema>;

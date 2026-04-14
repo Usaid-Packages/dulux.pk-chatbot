@@ -96,6 +96,7 @@ export const ProductCreatePage = (): JSX.Element => {
       title='Add New Product'
       description='Create a new product with type, warranty, coverage, and mapped surfaces.'
       submitLabel='Create Product'
+      defaultBasecoatWarrantyYears={0}
       isSubmitting={
         createProductMutation.isPending || uploadProductImageMutation.isPending || attachProductImageMutation.isPending
       }

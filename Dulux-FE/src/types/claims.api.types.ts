@@ -116,3 +116,40 @@ export interface RequestMoreInfoClaimRequestPayload {
   action: 'RESUBMIT';
   notes: string;
 }
+
+export interface ApiClaimCsrResubmissionRequestedItem {
+  required_item?: string;
+  requiredItem?: string;
+  label?: string;
+  input_type?: string;
+  inputType?: string;
+  is_multiple?: boolean;
+  isMultiple?: boolean;
+}
+
+export interface ApiClaimCsrResubmissionRequestResponse {
+  claim_id?: number;
+  claimId?: number;
+  claim_state?: string;
+  claimState?: string;
+  quality_review_id?: number;
+  qualityReviewId?: number;
+  quality_notes?: string;
+  qualityNotes?: string;
+  other_text?: string;
+  otherText?: string;
+  requested_items?: ApiClaimCsrResubmissionRequestedItem[];
+  requestedItems?: ApiClaimCsrResubmissionRequestedItem[];
+  created?: string;
+}
+
+export interface ClaimCsrResubmissionEntryRequestPayload {
+  required_item: string;
+  response_text?: string;
+  image_id?: number;
+}
+
+export interface ClaimCsrResubmissionSubmitRequestPayload {
+  notes?: string;
+  entries: ClaimCsrResubmissionEntryRequestPayload[];
+}

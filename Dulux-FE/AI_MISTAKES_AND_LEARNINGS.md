@@ -708,6 +708,14 @@
 - Rule: In touched data-layer files, keep React Query and local helper imports split into separate value/type statements
   and run targeted ESLint before commit if `import/order` has been involved.
 
+### 2026-04-14 - Dynamic CSR requested-items list initially used array index as React key
+
+- Issue: In new claim CSR resubmission modal, mapped requested-item fields used `${requiredItem}-${index}` key shape,
+  which still included array index and violated stable-key lint rules.
+- Fix: Switched keys to backend-provided stable identity (`requiredItem`) for mapped entry components.
+- Rule: In dynamic form/list rendering, never include array index in key generation when backend field identifiers are
+  available; always use stable domain ids/enums.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

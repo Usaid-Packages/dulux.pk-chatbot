@@ -151,19 +151,19 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           {thread.complaintImages.length === 0 ? (
             <p className='text-xs text-text-muted'>No images</p>
           ) : (
-            <div className='grid grid-cols-6 justify-items-center gap-2'>
+            <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3'>
               {thread.complaintImages.map(image => (
                 <button
                   key={image.id}
                   type='button'
-                  className='w-full max-w-24 rounded-xl border border-primary/20 bg-surface-muted p-1 transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                  className='group relative w-full overflow-hidden rounded-xl border border-primary/20 bg-surface-muted p-1 shadow-[0_4px_14px_rgba(19,87,167,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_22px_rgba(19,87,167,0.14)] hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   data-image-id={image.id}
                   onClick={handleImagePreviewClick}
                 >
                   <img
                     src={image.url}
                     alt={image.name}
-                    className='h-20 w-full rounded-lg object-contain sm:h-24'
+                    className='h-28 w-full rounded-lg bg-white object-contain p-1 transition duration-200 group-hover:scale-[1.02] sm:h-32'
                     loading='lazy'
                   />
                 </button>
