@@ -4,6 +4,8 @@ from abc import ABC
 
 from django.core.files.base import ContentFile
 
+from dulux_chatbot.chatbot.constants import IMAGE_UPLOAD_NOTE as DEFAULT_IMAGE_UPLOAD_NOTE
+from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT as DEFAULT_MAIN_MENU_TEXT
 from dulux_chatbot.core.models import Image
 
 
@@ -13,15 +15,8 @@ class BaseFlow(ABC):
     MAIN_MENU_COMMAND = "00"
     TEXT_BACK_COMMANDS = {"BACK"}
     TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
-    IMAGE_UPLOAD_NOTE = "Note : Please add one Invoice image at a time"
-    MAIN_MENU_TEXT = (
-        "How can I assist you? Reply with:\n"
-        "1. Warranty Registration\n"
-        "2. Warranty Claim\n"
-        "3. Find a Product\n"
-        "4. Raise a Complaint\n"
-        "5. Certificate Reissuance"
-    )
+    IMAGE_UPLOAD_NOTE = DEFAULT_IMAGE_UPLOAD_NOTE
+    MAIN_MENU_TEXT = DEFAULT_MAIN_MENU_TEXT
 
     def __init__(self, session, client):
         self.session = session
@@ -102,6 +97,13 @@ class BaseFlow(ABC):
 
     def _get_media_id(self, message: dict) -> str:
         return str(message.get("media_id") or "").strip()
+
+    def _message_type(self, message: dict) -> str:
+        return str(message.get("type") or "").strip()
+
+    def _is_supported_media_type(self, message: dict, *, expected_type: str = "image") -> bool:
+        message_type = self._message_type(message)
+        return not message_type or message_type == expected_type
 
     def _save_media_image(self, media_id: str, *, filename_prefix: str) -> Image:
         content = self.client.download_media(media_id)

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_delete, log_update
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
+from dulux_chatbot.products.audit import build_product_snapshot
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product, ProductBasecoat, ProductImage, ProductSurfaceMapping, SurfaceType
 
@@ -139,14 +140,14 @@ class ProductSerializer(serializers.ModelSerializer):
             actor=getattr(request, "user", None),
             instance=product,
             request=request,
-            after_data=self._build_product_snapshot(product),
+            after_data=build_product_snapshot(product),
         )
         return product
 
     @transaction.atomic
     def update(self, instance: Product, validated_data: dict) -> Product:
         request = self.context.get("request")
-        before_data = self._build_product_snapshot(instance)
+        before_data = build_product_snapshot(instance)
         surface_types = validated_data.pop("surface_types", None)
         basecoats = validated_data.pop("basecoats", None)
         product_type = validated_data.get("product_type", instance.product_type)
@@ -164,7 +165,7 @@ class ProductSerializer(serializers.ModelSerializer):
             instance=product,
             request=request,
             before_data=before_data,
-            after_data=self._build_product_snapshot(product),
+            after_data=build_product_snapshot(product),
         )
         return product
 
@@ -246,26 +247,3 @@ class ProductSerializer(serializers.ModelSerializer):
         created_mappings = ProductBasecoat.objects.bulk_create(new_mappings)
         for mapping in created_mappings:
             log_create(actor=actor, instance=mapping, request=request)
-
-    def _build_product_snapshot(self, product: Product) -> dict:
-        return build_instance_snapshot(
-            product,
-            extra_data={
-                "surface_type_ids": list(
-                    ProductSurfaceMapping.objects.filter(product=product)
-                    .order_by("surface_type_id")
-                    .values_list(
-                        "surface_type_id",
-                        flat=True,
-                    )
-                ),
-                "basecoat_ids": list(
-                    ProductBasecoat.objects.filter(topcoat=product)
-                    .order_by("basecoat_id")
-                    .values_list(
-                        "basecoat_id",
-                        flat=True,
-                    )
-                ),
-            },
-        )

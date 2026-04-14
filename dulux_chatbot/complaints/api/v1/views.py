@@ -18,9 +18,10 @@ from dulux_chatbot.complaints.api.v1.serializers import (
     ComplaintListSerializer,
     ComplaintUpdateSerializer,
 )
-from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
-from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
+from dulux_chatbot.complaints.choices import ComplaintStatus
+from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.complaints.realtime import broadcast_complaint_created
+from dulux_chatbot.complaints.services import build_complaint_chat_items
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
 
 
@@ -109,30 +110,7 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
         return context
 
     def list(self, request, *args, **kwargs):
-        complaint_id = self.kwargs["complaint_id"]
-        messages = [
-            {
-                "id": message.id,
-                "type": "MESSAGE",
-                "sender": message.sender,
-                "text": message.text,
-                "image": None,
-                "created": message.created,
-            }
-            for message in ChatMessage.objects.filter(complaint_id=complaint_id).order_by("created", "id")
-        ]
-        images = [
-            {
-                "id": complaint_image.id,
-                "type": "IMAGE",
-                "sender": MessageSender.CUSTOMER,
-                "text": "",
-                "image": complaint_image.image,
-                "created": complaint_image.created,
-            }
-            for complaint_image in ComplaintImage.objects.select_related("image").filter(complaint_id=complaint_id)
-        ]
-        items = sorted([*messages, *images], key=lambda item: (item["created"], item["id"]))
+        items = build_complaint_chat_items(complaint_id=self.kwargs["complaint_id"])
         serializer = ComplaintChatItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

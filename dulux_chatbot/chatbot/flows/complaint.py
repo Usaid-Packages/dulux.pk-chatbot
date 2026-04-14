@@ -59,11 +59,10 @@ class ComplaintFlow(BaseFlow):
             self.handle_complete(message)
             return
         media_id = self._get_media_id(message)
-        message_type = str(message.get("type") or "").strip()
         if not media_id:
             self._send_validation_error("Please upload an image or reply DONE.")
             return
-        if message_type and message_type != "image":
+        if not self._is_supported_media_type(message):
             self._send_validation_error("File format not supported. Please upload an image.")
             return
         images = list((self.session.session_data or {}).get("image_ids", []))
@@ -111,12 +110,11 @@ class ComplaintFlow(BaseFlow):
         complaint_id = (self.session.session_data or {}).get("complaint_id")
         text = self._get_text(message)
         media_id = self._get_media_id(message)
-        message_type = str(message.get("type") or "").strip()
         if not complaint_id:
             self.prompt_chat()
             return
         if media_id:
-            if message_type and message_type != "image":
+            if not self._is_supported_media_type(message):
                 self._send_validation_error("File format not supported. Please upload an image.")
                 return
             image = self._save_media_image(media_id, filename_prefix="complaint_chat")

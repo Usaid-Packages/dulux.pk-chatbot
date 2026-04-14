@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
@@ -16,9 +17,6 @@ from dulux_chatbot.warranty.api.v1.serializers import (
 from dulux_chatbot.warranty.choices import RegistrationState
 from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
-
-
-MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS = 0
 
 
 class RegistrationFlow(BaseFlow):
@@ -314,7 +312,6 @@ class RegistrationFlow(BaseFlow):
     def handle_invoice_upload(self, message: dict) -> None:
         text = self._get_text(message).upper()
         media_id = self._get_media_id(message)
-        message_type = str(message.get("type") or "").strip()
         if text == "DONE":
             if not (self.session.session_data or {}).get("paint_pair_invoices"):
                 self.client.send_text(
@@ -326,7 +323,7 @@ class RegistrationFlow(BaseFlow):
                 return
             self.handle_complete(message)
             return
-        if media_id and message_type and message_type != "image":
+        if media_id and not self._is_supported_media_type(message):
             self._send_validation_error("File format not supported. Please upload an image file for the invoice.")
             return
         if not media_id:
@@ -346,17 +343,6 @@ class RegistrationFlow(BaseFlow):
         if is_registration_resubmit_session(data):
             self._handle_resubmit_complete(data)
             return
-        paint_pairs = []
-        for pair_data in data.get("paint_pairs", []):
-            paint_pair_payload = {
-                "topcoat": pair_data.get("topcoat_id"),
-                "topcoat_quantity": pair_data.get("topcoat_quantity"),
-            }
-            if pair_data.get("basecoat_id") is not None:
-                paint_pair_payload["basecoat"] = pair_data.get("basecoat_id")
-                paint_pair_payload["basecoat_quantity"] = pair_data.get("basecoat_quantity")
-            paint_pairs.append(paint_pair_payload)
-
         serializer = WarrantyRegistrationCreateSerializer(
             data={
                 "channel": "WHATSAPP",
@@ -372,7 +358,7 @@ class RegistrationFlow(BaseFlow):
                 "purchase_dealer_address": data.get("purchase_dealer_address", ""),
                 "postal_code": "",
                 "notes": "",
-                "paint_pairs": paint_pairs,
+                "paint_pairs": self._build_paint_pairs_payload(data),
                 "paint_pair_invoices": data.get("paint_pair_invoices", []),
             }
         )

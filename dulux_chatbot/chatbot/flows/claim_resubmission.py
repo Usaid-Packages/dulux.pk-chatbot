@@ -92,7 +92,7 @@ class ClaimResubmissionFlow(BaseFlow):
         if not media_id:
             self._send_validation_error("Please upload an image or reply with DONE once finished.")
             return
-        if str(message.get("type") or "").strip() != "image":
+        if not self._is_supported_media_type(message):
             self._send_validation_error("File format not supported. Please upload an image.")
             return
 

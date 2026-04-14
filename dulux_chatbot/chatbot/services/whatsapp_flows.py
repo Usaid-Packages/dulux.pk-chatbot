@@ -13,6 +13,7 @@ from decouple import config as env_config
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 
+from dulux_chatbot.chatbot.constants import MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.products.choices import ProductType
@@ -243,7 +244,11 @@ class WarrantyRegistrationFlowService:
     def _pair_screen_data(cls, *, pair_key: str, topcoat_id: Any | None = None) -> dict[str, Any]:
         data = {
             "topcoat_options": cls._product_options(
-                Product.objects.filter(product_type=ProductType.TOPCOAT, is_active=True)
+                Product.objects.filter(
+                    product_type=ProductType.TOPCOAT,
+                    is_active=True,
+                    warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
+                )
             ),
             f"basecoat_options_{pair_key}": [],
         }
@@ -253,7 +258,12 @@ class WarrantyRegistrationFlowService:
         topcoat = Product.objects.filter(pk=parsed_topcoat_id, product_type=ProductType.TOPCOAT, is_active=True).first()
         if topcoat is None:
             return data
-        data[f"basecoat_options_{pair_key}"] = cls._product_options(topcoat.basecoats.filter(is_active=True))
+        data[f"basecoat_options_{pair_key}"] = cls._product_options(
+            topcoat.basecoats.filter(
+                is_active=True,
+                warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
+            )
+        )
         return data
 
     @staticmethod

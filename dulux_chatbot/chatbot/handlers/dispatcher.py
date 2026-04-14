@@ -4,6 +4,7 @@ from constance import config
 from django.utils import timezone
 
 from dulux_chatbot.chatbot.choices import FlowType
+from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
 from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
@@ -88,17 +89,7 @@ def dispatch(session, message: dict, client) -> None:
 
 
 def _send_main_menu(phone_number: str, client) -> None:
-    client.send_text(
-        phone_number,
-        (
-            "How can I assist you? Reply with:\n"
-            "1. Warranty Registration\n"
-            "2. Warranty Claim\n"
-            "3. Find a Product\n"
-            "4. Raise a Complaint\n"
-            "5. Certificate Reissuance"
-        ),
-    )
+    client.send_text(phone_number, MAIN_MENU_TEXT)
 
 
 def _session_expired(*, session, now) -> bool:

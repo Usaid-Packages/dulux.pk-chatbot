@@ -14,6 +14,7 @@ from dulux_chatbot.products.api.v1.serializers import (
     ProductWarrantyOptionSerializer,
     SurfaceTypeSerializer,
 )
+from dulux_chatbot.products.audit import build_product_snapshot
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product, ProductImage, SurfaceType
 
@@ -26,6 +27,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     filterset_fields = ["product_type", "is_active"]
     search_fields = ["name"]
     ordering_fields = ["name", "created"]
+    ordering = ["name"]
 
     def get_permissions(self):
         permissions = super().get_permissions()
@@ -48,17 +50,7 @@ class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
 
     def perform_destroy(self, instance: Product) -> None:
         deleted_object_id = instance.pk
-        before_data = build_instance_snapshot(
-            instance,
-            extra_data={
-                "surface_type_ids": list(
-                    instance.surface_mappings.order_by("surface_type_id").values_list("surface_type_id", flat=True)
-                ),
-                "basecoat_ids": list(
-                    instance.basecoat_mappings.order_by("basecoat_id").values_list("basecoat_id", flat=True)
-                ),
-            },
-        )
+        before_data = build_product_snapshot(instance)
         try:
             super().perform_destroy(instance)
         except ProtectedError as exc:

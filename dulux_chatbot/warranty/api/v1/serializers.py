@@ -6,12 +6,20 @@ from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from rest_framework import serializers
 
-from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_update
+from dulux_chatbot.audit_logs.services import log_create, log_update
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.core.validators import validate_pakistan_phone_number
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
+from dulux_chatbot.warranty.api.v1.relations import latest_prefetched
+from dulux_chatbot.warranty.audit import (
+    build_claim_event_label,
+    build_claim_snapshot,
+    build_quality_review_snapshot,
+    build_registration_event_label,
+    build_registration_snapshot,
+)
 from dulux_chatbot.warranty.choices import (
     ClaimResubmissionSource,
     ClaimState,
@@ -57,78 +65,6 @@ QUALITY_TEXT_REQUIRED_ITEMS = {
     QualityRequiredItem.SITE_CONDITIONS_INFO,
     QualityRequiredItem.OTHER,
 }
-
-
-def _build_registration_snapshot(registration: WarrantyRegistration) -> dict:
-    return build_instance_snapshot(
-        registration,
-        extra_data={
-            "paint_pairs": [
-                {
-                    "id": pair.id,
-                    "topcoat_id": pair.topcoat_id,
-                    "topcoat_quantity": str(pair.topcoat_quantity),
-                    "basecoat_id": pair.basecoat_id,
-                    "basecoat_quantity": str(pair.basecoat_quantity) if pair.basecoat_quantity is not None else None,
-                }
-                for pair in registration.paint_pairs.order_by("id")
-            ],
-            "invoice_ids": list(registration.invoices.order_by("id").values_list("image_id", flat=True)),
-            "rejection_fields": [
-                {"field_name": item.field_name, "note": item.note}
-                for item in registration.rejection_fields.order_by("id")
-            ],
-        },
-    )
-
-
-def _build_claim_snapshot(claim: WarrantyClaim) -> dict:
-    return build_instance_snapshot(
-        claim,
-        extra_data={
-            "images": [
-                {
-                    "id": image.id,
-                    "image_id": image.image_id,
-                    "photo_type": image.photo_type,
-                }
-                for image in claim.images.order_by("id")
-            ],
-            "quality_review_ids": list(claim.quality_reviews.order_by("id").values_list("id", flat=True)),
-            "resubmissions": [
-                {
-                    "id": resubmission.id,
-                    "source": resubmission.source,
-                    "notes": resubmission.notes,
-                    "entries": [
-                        {
-                            "id": entry.id,
-                            "required_item": entry.required_item,
-                            "response_text": entry.response_text,
-                            "image_id": entry.image_id,
-                        }
-                        for entry in resubmission.entries.order_by("id")
-                    ],
-                }
-                for resubmission in claim.resubmissions.order_by("id").prefetch_related("entries")
-            ],
-        },
-    )
-
-
-def _build_quality_review_snapshot(review: ClaimQualityReview) -> dict:
-    return build_instance_snapshot(
-        review,
-        extra_data={
-            "required_items": [
-                {
-                    "id": item.id,
-                    "required_item": item.required_item,
-                }
-                for item in review.required_items.order_by("id")
-            ]
-        },
-    )
 
 
 class PaintPairInvoiceSerializer(serializers.ModelSerializer):
@@ -343,7 +279,7 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             actor=actor,
             instance=registration,
             request=request,
-            after_data=_build_registration_snapshot(registration),
+            after_data=build_registration_snapshot(registration),
             event_label="Registration created",
         )
 
@@ -495,7 +431,7 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: WarrantyRegistration, validated_data: dict) -> WarrantyRegistration:
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_registration_snapshot(instance)
+        before_data = build_registration_snapshot(instance)
         action = validated_data.pop("action", None)
         notification_template = validated_data.pop("notification_template", None)
         rejection_fields = validated_data.pop("rejection_fields", [])
@@ -550,8 +486,8 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
             instance=instance,
             request=request,
             before_data=before_data,
-            after_data=_build_registration_snapshot(instance),
-            event_label=self._build_registration_event_label(action=action),
+            after_data=build_registration_snapshot(instance),
+            event_label=build_registration_event_label(action=action),
         )
 
         return instance
@@ -597,16 +533,6 @@ class WarrantyRegistrationUpdateSerializer(serializers.ModelSerializer):
                 field_name=field_name,
                 defaults={"note": note},
             )
-
-    @staticmethod
-    def _build_registration_event_label(*, action: str | None) -> str:
-        action_labels = {
-            "APPROVE": "Registration approved",
-            "REJECT": "Registration rejected",
-            "RESUBMIT": "Registration marked for resubmission",
-            "IN_PROGRESS": "Registration moved to in progress",
-        }
-        return action_labels.get(action or "", "Registration updated")
 
 
 class ClaimImageSerializer(serializers.ModelSerializer):
@@ -685,7 +611,7 @@ class WarrantyClaimListSerializer(serializers.ModelSerializer):
         return obj.paint_pair.topcoat.name
 
     def get_latest_quality_decision(self, obj: WarrantyClaim) -> str | None:
-        latest_review = obj.quality_reviews.order_by("-created", "-id").first()
+        latest_review = latest_prefetched(obj, "quality_reviews")
         return latest_review.decision_type if latest_review else None
 
 
@@ -718,13 +644,13 @@ class WarrantyClaimDetailSerializer(serializers.ModelSerializer):
         )
 
     def get_latest_quality_review(self, obj: WarrantyClaim) -> dict | None:
-        latest_review = obj.quality_reviews.order_by("-created", "-id").first()
+        latest_review = latest_prefetched(obj, "quality_reviews")
         if latest_review is None:
             return None
         return ClaimQualityReviewSerializer(latest_review).data
 
     def get_latest_resubmission(self, obj: WarrantyClaim) -> dict | None:
-        latest_resubmission = obj.resubmissions.order_by("-created", "-id").first()
+        latest_resubmission = latest_prefetched(obj, "resubmissions")
         if latest_resubmission is None:
             return None
         return ClaimResubmissionSerializer(latest_resubmission).data
@@ -796,7 +722,7 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
             actor=actor,
             instance=claim,
             request=request,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim created",
         )
         return claim
@@ -863,7 +789,7 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: WarrantyClaim, validated_data: dict) -> WarrantyClaim:
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(instance)
+        before_data = build_claim_snapshot(instance)
         action = validated_data.pop("action", None)
         notification_template = validated_data.pop("notification_template", None)
         notes = validated_data.get("notes", "").strip()
@@ -896,21 +822,11 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
             instance=instance,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(instance),
-            event_label=self._build_claim_event_label(action=action),
+            after_data=build_claim_snapshot(instance),
+            event_label=build_claim_event_label(action=action),
         )
 
         return instance
-
-    @staticmethod
-    def _build_claim_event_label(*, action: str | None) -> str:
-        action_labels = {
-            "IN_REVIEW": "Claim moved to CS review",
-            "QA_REVIEW": "Claim forwarded to quality",
-            "APPROVE": "Claim approved",
-            "REJECT": "Claim rejected",
-        }
-        return action_labels.get(action or "", "Claim updated")
 
 
 class ClaimQualityApproveSerializer(serializers.Serializer):
@@ -928,7 +844,7 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
         claim: WarrantyClaim = self.context["claim"]
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(claim)
+        before_data = build_claim_snapshot(claim)
         notes = self.validated_data.get("technical_notes", "").strip()
         quality_review = ClaimQualityReview.objects.create(
             claim=claim,
@@ -943,7 +859,7 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
             actor=actor,
             instance=quality_review,
             request=request,
-            after_data=_build_quality_review_snapshot(quality_review),
+            after_data=build_quality_review_snapshot(quality_review),
             event_label="QA approved claim",
         )
         log_update(
@@ -951,7 +867,7 @@ class ClaimQualityApproveSerializer(serializers.Serializer):
             instance=claim,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim moved to QA approved",
         )
         return claim
@@ -973,7 +889,7 @@ class ClaimQualityRejectSerializer(serializers.Serializer):
         claim: WarrantyClaim = self.context["claim"]
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(claim)
+        before_data = build_claim_snapshot(claim)
         notes = self.validated_data.get("technical_notes", "").strip()
         quality_review = ClaimQualityReview.objects.create(
             claim=claim,
@@ -989,7 +905,7 @@ class ClaimQualityRejectSerializer(serializers.Serializer):
             actor=actor,
             instance=quality_review,
             request=request,
-            after_data=_build_quality_review_snapshot(quality_review),
+            after_data=build_quality_review_snapshot(quality_review),
             event_label="QA rejected claim",
         )
         log_update(
@@ -997,7 +913,7 @@ class ClaimQualityRejectSerializer(serializers.Serializer):
             instance=claim,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim moved to QA rejected",
         )
         return claim
@@ -1025,7 +941,7 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
         claim: WarrantyClaim = self.context["claim"]
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(claim)
+        before_data = build_claim_snapshot(claim)
         notes = self.validated_data.get("notes", "").strip()
         other_text = self.validated_data.get("other_text", "").strip()
         required_items = self.validated_data["required_items"]
@@ -1042,7 +958,7 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
             actor=actor,
             instance=quality_review,
             request=request,
-            after_data=_build_quality_review_snapshot(quality_review),
+            after_data=build_quality_review_snapshot(quality_review),
             event_label="QA requested more information",
         )
         claim.state = ClaimState.RESUBMIT
@@ -1056,7 +972,7 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
             instance=claim,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim moved to resubmission",
         )
         send_claim_resubmit_notification.delay(claim.id)
@@ -1148,7 +1064,7 @@ class ClaimResubmissionCreateSerializer(serializers.Serializer):
         claim: WarrantyClaim = self.context["claim"]
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(claim)
+        before_data = build_claim_snapshot(claim)
         notes = self.validated_data.get("notes", "").strip()
         resubmission = ClaimResubmission.objects.create(
             claim=claim,
@@ -1168,7 +1084,7 @@ class ClaimResubmissionCreateSerializer(serializers.Serializer):
             instance=claim,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim resubmitted",
         )
         return claim
@@ -1222,7 +1138,7 @@ class ClaimCSRResubmissionCreateSerializer(serializers.Serializer):
         claim: WarrantyClaim = self.context["claim"]
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = _build_claim_snapshot(claim)
+        before_data = build_claim_snapshot(claim)
         notes = self.validated_data.get("notes", "").strip()
         resubmission = ClaimResubmission.objects.create(
             claim=claim,
@@ -1242,7 +1158,7 @@ class ClaimCSRResubmissionCreateSerializer(serializers.Serializer):
             instance=claim,
             request=request,
             before_data=before_data,
-            after_data=_build_claim_snapshot(claim),
+            after_data=build_claim_snapshot(claim),
             event_label="Claim resubmitted by CSR",
         )
         return claim

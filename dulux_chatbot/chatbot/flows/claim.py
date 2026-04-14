@@ -154,11 +154,10 @@ class ClaimFlow(BaseFlow):
 
     def handle_photo_alternate_angle(self, message: dict) -> None:
         media_id = self._get_media_id(message)
-        message_type = str(message.get("type") or "").strip()
         if not media_id:
             self._send_validation_error("Please upload an image.")
             return
-        if message_type and message_type != "image":
+        if not self._is_supported_media_type(message):
             self._send_validation_error("File format not supported. Please upload an image.")
             return
         image = self._save_media_image(media_id, filename_prefix="claim")
@@ -167,11 +166,10 @@ class ClaimFlow(BaseFlow):
 
     def _handle_photo_step(self, message: dict, *, step: str, photo_type: str, prompt: str) -> None:
         media_id = self._get_media_id(message)
-        message_type = str(message.get("type") or "").strip()
         if not media_id:
             self._send_validation_error("Please upload an image.")
             return
-        if message_type and message_type != "image":
+        if not self._is_supported_media_type(message):
             self._send_validation_error("File format not supported. Please upload an image.")
             return
         image = self._save_media_image(media_id, filename_prefix="claim")

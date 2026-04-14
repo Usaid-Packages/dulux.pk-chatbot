@@ -3,8 +3,13 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from dulux_chatbot.audit_logs.choices import AuditAction
-from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_event, log_update
+from dulux_chatbot.audit_logs.services import log_create, log_event, log_update
 from dulux_chatbot.chatbot.services.sessions import end_complaint_chat_session
+from dulux_chatbot.complaints.audit import (
+    build_complaint_before_snapshot,
+    build_complaint_event_label,
+    build_complaint_snapshot,
+)
 from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
@@ -143,24 +148,10 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
             actor=actor,
             instance=complaint,
             request=request,
-            after_data=self._build_complaint_snapshot(complaint),
+            after_data=build_complaint_snapshot(complaint),
             event_label="Complaint created",
         )
         return complaint
-
-    def _build_complaint_snapshot(self, complaint: Complaint) -> dict:
-        return build_instance_snapshot(
-            complaint,
-            extra_data={
-                "images": [
-                    {
-                        "id": complaint_image.id,
-                        "image_id": complaint_image.image_id,
-                    }
-                    for complaint_image in complaint.images.order_by("id")
-                ],
-            },
-        )
 
 
 class ComplaintUpdateSerializer(serializers.ModelSerializer):
@@ -219,12 +210,7 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: Complaint, validated_data: dict) -> Complaint:
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        before_data = build_instance_snapshot(
-            instance,
-            extra_data={
-                "image_ids": list(instance.images.order_by("id").values_list("image_id", flat=True)),
-            },
-        )
+        before_data = build_complaint_before_snapshot(instance)
         action = validated_data.pop("action", None)
         images = validated_data.pop("images", None)
 
@@ -260,32 +246,11 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
             instance=instance,
             request=request,
             before_data=before_data,
-            after_data=build_instance_snapshot(
-                instance,
-                extra_data={
-                    "images": [
-                        {
-                            "id": complaint_image.id,
-                            "image_id": complaint_image.image_id,
-                        }
-                        for complaint_image in instance.images.order_by("id")
-                    ],
-                },
-            ),
-            event_label=self._build_complaint_event_label(action=action),
+            after_data=build_complaint_snapshot(instance),
+            event_label=build_complaint_event_label(action=action),
         )
 
         return instance
-
-    @staticmethod
-    def _build_complaint_event_label(*, action: str | None) -> str:
-        action_labels = {
-            "ASSIGN": "Complaint assigned",
-            "RESOLVE": "Complaint resolved",
-            "CLOSE": "Complaint closed",
-            "REOPEN": "Complaint reopened",
-        }
-        return action_labels.get(action or "", "Complaint updated")
 
 
 class ChatMessageCreateSerializer(serializers.ModelSerializer):
@@ -308,18 +273,7 @@ class ChatMessageCreateSerializer(serializers.ModelSerializer):
         )
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        complaint_snapshot = build_instance_snapshot(
-            complaint,
-            extra_data={
-                "images": [
-                    {
-                        "id": complaint_image.id,
-                        "image_id": complaint_image.image_id,
-                    }
-                    for complaint_image in complaint.images.order_by("id")
-                ]
-            },
-        )
+        complaint_snapshot = build_complaint_snapshot(complaint)
         log_event(
             actor=actor,
             action=AuditAction.UPDATE,

@@ -11,8 +11,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from dulux_chatbot.products.tests.factories import create_product, create_product_basecoat
+from dulux_chatbot.warranty.api.v1.serializers import WarrantyClaimListSerializer
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationChannel, RegistrationState
-from dulux_chatbot.warranty.models import ClaimQualityReview, ClaimQualityReviewItem, ClaimResubmission
+from dulux_chatbot.warranty.models import ClaimQualityReview, ClaimQualityReviewItem, ClaimResubmission, WarrantyClaim
 from dulux_chatbot.warranty.tasks import send_claim_status_notification, send_registration_status_notification
 from dulux_chatbot.warranty.tests.factories import (
     create_admin_user,
@@ -501,6 +502,33 @@ class WarrantyClaimAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"][0]["customer_name"], registration.customer_name)
+
+    def test_claim_list_serializer_uses_prefetched_quality_reviews(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        claims = []
+        for index in range(3):
+            topcoat = create_product(name=f"Quality Decision Topcoat {index}", warranty_years=5)
+            basecoat = create_product(
+                name=f"Quality Decision Basecoat {index}",
+                product_type="BASECOAT",
+                warranty_years=3,
+            )
+            paint_pair = create_paint_pair(registration=registration, topcoat=topcoat, basecoat=basecoat)
+            claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REVIEW)
+            ClaimQualityReview.objects.create(claim=claim, decision_type="QA_APPROVED", notes="")
+            claims.append(claim)
+
+        queryset = (
+            WarrantyClaim.objects.select_related("registration", "paint_pair__topcoat", "paint_pair__basecoat")
+            .prefetch_related("quality_reviews")
+            .filter(pk__in=[claim.pk for claim in claims])
+        )
+        prefetched_claims = list(queryset)
+
+        with self.assertNumQueries(0):
+            data = WarrantyClaimListSerializer(prefetched_claims, many=True).data
+
+        self.assertEqual([item["latest_quality_decision"] for item in data], ["QA_APPROVED"] * 3)
 
     def test_claim_list_for_quality_user_only_returns_qa_pipeline_states(self):
         topcoat = create_product(name="Quality List Topcoat", warranty_years=5)

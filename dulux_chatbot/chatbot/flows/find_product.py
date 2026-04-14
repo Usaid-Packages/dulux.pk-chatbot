@@ -30,15 +30,14 @@ class FindProductFlow(BaseFlow):
             self._reset()
             return
 
-        option_map = {}
-        option_lines = ["Please select a surface type:"]
-        for index, surface_type in enumerate(surface_types, start=1):
-            option_key = str(index)
-            option_map[option_key] = surface_type.id
-            option_lines.append(f"{option_key}. {surface_type.name}")
-
-        self._save_data("surface_type_options", option_map)
-        self._send_step_prompt("\n".join(option_lines))
+        option_lines = self._build_choice_lines(surface_types)
+        self._set_choice_options(
+            "surface_type_options",
+            [(option, surface_type_id) for option, surface_type_id, _ in option_lines],
+        )
+        prompt_lines = ["Please select a surface type:"]
+        prompt_lines.extend(f"{option}. {label}" for option, _, label in option_lines)
+        self._send_step_prompt("\n".join(prompt_lines))
 
     def handle_interior_exterior_select(self, message: dict) -> None:
         environment_value = self._get_text(message)
@@ -81,9 +80,9 @@ class FindProductFlow(BaseFlow):
     def handle_result(self, _message: dict) -> None:
         surface_type_id = (self.session.session_data or {}).get("surface_type_id")
         products = list(
-            Product.objects.filter(surface_mappings__surface_type_id=surface_type_id, is_active=True).prefetch_related(
-                "images__image"
-            )
+            Product.objects.filter(surface_mappings__surface_type_id=surface_type_id, is_active=True)
+            .prefetch_related("images__image")
+            .order_by("name")
         )
         if not products:
             self.client.send_text(self.session.phone_number, "No products found for the selected surface type.")
@@ -92,7 +91,7 @@ class FindProductFlow(BaseFlow):
             return
         for product in products:
             product_message = self._format_product_message(product=product)
-            product_image = product.images.first()
+            product_image = next(iter(product.images.all()), None)
             if product_image is not None:
                 self.client.send_image(
                     self.session.phone_number,

@@ -214,6 +214,26 @@ class FlowTests(TestCase):
         self.assertIn('"Full Name": ["This field is required."]', message)
         self.assertNotIn("customer_name", message)
 
+    def test_whatsapp_flow_options_only_include_products_with_warranty_years_more_than_zero(self):
+        create_product(name="Flow Zero Year Topcoat", warranty_years=0)
+        topcoat = create_product(name="Flow One Year Topcoat", warranty_years=1)
+        create_product_basecoat(
+            topcoat=topcoat,
+            basecoat=create_product(name="Flow Zero Year Basecoat", product_type="BASECOAT", warranty_years=0),
+        )
+        create_product_basecoat(
+            topcoat=topcoat,
+            basecoat=create_product(name="Flow One Year Basecoat", product_type="BASECOAT", warranty_years=1),
+        )
+
+        pair_data = WarrantyRegistrationFlowService._pair_screen_data(pair_key="one", topcoat_id=topcoat.id)
+
+        self.assertEqual(pair_data["topcoat_options"], [{"id": str(topcoat.id), "title": topcoat.name}])
+        self.assertEqual(
+            pair_data["basecoat_options_one"],
+            [{"id": str(topcoat.basecoats.get(warranty_years=1).id), "title": "Flow One Year Basecoat"}],
+        )
+
     def test_registration_requires_at_least_one_invoice_image(self):
         create_product(name="Flow Topcoat")
 
