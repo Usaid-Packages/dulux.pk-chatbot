@@ -71,7 +71,7 @@ export const ConversationListPanel = ({
             type='search'
             value={search}
             onChange={event => onSearchChange(event.target.value)}
-            placeholder='Search by customer, subject, or phone'
+            placeholder='Search by subject or phone'
             className='h-10 rounded-xl border-primary/25 bg-white'
             aria-label='Search conversations'
           />

@@ -41,6 +41,7 @@ import { cn, getApiErrorMessage } from '#/utils';
 const FIRST_PAGE = 1;
 const PRODUCT_PAGE_SIZE = 10;
 const SURFACE_TYPE_PAGE_SIZE = 10;
+const INVALID_PAGE_ERROR_MESSAGE = 'Invalid page.';
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 
@@ -150,6 +151,8 @@ export const ProductsListPage = (): JSX.Element => {
   const productTotalPages = Math.max(1, Math.ceil(productTotalItems / PRODUCT_PAGE_SIZE));
   const surfaceTypeTotalItems = surfaceTypesQuery.data?.count ?? 0;
   const surfaceTypeTotalPages = Math.max(1, Math.ceil(surfaceTypeTotalItems / SURFACE_TYPE_PAGE_SIZE));
+  const isSurfaceTypesInvalidPageError =
+    surfaceTypesQuery.isError && getApiErrorMessage(surfaceTypesQuery.error).includes(INVALID_PAGE_ERROR_MESSAGE);
 
   const linkedProductCountMap = useMemo<Record<number, number>>(() => {
     return buildSurfaceLinkedCountMap(products);
@@ -213,6 +216,12 @@ export const ProductsListPage = (): JSX.Element => {
       setSurfacePage(surfaceTypeTotalPages);
     }
   }, [surfacePage, surfaceTypeTotalPages, surfaceTypesQuery.isError, surfaceTypesQuery.isLoading]);
+
+  useEffect(() => {
+    if (surfacePage > FIRST_PAGE && isSurfaceTypesInvalidPageError) {
+      setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
+    }
+  }, [isSurfaceTypesInvalidPageError, surfacePage]);
 
   const setTab = (tab: ProductTab): void => {
     setSearchParams(previous => {
@@ -304,6 +313,9 @@ export const ProductsListPage = (): JSX.Element => {
 
     deleteSurfaceTypeMutation.mutate(String(surfaceTypeDeleteTarget.id), {
       onSuccess: () => {
+        if (surfacePage > FIRST_PAGE && surfaceTypes.length === 1) {
+          setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
+        }
         toast.success('Surface type deleted successfully.');
         closeDeleteSurfaceTypeModal();
       },

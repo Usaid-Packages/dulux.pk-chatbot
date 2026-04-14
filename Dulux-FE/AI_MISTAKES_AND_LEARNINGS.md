@@ -699,6 +699,15 @@
 - Fix: Switched Products page root container to `wf-list-shell` (with `gap-4` to preserve visual spacing).
 - Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is consistent.
 
+### 2026-04-14 - React Query mixed imports retriggered `import/order` crash
+
+- Issue: `useGetSurfaceTypesQuery.ts` used mixed value+type imports from `@tanstack/react-query` and `./shared`, which
+  retriggered the repo's known `import/order` plugin crash during lint-staged.
+- Fix: Split value and type imports into separate statements and kept the import block grouped/alphabetized per
+  `eslint.config.ts`.
+- Rule: In touched data-layer files, keep React Query and local helper imports split into separate value/type statements
+  and run targeted ESLint before commit if `import/order` has been involved.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.
