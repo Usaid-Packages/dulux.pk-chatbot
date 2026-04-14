@@ -30,27 +30,35 @@ const getStateBackRoute = (state: unknown): string | null => {
   return backTo;
 };
 
-const getBackRoute = (pathName: string, state: unknown): string | null => {
+const withSearch = (path: string, search: string): string => {
+  if (!search) {
+    return path;
+  }
+
+  return `${path}${search}`;
+};
+
+const getBackRoute = (pathName: string, search: string, state: unknown): string | null => {
   const stateBackRoute = getStateBackRoute(state);
 
   if (pathName.startsWith(ROUTES.MANUAL_REGISTRATION_ROOT)) {
-    return ROUTES.REGISTRATIONS;
+    return withSearch(ROUTES.REGISTRATIONS, search);
   }
 
   if (pathName.startsWith(`${ROUTES.REGISTRATIONS}/`)) {
-    return stateBackRoute ?? ROUTES.REGISTRATIONS;
+    return stateBackRoute ?? withSearch(ROUTES.REGISTRATIONS, search);
   }
 
   if (pathName.startsWith(`${ROUTES.CLAIMS}/`)) {
-    return ROUTES.CLAIMS;
+    return withSearch(ROUTES.CLAIMS, search);
   }
 
   if (pathName.startsWith(`${ROUTES.QUALITY}/`)) {
-    return ROUTES.QUALITY;
+    return withSearch(ROUTES.QUALITY, search);
   }
 
   if (pathName === ROUTES.PRODUCT_NEW || pathName.startsWith(`${ROUTES.PRODUCTS}/`)) {
-    return ROUTES.PRODUCTS;
+    return withSearch(ROUTES.PRODUCTS, search);
   }
 
   return null;
@@ -66,7 +74,7 @@ export const Header = (): JSX.Element => {
   const location = useLocation();
   const title = getHeaderTitle(location.pathname);
   const breadcrumb = getBreadcrumb(location.pathname);
-  const backRoute = getBackRoute(location.pathname, location.state);
+  const backRoute = getBackRoute(location.pathname, location.search, location.state);
   const isRegistrationsRoute = location.pathname === ROUTES.REGISTRATIONS;
   const isClaimsRoute = location.pathname === ROUTES.CLAIMS;
   const isProductsRoute = location.pathname === ROUTES.PRODUCTS;

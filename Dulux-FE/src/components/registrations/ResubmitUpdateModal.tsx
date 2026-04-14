@@ -73,13 +73,6 @@ const getRequestedFieldNames = (
   return REQUESTED_FIELD_ORDER.filter(fieldName => names.has(fieldName));
 };
 
-const getFieldNote = (
-  rejectionFields: RegistrationRejectionField[],
-  fieldName: RegistrationRejectionField['fieldName']
-): RegistrationRejectionField | null => {
-  return rejectionFields.find(field => field.fieldName === fieldName) ?? null;
-};
-
 const formatNoteTimestamp = (value: string): string => {
   if (!value.trim()) {
     return '';
@@ -96,6 +89,45 @@ const formatNoteTimestamp = (value: string): string => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(parsedDate);
+};
+
+interface RequestedCorrectionNote {
+  key: string;
+  note: string;
+  timestamp: string;
+}
+
+const getRequestedCorrectionNotes = (
+  rejectionFields: RegistrationRejectionField[],
+  requestedFieldNames: RegistrationRejectionField['fieldName'][]
+): RequestedCorrectionNote[] => {
+  const requestedFieldNameSet = new Set<RegistrationRejectionField['fieldName']>(requestedFieldNames);
+  const uniqueNotes = new Map<string, RequestedCorrectionNote>();
+
+  rejectionFields.forEach(field => {
+    if (!requestedFieldNameSet.has(field.fieldName)) {
+      return;
+    }
+
+    const normalizedNote = field.note?.trim() ?? '';
+    if (!normalizedNote) {
+      return;
+    }
+
+    const timestamp = formatNoteTimestamp(field.created);
+    const noteKey = `${normalizedNote}::${timestamp}`;
+    if (uniqueNotes.has(noteKey)) {
+      return;
+    }
+
+    uniqueNotes.set(noteKey, {
+      key: noteKey,
+      note: normalizedNote,
+      timestamp,
+    });
+  });
+
+  return Array.from(uniqueNotes.values());
 };
 
 const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
@@ -150,6 +182,7 @@ export const ResubmitUpdateModal = ({
     }))
   );
   const requestedFieldNames = getRequestedFieldNames(registration.rejectionFields);
+  const requestedCorrectionNotes = getRequestedCorrectionNotes(registration.rejectionFields, requestedFieldNames);
   const defaultPaintPairs =
     registration.paintPairs.length > 0
       ? registration.paintPairs.map(pair => ({
@@ -307,28 +340,6 @@ export const ResubmitUpdateModal = ({
     }
   };
 
-  const renderFieldNote = (fieldName: RegistrationRejectionField['fieldName']): JSX.Element | null => {
-    const noteField = getFieldNote(registration.rejectionFields, fieldName);
-    const noteValue = noteField?.note?.trim() ?? '';
-    if (!noteValue) {
-      return null;
-    }
-    const noteTimestamp = noteField ? formatNoteTimestamp(noteField.created) : '';
-
-    return (
-      <div className='mt-2 rounded-lg border border-warning/30 bg-warning/10 p-2'>
-        <div className='flex items-start gap-2'>
-          <Info className='mt-0.5 h-3.5 w-3.5 shrink-0 text-warning' />
-          <div className='space-y-1'>
-            <p className='text-[11px] font-semibold uppercase tracking-wide text-warning'>Requested Correction</p>
-            <p className='text-xs leading-5 text-text-primary'>{noteValue}</p>
-            {noteTimestamp ? <p className='text-[11px] text-text-muted'>Added: {noteTimestamp}</p> : null}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const handleInvoiceFilesChange = (onChange: (value: File[]) => void, event: ChangeEvent<HTMLInputElement>): void => {
     const files = event.target.files ? Array.from(event.target.files) : [];
     onChange(files);
@@ -355,7 +366,6 @@ export const ResubmitUpdateModal = ({
                 {errors.customerName ? (
                   <p className='mt-1 text-xs text-destructive'>{errors.customerName.message}</p>
                 ) : null}
-                {renderFieldNote('customer_name')}
               </div>
             ) : null}
 
@@ -371,7 +381,6 @@ export const ResubmitUpdateModal = ({
                 {errors.phoneNumber ? (
                   <p className='mt-1 text-xs text-destructive'>{errors.phoneNumber.message}</p>
                 ) : null}
-                {renderFieldNote('phone_number')}
               </div>
             ) : null}
 
@@ -380,7 +389,6 @@ export const ResubmitUpdateModal = ({
                 <label className='text-sm font-medium text-text-primary'>Email</label>
                 <Input type='email' placeholder='customer@example.com' {...emailField} />
                 {errors.email ? <p className='mt-1 text-xs text-destructive'>{errors.email.message}</p> : null}
-                {renderFieldNote('email')}
               </div>
             ) : null}
 
@@ -393,7 +401,6 @@ export const ResubmitUpdateModal = ({
                   {...cityField}
                   onChange={handleCityChange}
                 />
-                {renderFieldNote('city')}
               </div>
             ) : null}
 
@@ -419,7 +426,6 @@ export const ResubmitUpdateModal = ({
                   )}
                 />
                 {errors.province ? <p className='mt-1 text-xs text-destructive'>{errors.province.message}</p> : null}
-                {renderFieldNote('province')}
               </div>
             ) : null}
 
@@ -427,7 +433,6 @@ export const ResubmitUpdateModal = ({
               <div>
                 <label className='text-sm font-medium text-text-primary'>Site Address</label>
                 <Input placeholder='Street, area, city' {...siteAddressField} />
-                {renderFieldNote('site_address')}
               </div>
             ) : null}
 
@@ -435,7 +440,6 @@ export const ResubmitUpdateModal = ({
               <div>
                 <label className='text-sm font-medium text-text-primary'>Purchase Date</label>
                 <Input type='date' {...register('purchaseDate')} />
-                {renderFieldNote('purchase_date')}
               </div>
             ) : null}
 
@@ -448,7 +452,6 @@ export const ResubmitUpdateModal = ({
                   {...purchaseDealerField}
                   onChange={handlePurchaseDealerChange}
                 />
-                {renderFieldNote('purchase_dealer')}
               </div>
             ) : null}
 
@@ -461,7 +464,6 @@ export const ResubmitUpdateModal = ({
                   {...purchaseDealerCityField}
                   onChange={handlePurchaseDealerCityChange}
                 />
-                {renderFieldNote('purchase_dealer_city')}
               </div>
             ) : null}
 
@@ -473,7 +475,6 @@ export const ResubmitUpdateModal = ({
                   maxLength={DEALER_ADDRESS_MAX_LENGTH}
                   {...purchaseDealerAddressField}
                 />
-                {renderFieldNote('purchase_dealer_address')}
               </div>
             ) : null}
 
@@ -481,7 +482,6 @@ export const ResubmitUpdateModal = ({
               <div>
                 <label className='text-sm font-medium text-text-primary'>Postal Code</label>
                 <Input {...postalCodeField} />
-                {renderFieldNote('postal_code')}
               </div>
             ) : null}
 
@@ -619,7 +619,6 @@ export const ResubmitUpdateModal = ({
                 >
                   Add Paint Pair
                 </Button>
-                {renderFieldNote('paint_pairs')}
               </section>
             ) : null}
 
@@ -648,7 +647,23 @@ export const ResubmitUpdateModal = ({
                   Existing invoices: {registration.paintPairInvoices.length} ({REGISTRATION_INVOICE_TYPES.TOPCOAT}/
                   {REGISTRATION_INVOICE_TYPES.BASECOAT})
                 </p>
-                {renderFieldNote('paint_pair_invoices')}
+              </section>
+            ) : null}
+
+            {requestedCorrectionNotes.length > 0 ? (
+              <section className='space-y-2 rounded-lg border border-warning/30 bg-warning/10 p-3'>
+                <div className='flex items-center gap-2'>
+                  <Info className='h-4 w-4 shrink-0 text-warning' />
+                  <h3 className='text-sm font-semibold text-warning'>Requested Correction Notes</h3>
+                </div>
+                {requestedCorrectionNotes.map(noteItem => (
+                  <div key={noteItem.key} className='rounded-md border border-warning/30 bg-white/60 p-2'>
+                    <p className='text-xs leading-5 text-text-primary'>{noteItem.note}</p>
+                    {noteItem.timestamp ? (
+                      <p className='mt-1 text-[11px] text-text-muted'>Added: {noteItem.timestamp}</p>
+                    ) : null}
+                  </div>
+                ))}
               </section>
             ) : null}
           </div>

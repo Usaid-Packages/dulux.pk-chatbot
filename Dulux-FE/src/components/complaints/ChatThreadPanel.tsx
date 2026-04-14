@@ -47,6 +47,9 @@ const isImageAttachment = (attachment: ChatAttachment): boolean => {
   return IMAGE_ATTACHMENT_EXTENSIONS.some(extension => combinedValue.includes(extension));
 };
 
+const isNonEmptyText = (value: string): boolean => value.trim().length > 0;
+const IMAGE_ATTACHMENT_PLACEHOLDER_TEXT = 'image attachment';
+
 /**
  * ChatThreadPanel renders selected conversation messages and message composer.
  *
@@ -134,12 +137,21 @@ export const ChatThreadPanel = ({
         {thread.messages.map(message => {
           const isCustomerMessage = message.kind === 'customer';
           const isSystemMessage = message.kind === 'system';
+          const attachments = message.attachments ?? [];
+          const hasAttachments = attachments.length > 0;
+          const hasText = isNonEmptyText(message.text);
+          const isAttachmentPlaceholderText = message.text.trim().toLowerCase() === IMAGE_ATTACHMENT_PLACEHOLDER_TEXT;
+          const hasDisplayText = hasText && !isAttachmentPlaceholderText;
+          const isSingleImageAttachment = attachments.length === 1 && isImageAttachment(attachments[0]);
+          const isImageOnlyMessage =
+            hasAttachments && !hasDisplayText && attachments.every(attachment => isImageAttachment(attachment));
 
           return (
             <article
               key={message.id}
               className={cn(
                 'max-w-[80%] rounded-xl px-3 py-2 text-sm',
+                isImageOnlyMessage ? 'w-fit max-w-full px-2' : '',
                 isSystemMessage
                   ? 'mx-auto max-w-[90%] border border-primary/20 bg-chat-systemBg text-chat-systemText'
                   : isCustomerMessage
@@ -147,23 +159,37 @@ export const ChatThreadPanel = ({
                     : 'ml-auto bg-chat-agentBubble text-chat-agentText shadow-[0_10px_22px_rgba(20,87,167,0.22)]'
               )}
             >
-              <p>{message.text}</p>
-              {message.attachments && message.attachments.length > 0 ? (
-                <div className='mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3'>
-                  {message.attachments.map(attachment => (
+              {hasDisplayText ? <p>{message.text}</p> : null}
+              {hasAttachments ? (
+                <div
+                  className={cn(
+                    'mt-2',
+                    isSingleImageAttachment ? 'w-fit' : '',
+                    isImageOnlyMessage ? 'flex flex-wrap gap-2' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'
+                  )}
+                >
+                  {attachments.map(attachment => (
                     <a
                       key={`${message.id}-${attachment.id}`}
                       href={attachment.url}
                       target='_blank'
                       rel='noreferrer'
-                      className='group block overflow-hidden rounded-lg border border-primary/20 bg-white/80'
+                      className={cn(
+                        'group overflow-hidden rounded-lg border border-primary/20 bg-white/80',
+                        isImageOnlyMessage || isSingleImageAttachment ? 'inline-block w-fit' : 'block'
+                      )}
                     >
                       {isImageAttachment(attachment) ? (
                         <img
                           src={attachment.url}
                           alt={attachment.name}
                           loading='lazy'
-                          className='h-24 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]'
+                          className={cn(
+                            'transition-transform duration-200 group-hover:scale-[1.02]',
+                            isImageOnlyMessage || isSingleImageAttachment
+                              ? 'h-auto max-h-56 w-auto max-w-[260px] object-contain'
+                              : 'h-24 w-full object-cover'
+                          )}
                         />
                       ) : (
                         <div className='flex h-24 items-center justify-center px-2 text-center text-xs text-text-muted'>
