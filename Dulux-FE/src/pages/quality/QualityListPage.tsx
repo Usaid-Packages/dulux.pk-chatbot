@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { useSearchParams } from 'react-router-dom';
+
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
 import {
   Button,
@@ -24,8 +26,9 @@ const STAT_CARD_STYLES = ['', '', '', ''] as const;
  * @returns Quality list page.
  */
 export const QualityListPage = (): React.JSX.Element => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { qualityQueueQuery, cardCountsQuery, filters, setStatusFilter, setPage } = useQualityQueue();
-  const [searchValue, setSearchValue] = React.useState<string>('');
+  const searchValue = searchParams.get('search') ?? '';
   const debouncedSearchValue = useDebouncedValue(searchValue);
 
   const queueData = qualityQueueQuery.data;
@@ -57,6 +60,19 @@ export const QualityListPage = (): React.JSX.Element => {
     if (filters.page < totalPages) {
       setPage(filters.page + 1);
     }
+  };
+
+  const handleSearchChange = (value: string): void => {
+    setSearchParams(previous => {
+      const nextParams = new URLSearchParams(previous);
+      if (value.trim().length > 0) {
+        nextParams.set('search', value);
+      } else {
+        nextParams.delete('search');
+      }
+      nextParams.set('page', '1');
+      return nextParams;
+    });
   };
 
   return (
@@ -100,7 +116,7 @@ export const QualityListPage = (): React.JSX.Element => {
           <Input
             type='search'
             value={searchValue}
-            onChange={event => setSearchValue(event.target.value)}
+            onChange={event => handleSearchChange(event.target.value)}
             placeholder='Search by customer or city'
             className='h-10 w-[240px] min-w-[240px] rounded-xl border-primary/25 bg-white'
             aria-label='Search quality queue'

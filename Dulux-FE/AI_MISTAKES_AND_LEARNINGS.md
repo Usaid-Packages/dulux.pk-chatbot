@@ -814,3 +814,9 @@
 - No inline JSX handlers/styles.
 - Lint/build/tests run with `yarn`.
 - Generic PR comments logged in this file.
+
+### 2026-04-14 - Missed ESLint import group separation from config
+
+- Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as its own group before other external imports), which caused lint instability and blocked full-repo validation.
+- Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved remaining formatting violations.
+- Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly (grouping + blank lines + alphabetical order).
