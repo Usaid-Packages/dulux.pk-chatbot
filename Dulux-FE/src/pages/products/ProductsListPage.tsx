@@ -1,5 +1,4 @@
-import type { JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -27,6 +26,7 @@ import {
   useGetSurfaceTypesQuery,
   useUpdateSurfaceTypeMutation,
 } from '#/data-layer/products';
+import { useDebouncedValue } from '#/hooks';
 import { mapSurfaceTypeFormToPayload } from '#/hooks/products';
 import type {
   Product,
@@ -87,44 +87,46 @@ const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number>
   }, {});
 };
 
-export const ProductsListPage = (): JSX.Element => {
+export const ProductsListPage = (): React.JSX.Element => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get('tab');
   const activeTab: ProductTab = isProductTab(tabParam) ? tabParam : 'products';
 
-  const [productSearch, setProductSearch] = useState<string>(() => searchParams.get('productSearch') ?? '');
-  const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>(() => {
+  const [productSearch, setProductSearch] = React.useState<string>(() => searchParams.get('productSearch') ?? '');
+  const [productTypeFilter, setProductTypeFilter] = React.useState<ProductTypeFilter>(() => {
     const value = searchParams.get('productType');
     return isProductTypeFilter(value) ? value : 'ALL';
   });
-  const [productStatusFilter, setProductStatusFilter] = useState<ProductStatusFilter>(() => {
+  const [productStatusFilter, setProductStatusFilter] = React.useState<ProductStatusFilter>(() => {
     const value = searchParams.get('productStatus');
     return isProductStatusFilter(value) ? value : 'ALL';
   });
-  const [productOrdering, setProductOrdering] = useState<ProductOrdering>(() => {
+  const [productOrdering, setProductOrdering] = React.useState<ProductOrdering>(() => {
     const value = searchParams.get('productOrdering');
     return isProductOrdering(value) ? value : '-created';
   });
-  const [productPage, setProductPage] = useState<number>(() =>
+  const [productPage, setProductPage] = React.useState<number>(() =>
     parsePageFromSearchParam(searchParams.get('productPage'))
   );
 
-  const [surfaceSearch, setSurfaceSearch] = useState<string>(() => searchParams.get('surfaceSearch') ?? '');
-  const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = useState<SurfaceEnvironmentFilter>(() => {
+  const [surfaceSearch, setSurfaceSearch] = React.useState<string>(() => searchParams.get('surfaceSearch') ?? '');
+  const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = React.useState<SurfaceEnvironmentFilter>(() => {
     const value = searchParams.get('surfaceEnvironment');
     return isSurfaceEnvironmentFilter(value) ? value : 'ALL';
   });
-  const [surfacePage, setSurfacePage] = useState<number>(() =>
+  const [surfacePage, setSurfacePage] = React.useState<number>(() =>
     parsePageFromSearchParam(searchParams.get('surfacePage'))
   );
+  const debouncedProductSearch = useDebouncedValue(productSearch);
+  const debouncedSurfaceSearch = useDebouncedValue(surfaceSearch);
 
-  const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = useState<boolean>(false);
-  const [surfaceTypeEditTarget, setSurfaceTypeEditTarget] = useState<SurfaceType | null>(null);
-  const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = useState<SurfaceType | null>(null);
+  const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = React.useState<boolean>(false);
+  const [surfaceTypeEditTarget, setSurfaceTypeEditTarget] = React.useState<SurfaceType | null>(null);
+  const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = React.useState<SurfaceType | null>(null);
 
   const productQuery = useGetProductsQuery({
-    search: productSearch.trim() || undefined,
+    search: debouncedProductSearch.trim() || undefined,
     product_type: productTypeFilter === 'ALL' ? undefined : productTypeFilter,
     is_active: productStatusFilter === 'ALL' ? undefined : productStatusFilter === 'ACTIVE',
     ordering: productOrdering,
@@ -133,7 +135,7 @@ export const ProductsListPage = (): JSX.Element => {
   });
 
   const surfaceTypeParams: SurfaceTypeQueryParams = {
-    search: surfaceSearch.trim() || undefined,
+    search: debouncedSurfaceSearch.trim() || undefined,
     environment: surfaceEnvironmentFilter === 'ALL' ? undefined : surfaceEnvironmentFilter,
     page: surfacePage,
     page_size: SURFACE_TYPE_PAGE_SIZE,
@@ -154,17 +156,17 @@ export const ProductsListPage = (): JSX.Element => {
   const isSurfaceTypesInvalidPageError =
     surfaceTypesQuery.isError && getApiErrorMessage(surfaceTypesQuery.error).includes(INVALID_PAGE_ERROR_MESSAGE);
 
-  const linkedProductCountMap = useMemo<Record<number, number>>(() => {
+  const linkedProductCountMap = React.useMemo<Record<number, number>>(() => {
     return buildSurfaceLinkedCountMap(products);
   }, [products]);
   const searchParamsString = searchParams.toString();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const nextParams = new URLSearchParams();
     nextParams.set('tab', activeTab);
 
-    if (productSearch.trim().length > 0) {
-      nextParams.set('productSearch', productSearch.trim());
+    if (debouncedProductSearch.trim().length > 0) {
+      nextParams.set('productSearch', debouncedProductSearch.trim());
     }
     if (productTypeFilter !== 'ALL') {
       nextParams.set('productType', productTypeFilter);
@@ -178,8 +180,8 @@ export const ProductsListPage = (): JSX.Element => {
     if (productPage !== FIRST_PAGE) {
       nextParams.set('productPage', String(productPage));
     }
-    if (surfaceSearch.trim().length > 0) {
-      nextParams.set('surfaceSearch', surfaceSearch.trim());
+    if (debouncedSurfaceSearch.trim().length > 0) {
+      nextParams.set('surfaceSearch', debouncedSurfaceSearch.trim());
     }
     if (surfaceEnvironmentFilter !== 'ALL') {
       nextParams.set('surfaceEnvironment', surfaceEnvironmentFilter);
@@ -195,29 +197,29 @@ export const ProductsListPage = (): JSX.Element => {
     activeTab,
     productOrdering,
     productPage,
-    productSearch,
+    debouncedProductSearch,
     productStatusFilter,
     productTypeFilter,
     searchParamsString,
     setSearchParams,
     surfaceEnvironmentFilter,
     surfacePage,
-    surfaceSearch,
+    debouncedSurfaceSearch,
   ]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!productQuery.isLoading && !productQuery.isError && productPage > productTotalPages) {
       setProductPage(productTotalPages);
     }
   }, [productPage, productQuery.isError, productQuery.isLoading, productTotalPages]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfacePage > surfaceTypeTotalPages) {
       setSurfacePage(surfaceTypeTotalPages);
     }
   }, [surfacePage, surfaceTypeTotalPages, surfaceTypesQuery.isError, surfaceTypesQuery.isLoading]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (surfacePage > FIRST_PAGE && isSurfaceTypesInvalidPageError) {
       setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
     }

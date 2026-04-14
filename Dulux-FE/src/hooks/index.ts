@@ -8,3 +8,4 @@ export { useManualRegistration } from './manualRegistration';
 export { mapProductFormValuesToPayload, mapProductToFormValues, mapSurfaceTypeFormToPayload } from './products';
 export { useQualityDetail, useQualityQueue } from './quality';
 export { useRegistrationDetail, useRegistrations } from './registrations';
+export { useDebouncedValue } from './useDebouncedValue';
