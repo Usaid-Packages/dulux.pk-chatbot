@@ -12,6 +12,7 @@ from dulux_chatbot.complaints.audit import (
 )
 from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
+from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.core.validators import validate_pakistan_phone_number
@@ -240,6 +241,8 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
 
         if action in {"RESOLVE", "CLOSE"}:
             end_complaint_chat_session(phone_number=instance.phone_number, complaint_id=instance.id)
+        if action == "CLOSE":
+            send_complaint_closed_notification.delay(instance.phone_number, instance.subject)
 
         log_update(
             actor=actor,

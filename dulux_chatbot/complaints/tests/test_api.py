@@ -8,8 +8,10 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from dulux_chatbot.chatbot.choices import FlowType
+from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.complaints.choices import ComplaintStatus
+from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.complaints.tests.factories import (
     create_chat_message,
     create_complaint,
@@ -148,7 +150,8 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(session.current_step, "menu")
         self.assertEqual(session.session_data, {})
 
-    def test_close_complaint_ends_matching_whatsapp_session(self):
+    @patch("dulux_chatbot.complaints.api.v1.serializers.send_complaint_closed_notification.delay")
+    def test_close_complaint_ends_matching_whatsapp_session(self, notification_mock):
         complaint = create_complaint(status=ComplaintStatus.RESOLVED, phone_number="923214840046")
         WhatsAppSession.objects.create(
             phone_number=complaint.phone_number,
@@ -169,6 +172,7 @@ class ComplaintAPITests(TestCase):
         self.assertIsNone(session.flow)
         self.assertEqual(session.current_step, "menu")
         self.assertEqual(session.session_data, {})
+        notification_mock.assert_called_once_with(complaint.phone_number, complaint.subject)
 
     def test_resolve_complaint_does_not_end_different_complaint_session(self):
         complaint = create_complaint(status=ComplaintStatus.IN_PROGRESS, phone_number="923214840047")
@@ -258,6 +262,31 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(session.flow, FlowType.COMPLAINT)
         self.assertEqual(session.current_step, "chat")
         self.assertEqual(session.session_data, {"complaint_id": complaint.id})
+
+    @patch("dulux_chatbot.complaints.tasks.send_whatsapp_main_menu.apply_async")
+    @patch("dulux_chatbot.complaints.tasks.WhatsAppClient")
+    def test_complaint_closed_notification_sends_message_and_main_menu(self, client_mock, main_menu_mock):
+        phone_number = "923214840048"
+        WhatsAppSession.objects.create(
+            phone_number=phone_number,
+            flow=FlowType.COMPLAINT,
+            current_step="chat",
+            session_data={"complaint_id": 123},
+        )
+
+        send_complaint_closed_notification(phone_number, "Paint damaged")
+
+        session = WhatsAppSession.objects.get(phone_number=phone_number)
+        self.assertIsNone(session.flow)
+        self.assertEqual(session.current_step, "menu")
+        self.assertEqual(session.session_data, {})
+        client_mock.return_value.send_text.assert_called_once_with(
+            phone_number,
+            "Your complaint with subject: Paint damaged has been closed.",
+        )
+        main_menu_mock.assert_called_once()
+        self.assertEqual(main_menu_mock.call_args.kwargs["countdown"], 2)
+        self.assertEqual(main_menu_mock.call_args.kwargs["args"], [phone_number, MAIN_MENU_TEXT])
 
 
 class LiveChatCardCountAPITests(TestCase):

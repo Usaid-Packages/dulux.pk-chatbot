@@ -52,6 +52,9 @@ class RegistrationFlow(BaseFlow):
     def prompt_dealer_address(self) -> None:
         self._send_step_prompt("Please share dealer address.")
 
+    def prompt_postal_code(self) -> None:
+        self._send_step_prompt("Please share postal code.")
+
     def prompt_topcoat_select(self) -> None:
         topcoats = list(
             Product.objects.filter(
@@ -247,6 +250,20 @@ class RegistrationFlow(BaseFlow):
             return
         self._save_data("purchase_dealer_address", dealer_address)
         if self._advance_resubmit_after_current_step("dealer_address"):
+            return
+        self.prompt_topcoat_select()
+        self._advance_to("topcoat_select")
+
+    def handle_postal_code(self, message: dict) -> None:
+        postal_code = self._get_text(message)
+        if not postal_code:
+            self._send_validation_error("Postal code is required.")
+            return
+        if len(postal_code) > 20:
+            self._send_validation_error("Please provide a postal code under 20 characters.")
+            return
+        self._save_data("postal_code", postal_code)
+        if self._advance_resubmit_after_current_step("postal_code"):
             return
         self.prompt_topcoat_select()
         self._advance_to("topcoat_select")

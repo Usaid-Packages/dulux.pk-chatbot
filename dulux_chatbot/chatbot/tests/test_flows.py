@@ -467,6 +467,22 @@ class FlowTests(TestCase):
         self.assertNotIn("paint_pair_invoices", combined_text)
         send_email_mock.assert_called_once()
 
+    @patch("dulux_chatbot.warranty.tasks.EmailMultiAlternatives.send")
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient.send_text")
+    def test_registration_resubmit_notification_maps_postal_code_label(self, send_text_mock, send_email_mock):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="postal_code", note="Please provide the postal code.")
+
+        send_registration_resubmit_notification(registration.id)
+
+        sent_messages = [call.args[1] for call in send_text_mock.call_args_list if len(call.args) >= 2]
+        combined_text = "\n".join(sent_messages)
+        self.assertIn("Postal code", combined_text)
+        self.assertNotIn("postal_code", combined_text)
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.current_step, "postal_code")
+        send_email_mock.assert_called_once()
+
     def test_registration_resubmit_flow_updates_requested_fields_only(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
         registration.rejection_fields.create(field_name="email", note="Please provide a valid email.")
@@ -502,6 +518,28 @@ class FlowTests(TestCase):
         self.assertEqual(registration.city, "Lahore")
         self.assertEqual(registration.state, RegistrationState.SUBMITTED)
         self.assertFalse(registration.rejection_fields.exists())
+        self.assertIsNone(self.session.flow)
+
+    def test_registration_resubmit_flow_updates_postal_code(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="postal_code", note="Please provide the postal code.")
+        self.session.flow = "REGISTRATION"
+        self.session.current_step = "postal_code"
+        self.session.session_data = {
+            "postal_code": registration.postal_code,
+            "paint_pairs": [],
+            "paint_pair_invoices": [],
+            "resubmit_registration_id": registration.id,
+            "resubmit_steps": ["postal_code"],
+            "resubmit_step_index": 0,
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        self.dispatch_text("54000")
+
+        registration.refresh_from_db()
+        self.assertEqual(registration.postal_code, "54000")
+        self.assertEqual(registration.state, RegistrationState.SUBMITTED)
         self.assertIsNone(self.session.flow)
 
     def test_expired_resubmit_session_shows_fallback_message(self):

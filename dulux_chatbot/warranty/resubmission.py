@@ -13,6 +13,7 @@ RESUBMISSION_FIELD_LABELS = {
     "purchase_dealer": "Dealer Name",
     "purchase_dealer_city": "Dealer City",
     "purchase_dealer_address": "Dealer Address",
+    "postal_code": "Postal code",
     "paint_pairs": "Paint Details",
     "paint_pair_invoices": "Invoice Photos",
     "invoice": "Invoice Photos",
@@ -31,6 +32,7 @@ SUPPORTED_RESUBMIT_FIELD_TO_STEP = {
     "purchase_dealer": "dealer_name",
     "purchase_dealer_city": "dealer_city",
     "purchase_dealer_address": "dealer_address",
+    "postal_code": "postal_code",
     "paint_pairs": "topcoat_select",
     "paint_pair_invoices": "invoice_upload",
     "invoice": "invoice_upload",
@@ -58,6 +60,7 @@ STEP_TO_MODEL_FIELD = {
     "dealer_name": "purchase_dealer",
     "dealer_city": "purchase_dealer_city",
     "dealer_address": "purchase_dealer_address",
+    "postal_code": "postal_code",
 }
 
 
@@ -112,6 +115,7 @@ def initial_resubmit_session_data(*, registration) -> dict:
         "purchase_dealer": registration.purchase_dealer,
         "purchase_dealer_city": registration.purchase_dealer_city,
         "purchase_dealer_address": registration.purchase_dealer_address,
+        "postal_code": registration.postal_code,
         "paint_pairs": [],
         "paint_pair_invoices": [],
     }
