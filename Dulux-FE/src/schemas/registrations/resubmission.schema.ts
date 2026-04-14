@@ -4,6 +4,7 @@ import { NOTES_MAX_LENGTH } from '#/constants';
 
 export const resubmissionFieldSchema = z.enum([
   'customer_name',
+  'phone_number',
   'email',
   'city',
   'province',
@@ -12,6 +13,7 @@ export const resubmissionFieldSchema = z.enum([
   'purchase_dealer',
   'purchase_dealer_city',
   'purchase_dealer_address',
+  'postal_code',
   'paint_pairs',
   'paint_pair_invoices',
 ]);

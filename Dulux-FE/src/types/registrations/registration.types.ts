@@ -68,6 +68,7 @@ export interface RegistrationDetail {
   warrantyCertificate: string | null;
   paintPairs: RegistrationPaintPair[];
   paintPairInvoices: RegistrationInvoice[];
+  rejectionFields: RegistrationRejectionField[];
   created: string;
   modified: string;
 }
@@ -101,6 +102,7 @@ export interface ResubmissionFieldPayload {
 
 export type ResubmissionFieldName =
   | 'customer_name'
+  | 'phone_number'
   | 'email'
   | 'city'
   | 'province'
@@ -109,8 +111,16 @@ export type ResubmissionFieldName =
   | 'purchase_dealer'
   | 'purchase_dealer_city'
   | 'purchase_dealer_address'
+  | 'postal_code'
   | 'paint_pairs'
   | 'paint_pair_invoices';
+
+export interface RegistrationRejectionField {
+  id: number;
+  fieldName: ResubmissionFieldName;
+  note: string;
+  created: string;
+}
 
 export interface RegistrationActionPayload extends Record<string, unknown> {
   action: 'APPROVE' | 'REJECT' | 'RESUBMIT';
@@ -146,6 +156,14 @@ export interface RegistrationDetailApiInvoice {
   invoiceType?: 'TOPCOAT' | 'BASECOAT';
 }
 
+export interface RegistrationDetailApiRejectionField {
+  id?: number;
+  fieldName?: ResubmissionFieldName;
+  field_name?: ResubmissionFieldName;
+  note?: string;
+  created?: string;
+}
+
 export interface RegistrationDetailApiResponse {
   id?: number;
   registrationCode?: string;
@@ -174,4 +192,34 @@ export interface RegistrationDetailApiResponse {
   paint_pairs?: RegistrationDetailApiPaintPair[];
   paintPairInvoices?: RegistrationDetailApiInvoice[];
   paint_pair_invoices?: RegistrationDetailApiInvoice[];
+  rejectionFields?: RegistrationDetailApiRejectionField[];
+  rejection_fields?: RegistrationDetailApiRejectionField[];
+}
+
+export interface RegistrationResubmitUpdatePaintPair {
+  topcoat: number;
+  topcoatQuantity: string;
+  basecoat?: number;
+  basecoatQuantity?: string;
+}
+
+export interface RegistrationResubmitUpdateInvoice {
+  imageId: number;
+  invoiceType: 'TOPCOAT' | 'BASECOAT';
+}
+
+export interface RegistrationResubmitUpdatePayload extends Record<string, unknown> {
+  customerName?: string;
+  phoneNumber?: string;
+  email?: string;
+  city?: string;
+  province?: string;
+  siteAddress?: string;
+  purchaseDate?: string;
+  purchaseDealer?: string;
+  purchaseDealerCity?: string;
+  purchaseDealerAddress?: string;
+  postalCode?: string;
+  paintPairs?: RegistrationResubmitUpdatePaintPair[];
+  paintPairInvoices?: RegistrationResubmitUpdateInvoice[];
 }

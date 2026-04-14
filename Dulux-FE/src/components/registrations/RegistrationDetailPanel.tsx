@@ -83,7 +83,7 @@ export const RegistrationDetailPanel = ({
   const isResubmissionRequested = registration.state === 'RESUBMIT';
   const isApproveActionDisabled = isApprovePending || isApproveDisabled || isRejected;
   const isReviewActionsDisabled = isReviewActionDisabled || isRejected;
-  const isResubmitActionDisabled = isReviewActionsDisabled || isResubmitPending || isResubmissionRequested;
+  const isResubmitActionDisabled = isReviewActionsDisabled || isResubmitPending;
 
   return (
     <section className='space-y-4'>
@@ -173,9 +173,9 @@ export const RegistrationDetailPanel = ({
               onClick={onOpenResubmitModal}
             >
               {isResubmitPending
-                ? 'Requesting...'
+                ? 'Submitting...'
                 : isResubmissionRequested
-                  ? 'Resubmission Requested'
+                  ? 'Submit Resubmission Changes'
                   : 'Request Resubmission'}
             </Button>
             <Button

@@ -118,6 +118,7 @@ export interface SendMessagePayload extends Record<string, unknown> {
 
 export interface ComplaintApiMessage extends Record<string, unknown> {
   id: string | number;
+  type?: string;
   sender?: string;
   text?: string;
   created?: string;
@@ -126,6 +127,15 @@ export interface ComplaintApiMessage extends Record<string, unknown> {
   images?: unknown[];
   image?: unknown;
 }
+
+export interface ComplaintMessagesApiPaginatedResponse extends Record<string, unknown> {
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: ComplaintApiMessage[];
+}
+
+export type ComplaintMessagesApiResponse = ComplaintApiMessage[] | ComplaintMessagesApiPaginatedResponse;
 
 export interface ComplaintQueueSocketEventPayload extends Record<string, unknown> {
   event: ComplaintSocketEvent;

@@ -65,6 +65,8 @@
   and must not include any secondary metadata paragraph under the heading unless explicitly requested.
 - Do not define per-item wrapper handlers inside `.map()` render blocks for tables/lists; keep action handlers at
   component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
+- For complaint threads, always fetch `/api/v1/complaints/{id}/messages/` for message timeline rendering; never infer
+  per-message image ownership from complaint detail-level `images`.
 
 ## Mistake Log (Short)
 
@@ -715,6 +717,67 @@
 - Fix: Switched keys to backend-provided stable identity (`requiredItem`) for mapped entry components.
 - Rule: In dynamic form/list rendering, never include array index in key generation when backend field identifiers are
   available; always use stable domain ids/enums.
+
+### 2026-04-14 - Complaint thread images were mapped from detail fallback instead of message API
+
+- Issue: Complaint thread normalization attached complaint-detail `images` to the first message when message-level
+  attachments were missing, so chat UI could not reliably show which specific message had which image.
+- Fix: Updated thread query to fetch both complaint detail and `/messages/`, normalized message list from `/messages/`,
+  and removed first-message image injection fallback in normalization.
+- Rule: Use `/messages/` as source of truth for message text + attachments; use complaint detail `images` only as
+  supplemental image metadata in the side panel.
+
+### 2026-04-14 - Complaint thread rendering was brittle when listing payload had invalid rows
+
+- Issue: Thread query parsed each `/messages/` row with strict `parse`, so one malformed row (for example nullable
+  fields) could fail the whole thread and hide chat messages.
+- Fix: Switched to resilient parsing (`safeParse` + valid-row filtering) and fallback to detail `messages` if listing
+  endpoint fails, so chat stays visible.
+- Rule: For message timelines, never let a single bad row break entire thread rendering; degrade gracefully and render
+  valid messages.
+
+### 2026-04-14 - Complaint message schema was too strict for nullable backend chat fields
+
+- Issue: Message schema expected non-null strings/arrays for optional fields, so valid backend rows with nullable chat
+  fields could be filtered out before UI rendering.
+- Fix: Updated complaint message schema to accept nullable `type/sender/text/created/createdAt/attachments/images/image`
+  values and kept normalizer fallbacks for display text and attachments.
+- Rule: Treat chat payload optional fields as nullable-by-default unless backend contract explicitly guarantees non-null.
+
+### 2026-04-14 - Strict attachment URL validation blocked relative media paths
+
+- Issue: Chat attachment schema required absolute URLs, but backend can return relative media paths
+  (for example `/django-media/...`), causing thread parse/render failures.
+- Fix: Relaxed attachment URL schema to non-empty string and added safe relative-path fallback in URL normalization.
+- Rule: For backend media fields, accept relative URLs and normalize to absolute when possible; never reject valid
+  relative paths at schema level.
+
+### 2026-04-14 - Missing structured debug logs slowed complaint-thread payload diagnosis
+
+- Issue: Complaint-thread fetch path had no structured diagnostics, making it hard to identify where messages were being
+  dropped (API shape vs parse vs normalized thread mapping).
+- Fix: Added scoped debug warnings in thread query for raw messages shape, normalization counts, parse failures, and
+  final thread message/image counts.
+- Rule: During active API-shape debugging, add targeted, prefixed logs at each transformation stage and remove them
+  after root cause is confirmed.
+
+### 2026-04-14 - Messages API array arrived as numeric-key object after response transform
+
+- Issue: Messages endpoint response reached frontend as an object with numeric keys (`"0"`, `"1"`, ...) instead of a
+  true array, so normalizer returned zero messages and chat thread appeared empty.
+- Fix: Extended `normalizeComplaintMessagesResponse` to detect numeric-key objects, sort by numeric key, and convert
+  them into ordered message arrays before parsing.
+- Rule: For transformed API payloads, support array-like numeric-key objects in normalizers when case-conversion or
+  transport layers can alter array shape.
+
+### 2026-04-14 - Resubmission note UI lacked visual hierarchy in update modal
+
+- Issue: Rejection notes in the RESUBMIT update modal were rendered as plain text under fields, making request context
+  easy to miss during edits.
+- Fix: Replaced plain note text with a structured highlighted note block (label + note body + timestamp) per requested
+  field.
+- Rule: In correction/resubmission forms, show backend review notes in an explicit, visually distinct callout near each
+  field instead of plain inline text.
 
 ## Final Check (Before Submit)
 

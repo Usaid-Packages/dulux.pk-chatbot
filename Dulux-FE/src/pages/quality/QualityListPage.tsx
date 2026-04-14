@@ -101,7 +101,7 @@ export const QualityListPage = (): JSX.Element => {
             type='search'
             value={searchValue}
             onChange={event => setSearchValue(event.target.value)}
-            placeholder='Search by claim id, customer, or city'
+            placeholder='Search by customer or city'
             className='h-10 w-[240px] min-w-[240px] rounded-xl border-primary/25 bg-white'
             aria-label='Search quality queue'
           />

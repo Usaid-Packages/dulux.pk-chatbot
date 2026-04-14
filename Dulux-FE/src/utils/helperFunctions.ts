@@ -32,6 +32,7 @@ import type {
   ChatAttachment,
   ChatMessage,
   ComplaintApiMessage,
+  ComplaintMessagesApiResponse,
   ComplaintApiStatus,
   ComplaintDetailApiResponse,
   ComplaintListApiResponse,
@@ -48,6 +49,7 @@ import type {
 import type {
   RegistrationDetail,
   RegistrationDetailApiResponse,
+  ResubmissionFieldName,
   RegistrationsListResponse,
 } from '#/types/registrations/registration.types';
 import type { Paginated } from '#/types/services.types';
@@ -134,6 +136,21 @@ export const normalizeRegistrationsListResponse = (
 };
 
 export const normalizeRegistrationDetailResponse = (response: RegistrationDetailApiResponse): RegistrationDetail => {
+  const supportedResubmissionFieldNames = new Set<ResubmissionFieldName>([
+    'customer_name',
+    'phone_number',
+    'email',
+    'city',
+    'province',
+    'site_address',
+    'purchase_date',
+    'purchase_dealer',
+    'purchase_dealer_city',
+    'purchase_dealer_address',
+    'postal_code',
+    'paint_pairs',
+    'paint_pair_invoices',
+  ]);
   const normalizedPaintPairs = (response.paintPairs ?? response.paint_pairs ?? []).map(pair => {
     const topcoatId = pair.topcoat ?? pair.topcoatId ?? pair.topcoat_id ?? 0;
     const basecoatId = pair.basecoat ?? pair.basecoatId ?? pair.basecoat_id;
@@ -168,6 +185,21 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
       invoiceType: invoice.invoiceType ?? 'TOPCOAT',
     };
   });
+  const normalizedRejectionFields = (response.rejectionFields ?? response.rejection_fields ?? []).flatMap(field => {
+    const fieldName = field.fieldName ?? field.field_name;
+    if (!fieldName || !supportedResubmissionFieldNames.has(fieldName)) {
+      return [];
+    }
+
+    return [
+      {
+        id: field.id ?? 0,
+        fieldName,
+        note: field.note ?? '',
+        created: field.created ?? '',
+      },
+    ];
+  });
 
   return {
     id: response.id ?? 0,
@@ -192,6 +224,7 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
     warrantyCertificate: response.warrantyCertificate ?? null,
     paintPairs: normalizedPaintPairs,
     paintPairInvoices: normalizedInvoices,
+    rejectionFields: normalizedRejectionFields,
     created: response.created ?? '',
     modified: response.modified ?? response.created ?? '',
   };
@@ -223,6 +256,10 @@ const toAbsoluteBackendUrl = (urlValue: string): string => {
   try {
     return new URL(urlValue, env.VITE_BACKEND_BASE_URL).toString();
   } catch {
+    if (urlValue.startsWith('/') && typeof window !== 'undefined' && window.location?.origin) {
+      return `${window.location.origin}${urlValue}`;
+    }
+
     return urlValue;
   }
 };
@@ -379,6 +416,22 @@ const normalizeMessageAttachments = (message: ComplaintApiMessage): ChatAttachme
   return normalizedAttachments;
 };
 
+const mergeUniqueAttachments = (base: ChatAttachment[], next: ChatAttachment[]): ChatAttachment[] => {
+  const mergedAttachments = [...base];
+
+  next.forEach(attachment => {
+    const alreadyPresent = mergedAttachments.some(
+      existingAttachment => existingAttachment.id === attachment.id && existingAttachment.url === attachment.url
+    );
+
+    if (!alreadyPresent) {
+      mergedAttachments.push(attachment);
+    }
+  });
+
+  return mergedAttachments;
+};
+
 const getMessageKindFromSender = (sender?: string): ChatMessage['kind'] => {
   const normalizedSender = sender?.trim().toUpperCase();
   if (normalizedSender === CUSTOMER_SENDER) {
@@ -421,6 +474,28 @@ export const normalizeComplaintApiMessage = (response: ComplaintApiMessage, thre
     createdAt,
     attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
   };
+};
+
+export const normalizeComplaintMessagesResponse = (response: ComplaintMessagesApiResponse): ComplaintApiMessage[] => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (isRecordValue(response) && Array.isArray(response.results)) {
+    return response.results;
+  }
+
+  if (isRecordValue(response)) {
+    const numericKeys = Object.keys(response).filter(key => /^\d+$/.test(key));
+    if (numericKeys.length > 0) {
+      return numericKeys
+        .sort((left, right) => Number(left) - Number(right))
+        .map(key => response[key])
+        .filter((value): value is ComplaintApiMessage => isRecordValue(value));
+    }
+  }
+
+  return [];
 };
 
 export const appendMessageToConversationThread = (
@@ -620,7 +695,10 @@ export const normalizeComplaintsListResponse = (
   };
 };
 
-export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiResponse): ConversationThread => {
+export const normalizeComplaintDetailResponse = (
+  response: ComplaintDetailApiResponse,
+  responseMessages?: ComplaintApiMessage[]
+): ConversationThread => {
   const threadId = String(response.id);
   const apiStatus = normalizeComplaintApiStatus(response.status);
   const fallbackTimestamp = new Date().toISOString();
@@ -629,9 +707,10 @@ export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiRes
     response.registrationNumber ??
     (typeof response.registration === 'number' ? String(response.registration) : undefined) ??
     threadId;
-  const normalizedMessages = (response.messages ?? []).map(message => normalizeComplaintApiMessage(message, threadId));
+  const messageSource = responseMessages ?? response.messages ?? [];
+  const normalizedMessages = messageSource.map(message => normalizeComplaintApiMessage(message, threadId));
   const latestMessage = normalizedMessages.at(-1);
-  const attachments = (response.images ?? []).flatMap(imageItem => {
+  const detailAttachments = (response.images ?? []).flatMap(imageItem => {
     const imageUrl = imageItem.image?.image;
     const imageId = imageItem.image?.id;
 
@@ -647,6 +726,14 @@ export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiRes
       },
     ];
   });
+  const messageAttachments = normalizedMessages.reduce<ChatAttachment[]>((attachments, message) => {
+    if (message.attachments && message.attachments.length > 0) {
+      return mergeUniqueAttachments(attachments, message.attachments);
+    }
+
+    return attachments;
+  }, []);
+  const complaintImages = mergeUniqueAttachments(messageAttachments, detailAttachments);
 
   return {
     id: threadId,
@@ -673,27 +760,11 @@ export const normalizeComplaintDetailResponse = (response: ComplaintDetailApiRes
       claims: 0,
       pastComplaints: 0,
     },
-    complaintImages: attachments,
+    complaintImages,
     lastMessagePreview: latestMessage?.text ?? response.subject,
     lastMessageAt: latestMessage?.createdAt ?? response.modified ?? response.created ?? submittedAt,
     lastResolvedAt: response.closedAt ?? undefined,
-    messages:
-      normalizedMessages.length > 0
-        ? normalizedMessages.map((message, index) => {
-            if ((message.attachments?.length ?? 0) > 0) {
-              return message;
-            }
-
-            if (index !== 0 || attachments.length === 0) {
-              return message;
-            }
-
-            return {
-              ...message,
-              attachments,
-            };
-          })
-        : normalizedMessages,
+    messages: normalizedMessages,
   };
 };
 

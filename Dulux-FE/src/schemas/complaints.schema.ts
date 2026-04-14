@@ -16,7 +16,7 @@ export const messageKindSchema = z.enum(MESSAGE_KINDS);
 export const chatAttachmentSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  url: z.string().url(),
+  url: z.string().min(1),
 });
 
 export const chatMessageSchema = z.object({
@@ -31,13 +31,14 @@ export const chatMessageSchema = z.object({
 
 export const complaintApiMessageSchema = z.object({
   id: z.union([z.string(), z.number()]),
-  sender: z.string().optional(),
-  text: z.string().optional(),
-  created: z.string().min(1).optional(),
-  createdAt: z.string().min(1).optional(),
-  attachments: z.array(z.unknown()).optional(),
-  images: z.array(z.unknown()).optional(),
-  image: z.unknown().optional(),
+  type: z.string().nullable().optional(),
+  sender: z.string().nullable().optional(),
+  text: z.string().nullable().optional(),
+  created: z.string().min(1).nullable().optional(),
+  createdAt: z.string().min(1).nullable().optional(),
+  attachments: z.array(z.unknown()).nullable().optional(),
+  images: z.array(z.unknown()).nullable().optional(),
+  image: z.unknown().nullable().optional(),
 });
 
 export const complaintQueueSocketEventSchema = z.object({

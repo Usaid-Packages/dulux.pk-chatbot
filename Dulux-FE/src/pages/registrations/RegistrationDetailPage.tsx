@@ -9,6 +9,7 @@ import {
   ApproveRegistrationModal,
   RegistrationDetailPanel,
   RejectRegistrationModal,
+  ResubmitUpdateModal,
   ResubmissionModal,
 } from '#/components/registrations';
 import {
@@ -66,6 +67,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
   const registrationId = id ?? '';
   const [isApproveModalOpen, setIsApproveModalOpen] = useState<boolean>(false);
   const [isResubmissionModalOpen, setIsResubmissionModalOpen] = useState<boolean>(false);
+  const [isResubmitUpdateModalOpen, setIsResubmitUpdateModalOpen] = useState<boolean>(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
 
   const {
@@ -75,10 +77,12 @@ export const RegistrationDetailPage = (): JSX.Element => {
     isApprovePending,
     isRejectPending,
     isResubmitPending,
+    isResubmitUpdatePending,
     registration,
     approveRegistration,
     rejectRegistration,
     resubmitRegistration,
+    submitResubmitChanges,
   } = useRegistrationDetail(registrationId);
 
   const normalizedRole = normalizeAppUserRole(user?.role);
@@ -107,11 +111,19 @@ export const RegistrationDetailPage = (): JSX.Element => {
   };
 
   const openResubmissionModal = (): void => {
+    if (registration?.state === 'RESUBMIT') {
+      setIsResubmitUpdateModalOpen(true);
+      return;
+    }
     setIsResubmissionModalOpen(true);
   };
 
   const closeResubmissionModal = (): void => {
     setIsResubmissionModalOpen(false);
+  };
+
+  const closeResubmitUpdateModal = (): void => {
+    setIsResubmitUpdateModalOpen(false);
   };
 
   const openRejectModal = (): void => {
@@ -140,6 +152,10 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
   const handleResubmissionSubmit = (values: Parameters<typeof resubmitRegistration>[0]): void => {
     resubmitRegistration(values, closeResubmissionModal);
+  };
+
+  const handleResubmitUpdateSubmit = (values: Parameters<typeof submitResubmitChanges>[0]): void => {
+    submitResubmitChanges(values, closeResubmitUpdateModal);
   };
 
   if (!registrationId) {
@@ -287,7 +303,7 @@ export const RegistrationDetailPage = (): JSX.Element => {
             isApprovePending={isApprovePending}
             isApproveDisabled={registration.state === 'APPROVED'}
             isReviewActionDisabled={registration.state === 'APPROVED'}
-            isResubmitPending={isResubmitPending}
+            isResubmitPending={isResubmitPending || isResubmitUpdatePending}
             onOpenApproveModal={openApproveModal}
             onOpenResubmitModal={openResubmissionModal}
             onOpenRejectModal={openRejectModal}
@@ -311,6 +327,16 @@ export const RegistrationDetailPage = (): JSX.Element => {
           isSubmitting={isResubmitPending}
           onClose={closeResubmissionModal}
           onSubmit={handleResubmissionSubmit}
+        />
+      ) : null}
+
+      {!isQualityReviewer ? (
+        <ResubmitUpdateModal
+          isOpen={isResubmitUpdateModalOpen}
+          isSubmitting={isResubmitUpdatePending}
+          registration={registration}
+          onClose={closeResubmitUpdateModal}
+          onSubmit={handleResubmitUpdateSubmit}
         />
       ) : null}
 
