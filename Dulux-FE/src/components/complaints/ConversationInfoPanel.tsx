@@ -106,7 +106,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
 
   return (
     <>
-      <aside className='flex min-w-0 max-h-[calc(100vh-16rem)] min-h-[26rem] flex-col gap-4 overflow-hidden rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
+      <aside className='flex min-h-0 min-w-0 max-h-[calc(100vh-16rem)] flex-col gap-4 overflow-hidden rounded-2xl border border-primary/15 bg-white/95 p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)] sm:min-h-[26rem]'>
         <section className='text-center'>
           <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white'>
             {getInitials(thread.customerName)}
@@ -114,9 +114,9 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           <h3 className='mt-2 text-base font-semibold text-text-primary'>{thread.customerName}</h3>
         </section>
 
-        <section className='min-w-0 space-y-2 overflow-hidden rounded-xl border border-primary/15 bg-primary/5 p-3'>
+        <section className='min-h-0 min-w-0 space-y-2 overflow-hidden rounded-xl border border-primary/15 bg-primary/5 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Details</p>
-          <div className='grid max-h-64 grid-cols-[5.5rem_minmax(0,1fr)] gap-2 overflow-y-auto pr-1 text-xs'>
+          <div className='grid min-h-0 max-h-[clamp(12rem,40vh,12rem)] grid-cols-[5.5rem_minmax(0,1fr)] gap-2 overflow-y-auto overscroll-y-contain pb-2 pr-1 text-xs touch-pan-y'>
             <span className='text-text-muted'>Ticket</span>
             <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
               {thread.ticketId}
@@ -146,17 +146,17 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
           </div>
         </section>
 
-        <section className='min-h-[9rem] flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
+        <section className='min-h-0 flex-1 space-y-2 overflow-y-auto rounded-xl border border-primary/15 bg-white/85 p-3'>
           <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Complaint Images</p>
           {thread.complaintImages.length === 0 ? (
             <p className='text-xs text-text-muted'>No images</p>
           ) : (
-            <div className='grid grid-cols-2 justify-items-center gap-2 sm:justify-items-stretch'>
+            <div className='grid grid-cols-6 justify-items-center gap-2'>
               {thread.complaintImages.map(image => (
                 <button
                   key={image.id}
                   type='button'
-                  className='w-24 rounded-xl border border-primary/20 bg-surface-muted p-1 transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-full'
+                  className='w-full max-w-24 rounded-xl border border-primary/20 bg-surface-muted p-1 transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                   data-image-id={image.id}
                   onClick={handleImagePreviewClick}
                 >
