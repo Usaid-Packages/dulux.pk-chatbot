@@ -213,5 +213,5 @@ export interface ResolveConversationPayload extends Record<string, unknown> {
 
 export interface CloseConversationPayload extends Record<string, unknown> {
   threadId: string;
-  closureNote: string;
+  closureNote?: string;
 }

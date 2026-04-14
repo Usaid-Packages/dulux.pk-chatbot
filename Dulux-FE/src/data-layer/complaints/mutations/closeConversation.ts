@@ -10,7 +10,7 @@ import { normalizeComplaintDetailResponse } from '#/utils';
 
 interface ComplaintActionRequestPayload extends Record<string, unknown> {
   action: 'CLOSE';
-  closureNote: string;
+  closureNote?: string;
 }
 
 export const closeConversation = async (payload: CloseConversationPayload): Promise<ConversationThread> => {
@@ -19,7 +19,7 @@ export const closeConversation = async (payload: CloseConversationPayload): Prom
     url: apiEndpoints.complaints.detail(payload.threadId),
     payload: {
       action: COMPLAINT_ACTIONS.CLOSE,
-      closureNote: payload.closureNote,
+      ...(payload.closureNote ? { closureNote: payload.closureNote } : {}),
     },
   });
 

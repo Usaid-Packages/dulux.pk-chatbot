@@ -5,7 +5,7 @@ const phonePattern = /^923\d{9}$/;
 
 export const resubmitUpdatePaintPairSchema = z
   .object({
-    topcoatId: z.string().trim().min(1, 'Topcoat id is required.'),
+    topcoatId: z.string().trim().min(1, 'Topcoat product is required.'),
     topcoatQuantity: z
       .string()
       .trim()
@@ -19,7 +19,7 @@ export const resubmitUpdatePaintPairSchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatQuantity'],
-        message: 'Basecoat quantity is required when basecoat id is provided.',
+        message: 'Basecoat quantity is required when a basecoat product is selected.',
       });
     }
 
@@ -27,7 +27,7 @@ export const resubmitUpdatePaintPairSchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatId'],
-        message: 'Basecoat id is required when basecoat quantity is provided.',
+        message: 'Basecoat product is required when basecoat quantity is provided.',
       });
     }
 

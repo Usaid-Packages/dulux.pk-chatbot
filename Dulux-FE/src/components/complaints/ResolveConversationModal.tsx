@@ -51,13 +51,13 @@ export const ResolveConversationModal = ({
         <DialogHeader>
           <DialogTitle>Mark Complaint as Resolved</DialogTitle>
           <DialogDescription>
-            This will resolve and close the complaint. Please provide a closure note.
+            This will resolve and close the complaint. You can add a closure note if needed.
           </DialogDescription>
         </DialogHeader>
 
         <div className='space-y-2'>
           <label htmlFor='closure-note' className='text-sm font-medium text-text-primary'>
-            Closure Note
+            Closure Note (Optional)
           </label>
           <Textarea
             id='closure-note'
@@ -79,7 +79,7 @@ export const ResolveConversationModal = ({
             type='button'
             className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
             onClick={handleConfirm}
-            disabled={isSubmitting || trimmedClosureNote.length === 0}
+            disabled={isSubmitting}
           >
             {isSubmitting ? 'Updating...' : 'Resolve & Close'}
           </Button>

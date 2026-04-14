@@ -779,6 +779,14 @@
 - Rule: In correction/resubmission forms, show backend review notes in an explicit, visually distinct callout near each
   field instead of plain inline text.
 
+### 2026-04-14 - Missed lint pass after resubmission UI refactor
+
+- Issue: After refactoring resubmission modal fields to manual-registration style controls, an unused `Textarea` import
+  and one unformatted JSX line were left in the file, failing targeted ESLint.
+- Fix: Removed unused import and aligned JSX formatting to Prettier output, then reran targeted lint.
+- Rule: After any UI refactor in large form files, run immediate targeted lint and clear import/format errors before
+  proceeding to additional changes.
+
 ## Final Check (Before Submit)
 
 - PRD + standards aligned.

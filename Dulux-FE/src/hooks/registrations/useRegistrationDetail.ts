@@ -85,7 +85,7 @@ const buildResubmitUpdatePayload = (
     payload.paintPairs = values.paintPairs.map(paintPair => {
       const topcoat = toIntegerOrNull(paintPair.topcoatId);
       if (!topcoat) {
-        throw new Error('Topcoat id is required for every paint pair.');
+        throw new Error('Topcoat product is required for every paint pair.');
       }
 
       const basecoat = toIntegerOrNull(paintPair.basecoatId);
