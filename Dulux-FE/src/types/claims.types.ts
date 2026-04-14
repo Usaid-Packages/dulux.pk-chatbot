@@ -19,11 +19,13 @@ export const CLAIM_ISSUE_TYPES = [
   'NON_UNIFORM_FINISH',
   'OTHERS',
 ] as const;
+export const CLAIM_CSR_RESUBMISSION_INPUT_TYPES = ['IMAGE', 'TEXT'] as const;
 
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 export type ClaimWorkflowState = (typeof CLAIM_WORKFLOW_STATES)[number];
 export type ClaimIssueType = (typeof CLAIM_ISSUE_TYPES)[number];
 export type ClaimListStatusFilter = 'all' | ClaimStatus | 'submitted' | 'inReview';
+export type ClaimCsrResubmissionInputType = (typeof CLAIM_CSR_RESUBMISSION_INPUT_TYPES)[number];
 
 export interface ClaimTimelineItem {
   id: string;
@@ -146,4 +148,33 @@ export interface RequestMoreInfoPayload extends Record<string, unknown> {
 
 export interface MarkClaimInReviewPayload extends Record<string, unknown> {
   id: string;
+}
+
+export interface ClaimCsrResubmissionRequestedItem {
+  requiredItem: string;
+  label: string;
+  inputType: ClaimCsrResubmissionInputType;
+  isMultiple: boolean;
+}
+
+export interface ClaimCsrResubmissionRequest {
+  claimId: string;
+  claimState: ClaimWorkflowState;
+  qualityReviewId: string;
+  qualityNotes: string;
+  otherText: string;
+  requestedItems: ClaimCsrResubmissionRequestedItem[];
+  created: string;
+}
+
+export interface ClaimCsrResubmissionEntrySubmit {
+  requiredItem: string;
+  responseText?: string;
+  imageFile?: File;
+}
+
+export interface ClaimCsrResubmissionSubmitPayload extends Record<string, unknown> {
+  id: string;
+  notes?: string;
+  entries: ClaimCsrResubmissionEntrySubmit[];
 }

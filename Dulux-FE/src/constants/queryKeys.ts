@@ -15,6 +15,8 @@ export const queryKeys = {
     sendToQuality: ['claims', 'send-to-quality'] as const,
     reject: ['claims', 'reject'] as const,
     requestInfo: ['claims', 'request-info'] as const,
+    csrResubmissionRequest: (id: string) => ['claims', 'csr-resubmission-request', id] as const,
+    csrResubmissionSubmit: ['claims', 'csr-resubmission-submit'] as const,
   },
   quality: {
     all: ['quality'] as const,

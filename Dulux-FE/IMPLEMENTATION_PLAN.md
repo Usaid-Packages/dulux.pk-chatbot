@@ -3587,6 +3587,8 @@ registrations/mutations/
 claims/mutations/
   requestMoreInfoClaim.ts       ← POST /claims/:id/request-info
                                    payload: { items: string[], note?: string, priority: string }
+  submitClaimCsrResubmission.ts ← POST /claims/:id/csr-resubmission
+                                   payload: { notes?: string, entries: Array<{ required_item, response_text?, image_id? }> }
 
 quality/mutations/
   approveClaim.ts               ← POST /quality/:id/approve
@@ -3623,6 +3625,10 @@ products/queries/
 
 complaints/queries/
   getConversationById.ts        ← GET /complaints/:id (full conversation with info panel data)
+
+claims/queries/
+  getClaimCsrResubmissionRequest.ts ← GET /claims/:id/csr-resubmission
+                                       response: requested_items[] + input_type metadata for CSR form rendering
 ```
 
 #### 14.5.3 Expanded API_ENDPOINTS
@@ -3634,6 +3640,7 @@ export const API_ENDPOINTS = {
   REGISTRATION_REJECT: (id: string) => `/registrations/${id}/reject`,
 
   CLAIM_REQUEST_INFO: (id: string) => `/claims/${id}/request-info`,
+  CLAIM_CSR_RESUBMISSION: (id: string) => `/claims/${id}/csr-resubmission`,
 
   QUALITY: "/quality",
   QUALITY_APPROVE: (id: string) => `/quality/${id}/approve`,
@@ -3656,6 +3663,8 @@ SURFACE_TYPES: ["surface-types"] as const,
 SURFACE_TYPE_DETAIL: (id: string) => ["surface-type", id] as const,
 QUALITY_QUEUE: ["quality-queue"] as const,
 QUALITY_DETAIL: (id: string) => ["quality", id] as const,
+CLAIM_CSR_RESUBMISSION_REQUEST: (id: string) => ["claims", "csr-resubmission-request", id] as const,
+CLAIM_CSR_RESUBMISSION_SUBMIT: ["claims", "csr-resubmission-submit"] as const,
 ```
 
 ---
@@ -4089,6 +4098,9 @@ Audit checks executed:
 - [x] Registration detail expandable text placement fixed (`Show more/Show less` always trailing).
 - [x] Manual registration dealer-address validation behavior fixed (input handling + schema message).
 - [x] Surface type `Delete` action removed from product listing table UI.
+- [x] Claims detail Action Center now shows `CSR Resubmission` when claim state is `RESUBMIT`.
+- [x] CSR resubmission modal flow is implemented on claim detail: fetch requested fields via `GET /claims/:id/csr-resubmission`, allow edit/upload per `input_type`, and submit all fields via `POST /claims/:id/csr-resubmission`.
+- [x] Claims data-layer now includes CSR resubmission query/mutation wiring with query-key and endpoint constants for cache-safe integration.
 
 ### 15.3 Remaining Action Items (Not Done Yet)
 

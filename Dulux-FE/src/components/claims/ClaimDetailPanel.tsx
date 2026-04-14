@@ -8,9 +8,11 @@ import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
 interface ClaimDetailPanelProps {
   claim: ClaimDetail;
   onOpenApproveModal: () => void;
+  onOpenCsrResubmissionModal: () => void;
   onOpenForwardModal: () => void;
   onOpenRejectModal: () => void;
   isActionPending: boolean;
+  canCsrResubmit: boolean;
   canSendToQuality: boolean;
   canFinalApprove: boolean;
   canFinalReject: boolean;
@@ -25,9 +27,11 @@ interface ClaimDetailPanelProps {
 export const ClaimDetailPanel = ({
   claim,
   onOpenApproveModal,
+  onOpenCsrResubmissionModal,
   onOpenForwardModal,
   onOpenRejectModal,
   isActionPending,
+  canCsrResubmit,
   canSendToQuality,
   canFinalApprove,
   canFinalReject,
@@ -116,6 +120,15 @@ export const ClaimDetailPanel = ({
               Send To Quality
             </Button>
           ) : null}
+          {canCsrResubmit ? (
+            <Button
+              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              onClick={onOpenCsrResubmissionModal}
+              disabled={isActionPending}
+            >
+              CSR Resubmission
+            </Button>
+          ) : null}
           {canFinalReject ? (
             <Button
               className='h-10 w-full rounded-xl'
@@ -126,7 +139,7 @@ export const ClaimDetailPanel = ({
               Final Reject
             </Button>
           ) : null}
-          {!canSendToQuality && !canFinalApprove && !canFinalReject ? (
+          {!canSendToQuality && !canFinalApprove && !canFinalReject && !canCsrResubmit ? (
             <p className='rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs text-text-muted'>
               No actions are available for the current claim state.
             </p>

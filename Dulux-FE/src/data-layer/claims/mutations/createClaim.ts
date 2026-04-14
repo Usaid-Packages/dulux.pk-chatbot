@@ -1,32 +1,12 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UseMutationResult } from '@tanstack/react-query';
 
 import { POST, apiEndpoints, queryKeys } from '#/constants';
 import { performRequest } from '#/services/apiClient';
 import type { CreateClaimRequestPayload } from '#/types/claims.api.types';
 import type { CreateClaimPayload } from '#/types/claims.types';
+import { uploadClaimImage } from './uploadClaimImage';
 import { toCreateClaimPayload } from '../payloadHelpers';
-
-interface UploadImageResponse {
-  id: number;
-}
-
-const uploadClaimImage = async (image: File): Promise<number> => {
-  const payload = new FormData();
-  payload.append('image', image);
-
-  const response = await performRequest<UploadImageResponse, FormData>({
-    method: POST,
-    url: apiEndpoints.core.uploadImage,
-    payload,
-    config: {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    },
-  });
-
-  return response.id;
-};
 
 export const createClaim = async (payload: CreateClaimPayload): Promise<void> => {
   const [longShotImageId, closeShotImageId, alternateAngleImageId] = await Promise.all([
