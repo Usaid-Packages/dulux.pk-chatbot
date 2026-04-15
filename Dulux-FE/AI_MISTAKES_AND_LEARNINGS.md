@@ -820,3 +820,9 @@
 - Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as its own group before other external imports), which caused lint instability and blocked full-repo validation.
 - Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved remaining formatting violations.
 - Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly (grouping + blank lines + alphabetical order).
+
+### 2026-04-15 - Ran lint from wrong workspace root
+
+- Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json` and delayed validation.
+- Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
+- Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.

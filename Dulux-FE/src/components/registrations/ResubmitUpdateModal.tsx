@@ -1,5 +1,5 @@
 import type { ChangeEvent, FocusEvent, JSX, MouseEvent } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Info } from 'lucide-react';
@@ -173,15 +173,8 @@ export const ResubmitUpdateModal = ({
   onClose,
   onSubmit,
 }: ResubmitUpdateModalProps): JSX.Element => {
-  const manualProductsQuery = useGetManualRegistrationProductsQuery();
-  const topcoatProducts = mergeUniqueProductOptions(
-    manualProductsQuery.data?.topcoatProducts ?? [],
-    registration.paintPairs.map(pair => ({
-      id: String(pair.topcoat.id),
-      label: pair.topcoat.name,
-    }))
-  );
   const requestedFieldNames = getRequestedFieldNames(registration.rejectionFields);
+  const shouldLoadPaintOptions = isOpen && requestedFieldNames.includes('paint_pairs');
   const requestedCorrectionNotes = getRequestedCorrectionNotes(registration.rejectionFields, requestedFieldNames);
   const defaultPaintPairs =
     registration.paintPairs.length > 0
@@ -233,6 +226,20 @@ export const ResubmitUpdateModal = ({
     name: 'paintPairs',
   });
   const watchedPaintPairs = watch('paintPairs') ?? [];
+  const selectedTopcoatIds = useMemo(() => {
+    return watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0);
+  }, [watchedPaintPairs]);
+  const manualProductsQuery = useGetManualRegistrationProductsQuery({
+    enabled: shouldLoadPaintOptions,
+    basecoatTopcoatIds: selectedTopcoatIds,
+  });
+  const topcoatProducts = mergeUniqueProductOptions(
+    manualProductsQuery.data?.topcoatProducts ?? [],
+    registration.paintPairs.map(pair => ({
+      id: String(pair.topcoat.id),
+      label: pair.topcoat.name,
+    }))
+  );
   const customerNameField = register('customerName');
   const phoneNumberField = register('phoneNumber');
   const emailField = register('email');

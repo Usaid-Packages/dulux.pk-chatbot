@@ -4059,7 +4059,7 @@ For product queries/mutations:
 
 ---
 
-## Step 15: Codebase Audit Status Update (2026-04-10)
+## Step 15: Codebase Audit Status Update (2026-04-15)
 
 This section records an evidence-based implementation audit of the current codebase.  
 Audit scope included routes, pages/components, hooks/data-layer, schemas/constants, and project health checks.
@@ -4093,14 +4093,19 @@ Audit checks executed:
 - [x] Live chat thread header reduced to a single heading line.
 - [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
 - [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
+- [x] Complaint thread socket lifecycle hardened: when switching `/app/complaints/:id`, previous thread socket is closed and stale reconnect handlers are ignored so only one active thread connection remains.
+- [x] Complaint chat message-mixing regression addressed by isolating socket receive/reconnect logic to the currently active thread effect session.
 - [x] Complaint details panel long-text resilience improved (bounded detail area + internal scroll + show more/less for long fields).
 - [x] Search bars preserve spaces while typing (no premature trim in URL/state setters).
 - [x] Registration detail expandable text placement fixed (`Show more/Show less` always trailing).
 - [x] Manual registration dealer-address validation behavior fixed (input handling + schema message).
+- [x] Registration/claim timeline UX upgraded to avoid raw JSON in primary presentation for complex fields (`resubmissions`, `quality_review_ids`): show concise arrow-based summaries and structured field cards.
+- [x] Timeline noise reduced: suppress "No field-level changes available" when a state transition is already displayed for the same event.
 - [x] Surface type `Delete` action removed from product listing table UI.
 - [x] Claims detail Action Center now shows `CSR Resubmission` when claim state is `RESUBMIT`.
 - [x] CSR resubmission modal flow is implemented on claim detail: fetch requested fields via `GET /claims/:id/csr-resubmission`, allow edit/upload per `input_type`, and submit all fields via `POST /claims/:id/csr-resubmission`.
 - [x] Claims data-layer now includes CSR resubmission query/mutation wiring with query-key and endpoint constants for cache-safe integration.
+- [x] Warranty-options over-fetching reduced: manual-products query now supports lazy enablement and selected-topcoat scoping so registration resubmission/detail flows do not prefetch basecoats for every topcoat on page open.
 
 ### 15.3 Remaining Action Items (Not Done Yet)
 
@@ -4117,3 +4122,4 @@ Audit checks executed:
 - Chat architecture: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`
 - Manual registration wizard: `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
 - Audit timeline renderer: `src/components/auditLogs/AuditTimelinePanel.tsx`
+- Warranty-options data loading: `src/data-layer/registrations/queries/useGetManualRegistrationProductsQuery.ts`, `src/components/registrations/ResubmitUpdateModal.tsx`, `src/components/manualRegistration/ReviewStep.tsx`

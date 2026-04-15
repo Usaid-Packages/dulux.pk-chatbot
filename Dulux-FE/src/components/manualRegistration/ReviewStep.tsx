@@ -31,9 +31,19 @@ export const ReviewStep = (): JSX.Element => {
     control,
     name: 'additionalPaintPairs',
   });
-  const manualProductsQuery = useGetManualRegistrationProductsQuery();
-
   const values = useWatch({ control });
+  const selectedTopcoatIds = useMemo(() => {
+    const primaryTopcoatId = values.topcoatProductId?.trim() ?? '';
+    const additionalTopcoatIds = (values.additionalPaintPairs ?? [])
+      .map(pair => pair.topcoatProductId?.trim() ?? '')
+      .filter(topcoatId => topcoatId.length > 0);
+
+    return [primaryTopcoatId, ...additionalTopcoatIds].filter(topcoatId => topcoatId.length > 0);
+  }, [values.additionalPaintPairs, values.topcoatProductId]);
+  const manualProductsQuery = useGetManualRegistrationProductsQuery({
+    basecoatTopcoatIds: selectedTopcoatIds,
+  });
+
   const allProducts = [
     ...(manualProductsQuery.data?.topcoatProducts ?? []),
     ...(manualProductsQuery.data?.basecoatProducts ?? []),

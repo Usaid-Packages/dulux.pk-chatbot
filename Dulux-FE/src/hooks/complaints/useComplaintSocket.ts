@@ -67,9 +67,6 @@ export const useComplaintSocket = ({ threadId, enabled }: UseComplaintSocketArgs
   const { token } = useAuthContext();
 
   const socketRef = useRef<WebSocket | null>(null);
-  const reconnectTimerRef = useRef<number | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const isUnmountingRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
   const sendSocketMessage = useCallback(
@@ -87,31 +84,48 @@ export const useComplaintSocket = ({ threadId, enabled }: UseComplaintSocketArgs
 
   useEffect(() => {
     if (!enabled || !token || threadId.length === 0) {
+      setIsConnected(false);
       return;
     }
 
-    isUnmountingRef.current = false;
+    let isEffectActive = true;
+    let reconnectAttempts = 0;
+    let reconnectTimer: number | null = null;
+    let activeSocket: WebSocket | null = null;
 
     const clearReconnectTimer = (): void => {
-      if (reconnectTimerRef.current === null) {
+      if (reconnectTimer === null) {
         return;
       }
 
-      window.clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     };
 
     const connect = (): void => {
+      if (!isEffectActive) {
+        return;
+      }
+
       const socketUrl = buildComplaintsSocketUrl(threadId, token);
       const socket = new WebSocket(socketUrl);
+      activeSocket = socket;
       socketRef.current = socket;
 
       socket.onopen = () => {
-        reconnectAttemptsRef.current = 0;
+        if (!isEffectActive || socketRef.current !== socket) {
+          return;
+        }
+
+        reconnectAttempts = 0;
         setIsConnected(true);
       };
 
       socket.onmessage = event => {
+        if (!isEffectActive || socketRef.current !== socket) {
+          return;
+        }
+
         let parsedPayload: unknown;
         try {
           parsedPayload = JSON.parse(event.data as string);
@@ -134,10 +148,12 @@ export const useComplaintSocket = ({ threadId, enabled }: UseComplaintSocketArgs
       };
 
       socket.onclose = event => {
-        socketRef.current = null;
+        if (socketRef.current === socket) {
+          socketRef.current = null;
+        }
         setIsConnected(false);
 
-        if (isUnmountingRef.current) {
+        if (!isEffectActive || activeSocket !== socket) {
           return;
         }
 
@@ -151,15 +167,15 @@ export const useComplaintSocket = ({ threadId, enabled }: UseComplaintSocketArgs
           return;
         }
 
-        if (reconnectAttemptsRef.current >= MAX_SOCKET_RETRIES) {
+        if (reconnectAttempts >= MAX_SOCKET_RETRIES) {
           return;
         }
 
-        const retryDelay = RETRY_DELAY_MS_BASE * 2 ** reconnectAttemptsRef.current;
-        reconnectAttemptsRef.current += 1;
+        const retryDelay = RETRY_DELAY_MS_BASE * 2 ** reconnectAttempts;
+        reconnectAttempts += 1;
 
         clearReconnectTimer();
-        reconnectTimerRef.current = window.setTimeout(() => {
+        reconnectTimer = window.setTimeout(() => {
           connect();
         }, retryDelay);
       };
@@ -168,12 +184,15 @@ export const useComplaintSocket = ({ threadId, enabled }: UseComplaintSocketArgs
     connect();
 
     return () => {
-      isUnmountingRef.current = true;
+      isEffectActive = false;
       clearReconnectTimer();
       setIsConnected(false);
 
-      if (socketRef.current) {
-        socketRef.current.close(SOCKET_NORMAL_CLOSURE, 'chat-view-change');
+      if (activeSocket) {
+        activeSocket.close(SOCKET_NORMAL_CLOSURE, 'chat-view-change');
+      }
+
+      if (socketRef.current === activeSocket) {
         socketRef.current = null;
       }
     };
