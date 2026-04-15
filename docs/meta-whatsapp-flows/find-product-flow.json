@@ -1,0 +1,150 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "SELECT_ENVIRONMENT": ["SELECT_SURFACE"],
+    "SELECT_SURFACE": ["REVIEW"],
+    "REVIEW": []
+  },
+  "screens": [
+    {
+      "id": "SELECT_ENVIRONMENT",
+      "title": "Find a Product",
+      "data": {
+        "environment_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [
+            {"id": "INTERIOR", "title": "Interior"},
+            {"id": "EXTERIOR", "title": "Exterior"}
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "environment",
+                "label": "Interior or Exterior",
+                "required": true,
+                "data-source": "${data.environment_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "SELECT_ENVIRONMENT",
+                    "flow_name": "Find a Product",
+                    "environment": "${form.environment}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "SELECT_SURFACE",
+      "title": "Surface Type",
+      "data": {
+        "surface_type_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "1", "title": "Wall"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "surface_type",
+                "label": "Surface type",
+                "required": true,
+                "data-source": "${data.surface_type_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "SELECT_SURFACE",
+                    "flow_name": "Find a Product",
+                    "surface_type": "${form.surface_type}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "REVIEW",
+      "title": "Review",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "surface_type": {
+          "type": "string",
+          "__example__": "1"
+        },
+        "product_summary": {
+          "type": "string",
+          "__example__": "Product names will appear here."
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "${data.product_summary}"
+              },
+              {
+                "type": "Footer",
+                "label": "Send products",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "flow_name": "Find a Product",
+                    "surface_type": "${data.surface_type}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

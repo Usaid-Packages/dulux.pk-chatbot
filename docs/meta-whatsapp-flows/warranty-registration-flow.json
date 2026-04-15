@@ -1,0 +1,515 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "CONSENT": ["CUSTOMER_DETAILS"],
+    "CUSTOMER_DETAILS": ["PURCHASE_DETAILS"],
+    "PURCHASE_DETAILS": ["PAIR_ONE"],
+    "PAIR_ONE": ["ADD_PAIR_TWO"],
+    "ADD_PAIR_TWO": ["PAIR_TWO", "ADD_PAIR_THREE"],
+    "PAIR_TWO": ["ADD_PAIR_THREE"],
+    "ADD_PAIR_THREE": ["PAIR_THREE", "REVIEW_UPLOAD"],
+    "PAIR_THREE": ["REVIEW_UPLOAD"],
+    "REVIEW_UPLOAD": []
+  },
+  "screens": [
+    {
+      "id": "CONSENT",
+      "title": "Dulux Assurance",
+      "data": {
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "${data.error_message}"
+              },
+              {
+                "type": "OptIn",
+                "name": "consent_value",
+                "label": "I agree",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "CONSENT",
+                    "flow_name": "Warranty Registration",
+                    "consent_value": "YES"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CUSTOMER_DETAILS",
+      "title": "Customer Details",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "customer_name",
+                "label": "Full name",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "email_value",
+                "label": "Email",
+                "required": true,
+                "input-type": "email"
+              },
+              {
+                "type": "TextInput",
+                "name": "city_value",
+                "label": "City",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "province_value",
+                "label": "Province",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextArea",
+                "name": "site_address",
+                "label": "Site address",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "CUSTOMER_DETAILS",
+                    "flow_name": "Warranty Registration",
+                    "customer_name": "${form.customer_name}",
+                    "email_value": "${form.email_value}",
+                    "city_value": "${form.city_value}",
+                    "province_value": "${form.province_value}",
+                    "site_address": "${form.site_address}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PURCHASE_DETAILS",
+      "title": "Purchase Details",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "DatePicker",
+                "name": "purchase_date",
+                "label": "Purchase date",
+                "required": true
+              },
+              {
+                "type": "TextInput",
+                "name": "dealer_name",
+                "label": "Dealer name",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "dealer_city",
+                "label": "Dealer city",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextArea",
+                "name": "dealer_address",
+                "label": "Dealer address",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Select product",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PURCHASE_DETAILS",
+                    "flow_name": "Warranty Registration",
+                    "purchase_date": "${form.purchase_date}",
+                    "dealer_name": "${form.dealer_name}",
+                    "dealer_city": "${form.dealer_city}",
+                    "dealer_address": "${form.dealer_address}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PAIR_ONE",
+      "title": "Product Details",
+      "data": {
+        "topcoat_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "1", "title": "Dulux Topcoat"}]
+        },
+        "basecoat_options_one": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "2", "title": "Dulux Basecoat"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "topcoat_name_one",
+                "label": "Topcoat",
+                "required": true,
+                "data-source": "${data.topcoat_options}"
+              },
+              {
+                "type": "TextInput",
+                "name": "topcoat_liters_one",
+                "label": "Topcoat liters",
+                "required": true,
+                "input-type": "number"
+              },
+              {
+                "type": "Dropdown",
+                "name": "basecoat_name_one",
+                "label": "Basecoat",
+                "required": false,
+                "data-source": "${data.basecoat_options_one}"
+              },
+              {
+                "type": "TextInput",
+                "name": "basecoat_liters_one",
+                "label": "Basecoat liters",
+                "required": false,
+                "input-type": "number"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PAIR_ONE",
+                    "flow_name": "Warranty Registration",
+                    "topcoat_name_one": "${form.topcoat_name_one}",
+                    "topcoat_liters_one": "${form.topcoat_liters_one}",
+                    "basecoat_name_one": "${form.basecoat_name_one}",
+                    "basecoat_liters_one": "${form.basecoat_liters_one}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADD_PAIR_TWO",
+      "title": "Add More",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "add_pair_two",
+                "label": "Add second pair?",
+                "required": true,
+                "data-source": [
+                  {"id": "YES", "title": "Yes"},
+                  {"id": "NO", "title": "No"}
+                ]
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "ADD_PAIR_TWO",
+                    "flow_name": "Warranty Registration",
+                    "add_pair_two": "${form.add_pair_two}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PAIR_TWO",
+      "title": "Second Product",
+      "data": {
+        "topcoat_options": {
+          "type": "array",
+          "items": {"type": "object"},
+          "__example__": [{"id": "1", "title": "Dulux Topcoat"}]
+        },
+        "basecoat_options_two": {
+          "type": "array",
+          "items": {"type": "object"},
+          "__example__": [{"id": "2", "title": "Dulux Basecoat"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "topcoat_name_two",
+                "label": "Topcoat",
+                "required": true,
+                "data-source": "${data.topcoat_options}"
+              },
+              {
+                "type": "TextInput",
+                "name": "topcoat_liters_two",
+                "label": "Topcoat liters",
+                "required": true,
+                "input-type": "number"
+              },
+              {
+                "type": "Dropdown",
+                "name": "basecoat_name_two",
+                "label": "Basecoat",
+                "required": false,
+                "data-source": "${data.basecoat_options_two}"
+              },
+              {
+                "type": "TextInput",
+                "name": "basecoat_liters_two",
+                "label": "Basecoat liters",
+                "required": false,
+                "input-type": "number"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PAIR_TWO",
+                    "flow_name": "Warranty Registration",
+                    "topcoat_name_two": "${form.topcoat_name_two}",
+                    "topcoat_liters_two": "${form.topcoat_liters_two}",
+                    "basecoat_name_two": "${form.basecoat_name_two}",
+                    "basecoat_liters_two": "${form.basecoat_liters_two}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADD_PAIR_THREE",
+      "title": "Add More",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "add_pair_three",
+                "label": "Add third pair?",
+                "required": true,
+                "data-source": [
+                  {"id": "YES", "title": "Yes"},
+                  {"id": "NO", "title": "No"}
+                ]
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "ADD_PAIR_THREE",
+                    "flow_name": "Warranty Registration",
+                    "add_pair_three": "${form.add_pair_three}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PAIR_THREE",
+      "title": "Third Product",
+      "data": {
+        "topcoat_options": {
+          "type": "array",
+          "items": {"type": "object"},
+          "__example__": [{"id": "1", "title": "Dulux Topcoat"}]
+        },
+        "basecoat_options_three": {
+          "type": "array",
+          "items": {"type": "object"},
+          "__example__": [{"id": "2", "title": "Dulux Basecoat"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "topcoat_name_three",
+                "label": "Topcoat",
+                "required": true,
+                "data-source": "${data.topcoat_options}"
+              },
+              {
+                "type": "TextInput",
+                "name": "topcoat_liters_three",
+                "label": "Topcoat liters",
+                "required": true,
+                "input-type": "number"
+              },
+              {
+                "type": "Dropdown",
+                "name": "basecoat_name_three",
+                "label": "Basecoat",
+                "required": false,
+                "data-source": "${data.basecoat_options_three}"
+              },
+              {
+                "type": "TextInput",
+                "name": "basecoat_liters_three",
+                "label": "Basecoat liters",
+                "required": false,
+                "input-type": "number"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PAIR_THREE",
+                    "flow_name": "Warranty Registration",
+                    "topcoat_name_three": "${form.topcoat_name_three}",
+                    "topcoat_liters_three": "${form.topcoat_liters_three}",
+                    "basecoat_name_three": "${form.basecoat_name_three}",
+                    "basecoat_liters_three": "${form.basecoat_liters_three}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "REVIEW_UPLOAD",
+      "title": "Invoice Upload",
+      "terminal": true,
+      "success": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "Upload invoice photos to submit your warranty registration."
+              },
+              {
+                "type": "PhotoPicker",
+                "name": "invoice_photos",
+                "label": "Invoice photos",
+                "max-uploaded-photos": 3
+              },
+              {
+                "type": "Footer",
+                "label": "Submit",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "flow_name": "Warranty Registration",
+                    "invoice_photos": "${form.invoice_photos}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "PHONE_LOOKUP": ["REGISTRATION_SELECT"],
+    "REGISTRATION_SELECT": []
+  },
+  "screens": [
+    {
+      "id": "PHONE_LOOKUP",
+      "title": "Certificate Reissuance",
+      "data": {
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "${data.error_message}"
+              },
+              {
+                "type": "TextInput",
+                "name": "phone_number",
+                "label": "Phone number",
+                "required": true,
+                "input-type": "phone"
+              },
+              {
+                "type": "Footer",
+                "label": "Find certificates",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PHONE_LOOKUP",
+                    "flow_name": "Certificate Reissuance",
+                    "phone_number": "${form.phone_number}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "REGISTRATION_SELECT",
+      "title": "Select Certificate",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "registration_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"},
+              "description": {"type": "string"}
+            }
+          },
+          "__example__": [
+            {"id": "1", "title": "1234567890", "description": "01/01/2026"}
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "registration_id",
+                "label": "Registration no.",
+                "required": true,
+                "data-source": "${data.registration_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Send certificate",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "flow_name": "Certificate Reissuance",
+                    "registration_id": "${form.registration_id}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

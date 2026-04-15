@@ -1,0 +1,121 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "COMPLAINT_DETAILS": ["COMPLAINT_REVIEW"],
+    "COMPLAINT_REVIEW": []
+  },
+  "screens": [
+    {
+      "id": "COMPLAINT_DETAILS",
+      "title": "Raise a Complaint",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "customer_name",
+                "label": "Name",
+                "required": false,
+                "input-type": "text"
+              },
+              {
+                "type": "TextInput",
+                "name": "subject",
+                "label": "Subject",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "TextArea",
+                "name": "description",
+                "label": "Description",
+                "required": true
+              },
+              {
+                "type": "PhotoPicker",
+                "name": "images",
+                "label": "Complaint images",
+                "description": "Optional. Upload up to 3 images.",
+                "max-uploaded-photos": 3
+              },
+              {
+                "type": "Footer",
+                "label": "Review",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "COMPLAINT_DETAILS",
+                    "flow_name": "Raise a Complaint",
+                    "customer_name": "${form.customer_name}",
+                    "subject": "${form.subject}",
+                    "description": "${form.description}",
+                    "images": "${form.images}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "COMPLAINT_REVIEW",
+      "title": "Confirm Complaint",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "customer_name": {
+          "type": "string",
+          "__example__": "Customer Name"
+        },
+        "subject": {
+          "type": "string",
+          "__example__": "Wall damage"
+        },
+        "description": {
+          "type": "string",
+          "__example__": "Paint is peeling."
+        },
+        "images": {
+          "type": "array",
+          "items": {"type": "object"},
+          "__example__": []
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "Submit this complaint to Customer Support?"
+              },
+              {
+                "type": "Footer",
+                "label": "Submit",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "flow_name": "Raise a Complaint",
+                    "customer_name": "${data.customer_name}",
+                    "subject": "${data.subject}",
+                    "description": "${data.description}",
+                    "images": "${data.images}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -55,6 +55,45 @@ class WhatsAppClient:
         }
         return self._post("messages", payload)
 
+    def send_flow(
+        self,
+        to: str,
+        *,
+        body: str,
+        flow_id: str,
+        flow_token: str,
+        flow_cta: str = "Start",
+        screen: str | None = None,
+        data: dict | None = None,
+    ) -> dict:
+        flow_action_payload = {}
+        if screen:
+            flow_action_payload["screen"] = screen
+        if data:
+            flow_action_payload["data"] = data
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": to,
+            "type": "interactive",
+            "interactive": {
+                "type": "flow",
+                "body": {"text": body},
+                "action": {
+                    "name": "flow",
+                    "parameters": {
+                        "flow_message_version": "3",
+                        "flow_id": flow_id,
+                        "flow_token": flow_token,
+                        "flow_cta": flow_cta,
+                        "flow_action": "navigate",
+                        "flow_action_payload": flow_action_payload,
+                    },
+                },
+            },
+        }
+        return self._post("messages", payload)
+
     def send_document(self, to: str, document_url: str, filename: str, caption: str = "") -> dict:
         absolute_document_url = self._build_absolute_media_url(document_url)
         payload = {
@@ -101,7 +140,9 @@ class WhatsAppClient:
             response = requests.post(url, json=payload, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
             response.raise_for_status()
         except requests.RequestException as exc:
-            logger.exception("WhatsApp API POST request failed.")
+            response = getattr(exc, "response", None)
+            response_text = getattr(response, "text", "") if response is not None else ""
+            logger.exception("WhatsApp API POST request failed. Response: %s", response_text)
             raise WhatsAppAPIError("WhatsApp API request failed.") from exc
 
         return response.json()

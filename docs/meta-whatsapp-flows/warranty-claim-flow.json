@@ -1,0 +1,253 @@
+{
+  "version": "7.1",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "REGISTRATION_LOOKUP": ["PAINT_PAIR_SELECT"],
+    "PAINT_PAIR_SELECT": ["CLAIM_DETAILS"],
+    "CLAIM_DETAILS": ["CLAIM_PHOTOS"],
+    "CLAIM_PHOTOS": []
+  },
+  "screens": [
+    {
+      "id": "REGISTRATION_LOOKUP",
+      "title": "Warranty Claim",
+      "data": {
+        "error_message": {
+          "type": "string",
+          "__example__": ""
+        },
+        "issue_type_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "PEELING_CRACKING", "title": "Peeling Or Cracking"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextBody",
+                "text": "${data.error_message}"
+              },
+              {
+                "type": "TextInput",
+                "name": "registration_code",
+                "label": "Registration no.",
+                "required": true,
+                "input-type": "text"
+              },
+              {
+                "type": "Footer",
+                "label": "Find products",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "REGISTRATION_LOOKUP",
+                    "flow_name": "Warranty Claim",
+                    "registration_code": "${form.registration_code}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PAINT_PAIR_SELECT",
+      "title": "Claim Product",
+      "data": {
+        "registration_code": {
+          "type": "string",
+          "__example__": "1234567890"
+        },
+        "paint_pair_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "1", "title": "Dulux Topcoat"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "paint_pair",
+                "label": "Topcoat product",
+                "required": true,
+                "data-source": "${data.paint_pair_options}"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "PAINT_PAIR_SELECT",
+                    "flow_name": "Warranty Claim",
+                    "registration_code": "${data.registration_code}",
+                    "paint_pair": "${form.paint_pair}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CLAIM_DETAILS",
+      "title": "Claim Details",
+      "data": {
+        "registration_code": {
+          "type": "string",
+          "__example__": "1234567890"
+        },
+        "paint_pair": {
+          "type": "string",
+          "__example__": "1"
+        },
+        "issue_type_options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"}
+            }
+          },
+          "__example__": [{"id": "PEELING_CRACKING", "title": "Peeling Or Cracking"}]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "issue_type",
+                "label": "Issue type",
+                "required": true,
+                "data-source": "${data.issue_type_options}"
+              },
+              {
+                "type": "TextInput",
+                "name": "affected_area_sqft",
+                "label": "Affected area sq ft",
+                "required": true,
+                "input-type": "number"
+              },
+              {
+                "type": "TextArea",
+                "name": "notes",
+                "label": "Notes",
+                "required": false
+              },
+              {
+                "type": "Footer",
+                "label": "Upload photos",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "screen": "CLAIM_DETAILS",
+                    "flow_name": "Warranty Claim",
+                    "registration_code": "${data.registration_code}",
+                    "paint_pair": "${data.paint_pair}",
+                    "issue_type": "${form.issue_type}",
+                    "affected_area_sqft": "${form.affected_area_sqft}",
+                    "notes": "${form.notes}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CLAIM_PHOTOS",
+      "title": "Claim Photos",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "registration_code": {
+          "type": "string",
+          "__example__": "1234567890"
+        },
+        "paint_pair": {
+          "type": "string",
+          "__example__": "1"
+        },
+        "issue_type": {
+          "type": "string",
+          "__example__": "PEELING_CRACKING"
+        },
+        "affected_area_sqft": {
+          "type": "string",
+          "__example__": "100"
+        },
+        "notes": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "PhotoPicker",
+                "name": "claim_photos",
+                "label": "Claim photos",
+                "description": "Upload 3 photos: long shot, close shot, and alternate angle.",
+                "max-uploaded-photos": 3
+              },
+              {
+                "type": "Footer",
+                "label": "Submit claim",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "flow_name": "Warranty Claim",
+                    "registration_code": "${data.registration_code}",
+                    "paint_pair": "${data.paint_pair}",
+                    "issue_type": "${data.issue_type}",
+                    "affected_area_sqft": "${data.affected_area_sqft}",
+                    "notes": "${data.notes}",
+                    "claim_photos": "${form.claim_photos}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

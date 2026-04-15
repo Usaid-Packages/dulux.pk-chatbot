@@ -47,6 +47,32 @@ class DummyClient:
     def send_text(self, to: str, text: str) -> None:
         self.text_messages.append({"to": to, "text": text})
 
+    def send_interactive_buttons(self, to: str, body: str, buttons: list[dict]) -> None:
+        self.text_messages.append({"to": to, "text": body, "buttons": buttons})
+
+    def send_flow(
+        self,
+        to: str,
+        *,
+        body: str,
+        flow_id: str,
+        flow_token: str,
+        flow_cta: str = "Start",
+        screen: str | None = None,
+        data: dict | None = None,
+    ) -> None:
+        self.text_messages.append(
+            {
+                "to": to,
+                "text": body,
+                "flow_id": flow_id,
+                "flow_token": flow_token,
+                "flow_cta": flow_cta,
+                "screen": screen,
+                "data": data or {},
+            }
+        )
+
     def send_document(self, to: str, document_url: str, filename: str, caption: str = "") -> None:
         self.documents.append(
             {
@@ -102,12 +128,37 @@ class FlowTests(TestCase):
         )
         self.session.refresh_from_db()
 
+    def dispatch_interactive(self, interactive_id: str, text: str = "") -> None:
+        dispatch(
+            session=self.session,
+            message={"text": text, "interactive_id": interactive_id, "media_id": None},
+            client=self.client,
+        )
+        self.session.refresh_from_db()
+
     def test_dispatch_shows_menu_for_unknown_input(self):
         self.dispatch_text("unknown")
 
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+        self.assertEqual(len(self.client.text_messages[-1]["buttons"]), 3)
+
+    def test_main_menu_dulux_assurance_button_shows_assurance_submenu(self):
+        self.dispatch_interactive("menu_dulux_assurance")
+
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(
+            [button["reply"]["id"] for button in self.client.text_messages[-1]["buttons"]],
+            ["assurance_registration", "assurance_claim", "assurance_reissuance"],
+        )
+
+    def test_assurance_registration_button_starts_registration_fallback_flow(self):
+        self.dispatch_interactive("assurance_registration")
+
+        self.assertEqual(self.session.flow, "REGISTRATION")
+        self.assertEqual(self.session.current_step, "consent")
 
     def test_registration_flow_end_to_end(self):
         topcoat = create_product(name="Flow Topcoat")
@@ -860,7 +911,7 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
         self.assertEqual(self.session.session_data, {})
-        client_mock.return_value.send_text.assert_called_once_with(self.phone_number, "Main menu")
+        client_mock.return_value.send_interactive_buttons.assert_called_once()
 
     @patch.object(send_whatsapp_main_menu, "apply_async")
     def test_reissuance_flow_end_to_end(self, mocked_send_main_menu):

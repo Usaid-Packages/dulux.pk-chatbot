@@ -11,6 +11,13 @@ from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.handlers.message_parser import parse_incoming_message
 from dulux_chatbot.chatbot.models import ProcessedMessage, WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.chatbot.services.whatsapp_flows import (
+    FlowCryptoError,
+    WhatsAppFlowDataExchangeService,
+    decrypt_flow_request,
+    encrypt_flow_response,
+    validate_flow_request_signature,
+)
 
 
 logger = logging.getLogger("dulux_chatbot")
@@ -53,3 +60,26 @@ class WhatsAppWebhookView(APIView):
             logger.exception("WhatsApp webhook dispatch failed.")
             WhatsAppClient().send_text(phone_number, "Something went wrong. Please try again later.")
         return Response({"processed_message_id": processed_message.id}, status=200)
+
+
+class WhatsAppFlowDataExchangeView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request, *_args, **_kwargs):
+        signature_header = request.headers.get("X-Hub-Signature-256")
+        if not validate_flow_request_signature(body=request.body, signature_header=signature_header):
+            return Response({"detail": "Invalid flow signature."}, status=403)
+
+        try:
+            decrypted_payload, aes_key, initial_vector = decrypt_flow_request(request.data)
+            flow_response = WhatsAppFlowDataExchangeService.handle_exchange(decrypted_payload)
+            encrypted_response = encrypt_flow_response(flow_response, aes_key, initial_vector)
+        except FlowCryptoError as exc:
+            logger.exception("WhatsApp Flow crypto failed.")
+            return Response({"detail": str(exc)}, status=400)
+        except Exception:
+            logger.exception("WhatsApp Flow data exchange failed.")
+            return Response({"detail": "Unable to process WhatsApp Flow request."}, status=400)
+
+        return HttpResponse(encrypted_response, content_type="text/plain")
