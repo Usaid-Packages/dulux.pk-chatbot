@@ -36,6 +36,11 @@ export interface ManualRegistrationProductsResult {
   basecoatProducts: ManualRegistrationProductOption[];
 }
 
+interface UseGetManualRegistrationProductsQueryOptions {
+  enabled?: boolean;
+  basecoatTopcoatIds?: string[];
+}
+
 const MANUAL_PRODUCTS_STALE_TIME_MS = 0;
 const MAX_WARRANTY_OPTIONS_PAGES = 50;
 
@@ -109,29 +114,57 @@ const fetchAllWarrantyOptions = async (
   return products;
 };
 
+const getNormalizedTopcoatIds = (topcoatIds?: string[]): string[] => {
+  if (!Array.isArray(topcoatIds)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      topcoatIds
+        .map(topcoatId => {
+          const parsedTopcoatId = Number.parseInt(topcoatId ?? '', 10);
+          if (!Number.isFinite(parsedTopcoatId) || parsedTopcoatId <= 0) {
+            return null;
+          }
+
+          return String(parsedTopcoatId);
+        })
+        .filter((topcoatId): topcoatId is string => topcoatId !== null)
+    )
+  ).sort((firstId, secondId) => Number(firstId) - Number(secondId));
+};
+
 /**
- * Fetches eligible topcoat/basecoat options for manual registration wizard step 3.
+ * Fetches eligible topcoat/basecoat options for manual registration and resubmission flows.
  *
+ * @param options - Query controls for lazy loading and targeted basecoat scope.
  * @returns React Query result containing product options grouped by type.
  */
-export const useGetManualRegistrationProductsQuery = (): UseQueryResult<ManualRegistrationProductsResult, Error> => {
+export const useGetManualRegistrationProductsQuery = (
+  options?: UseGetManualRegistrationProductsQueryOptions
+): UseQueryResult<ManualRegistrationProductsResult, Error> => {
+  const normalizedTopcoatIds = getNormalizedTopcoatIds(options?.basecoatTopcoatIds);
+  const normalizedTopcoatIdsKey = normalizedTopcoatIds.join(',');
+
   return useQuery<ManualRegistrationProductsResult, Error>({
-    queryKey: queryKeys.registrations.manualProducts,
+    queryKey: queryKeys.registrations.manualProductsByTopcoats(normalizedTopcoatIdsKey),
+    enabled: options?.enabled ?? true,
     queryFn: async (): Promise<ManualRegistrationProductsResult> => {
       const topcoatApiItems = await fetchAllWarrantyOptions({
         product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
       });
 
       const topcoatProducts = toManualProductOptions(topcoatApiItems);
+      const basecoatTopcoatIds =
+        normalizedTopcoatIds.length > 0 ? normalizedTopcoatIds : topcoatProducts.map(topcoat => topcoat.id);
+      const basecoatsByTopcoatId = new Map<string, ManualRegistrationProductOption[]>();
 
-      const topcoatProductsWithBasecoats = await Promise.all(
-        topcoatProducts.map(async topcoat => {
-          const parsedTopcoatId = Number.parseInt(topcoat.id, 10);
+      await Promise.all(
+        basecoatTopcoatIds.map(async topcoatId => {
+          const parsedTopcoatId = Number.parseInt(topcoatId, 10);
           if (!Number.isFinite(parsedTopcoatId) || parsedTopcoatId <= 0) {
-            return {
-              ...topcoat,
-              linkedBasecoats: [],
-            };
+            return;
           }
 
           const basecoatApiItems = await fetchAllWarrantyOptions({
@@ -139,12 +172,14 @@ export const useGetManualRegistrationProductsQuery = (): UseQueryResult<ManualRe
             topcoat_id: parsedTopcoatId,
           });
 
-          return {
-            ...topcoat,
-            linkedBasecoats: toManualProductOptions(basecoatApiItems),
-          };
+          basecoatsByTopcoatId.set(topcoatId, toManualProductOptions(basecoatApiItems));
         })
       );
+
+      const topcoatProductsWithBasecoats = topcoatProducts.map(topcoat => ({
+        ...topcoat,
+        linkedBasecoats: basecoatsByTopcoatId.get(topcoat.id) ?? [],
+      }));
 
       const basecoatProducts = topcoatProductsWithBasecoats.reduce<ManualRegistrationProductOption[]>(
         (accumulator, topcoat) => {

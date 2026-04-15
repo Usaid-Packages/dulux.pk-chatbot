@@ -30,9 +30,12 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
 });
 
 const LONG_TEXT_LIMIT = 180;
+const JSON_PREVIEW_LIMIT = 240;
 const STATE_CHANGE_FIELDS = new Set(['state', 'workflow_state', 'workflowState', 'status']);
 const IMAGE_CHANGE_FIELDS = new Set(['images', 'image_ids', 'imageids']);
 const ASSIGNEE_CHANGE_FIELDS = new Set(['assigned_to', 'assignedto']);
+const ID_LIST_CHANGE_FIELDS = new Set(['quality_review_ids', 'qualityreviewids']);
+const RESUBMISSION_CHANGE_FIELDS = new Set(['resubmissions', 'resubmission']);
 const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   approved_at: 'Approved at',
   approvedat: 'Approved at',
@@ -78,6 +81,20 @@ interface RejectionFieldChangeItem {
 interface TimelineImagePreviewItem {
   id: string;
   url: string;
+}
+
+interface ResubmissionEntrySummary {
+  requiredItemLabel: string;
+  hasResponseText: boolean;
+  hasImage: boolean;
+  responsePreview: string | null;
+}
+
+interface ResubmissionSummary {
+  id: number | null;
+  source: string | null;
+  note: string | null;
+  entries: ResubmissionEntrySummary[];
 }
 
 const isRejectionFieldsField = (fieldName: string): boolean => {
@@ -158,11 +175,23 @@ const isAssigneeChangeField = (fieldName: string): boolean => {
   return ASSIGNEE_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
 };
 
+const isIdListChangeField = (fieldName: string): boolean => {
+  return ID_LIST_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const isResubmissionChangeField = (fieldName: string): boolean => {
+  return RESUBMISSION_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
 const formatTokenLabel = (value: string): string => {
   return value
     .replaceAll('_', ' ')
     .toLowerCase()
     .replace(/\b\w/g, letter => letter.toUpperCase());
+};
+
+const formatRequiredItemLabel = (value: string): string => {
+  return formatFieldLabel(value);
 };
 
 const formatUserReference = (value: unknown): string | null => {
@@ -247,6 +276,145 @@ const getImageUrlFromItem = (item: unknown): string | null => {
   }
 
   return null;
+};
+
+const hasResponseText = (value: unknown): boolean => {
+  return typeof value === 'string' && value.trim().length > 0;
+};
+
+const getResponsePreview = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const PREVIEW_LIMIT = 140;
+  return normalizedValue.length > PREVIEW_LIMIT ? `${normalizedValue.slice(0, PREVIEW_LIMIT)}...` : normalizedValue;
+};
+
+const toResubmissionEntrySummaries = (value: unknown): ResubmissionEntrySummary[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.reduce<ResubmissionEntrySummary[]>((accumulator, entry) => {
+    if (!isRecordValue(entry)) {
+      return accumulator;
+    }
+
+    const requiredItemRaw =
+      typeof entry.required_item === 'string' && entry.required_item.trim().length > 0
+        ? entry.required_item.trim()
+        : typeof entry.requiredItem === 'string' && entry.requiredItem.trim().length > 0
+          ? entry.requiredItem.trim()
+          : null;
+
+    if (!requiredItemRaw) {
+      return accumulator;
+    }
+
+    accumulator.push({
+      requiredItemLabel: formatRequiredItemLabel(requiredItemRaw),
+      hasResponseText: hasResponseText(entry.response_text) || hasResponseText(entry.responseText),
+      hasImage: getImageIdFromItem(entry) !== null,
+      responsePreview: getResponsePreview(entry.response_text) ?? getResponsePreview(entry.responseText),
+    });
+
+    return accumulator;
+  }, []);
+};
+
+const toResubmissionSummaries = (value: unknown): ResubmissionSummary[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.reduce<ResubmissionSummary[]>((accumulator, item) => {
+    if (!isRecordValue(item)) {
+      return accumulator;
+    }
+
+    const source =
+      typeof item.source === 'string' && item.source.trim().length > 0 ? formatTokenLabel(item.source.trim()) : null;
+    const note = typeof item.notes === 'string' && item.notes.trim().length > 0 ? item.notes.trim() : null;
+
+    accumulator.push({
+      id: getNumericIdFromUnknown(item.id),
+      source,
+      note,
+      entries: toResubmissionEntrySummaries(item.entries),
+    });
+
+    return accumulator;
+  }, []);
+};
+
+const isComplexDiffValue = (value: unknown): boolean => {
+  return Array.isArray(value) || isRecordValue(value);
+};
+
+const formatRawValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+
+  if (typeof value === 'string') {
+    return value.length > 0 ? value : '""';
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return '[Unserializable value]';
+  }
+};
+
+const getComplexValueSummary = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return `${value.length} item${value.length === 1 ? '' : 's'}`;
+  }
+
+  if (isRecordValue(value)) {
+    const keyCount = Object.keys(value).length;
+    return `${keyCount} field${keyCount === 1 ? '' : 's'}`;
+  }
+
+  return formatRawValue(value);
+};
+
+const getJsonPreview = (value: unknown): string => {
+  const rawValue = formatRawValue(value);
+  return rawValue.length > JSON_PREVIEW_LIMIT ? `${rawValue.slice(0, JSON_PREVIEW_LIMIT)}...` : rawValue;
+};
+
+const toNumericIdList = (value: unknown): number[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.reduce<number[]>((accumulator, item) => {
+    const numericId = getNumericIdFromUnknown(item);
+    if (numericId !== null) {
+      accumulator.push(numericId);
+    }
+    return accumulator;
+  }, []);
+};
+
+const formatNumericIdListSummary = (values: number[]): string => {
+  if (values.length === 0) {
+    return 'None';
+  }
+
+  return `[${values.join(', ')}]`;
 };
 
 const toTimelineImagePreviewItems = (value: unknown): TimelineImagePreviewItem[] => {
@@ -481,6 +649,123 @@ const renderImagePreviewRow = (heading: string, previewItems: TimelineImagePrevi
   );
 };
 
+const renderComplexChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
+  const beforeSummary = getComplexValueSummary(beforeValue);
+  const afterSummary = getComplexValueSummary(afterValue);
+  const beforeRaw = formatRawValue(beforeValue);
+  const afterRaw = formatRawValue(afterValue);
+  const beforePreview = getJsonPreview(beforeValue);
+  const afterPreview = getJsonPreview(afterValue);
+
+  return (
+    <div key={`${id}-${fieldName}`} className='space-y-1.5'>
+      <p className='text-xs text-text-primary'>
+        <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+        <span className='font-medium'>{beforeSummary}</span>
+        <span className='mx-1 text-primary'>{'\u2192'}</span>
+        <span className='font-medium'>{afterSummary}</span>
+      </p>
+      <p className='text-[11px] text-text-muted'>
+        <span title={beforeRaw}>{beforePreview}</span>
+        <span className='mx-1 text-primary'>{'\u2192'}</span>
+        <span title={afterRaw}>{afterPreview}</span>
+      </p>
+      <details className='rounded-lg border border-border/70 bg-white px-2 py-1.5'>
+        <summary className='cursor-pointer text-[11px] font-semibold text-primary'>View full payload</summary>
+        <div className='mt-2 space-y-2'>
+          <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
+            {beforeRaw}
+          </pre>
+          <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
+            {afterRaw}
+          </pre>
+        </div>
+      </details>
+    </div>
+  );
+};
+
+const renderIdListChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
+  const beforeIds = toNumericIdList(beforeValue);
+  const afterIds = toNumericIdList(afterValue);
+  const beforeSummary = formatNumericIdListSummary(beforeIds);
+  const afterSummary = formatNumericIdListSummary(afterIds);
+
+  return (
+    <div key={`${id}-${fieldName}`} className='space-y-1.5'>
+      <p className='text-xs text-text-primary'>
+        <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+        <span>{beforeSummary}</span>
+        <span className='mx-1 text-primary'>{'\u2192'}</span>
+        <span>{afterSummary}</span>
+      </p>
+    </div>
+  );
+};
+
+const renderResubmissionChange = (
+  fieldName: string,
+  beforeValue: unknown,
+  afterValue: unknown,
+  id: number
+): JSX.Element => {
+  const beforeSummaries = toResubmissionSummaries(beforeValue);
+  const afterSummaries = toResubmissionSummaries(afterValue);
+  const latestAfterSummary = afterSummaries[afterSummaries.length - 1] ?? null;
+  const answeredEntriesCount =
+    latestAfterSummary?.entries.filter(entry => entry.hasResponseText || entry.hasImage).length ?? 0;
+
+  return (
+    <div key={`${id}-${fieldName}`} className='space-y-2'>
+      <p className='text-xs text-text-primary'>
+        <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+        <span className='font-medium'>
+          {beforeSummaries.length} submission{beforeSummaries.length === 1 ? '' : 's'}
+        </span>
+        <span className='mx-1 text-primary'>{'\u2192'}</span>
+        <span className='font-medium'>
+          {afterSummaries.length} submission{afterSummaries.length === 1 ? '' : 's'}
+        </span>
+      </p>
+
+      {latestAfterSummary ? (
+        <div className='rounded-lg border border-primary/20 bg-primary/5 p-2 text-xs text-text-primary'>
+          <p className='text-text-muted'>
+            Source: {latestAfterSummary.source ?? 'Unknown'} | Requested items: {latestAfterSummary.entries.length} |
+            Answered: {answeredEntriesCount}
+          </p>
+          {latestAfterSummary.entries.length > 0 ? (
+            <div className='mt-2 space-y-2'>
+              {latestAfterSummary.entries.map(entry => (
+                <div
+                  key={`${id}-${fieldName}-${entry.requiredItemLabel}-${entry.hasResponseText}-${entry.hasImage}-${entry.responsePreview ?? ''}`}
+                  className='rounded-md border border-primary/15 bg-white p-2'
+                >
+                  <p className='text-[11px] font-semibold text-text-primary'>{entry.requiredItemLabel}</p>
+                  <p className='mt-1 text-[11px] text-text-muted'>
+                    Text: {entry.hasResponseText ? 'Provided' : 'Not provided'} | Image:{' '}
+                    {entry.hasImage ? 'Attached' : 'Not attached'}
+                  </p>
+                  {entry.responsePreview ? (
+                    <p className='mt-1 line-clamp-2 text-[11px] text-text-muted'>{entry.responsePreview}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {latestAfterSummary.note ? (
+            <p className='mt-2 line-clamp-2 rounded-md border border-border/60 bg-white px-2 py-1 text-[11px] text-text-muted'>
+              {latestAfterSummary.note}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className='text-xs text-text-muted'>No resubmission entries found.</p>
+      )}
+    </div>
+  );
+};
+
 const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
   if (isImageChangeField(fieldName)) {
     const beforeSummary = formatImageIdsValue(beforeValue);
@@ -524,6 +809,14 @@ const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: 
     );
   }
 
+  if (isIdListChangeField(fieldName)) {
+    return renderIdListChange(fieldName, beforeValue, afterValue, id);
+  }
+
+  if (isResubmissionChangeField(fieldName)) {
+    return renderResubmissionChange(fieldName, beforeValue, afterValue, id);
+  }
+
   const fullBefore = formatDiffValue(fieldName, beforeValue);
   const fullAfter = formatDiffValue(fieldName, afterValue);
   const compactBefore = getCompactValue(fieldName, beforeValue);
@@ -531,6 +824,15 @@ const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: 
   const beforeStateToken = normalizeStateToken(beforeValue);
   const afterStateToken = normalizeStateToken(afterValue);
   const isStateChange = STATE_CHANGE_FIELDS.has(fieldName) && Boolean(beforeStateToken) && Boolean(afterStateToken);
+  const shouldKeepArrowLayout =
+    isActorField(fieldName) ||
+    isAssigneeChangeField(fieldName) ||
+    isDateField(fieldName) ||
+    isRejectionFieldsField(fieldName);
+
+  if (!shouldKeepArrowLayout && (isComplexDiffValue(beforeValue) || isComplexDiffValue(afterValue))) {
+    return renderComplexChange(fieldName, beforeValue, afterValue, id);
+  }
 
   return (
     <p key={`${id}-${fieldName}`} className='text-xs text-text-primary'>
@@ -705,7 +1007,7 @@ export const AuditTimelinePanel = ({
                         renderArrowChange(fieldName, change.before, change.after, item.id)
                       )}
                     </div>
-                  ) : (
+                  ) : hasStateTransition ? null : (
                     <p className='text-xs text-text-muted'>No field-level changes available.</p>
                   )}
                 </div>
