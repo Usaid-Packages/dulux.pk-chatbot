@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from constance import config
+from django.db import transaction
 from django.utils import timezone
 
 from dulux_chatbot.chatbot.choices import FlowType
@@ -11,6 +12,7 @@ from dulux_chatbot.chatbot.flows.complaint import ComplaintFlow
 from dulux_chatbot.chatbot.flows.find_product import FindProductFlow
 from dulux_chatbot.chatbot.flows.registration import RegistrationFlow
 from dulux_chatbot.chatbot.flows.reissuance import ReissuanceFlow
+from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
 from dulux_chatbot.complaints.models import Complaint
 from dulux_chatbot.warranty.resubmission import fallback_resubmit_message
@@ -45,6 +47,15 @@ FLOW_INITIAL_STEPS = {
 
 
 def dispatch(session, message: dict, client) -> None:
+    # Serialize concurrent webhook deliveries for the same phone number.
+    # Without the row lock, racing requests read stale session state and
+    # overwrite each other's save() calls, silently corrupting flow state.
+    with transaction.atomic():
+        session = WhatsAppSession.objects.select_for_update().get(pk=session.pk)
+        _dispatch_locked(session=session, message=message, client=client)
+
+
+def _dispatch_locked(*, session, message: dict, client) -> None:
     now = timezone.now()
     if _is_main_menu_command(message):
         reset_whatsapp_session_to_main_menu(phone_number=session.phone_number)
