@@ -267,6 +267,10 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.UserDetailsSerializer",
     "TOKEN_MODEL": None,
     "USE_JWT": True,
+    # TODO(audit I10): Flip to True so dj-rest-auth sets the JWT cookie as
+    # HttpOnly. Defense-in-depth against XSS exfiltrating tokens. Currently a SPA
+    # reading tokens from the response body (also logged by LoggingMiddleware —
+    # separate finding) compounds this exposure.
     "JWT_AUTH_HTTPONLY": False,
 }
 

@@ -34,6 +34,10 @@ def reset_whatsapp_session_to_main_menu(*, phone_number: str) -> None:
     )
 
 
+# TODO(audit C3): Read-modify-write without locking. If CS ends the chat while the
+# customer sends a new message, one writer silently overwrites the other. Wrap in
+# `transaction.atomic()` and use `.select_for_update().filter(...).first()` to
+# serialize with the dispatcher's session lock.
 def end_complaint_chat_session(*, phone_number: str, complaint_id: int) -> None:
     target_phone_number = str(phone_number or "").strip()
     session = WhatsAppSession.objects.filter(

@@ -260,6 +260,14 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("At least one paint pair is required.")
         return value
 
+    # TODO(audit I13): Serializer is doing orchestration that belongs in a
+    # service — generating registration_code, writing three related tables, and
+    # recording audit events. Serializers should validate + project; creation
+    # logic (code generation, audit log, side effects) belongs in
+    # warranty/services/registration.py so it can be reused from the CS-dashboard
+    # manual-create path, the WhatsApp flow, and the historical import without
+    # copy-pasting. Same pattern applies to update() below, the claim serializer,
+    # and any view that calls .filter() + builds domain responses inline.
     @transaction.atomic
     def create(self, validated_data: dict) -> WarrantyRegistration:
         paint_pairs = validated_data.pop("paint_pairs")

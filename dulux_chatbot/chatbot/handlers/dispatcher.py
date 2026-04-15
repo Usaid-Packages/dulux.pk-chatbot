@@ -44,6 +44,12 @@ FLOW_INITIAL_STEPS = {
 }
 
 
+# TODO(audit C3): Concurrent webhook deliveries for the same phone number race on
+# session state. Meta retries and rapid user taps cause parallel dispatch() calls
+# that read stale state and overwrite each other's save() — flow can advance twice
+# or land in an inconsistent (flow, current_step) combination. Serialize per-phone
+# via `with transaction.atomic(): WhatsAppSession.objects.select_for_update().get(pk=session.pk)`
+# around the body below, or a Redis lock per phone_number.
 def dispatch(session, message: dict, client) -> None:
     now = timezone.now()
     if _is_main_menu_command(message):

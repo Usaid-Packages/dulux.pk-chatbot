@@ -17,6 +17,9 @@ class WhatsAppAPIError(Exception):
 
 
 class WhatsAppClient:
+    # TODO(audit S4): Hardcoded base URL blocks pointing stage at Meta's sandbox
+    # without a code change. Move to settings (e.g. WHATSAPP_API_BASE_URL loaded
+    # via decouple.config) and read it in __init__.
     base_url = "https://graph.facebook.com/v20.0"
 
     def send_text(self, to: str, text: str) -> dict:
@@ -91,6 +94,13 @@ class WhatsAppClient:
 
         return response.content
 
+    # TODO(audit I1): No retry / backoff. A single transient Meta error (429, 502,
+    # connection reset) raises WhatsAppAPIError immediately, so every Celery task
+    # that calls send_text/send_document is a one-shot. Use a module-level
+    # `requests.Session()` with `HTTPAdapter(max_retries=Retry(total=3,
+    # backoff_factor=0.5, status_forcelist=(429, 502, 503, 504),
+    # respect_retry_after_header=True))` and reuse it across calls so we also get
+    # connection pooling. Applies equally to _get() and download_media().
     def _post(self, endpoint: str, payload: dict) -> dict:
         url = f"{self.base_url}/{settings.WHATSAPP_PHONE_NUMBER_ID}/{endpoint}"
         headers = {
@@ -118,6 +128,12 @@ class WhatsAppClient:
 
         return response.json()
 
+    # TODO(audit I1): Silent fallback — if neither CERTIFICATE_MEDIA_URL nor
+    # BASE_URL is set, this returns the relative path (e.g. "/django-media/...").
+    # Meta then rejects the document/image, the Celery task reports success, and
+    # the customer never receives their warranty PDF. Fail fast instead: raise
+    # WhatsAppAPIError when the base URL is missing, and read the base URL from
+    # Django settings at import time so misconfiguration is caught on boot.
     def _build_absolute_media_url(self, media_url: str) -> str:
         if media_url.startswith(("http://", "https://")):
             return media_url
