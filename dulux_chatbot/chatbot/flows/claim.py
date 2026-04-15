@@ -177,6 +177,13 @@ class ClaimFlow(BaseFlow):
         self._send_step_prompt(prompt)
         self._advance_to(step)
 
+    # TODO(audit P1-6 Important): State is written twice — once on locked_session
+    # (DB save), then mirrored manually onto self.session (in-memory only). Adding
+    # a new field means remembering to mirror in both places; easy to forget and
+    # silently desync. The early-exit branch at ~L194 updates self.session but
+    # does NOT save it, so caller sees a mid-transaction view. Replace the mirror
+    # with `self.session.refresh_from_db(fields=[...])` after each locked save,
+    # or just use locked_session as the source of truth and re-point self.session.
     @transaction.atomic
     def handle_complete(self, _message: dict) -> None:
         locked_session = WhatsAppSession.objects.select_for_update().get(pk=self.session.pk)
@@ -210,6 +217,11 @@ class ClaimFlow(BaseFlow):
             registration_id=registration_id,
             paint_pair_id=paint_pair_id,
             issue_type=data.get("issue_type", ""),
+            # TODO(audit P1-10 Suggestion): Default "0" silently produces an invalid
+            # zero-area claim if upstream session_data lost the key. Flow-level
+            # validation already requires area > 0 — at completion time, a missing
+            # key means a bug upstream. Let it KeyError loudly instead of papering
+            # over with bad data: use `data["affected_area_sqft"]`.
             affected_area_sqft=data.get("affected_area_sqft", "0"),
             notes="",
         )

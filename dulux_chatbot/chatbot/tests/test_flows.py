@@ -70,6 +70,18 @@ class DummyClient:
         return b"fake-image-bytes"
 
 
+# TODO(audit P1-7 Important): Coverage is happy-path only. Missing negative cases
+# that the PRD and code explicitly care about:
+#   - Claim with < 3 or > 3 photos (PRD: exactly 3 — long/close/alternate)
+#   - Duplicate claim for same paint pair (BLOCKING_CLAIM_STATES guard in
+#     claim.py has no test exercising it)
+#   - Complaint with zero images (PRD says "up to 3" — lower bound unclear)
+#   - Registration with tampered session_data (e.g. injected fields)
+#   - Webhook POST with missing/invalid message_id
+#   - Session expiry while resubmission is mid-flight
+#     (fallback_resubmit_message branch)
+#   - assertNumQueries on the dispatcher hot path to catch N+1 regressions
+# Per review skill: "happy-path tests give false confidence."
 class FlowTests(TestCase):
     def setUp(self):
         unique_suffix = str(uuid4().int)[:7]

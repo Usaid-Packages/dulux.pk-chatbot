@@ -105,6 +105,13 @@ class BaseFlow(ABC):
         message_type = self._message_type(message)
         return not message_type or message_type == expected_type
 
+    # TODO(audit P1-3 Important): Hardcoded .jpg extension for every uploaded media.
+    # WhatsApp customers send PNG and WEBP too; stored filename misleads any
+    # downstream tool that sniffs MIME by extension (PDF renderer, S3
+    # Content-Disposition, thumbnail worker). Use WhatsApp media metadata
+    # mime_type to map to .jpg/.png/.webp, or drop the extension and derive from
+    # content-type header on serve. Combined with the missing upload-type
+    # validation, this compounds data-integrity issues.
     def _save_media_image(self, media_id: str, *, filename_prefix: str) -> Image:
         content = self.client.download_media(media_id)
         return Image.objects.create(

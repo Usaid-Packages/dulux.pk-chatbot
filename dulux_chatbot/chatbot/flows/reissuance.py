@@ -5,6 +5,12 @@ from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 
 
+# TODO(audit P1-1 Critical): OTP verification is missing. PRD: "The system prompts
+# for the registered phone number and verifies the user via OTP." Without it, a
+# recycled phone number (common with Pakistani telcos) lets the new owner reissue
+# the previous customer's warranty PDF. This is the higher-risk of the two OTP
+# gaps since WhatsApp's implicit phone verification does not protect against
+# carrier-level number reassignment. Use chatbot/services/otp.py once created.
 class ReissuanceFlow(BaseFlow):
     initial_step = "phone_lookup"
 

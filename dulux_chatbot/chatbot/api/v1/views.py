@@ -47,6 +47,12 @@ class WhatsAppWebhookView(APIView):
             return Response(status=200)
 
         session, _ = WhatsAppSession.objects.get_or_create(phone_number=phone_number)
+        # TODO(audit P1-2 Important): (a) bare `except Exception` swallows programming
+        # bugs, DB outages, and KeyboardInterrupt — real errors never surface to Sentry.
+        # Catch the specific types we expect (WhatsAppAPIError, DispatchError, DB errors).
+        # (b) The recovery send_text below is unguarded; if Meta is down it raises and
+        # the whole view 500s during an incident. Wrap the fallback send_text in its
+        # own try/except and log quietly.
         try:
             dispatch(session=session, message=message, client=WhatsAppClient())
         except Exception:

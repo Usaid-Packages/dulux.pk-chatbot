@@ -77,6 +77,14 @@ class FindProductFlow(BaseFlow):
         self._save_data("surface_type_id", surface_type.id)
         self.handle_result(message)
 
+    # TODO(audit P1-4 Important): Loops over every matching product and calls
+    # client.send_image/send_text synchronously inside the webhook POST. A popular
+    # surface with 20+ products = 20 blocking Meta HTTP calls before the view
+    # returns; Meta's retry timeout fires, webhook is replayed, customer gets
+    # duplicates, and rate-limit errors pile up. Combined with the per-phone
+    # session lock (C3), this would hold the lock for the full fan-out duration.
+    # Queue a Celery task that iterates and sends, then return from the webhook
+    # immediately. See warranty/tasks.py for the apply_async pattern already used.
     def handle_result(self, _message: dict) -> None:
         surface_type_id = (self.session.session_data or {}).get("surface_type_id")
         products = list(
