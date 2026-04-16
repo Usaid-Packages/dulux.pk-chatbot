@@ -10,7 +10,7 @@ from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, Wha
 
 
 class WhatsAppClientTests(SimpleTestCase):
-    @patch("dulux_chatbot.chatbot.services.whatsapp_client.requests.post")
+    @patch("dulux_chatbot.chatbot.services.whatsapp_client.REQUEST_SESSION.post")
     def test_send_text_posts_payload(self, post_mock):
         response = Mock()
         response.json.return_value = {"messages": []}
@@ -23,7 +23,7 @@ class WhatsAppClientTests(SimpleTestCase):
         self.assertEqual(result, {"messages": []})
         post_mock.assert_called_once()
 
-    @patch("dulux_chatbot.chatbot.services.whatsapp_client.requests.post")
+    @patch("dulux_chatbot.chatbot.services.whatsapp_client.REQUEST_SESSION.post")
     def test_send_text_raises_api_error_on_failure(self, post_mock):
         post_mock.side_effect = requests.RequestException("boom")
 
@@ -32,7 +32,7 @@ class WhatsAppClientTests(SimpleTestCase):
         with self.assertRaises(WhatsAppAPIError):
             client.send_text("923001234567", "Hello")
 
-    @patch("dulux_chatbot.chatbot.services.whatsapp_client.requests.post")
+    @patch("dulux_chatbot.chatbot.services.whatsapp_client.REQUEST_SESSION.post")
     def test_send_document_uses_absolute_media_url(self, post_mock):
         response = Mock()
         response.json.return_value = {"messages": []}

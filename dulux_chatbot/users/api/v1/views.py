@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.db.models import Count, QuerySet
 from django.db.models.functions import TruncDate
 from django.utils import timezone
-from rest_framework import permissions, status
+from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -28,13 +28,6 @@ class IsDashboardUser(permissions.BasePermission):
 class DashboardBaseAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsDashboardUser]
     cache_timeout_seconds = 60
-
-    def _validation_error_response(self, serializer) -> Response:
-        message = next(iter(serializer.errors.values()))[0]
-        return Response(
-            {"detail": str(message), "code": "INVALID_QUERY_PARAMS"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
     def _cache_key(self, prefix: str, validated_data: dict) -> str:
         serialized_params = "|".join(f"{key}={validated_data.get(key)}" for key in sorted(validated_data))
@@ -75,8 +68,7 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
 
     def get(self, request) -> Response:
         query_serializer = DashboardCardsQuerySerializer(data=request.query_params)
-        if not query_serializer.is_valid():
-            return self._validation_error_response(query_serializer)
+        query_serializer.is_valid(raise_exception=True)
 
         validated_data = query_serializer.validated_data
         cache_key = self._cache_key("cards", validated_data)
@@ -178,8 +170,7 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
 class DashboardAnalyticsAPIView(DashboardBaseAPIView):
     def get(self, request) -> Response:
         query_serializer = DashboardAnalyticsQuerySerializer(data=request.query_params)
-        if not query_serializer.is_valid():
-            return self._validation_error_response(query_serializer)
+        query_serializer.is_valid(raise_exception=True)
 
         validated_data = query_serializer.validated_data
         cache_key = self._cache_key("analytics", validated_data)

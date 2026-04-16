@@ -47,9 +47,13 @@ class WhatsAppWebhookView(APIView):
             return Response(status=200)
 
         session, _ = WhatsAppSession.objects.get_or_create(phone_number=phone_number)
+        client = WhatsAppClient()
         try:
-            dispatch(session=session, message=message, client=WhatsAppClient())
-        except Exception:
-            logger.exception("WhatsApp webhook dispatch failed.")
-            WhatsAppClient().send_text(phone_number, "Something went wrong. Please try again later.")
+            dispatch(session=session, message=message, client=client)
+        except Exception as e:
+            logger.exception("WhatsApp webhook dispatch failed: %s", e)
+            try:
+                client.send_text(phone_number, "Something went wrong. Please try again later.")
+            except Exception as fallback_error:
+                logger.exception("WhatsApp webhook fallback message failed: %s", fallback_error)
         return Response({"processed_message_id": processed_message.id}, status=200)

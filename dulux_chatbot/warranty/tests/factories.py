@@ -15,6 +15,7 @@ from dulux_chatbot.warranty.choices import (
     RegistrationChannel,
     RegistrationState,
 )
+from dulux_chatbot.warranty.helpers import generate_registration_code
 from dulux_chatbot.warranty.models import (
     ClaimImage,
     PaintPairInvoice,
@@ -22,7 +23,6 @@ from dulux_chatbot.warranty.models import (
     WarrantyClaim,
     WarrantyRegistration,
 )
-from dulux_chatbot.warranty.utils import generate_registration_code
 
 
 User = get_user_model()

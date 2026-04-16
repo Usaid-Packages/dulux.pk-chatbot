@@ -142,7 +142,7 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
         images = validated_data.pop("images", [])
         request = self.context.get("request")
         actor = getattr(request, "user", None)
-        complaint = Complaint.objects.create(**validated_data)
+        complaint = super().create(validated_data)
         for image_data in images:
             ComplaintImage.objects.create(complaint=complaint, **image_data)
         log_create(
@@ -215,9 +215,6 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
         action = validated_data.pop("action", None)
         images = validated_data.pop("images", None)
 
-        for field, value in validated_data.items():
-            setattr(instance, field, value)
-
         if action is not None:
             state_map = {
                 "ASSIGN": ComplaintStatus.IN_PROGRESS,
@@ -225,14 +222,14 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
                 "CLOSE": ComplaintStatus.CLOSED,
                 "REOPEN": ComplaintStatus.IN_PROGRESS,
             }
-            instance.status = state_map[action]
+            validated_data["status"] = state_map[action]
             if action == "CLOSE":
-                instance.closed_at = timezone.now()
+                validated_data["closed_at"] = timezone.now()
             elif action in {"ASSIGN", "REOPEN"}:
-                instance.closed_at = None
-                instance.closure_note = ""
+                validated_data["closed_at"] = None
+                validated_data["closure_note"] = ""
 
-        instance.save()
+        instance = super().update(instance, validated_data)
 
         if images is not None:
             instance.images.all().delete()
@@ -269,11 +266,8 @@ class ChatMessageCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict) -> ChatMessage:
         complaint = self.context["complaint"]
-        message = ChatMessage.objects.create(
-            complaint=complaint,
-            sender=MessageSender.CS_AGENT,
-            **validated_data,
-        )
+        validated_data.update({"complaint": complaint, "sender": MessageSender.CS_AGENT})
+        message = super().create(validated_data)
         request = self.context.get("request")
         actor = getattr(request, "user", None)
         complaint_snapshot = build_complaint_snapshot(complaint)

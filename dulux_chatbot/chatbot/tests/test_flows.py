@@ -6,11 +6,12 @@ from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.utils import timezone
 
+from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
 from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
-from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
+from dulux_chatbot.chatbot.tasks import send_find_product_results, send_whatsapp_main_menu
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
@@ -42,6 +43,7 @@ class DummyClient:
         self.documents = []
         self.images = []
         self.downloaded_media_ids = []
+        self.media_metadata = {}
 
     def send_text(self, to: str, text: str) -> None:
         self.text_messages.append({"to": to, "text": text})
@@ -68,6 +70,10 @@ class DummyClient:
     def download_media(self, media_id: str) -> bytes:
         self.downloaded_media_ids.append(media_id)
         return b"fake-image-bytes"
+
+    def download_media_with_metadata(self, media_id: str) -> tuple[bytes, dict]:
+        self.downloaded_media_ids.append(media_id)
+        return b"fake-image-bytes", self.media_metadata.get(media_id, {"mime_type": "image/jpeg"})
 
 
 class FlowTests(TestCase):
@@ -107,6 +113,16 @@ class FlowTests(TestCase):
         self.assertIsNone(self.session.flow)
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+
+    def test_save_media_image_uses_whatsapp_mime_type_extension(self):
+        self.client.media_metadata["png-media"] = {"mime_type": "image/png"}
+
+        image = BaseFlow(session=self.session, client=self.client)._save_media_image(
+            "png-media",
+            filename_prefix="test_upload",
+        )
+
+        self.assertTrue(image.image.name.endswith(".png"))
 
     def test_registration_flow_end_to_end(self):
         topcoat = create_product(name="Flow Topcoat")
@@ -708,8 +724,8 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "affected_area")
         self.assertIn("valid positive area", self.client.text_messages[-1]["text"])
 
-    @patch.object(send_whatsapp_main_menu, "apply_async")
-    def test_find_product_flow_end_to_end(self, mocked_send_main_menu):
+    @patch.object(send_find_product_results, "apply_async")
+    def test_find_product_flow_end_to_end(self, mocked_send_find_product_results):
         product = create_product(name="Flow Product")
         surface_type = create_surface_type(environment="EXTERIOR")
         create_product_surface_mapping(product=product, surface_type=surface_type)
@@ -723,16 +739,28 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
 
         self.assertIsNone(self.session.flow)
-        self.assertEqual(len(self.client.images), 1)
-        self.assertIn("*Name:* Flow Product", self.client.images[0]["caption"])
-        self.assertIn("*Features:* Durable finish", self.client.images[0]["caption"])
-        self.assertIn("*Coverage details:* 100 sqft per liter", self.client.images[0]["caption"])
-        self.assertIn("*URL:* https://example.com/products/test", self.client.images[0]["caption"])
+        self.assertEqual(len(self.client.images), 0)
         self.assertNotIn("How can I assist you?", self.client.text_messages[-1]["text"])
-        mocked_send_main_menu.assert_called_once()
-        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
-        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
-        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
+        mocked_send_find_product_results.assert_called_once()
+        self.assertEqual(mocked_send_find_product_results.call_args.kwargs["args"][0], self.phone_number)
+        self.assertEqual(mocked_send_find_product_results.call_args.kwargs["args"][1], [product.id])
+        self.assertIn("How can I assist you?", mocked_send_find_product_results.call_args.kwargs["args"][2])
+
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    @patch("dulux_chatbot.chatbot.tasks.WhatsAppClient")
+    def test_find_product_results_task_sends_products_and_queues_main_menu(self, client_mock, mocked_send_main_menu):
+        product = create_product(name="Flow Product")
+        attach_product_image(product=product)
+
+        send_find_product_results(self.phone_number, [product.id], "Main menu")
+
+        client_mock.return_value.send_image.assert_called_once()
+        self.assertEqual(client_mock.return_value.send_image.call_args.args[0], self.phone_number)
+        self.assertIn("*Name:* Flow Product", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*Features:* Durable finish", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*Coverage details:* 100 sqft per liter", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*URL:* https://example.com/products/test", client_mock.return_value.send_image.call_args.args[2])
+        mocked_send_main_menu.assert_called_once_with(args=[self.phone_number, "Main menu"], countdown=2)
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")

@@ -572,6 +572,31 @@ class WarrantyClaimAPITests(TestCase):
             set(visible_states),
         )
 
+    def test_quality_user_cannot_create_claim(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        images = [create_image(image_name=f"quality-claim/{index}.jpg") for index in range(3)]
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_cannot_create_claim_for_non_approved_registration(self):
         registration = create_registration(state=RegistrationState.SUBMITTED)
         paint_pair = create_paint_pair(registration=registration)
@@ -1254,7 +1279,7 @@ class WarrantyCardCountAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "date_from must be less than or equal to date_to.")
+        self.assertEqual(response.data["non_field_errors"][0], "date_from must be less than or equal to date_to.")
 
 
 class ClaimResubmissionSerializerTests(TestCase):

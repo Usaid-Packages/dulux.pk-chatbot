@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import STEP_MENU
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.warranty.choices import ClaimState, IssueType, PhotoType, RegistrationState
@@ -192,11 +193,11 @@ class ClaimFlow(BaseFlow):
             state__in=self.BLOCKING_CLAIM_STATES,
         ).exists():
             locked_session.flow = None
-            locked_session.current_step = "menu"
+            locked_session.current_step = STEP_MENU
             locked_session.session_data = {}
             locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
             self.session.flow = None
-            self.session.current_step = "menu"
+            self.session.current_step = STEP_MENU
             self.session.session_data = {}
             self._send_validation_error("A claim already exists for the selected paint pair.")
             return
@@ -220,10 +221,10 @@ class ClaimFlow(BaseFlow):
             f"Claim submitted successfully for Registration number: {claim.registration.registration_code}",
         )
         locked_session.flow = None
-        locked_session.current_step = "menu"
+        locked_session.current_step = STEP_MENU
         locked_session.session_data = {}
         locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
         self.session.flow = None
-        self.session.current_step = "menu"
+        self.session.current_step = STEP_MENU
         self.session.session_data = {}
         self._send_main_menu_message()

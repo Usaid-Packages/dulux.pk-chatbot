@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import STEP_MENU
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.warranty.choices import ClaimResubmissionSource, ClaimState, QualityRequiredItem
@@ -144,11 +145,11 @@ class ClaimResubmissionFlow(BaseFlow):
 
         data["claim_resubmission_completed"] = True
         locked_session.flow = None
-        locked_session.current_step = "menu"
+        locked_session.current_step = STEP_MENU
         locked_session.session_data = {}
         locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
         self.session.flow = None
-        self.session.current_step = "menu"
+        self.session.current_step = STEP_MENU
         self.session.session_data = {}
         self.client.send_text(
             self.session.phone_number,

@@ -1,5 +1,10 @@
 IMAGE_UPLOAD_NOTE = "Note : Please add one Invoice image at a time"
 MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS = 0
+STEP_MENU = "menu"
+STEP_CHAT = "chat"
+CMD_GO_BACK = "0"
+CMD_MAIN_MENU = "00"
+CMD_MAIN_MENU_WORDS = frozenset({"MENU", "MAIN MENU"})
 
 MAIN_MENU_TEXT = (
     "How can I assist you? Reply with:\n"

@@ -4,17 +4,26 @@ from abc import ABC
 
 from django.core.files.base import ContentFile
 
+from dulux_chatbot.chatbot.constants import CMD_GO_BACK, CMD_MAIN_MENU, CMD_MAIN_MENU_WORDS, STEP_MENU
 from dulux_chatbot.chatbot.constants import IMAGE_UPLOAD_NOTE as DEFAULT_IMAGE_UPLOAD_NOTE
 from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT as DEFAULT_MAIN_MENU_TEXT
 from dulux_chatbot.core.models import Image
 
 
+IMAGE_MIME_TYPE_EXTENSIONS = {
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+
+
 class BaseFlow(ABC):
     initial_step = ""
-    BACK_COMMAND = "0"
-    MAIN_MENU_COMMAND = "00"
+    BACK_COMMAND = CMD_GO_BACK
+    MAIN_MENU_COMMAND = CMD_MAIN_MENU
     TEXT_BACK_COMMANDS = {"BACK"}
-    TEXT_MAIN_MENU_COMMANDS = {"MENU", "MAIN MENU"}
+    TEXT_MAIN_MENU_COMMANDS = CMD_MAIN_MENU_WORDS
     IMAGE_UPLOAD_NOTE = DEFAULT_IMAGE_UPLOAD_NOTE
     MAIN_MENU_TEXT = DEFAULT_MAIN_MENU_TEXT
 
@@ -23,7 +32,7 @@ class BaseFlow(ABC):
         self.client = client
 
     def handle(self, message: dict) -> None:
-        step = self.session.current_step or "menu"
+        step = self.session.current_step or STEP_MENU
         command = self._get_text(message)
         if command.upper() in self.TEXT_BACK_COMMANDS:
             self._go_back()
@@ -48,7 +57,7 @@ class BaseFlow(ABC):
     def _advance_to(self, step: str) -> None:
         session_data = self.session.session_data or {}
         history = list(session_data.get("_history", []))
-        current_step = self.session.current_step or "menu"
+        current_step = self.session.current_step or STEP_MENU
         if current_step and current_step != step:
             history.append(current_step)
         session_data["_history"] = history
@@ -72,7 +81,7 @@ class BaseFlow(ABC):
 
     def _reset(self) -> None:
         self.session.flow = None
-        self.session.current_step = "menu"
+        self.session.current_step = STEP_MENU
         self.session.session_data = {}
         self.session.save(
             update_fields=[
@@ -89,7 +98,7 @@ class BaseFlow(ABC):
     def _send_step_prompt(self, text: str) -> None:
         self.client.send_text(
             self.session.phone_number,
-            f"{text}\n\n0. Go back\n00. Main menu",
+            f"{text}\n\n{self.BACK_COMMAND}. Go back\n{self.MAIN_MENU_COMMAND}. Main menu",
         )
 
     def _get_text(self, message: dict) -> str:
@@ -106,10 +115,19 @@ class BaseFlow(ABC):
         return not message_type or message_type == expected_type
 
     def _save_media_image(self, media_id: str, *, filename_prefix: str) -> Image:
-        content = self.client.download_media(media_id)
+        if hasattr(self.client, "download_media_with_metadata"):
+            content, metadata = self.client.download_media_with_metadata(media_id)
+        else:
+            content = self.client.download_media(media_id)
+            metadata = {}
+        extension = self._get_media_file_extension(metadata.get("mime_type"))
         return Image.objects.create(
-            image=ContentFile(content, name=f"{filename_prefix}_{media_id}.jpg"),
+            image=ContentFile(content, name=f"{filename_prefix}_{media_id}{extension}"),
         )
+
+    def _get_media_file_extension(self, mime_type: str | None) -> str:
+        normalized_mime_type = str(mime_type or "").lower().strip()
+        return IMAGE_MIME_TYPE_EXTENSIONS.get(normalized_mime_type, ".jpg")
 
     def send_initial_prompt(self) -> None:
         self.send_prompt()

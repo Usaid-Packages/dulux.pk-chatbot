@@ -7,9 +7,30 @@ import requests
 from constance import config
 from decouple import config as env_config
 from django.conf import settings
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 logger = logging.getLogger("dulux_chatbot")
+RETRY_STATUS_CODES = (429, 502, 503, 504)
+
+
+def _build_request_session() -> requests.Session:
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=RETRY_STATUS_CODES,
+        allowed_methods={"GET", "POST"},
+        respect_retry_after_header=True,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
+REQUEST_SESSION = _build_request_session()
 
 
 class WhatsAppAPIError(Exception):
@@ -75,21 +96,28 @@ class WhatsAppClient:
         }
         return self._post("messages", payload)
 
-    def download_media(self, media_id: str) -> bytes:
-        metadata = self._get(media_id)
+    def get_media_metadata(self, media_id: str) -> dict:
+        return self._get(media_id)
+
+    def download_media_with_metadata(self, media_id: str) -> tuple[bytes, dict]:
+        metadata = self.get_media_metadata(media_id)
         media_url = metadata.get("url")
         if not media_url:
             raise WhatsAppAPIError("Media URL missing in WhatsApp response.")
 
         headers = {"Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}"}
         try:
-            response = requests.get(media_url, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
+            response = REQUEST_SESSION.get(media_url, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
             response.raise_for_status()
         except requests.RequestException as exc:
             logger.exception("WhatsApp media download failed for media id.")
             raise WhatsAppAPIError("WhatsApp media download failed.") from exc
 
-        return response.content
+        return response.content, metadata
+
+    def download_media(self, media_id: str) -> bytes:
+        content, _metadata = self.download_media_with_metadata(media_id)
+        return content
 
     def _post(self, endpoint: str, payload: dict) -> dict:
         url = f"{self.base_url}/{settings.WHATSAPP_PHONE_NUMBER_ID}/{endpoint}"
@@ -98,7 +126,9 @@ class WhatsAppClient:
             "Content-Type": "application/json",
         }
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
+            response = REQUEST_SESSION.post(
+                url, json=payload, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS
+            )
             response.raise_for_status()
         except requests.RequestException as exc:
             logger.exception("WhatsApp API POST request failed.")
@@ -110,7 +140,7 @@ class WhatsAppClient:
         url = f"{self.base_url}/{endpoint}"
         headers = {"Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}"}
         try:
-            response = requests.get(url, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
+            response = REQUEST_SESSION.get(url, headers=headers, timeout=config.WHATSAPP_API_TIMEOUT_SECS)
             response.raise_for_status()
         except requests.RequestException as exc:
             logger.exception("WhatsApp API GET request failed.")

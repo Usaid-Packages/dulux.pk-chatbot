@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from dulux_chatbot.chatbot.models import ProcessedMessage, WhatsAppSession
+from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError
 
 
 class WhatsAppWebhookTests(TestCase):
@@ -87,3 +88,38 @@ class WhatsAppWebhookTests(TestCase):
         self.assertEqual(second_response.status_code, 200)
         self.assertEqual(ProcessedMessage.objects.filter(message_id="msg-dup").count(), 1)
         dispatch_mock.assert_called_once()
+
+    @patch("dulux_chatbot.chatbot.api.v1.views.WhatsAppClient.send_text")
+    @patch("dulux_chatbot.chatbot.api.v1.views.dispatch")
+    def test_post_handles_dispatch_and_fallback_whatsapp_failures(self, dispatch_mock, send_text_mock):
+        dispatch_mock.side_effect = WhatsAppAPIError("WhatsApp dispatch failed.")
+        send_text_mock.side_effect = WhatsAppAPIError("WhatsApp fallback failed.")
+
+        response = self.client.post(
+            reverse("whatsapp_webhook"),
+            {
+                "entry": [
+                    {
+                        "changes": [
+                            {
+                                "value": {
+                                    "messages": [
+                                        {
+                                            "id": "msg-fallback-fail",
+                                            "from": "923001234567",
+                                            "type": "text",
+                                            "text": {"body": "1"},
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        dispatch_mock.assert_called_once()
+        send_text_mock.assert_called_once_with("923001234567", "Something went wrong. Please try again later.")

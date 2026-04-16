@@ -30,10 +30,6 @@ from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
 class CardCountBaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def _validation_error_response(self, serializer) -> Response:
-        message = next(iter(serializer.errors.values()))[0]
-        return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)
-
     def _filter_registrations(self, validated_data: dict):
         queryset = WarrantyRegistration.objects.all()
         if validated_data.get("date_from"):
@@ -60,8 +56,7 @@ class RegistrationCardCountsAPIView(CardCountBaseAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = CardCountQuerySerializer(data=request.query_params)
-        if not serializer.is_valid():
-            return self._validation_error_response(serializer)
+        serializer.is_valid(raise_exception=True)
 
         queryset = self._filter_registrations(serializer.validated_data)
         counts = queryset.aggregate(
@@ -77,8 +72,7 @@ class ClaimCardCountsAPIView(CardCountBaseAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = CardCountQuerySerializer(data=request.query_params)
-        if not serializer.is_valid():
-            return self._validation_error_response(serializer)
+        serializer.is_valid(raise_exception=True)
 
         queryset = self._filter_claims(serializer.validated_data)
         counts = queryset.aggregate(
@@ -104,8 +98,7 @@ class QualityCardCountsAPIView(CardCountBaseAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = CardCountQuerySerializer(data=request.query_params)
-        if not serializer.is_valid():
-            return self._validation_error_response(serializer)
+        serializer.is_valid(raise_exception=True)
 
         queryset = self._filter_claims(serializer.validated_data)
         counts = queryset.aggregate(
@@ -182,6 +175,12 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
     ordering = ["-created"]
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        permissions = super().get_permissions()
+        if self.request.method == "POST":
+            permissions.append(IsCSAgentOrAdmin())
+        return permissions
+
     def get_serializer_class(self):
         if self.request.method == "POST":
             return WarrantyClaimCreateSerializer
@@ -190,7 +189,7 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
-        if getattr(user, "role", None) == UserRole.QUALITY_REVIEWER:
+        if user.role == UserRole.QUALITY_REVIEWER:
             return queryset.filter(
                 state__in=(
                     ClaimState.QA_REVIEW,
@@ -241,44 +240,32 @@ class ClaimActionAPIView(generics.GenericAPIView):
     detail_serializer_class = WarrantyClaimDetailSerializer
 
     def _build_response(self, claim: WarrantyClaim) -> Response:
+        if hasattr(claim, "_prefetched_objects_cache"):
+            claim._prefetched_objects_cache = {}
         serializer = self.detail_serializer_class(claim, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        claim = self.get_object()
+        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "claim": claim})
+        serializer.is_valid(raise_exception=True)
+        claim = serializer.save()
+        return self._build_response(claim)
 
 
 class ClaimQualityApproveAPIView(ClaimActionAPIView):
     serializer_class = ClaimQualityApproveSerializer
     permission_classes = [IsAuthenticated, IsQualityReviewerOrAdmin]
 
-    def post(self, request, *args, **kwargs):
-        claim = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "claim": claim})
-        serializer.is_valid(raise_exception=True)
-        claim = serializer.save()
-        return self._build_response(claim)
-
 
 class ClaimQualityRejectAPIView(ClaimActionAPIView):
     serializer_class = ClaimQualityRejectSerializer
     permission_classes = [IsAuthenticated, IsQualityReviewerOrAdmin]
 
-    def post(self, request, *args, **kwargs):
-        claim = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "claim": claim})
-        serializer.is_valid(raise_exception=True)
-        claim = serializer.save()
-        return self._build_response(claim)
-
 
 class ClaimQualityRequestInfoAPIView(ClaimActionAPIView):
     serializer_class = ClaimQualityRequestInfoSerializer
     permission_classes = [IsAuthenticated, IsQualityReviewerOrAdmin]
-
-    def post(self, request, *args, **kwargs):
-        claim = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "claim": claim})
-        serializer.is_valid(raise_exception=True)
-        claim = serializer.save()
-        return self._build_response(claim)
 
 
 class ClaimCSRResubmissionAPIView(ClaimActionAPIView):
@@ -290,10 +277,3 @@ class ClaimCSRResubmissionAPIView(ClaimActionAPIView):
         payload = ClaimResubmissionRequestSerializer.build_from_claim(claim)
         serializer = ClaimResubmissionRequestSerializer(payload)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        claim = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), "claim": claim})
-        serializer.is_valid(raise_exception=True)
-        claim = serializer.save()
-        return self._build_response(claim)

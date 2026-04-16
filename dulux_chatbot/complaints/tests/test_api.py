@@ -10,7 +10,9 @@ from rest_framework.test import APIClient
 from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT
 from dulux_chatbot.chatbot.models import WhatsAppSession
+from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError
 from dulux_chatbot.complaints.choices import ComplaintStatus
+from dulux_chatbot.complaints.models import ChatMessage
 from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.complaints.tests.factories import (
     create_chat_message,
@@ -244,6 +246,19 @@ class ComplaintAPITests(TestCase):
         send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
 
     @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_does_not_save_when_whatsapp_send_fails(self, send_text_mock):
+        send_text_mock.side_effect = WhatsAppAPIError("WhatsApp send failed.")
+        complaint = create_complaint(phone_number="923214840049")
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.post(url, {"text": "Need an update"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(response.data["detail"], "Message could not be sent to WhatsApp.")
+        self.assertFalse(ChatMessage.objects.filter(complaint=complaint, text="Need an update").exists())
+
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
     def test_create_message_reactivates_customer_complaint_session(self, send_text_mock):
         complaint = create_complaint(phone_number="923214840044")
         WhatsAppSession.objects.create(
@@ -347,4 +362,4 @@ class LiveChatCardCountAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "date_from must be less than or equal to date_to.")
+        self.assertEqual(response.data["non_field_errors"][0], "date_from must be less than or equal to date_to.")

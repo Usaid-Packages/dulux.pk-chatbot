@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import STEP_CHAT
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
@@ -104,7 +105,7 @@ class ComplaintFlow(BaseFlow):
                 "to customer support. Write MAIN MENU if you want to return to the main menu."
             ),
         )
-        self._advance_to("chat")
+        self._advance_to(STEP_CHAT)
 
     def handle_chat(self, message: dict) -> None:
         complaint_id = (self.session.session_data or {}).get("complaint_id")
