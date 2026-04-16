@@ -29,6 +29,14 @@ from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
 class LiveChatCardCountsAPIView(APIView):
     permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
 
+    # TODO(audit P2-VAL Important): Reinvents DRF validation handling. Replace the
+    # `is_valid()` + `_validation_error_response` pattern with
+    # `serializer.is_valid(raise_exception=True)` — DRF formats errors correctly
+    # and returns all fields, not just the first message of the first field.
+    # Same helper is duplicated in warranty/api/v1/views.py and users/api/v1/views.py.
+    # Response shape changes from {"detail": "..."} to {"field": ["..."]} —
+    # verify FE error handling before flipping (these are GET endpoints with
+    # typed query params, so a 400 should be rare in normal use).
     def _validation_error_response(self, serializer) -> Response:
         message = next(iter(serializer.errors.values()))[0]
         return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)

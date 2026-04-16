@@ -29,6 +29,12 @@ class DashboardBaseAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsDashboardUser]
     cache_timeout_seconds = 60
 
+    # TODO(audit P2-VAL Important): Same anti-pattern as complaints + warranty.
+    # Replace `is_valid() + _validation_error_response(...)` at the 2 call sites
+    # with `is_valid(raise_exception=True)` and drop this helper. Note the extra
+    # `"code": "INVALID_QUERY_PARAMS"` field — if FE relies on that code, use a
+    # custom exception handler in settings.REST_FRAMEWORK instead of duplicating
+    # this helper per app.
     def _validation_error_response(self, serializer) -> Response:
         message = next(iter(serializer.errors.values()))[0]
         return Response(

@@ -30,6 +30,10 @@ from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
 class CardCountBaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    # TODO(audit P2-VAL Important): Same anti-pattern as complaints + users.
+    # Replace `is_valid() + _validation_error_response(...)` at the 3 call
+    # sites below with `is_valid(raise_exception=True)` and drop this helper.
+    # DRF returns all field errors; this helper keeps only the first.
     def _validation_error_response(self, serializer) -> Response:
         message = next(iter(serializer.errors.values()))[0]
         return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)
