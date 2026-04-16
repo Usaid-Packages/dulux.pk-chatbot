@@ -11,6 +11,21 @@ from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 
 
+# TODO(audit P3-WS Important): _connect_validated does two unrelated jobs under
+# one name — (1) assign self.group_name, (2) authorize. The base's `return True`
+# is unreachable because every subclass must override it to set group_name
+# (otherwise channel_layer.group_add raises AttributeError).
+# ComplaintQueueConsumer overrides it just to set group_name = "complaints" and
+# always returns True — the name lies about the behavior. Also, that means any
+# authenticated dashboard user subscribes to every complaint's created-event
+# (missing authorization).
+#
+# Refactor:
+#   async def _resolve_group_name(self) -> str | None: ...   # required
+#   async def _is_authorized(self) -> bool: return True      # optional hook
+# Then `connect()` calls them in order: resolve group → check auth → group_add.
+# The default True becomes meaningful (sensible default for the auth hook only),
+# and ComplaintQueueConsumer gets a real `_is_authorized` that checks role.
 class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
     group_name: str
 
