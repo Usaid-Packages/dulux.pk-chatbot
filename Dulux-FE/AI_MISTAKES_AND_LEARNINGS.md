@@ -826,3 +826,9 @@
 - Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json` and delayed validation.
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
+
+### 2026-04-16 - Claims list test used label query for unlabeled search input
+
+- Issue: New `ClaimsListPage` test used `getByLabelText('claim-search')`, but the search control has an `id` and placeholder without an associated label, causing a failing spec.
+- Fix: Switched the assertion to query by placeholder text (`Search by registration or phone number`) to match the rendered accessibility surface.
+- Rule: In page tests, align RTL selectors with actual accessible output (label text, role/name, or placeholder) and avoid assuming `id` implies an associated label.
