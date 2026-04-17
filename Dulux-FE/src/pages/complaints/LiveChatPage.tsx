@@ -26,7 +26,17 @@ export const LiveChatPage = (): JSX.Element => {
   const { id: selectedThreadId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { conversationsQuery, cardCountsQuery, filters, setStatusFilter, setSearch } = useComplaints();
+  const {
+    conversationsQuery,
+    conversations,
+    cardCountsQuery,
+    filters,
+    hasNextPage,
+    isFetchingNextPage,
+    loadNextPage,
+    setStatusFilter,
+    setSearch,
+  } = useComplaints();
 
   const threadId = selectedThreadId ?? '';
   const { threadQuery, sendMessage, resolveConversation, isMessageSending, isActionPending } =
@@ -34,11 +44,11 @@ export const LiveChatPage = (): JSX.Element => {
   const [isResolveOpen, setResolveOpen] = useState(false);
   const [openedThreadIds, setOpenedThreadIds] = useState<Set<string>>(new Set());
 
-  const conversationItems = conversationsQuery.data?.items ?? EMPTY_CONVERSATIONS;
+  const conversationItems = conversations.items ?? EMPTY_CONVERSATIONS;
   const conversationStats: ConversationStatsType = {
     open: cardCountsQuery.data?.open ?? 0,
     inProgress: cardCountsQuery.data?.inProgress ?? 0,
-    resolved: conversationsQuery.data?.stats.resolved ?? 0,
+    resolved: conversations.stats.resolved ?? 0,
     closed: cardCountsQuery.data?.closed ?? 0,
   };
 
@@ -128,13 +138,16 @@ export const LiveChatPage = (): JSX.Element => {
           <ConversationListPanel
             items={conversationItems}
             openUnseenThreadIds={openUnseenThreadIds}
-            isLoading={conversationsQuery.isLoading}
+            isLoading={conversationsQuery.isLoading && conversationItems.length === 0}
             status={filters.status}
             search={filters.search ?? ''}
             selectedThreadId={selectedThreadId}
             onStatusChange={setStatusFilter}
             onSearchChange={setSearch}
             onThreadSelect={handleThreadSelect}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadNextPage={loadNextPage}
           />
         </div>
 
