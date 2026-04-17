@@ -52,9 +52,8 @@ class RegistrationFlow(BaseFlow):
     def prompt_dealer_address(self) -> None:
         self._send_step_prompt("Please share dealer address.")
 
-    # TODO(audit P1-8 Suggestion): postal_code handlers exist but are unreachable —
-    # dealer_address jumps straight to topcoat_select, and payload hardcodes
-    # postal_code="". Either wire into the flow or delete the dead methods.
+    # Postal code is intentionally skipped during normal registration and is only
+    # requested when CS asks for it during registration resubmission.
     def prompt_postal_code(self) -> None:
         if not is_registration_resubmit_session(self.session.session_data or {}):
             self.prompt_topcoat_select()
