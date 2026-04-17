@@ -4059,67 +4059,70 @@ For product queries/mutations:
 
 ---
 
-## Step 15: Codebase Audit Status Update (2026-04-15)
+## Step 15: Codebase Audit Status Update (2026-04-15, Refreshed)
 
-This section records an evidence-based implementation audit of the current codebase.  
+This section records an evidence-based implementation audit of the current frontend codebase.
 Audit scope included routes, pages/components, hooks/data-layer, schemas/constants, and project health checks.
 
-Audit checks executed:
-- `yarn lint` ✅
-- `yarn build` ✅
-- Test file scan (`test/spec/__tests__`) -> no test files found
+Audit checks executed for this refresh:
+- Route + module scan (`src/routes`, `src/pages`, `src/components`, `src/hooks`, `src/data-layer`)
+- Critical standards checks:
+  - `usePermissions` lookup -> not found
+  - test/spec scan -> no test files found
+  - `.env.example` check in `Dulux-FE` -> missing
+  - PR template check -> present at repository root (`/.github/pull_request_template.md`)
 
 ### 15.1 Completion Matrix (Current State)
 
 | Step | Status | Audit Result |
 | --- | --- | --- |
-| Step 1 (Routing + Access) | ⚠️ Partial | Core routes are implemented (`dashboard`, `registrations`, `claims`, `quality`, `complaints`, `products`, `manual-registration`) in `src/routes/createBrowserRouter.tsx`. `import` and `settings` placeholder routes are not wired yet. |
-| Step 2 (Structure + Ownership) | ✅ Done | Feature-aligned structure is implemented across `src/pages`, `src/components`, `src/hooks`, `src/data-layer`, `src/schemas`, `src/constants`. |
-| Step 3 (Component Tree + Data Flow) | ✅ Done | Module pages and major trees are implemented for Dashboard, Registrations, Claims, Quality, Live Chat, Products, and Manual Registration wizard. |
-| Step 4 (State Strategy) | ✅ Done | React Query + local state + scoped WebSocket state are implemented. No Redux baseline. |
-| Step 5 (API Layer + React Query) | ✅ Done | Endpoint/query-key ownership is in constants, transport is in services, and feature data access uses query/mutation hooks in data-layer. |
-| Step 6 (Forms + Validation) | ✅ Done | `react-hook-form` + Zod schema-driven forms are implemented across auth, registrations, claims, quality, products, and chat compose flows. |
-| Step 7 (Real-time Chat) | ✅ Done | Thread socket + queue socket with retry/backoff, message append, and queue updates are implemented in complaints hooks. |
-| Step 8 (UI Component Library) | ✅ Done | Shared UI primitives exist in `src/components/ui` and are used by feature modules. |
-| Step 9 (Environment Config) | ⚠️ Partial | Env usage exists, but `.env.example` is not present in repo root and should be added to satisfy standards. |
-| Step 10 (Notifications/Toasts) | ✅ Done | Success/error mutation feedback with `react-toastify` is implemented across feature mutations. |
-| Step 11 (Component-level RBAC) | ❌ Pending | Route-level guards exist, but `usePermissions` hook (component-level RBAC API described in this plan) is not implemented. |
-| Step 12 (Standards Compliance Gates) | ⚠️ Partial | Standards docs are present and lint/build pass, but required test coverage and PR template gate are not fully met yet. |
-| Step 13 (Tailwind Design System) | ✅ Done | Tailwind tokenized styling and shared design classes are implemented in current UI and `src/index.css`. |
-| Step 14 (Wireframe Gap Updates) | ⚠️ Partial | Most wireframe-aligned updates are implemented; remaining explicit gaps are listed below. |
+| Step 1 (Routing + Access) | ⚠️ Partial | Implemented routes: auth (`login/forgot/reset`), `dashboard`, `registrations`, `claims`, `quality`, `complaints`, `manual-registration`, `products`. Missing route wiring for `import` and `settings`. |
+| Step 2 (Structure + Ownership) | ✅ Done | Feature-aligned structure is implemented across `src/pages`, `src/components`, `src/hooks`, `src/data-layer`, `src/schemas`, `src/constants`, `src/types`. |
+| Step 3 (Component Tree + Data Flow) | ✅ Done | Full page trees are implemented for Dashboard, Registrations, Claims, Quality, Live Chat, Products, and Manual Registration wizard. |
+| Step 4 (State Strategy) | ✅ Done | React Query for server state + local/UI state + scoped websocket state are implemented. |
+| Step 5 (API Layer + React Query) | ✅ Done | Endpoint/query-key ownership is in constants; transport is in services; feature hooks use data-layer query/mutation modules. |
+| Step 6 (Forms + Validation) | ✅ Done | `react-hook-form` + Zod schema forms are implemented across auth, registrations, claims, quality, products, and chat compose flows. |
+| Step 7 (Real-time Chat) | ✅ Done | Thread and queue sockets are implemented with reconnect/backoff and safe thread-switch behavior. |
+| Step 8 (UI Component Library) | ✅ Done | Shared UI primitives are implemented in `src/components/ui` and reused in feature modules. |
+| Step 9 (Environment Config) | ⚠️ Partial | Typed env parsing exists (`env.mjs`), but `Dulux-FE/.env.example` is still missing. |
+| Step 10 (Notifications/Toasts) | ✅ Done | `react-toastify` success/error feedback is implemented across mutation workflows. |
+| Step 11 (Component-level RBAC) | ❌ Pending | Route-level RBAC exists (`PrivateRoute`, `RoleRoute`), but no `usePermissions`/action-level RBAC helper is implemented. |
+| Step 12 (Standards Compliance Gates) | ⚠️ Partial | Standards docs are present and enforced operationally, but automated tests are missing and FE-local PR template is not present under `Dulux-FE/.github/`. |
+| Step 13 (Tailwind Design System) | ✅ Done | Shared Tailwind tokens/utilities and module styling are implemented in `src/index.css` and component/page styles. |
+| Step 14 (Wireframe Gap Updates) | ⚠️ Partial | Most workflow gaps are addressed; remaining gaps are listed below and include route placeholders + RBAC-policy alignment + manual-success routing behavior. |
 
-### 15.2 Explicit "Done" Items Marked from Recent Updates
+### 15.2 Implemented Functionality Inventory (Code-Verified)
 
-- [x] Live chat thread header reduced to a single heading line.
-- [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
-- [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
-- [x] Complaint thread socket lifecycle hardened: when switching `/app/complaints/:id`, previous thread socket is closed and stale reconnect handlers are ignored so only one active thread connection remains.
-- [x] Complaint chat message-mixing regression addressed by isolating socket receive/reconnect logic to the currently active thread effect session.
-- [x] Complaint details panel long-text resilience improved (bounded detail area + internal scroll + show more/less for long fields).
-- [x] Search bars preserve spaces while typing (no premature trim in URL/state setters).
-- [x] Registration detail expandable text placement fixed (`Show more/Show less` always trailing).
-- [x] Manual registration dealer-address validation behavior fixed (input handling + schema message).
-- [x] Registration/claim timeline UX upgraded to avoid raw JSON in primary presentation for complex fields (`resubmissions`, `quality_review_ids`): show concise arrow-based summaries and structured field cards.
-- [x] Timeline noise reduced: suppress "No field-level changes available" when a state transition is already displayed for the same event.
-- [x] Surface type `Delete` action removed from product listing table UI.
-- [x] Claims detail Action Center now shows `CSR Resubmission` when claim state is `RESUBMIT`.
-- [x] CSR resubmission modal flow is implemented on claim detail: fetch requested fields via `GET /claims/:id/csr-resubmission`, allow edit/upload per `input_type`, and submit all fields via `POST /claims/:id/csr-resubmission`.
-- [x] Claims data-layer now includes CSR resubmission query/mutation wiring with query-key and endpoint constants for cache-safe integration.
-- [x] Warranty-options over-fetching reduced: manual-products query now supports lazy enablement and selected-topcoat scoping so registration resubmission/detail flows do not prefetch basecoats for every topcoat on page open.
+- [x] Auth: login, forgot-password, reset-password flows with token-aware redirects.
+- [x] App shell: protected layout with sidebar, header actions, and role-aware route guards.
+- [x] Dashboard: module cards plus analytics charts with query-backed data hooks.
+- [x] Registrations: list filters/search/pagination + detail actions (approve/reject/resubmit/update-resubmit) + timeline panel.
+- [x] Manual Registration: 5-step route-driven wizard (`Personal -> Purchase -> Products -> Invoices -> Review`) with step validation and submission flow.
+- [x] Claims: list filters/stats + detail action center (approve/reject/send-to-quality/CSR resubmission) + auto `SUBMITTED -> IN_REVIEW` transition.
+- [x] Quality: queue filters/stats + detail decision actions (approve/reject/request-info) + linked registration and timeline integration.
+- [x] Complaints Live Chat: queue/list/thread workspace with realtime sockets, thread-safe reconnect handling, and resolve/close flow.
+- [x] Products: product CRUD (`list/new/edit`) with image upload/attach/remove and surface-type management (list/create/update/delete).
+- [x] Audit features: audit timeline panel integrated across detail screens; dedicated `AuditLogsPage` implemented (not yet route-wired).
 
-### 15.3 Remaining Action Items (Not Done Yet)
+### 15.3 Remaining Required Action Items
 
-- [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to align with Step 1/plan scope.
-- [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
-- [ ] Add `.env.example` with required env keys.
-- [ ] Add automated tests for critical paths (currently no test files discovered).
-- [ ] Add `.github/pull_request_template.md` to satisfy required project-file standard.
+- [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to satisfy Step 1 route map.
+- [ ] Route-wire `AuditLogsPage` (and corresponding nav/permissions decision) since page and hooks are already implemented.
+- [ ] Implement component-level RBAC helper (`usePermissions`) and apply it to action-level controls.
+- [ ] Align products module RBAC with policy (current implementation exposes Products to CS users via sidebar/route; plan policy defines admin-only).
+- [ ] Fix manual registration success flow to navigate to `/manual-registration/success` on successful submit (currently success redirects to registrations list).
+- [ ] Add `Dulux-FE/.env.example` with required env keys from `env.mjs`.
+- [ ] Add automated tests for critical user/business flows (currently no test files found).
 
 ### 15.4 Evidence References
 
-- Routing: `src/routes/createBrowserRouter.tsx`
-- Navigation/role-driven sidebar: `src/constants/layout/navigation.ts`, `src/components/layout/Sidebar.tsx`
-- Chat architecture: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`
-- Manual registration wizard: `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
-- Audit timeline renderer: `src/components/auditLogs/AuditTimelinePanel.tsx`
-- Warranty-options data loading: `src/data-layer/registrations/queries/useGetManualRegistrationProductsQuery.ts`, `src/components/registrations/ResubmitUpdateModal.tsx`, `src/components/manualRegistration/ReviewStep.tsx`
+- Routing and guards: `src/routes/createBrowserRouter.tsx`, `src/routes/PrivateRoute.tsx`, `src/routes/RoleRoute.tsx`
+- Navigation and role visibility: `src/constants/layout/navigation.ts`, `src/components/layout/Sidebar.tsx`
+- Auth flows: `src/pages/auth/LoginPage.tsx`, `src/pages/auth/ForgotPasswordPage.tsx`, `src/pages/auth/ResetPasswordPage.tsx`
+- Dashboard: `src/pages/DashboardPage.tsx`, `src/hooks/dashboard/useDashboard.ts`
+- Registrations + wizard: `src/pages/registrations/RegistrationsListPage.tsx`, `src/pages/registrations/RegistrationDetailPage.tsx`, `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
+- Claims + quality: `src/pages/claims/ClaimsListPage.tsx`, `src/pages/claims/ClaimDetailPage.tsx`, `src/hooks/claims/useClaimDetail.ts`, `src/pages/quality/QualityListPage.tsx`, `src/pages/quality/QualityDetailPage.tsx`
+- Complaints realtime: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`, `src/hooks/complaints/useComplaintThread.ts`
+- Products and surface types: `src/pages/products/ProductsListPage.tsx`, `src/pages/products/ProductCreatePage.tsx`, `src/pages/products/ProductEditPage.tsx`
+- Audit logs: `src/pages/auditLogs/AuditLogsPage.tsx`, `src/components/auditLogs/AuditTimelinePanel.tsx`
+- Env and standards health: `env.mjs`, `package.json`, `/.github/pull_request_template.md`
