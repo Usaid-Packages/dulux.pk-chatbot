@@ -58,6 +58,8 @@ Implication:
   - `src/services/axiosInstance.ts`
   - `src/hooks/useSentry.ts`
   - `src/components/errorFallback/ErrorFallback.tsx`
+- Plan:
+  - convert default exports to named exports for app/service/hook/component modules (keep ambient/module declaration exceptions only).
 
 ## P1 - Mistakes File Rule Drift
 
@@ -526,62 +528,233 @@ Deliverables:
 - Reduced logic in page components
 - Stable architecture documentation
 
-## 4) Concrete Refactor Backlog (First 20 tickets)
+## 4) Concrete Refactor Backlog (Master Ticket List)
 
-1. `SEC-001`: Replace localStorage token persistence with secure session flow.
-2. `PERF-001`: Implement route-level lazy loading in router.
-3. `PERF-002`: Add bundle analyzer and budget gates.
-4. `ARCH-001`: Split `AuditTimelinePanel.tsx` into renderer subcomponents.
-5. `ARCH-002`: Split `ResubmitUpdateModal.tsx` by field groups + hooks.
-6. `ARCH-003`: Split `ProductForm.tsx` into sections + adapter hook.
-7. `ARCH-004`: Split `ProductsListPage.tsx` into tab containers.
-8. `ARCH-005`: Split `AddClaimModal.tsx` into structured sub-forms.
-9. `DRY-001`: Create shared `PaginationFooter` component.
-10. `DRY-002`: Create shared `ListStateBlock` component.
-11. `DRY-003`: Create shared `StatsCardGrid` component.
-12. `RULE-001`: Remove `import/order` file-level disables.
-13. `RULE-002`: Restore sidebar Manual Registration item.
-14. `RULE-003`: Add explicit return types to exported hooks.
-15. `RULE-004`: Add explicit return types to exported route components.
-16. `RULE-005`: Replace inline JSX arrows in top 10 touched files.
-17. `UTIL-001`: Split `helperFunctions.ts` into domain normalizers.
-18. `TEST-001`: Add auth critical-flow RTL/MSW tests.
-19. `TEST-002`: Add claim + registration action flow tests.
-20. `TEST-003`: Add complaint thread resilience tests.
-21. `ROUTE-001`: Introduce loader/action usage on priority routes (claims/quality lists).
-22. `RULE-006`: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper.
-23. `DOC-001`: Add FE-local `.github/pull_request_template.md` (or approved exception note).
-24. `RULE-007`: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception).
-25. `ARCH-006`: Move product page data-layer imports into product hooks (`pages` composition-only refactor).
-26. `ARCH-007`: Extract `CsrResubmissionModal` query logic into a dedicated claims hook.
-27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above).
-28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`).
-29. `DRY-004`: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products.
-30. `DRY-005`: Implement shared mutation-feedback wrapper for toast + error mapping.
-31. `ARCH-008`: Introduce shared detail-action controller helpers used by claims/quality/registrations detail hooks.
-32. `DRY-006`: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers.
-33. `ARCH-009`: Split `ResubmitUpdateModal`, `AddClaimModal`, and `ProductForm` into hook + section component architecture.
-34. `UI-001`: Standardize UI imports to barrel usage and disallow mixed deep imports outside UI package.
-35. `STYLE-001`: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`.
-36. `STYLE-002`: Introduce token-driven `Button` visual variants (e.g., `primaryGradient`) and migrate repeated inline classes.
-37. `PERF-003`: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook.
-38. `PERF-004`: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering.
-39. `PERF-005`: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility.
-40. `DRY-007`: Centralize query-param set/delete/reset-page behavior into shared adapter used by all list hooks.
-41. `PERF-006`: Optimize `ConversationListPanel` row rendering with `Set`-based unseen lookup and stable click handlers.
-42. `PERF-007`: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls.
-43. `PERF-008`: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost.
-44. `PERF-009`: Replace repeated action `.filter(...).length` counters in `AuditLogsPage` with a single memoized reducer.
-45. `DRY-008`: Extract shared input sanitizers (letters-only + PK phone normalization) into `src/utils/*` and migrate manual/registration forms.
-46. `DRY-009`: Create shared dialog lifecycle helper (`useDialogLifecycle`) and migrate modal open/close/reset patterns.
-47. `DRY-010`: Implement shared guarded detail-action orchestration helper for claims/quality/registration hooks.
-48. `ARCH-010`: Split `useRegistrationDetail` into query/actions/payload-builder modules for single-responsibility compliance.
-49. `DRY-011`: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals.
-50. `DRY-012`: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy.
-51. `RULE-009`: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern.
-52. `DRY-013`: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters.
+1. `SEC-001`: Replace localStorage token persistence with secure session flow. (Covers Findings: #1)
+2. `PERF-001`: Implement route-level lazy loading in router. (Covers Findings: #3)
+3. `PERF-002`: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
+4. `ARCH-001`: Split `AuditTimelinePanel.tsx` into renderer subcomponents. (Covers Findings: #2, #33)
+5. `ARCH-002`: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
+6. `ARCH-003`: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
+7. `ARCH-004`: Split `ProductsListPage.tsx` into tab containers. (Covers Findings: #2, #28)
+8. `ARCH-005`: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
+9. `DRY-001`: Create shared `PaginationFooter` component. (Covers Findings: #7)
+10. `DRY-002`: Create shared `ListStateBlock` component. (Covers Findings: #7)
+11. `DRY-003`: Create shared `StatsCardGrid` component. (Covers Findings: #7)
+12. `RULE-001`: Remove `import/order` file-level disables. (Covers Findings: #5)
+13. `RULE-002`: Restore sidebar Manual Registration item. (Covers Findings: #6)
+14. `RULE-003`: Add explicit return types to exported hooks. (Covers Findings: #10)
+15. `RULE-004`: Add explicit return types to exported route components. (Covers Findings: #10)
+16. `RULE-005`: Replace inline JSX arrows in top 10 touched files. (Covers Findings: #11, #41)
+17. `UTIL-001`: Split `helperFunctions.ts` into domain normalizers. (Covers Findings: #9)
+18. `TEST-001`: Add auth critical-flow RTL/MSW tests. (Cross-cutting regression safety for Findings: #1, #13, #21)
+19. `TEST-002`: Add claim + registration action flow tests. (Cross-cutting regression safety for Findings: #17, #22, #38)
+20. `TEST-003`: Add complaint thread resilience tests. (Cross-cutting regression safety for Findings: #31, #33, #34)
+21. `ROUTE-001`: Introduce loader/action usage on priority routes (claims/quality lists). (Covers Findings: #12)
+22. `RULE-006`: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper. (Covers Findings: #13)
+23. `DOC-001`: Add FE-local `.github/pull_request_template.md` (or approved exception note). (Covers Findings: #14)
+24. `RULE-007`: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception). (Covers Findings: #15)
+25. `ARCH-006`: Move product page data-layer imports into product hooks (`pages` composition-only refactor). (Covers Findings: #16)
+26. `ARCH-007`: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
+27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
+28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`). (Covers Findings: #19)
+29. `DRY-004`: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
+30. `DRY-005`: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
+31. `ARCH-008`: Introduce shared detail-action controller helpers used by claims/quality/registrations detail hooks. (Covers Findings: #8, #22, #37)
+32. `DRY-006`: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
+33. `ARCH-009`: Split `ResubmitUpdateModal`, `AddClaimModal`, and `ProductForm` into hook + section component architecture. (Covers Findings: #2, #24)
+34. `UI-001`: Standardize UI imports to barrel usage and disallow mixed deep imports outside UI package. (Covers Findings: #25)
+35. `STYLE-001`: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`. (Covers Findings: #26, #27)
+36. `STYLE-002`: Introduce token-driven `Button` visual variants (e.g., `primaryGradient`) and migrate repeated inline classes. (Covers Findings: #26, #29)
+37. `PERF-003`: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook. (Covers Findings: #28, #30)
+38. `PERF-004`: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering. (Covers Findings: #28)
+39. `PERF-005`: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility. (Covers Findings: #28)
+40. `DRY-007`: Centralize query-param set/delete/reset-page behavior into shared adapter used by all list hooks. (Covers Findings: #20, #30)
+41. `PERF-006`: Optimize `ConversationListPanel` row rendering with `Set`-based unseen lookup and stable click handlers. (Covers Findings: #31)
+42. `PERF-007`: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls. (Covers Findings: #32, #42)
+43. `PERF-008`: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost. (Covers Findings: #33)
+44. `PERF-009`: Replace repeated action `.filter(...).length` counters in `AuditLogsPage` with a single memoized reducer. (Covers Findings: #34)
+45. `DRY-008`: Extract shared input sanitizers (letters-only + PK phone normalization) into `src/utils/*` and migrate manual/registration forms. (Covers Findings: #35)
+46. `DRY-009`: Create shared dialog lifecycle helper (`useDialogLifecycle`) and migrate modal open/close/reset patterns. (Covers Findings: #36)
+47. `DRY-010`: Implement shared guarded detail-action orchestration helper for claims/quality/registration hooks. (Covers Findings: #22, #37)
+48. `ARCH-010`: Split `useRegistrationDetail` into query/actions/payload-builder modules for single-responsibility compliance. (Covers Findings: #2, #38)
+49. `DRY-011`: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals. (Covers Findings: #21, #39)
+50. `DRY-012`: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
+51. `RULE-009`: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
+52. `DRY-013`: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
+53. `RULE-010`: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
 
-## 5) Audit Commands (Repeatable)
+## 5) Finding-to-Ticket Coverage (Detailed)
+
+1. Finding #1 -> `SEC-001`:
+- Scope: remove auth token persistence from localStorage and move to secure session/cookie-aligned flow.
+- Done when: no token reads/writes remain in auth context, refresh service, or axios auth headers from localStorage.
+
+2. Finding #2 -> `ARCH-001`, `ARCH-002`, `ARCH-003`, `ARCH-004`, `ARCH-005`, `ARCH-009`, `ARCH-010`:
+- Scope: break oversized modules into hooks + sections + smaller presentational units.
+- Done when: target files are <= 300 lines (or exception documented) and behavior unchanged.
+
+3. Finding #3 -> `PERF-001`:
+- Scope: route-level lazy loading in router.
+- Done when: page modules load via lazy boundaries and initial chunk size drops.
+
+4. Finding #4 -> `RULE-010`:
+- Scope: replace default exports in flagged modules with named exports.
+- Done when: imports are updated and no default export drift remains (except declaration-file constraints).
+
+5. Finding #5 -> `RULE-001`:
+- Scope: remove `import/order` disable comments and stabilize imports.
+- Done when: source files have zero file-level import-order disables.
+
+6. Finding #6 -> `RULE-002`:
+- Scope: restore manual registration sidebar item.
+- Done when: nav includes Manual Registration route consistently.
+
+7. Finding #7 -> `DRY-001`, `DRY-002`, `DRY-003`:
+- Scope: common list-page primitives for pagination/state/stats.
+- Done when: at least pilot pages use shared primitives and duplicate blocks are removed.
+
+8. Finding #8 -> `DRY-009`, `ARCH-008`:
+- Scope: shared modal lifecycle and action orchestration for detail pages.
+- Done when: open/close/reset action modal boilerplate is centralized.
+
+9. Finding #9 -> `UTIL-001`:
+- Scope: split `helperFunctions.ts` into domain normalizers.
+- Done when: helper monolith is decomposed and imports migrated.
+
+10. Finding #10 -> `RULE-003`, `RULE-004`:
+- Scope: explicit return types on exported hooks/routes/components.
+- Done when: exported API surfaces have explicit return types.
+
+11. Finding #11 -> `RULE-005`, `RULE-009`:
+- Scope: reduce/remove inline JSX arrow handlers in priority files.
+- Done when: hot-path list/table handlers are stable and extracted.
+
+12. Finding #12 -> `ROUTE-001`:
+- Scope: introduce Data Router loaders/actions on priority routes.
+- Done when: claims/quality list flows use loader/action pattern.
+
+13. Finding #13 -> `RULE-006`:
+- Scope: replace product `mutateAsync` orchestration with callback style.
+- Done when: create/edit product action flows use callback mutation orchestration helper.
+
+14. Finding #14 -> `DOC-001`:
+- Scope: FE-local PR template presence or documented exception.
+- Done when: template exists under FE package or policy exception is documented.
+
+15. Finding #15 -> `RULE-007`:
+- Scope: resolve one-component-per-file drift in UI primitives.
+- Done when: primitives are split or standards exception is documented.
+
+16. Finding #16 -> `ARCH-006`:
+- Scope: remove page-level direct data-layer ownership in products module.
+- Done when: pages become composition-only and product hooks own orchestration.
+
+17. Finding #17 -> `ARCH-007`:
+- Scope: move component-level query logic out of `CsrResubmissionModal`.
+- Done when: dedicated claims hook supplies state/handlers.
+
+18. Finding #18 -> `RULE-008`:
+- Scope: add JSDoc for exported components.
+- Done when: missing exported components have concise JSDoc blocks.
+
+19. Finding #19 -> `CLEAN-001`:
+- Scope: remove or properly wire dead/unreachable modules.
+- Done when: dead code list is either deleted or route/usage wired.
+
+20. Finding #20 -> `DRY-004`, `DRY-007`:
+- Scope: shared URL query-param mutation utilities.
+- Done when: list hooks/pages use shared adapter and duplicate blocks are removed.
+
+21. Finding #21 -> `DRY-005`, `DRY-011`:
+- Scope: central mutation feedback/toast behavior.
+- Done when: success/error mapping is standardized and message literals reduced.
+
+22. Finding #22 -> `ARCH-008`, `DRY-010`:
+- Scope: shared guarded detail-action orchestration helpers.
+- Done when: claim/quality/registration detail hooks reuse common action helpers.
+
+23. Finding #23 -> `DRY-006`, `DRY-013`:
+- Scope: remove duplicated claims/quality date wrappers.
+- Done when: formatters resolve through shared date utility presets.
+
+24. Finding #24 -> `ARCH-002`, `ARCH-003`, `ARCH-005`, `ARCH-009`:
+- Scope: split complex forms into controller hooks + section components.
+- Done when: each form has clear container vs presentation separation.
+
+25. Finding #25 -> `UI-001`:
+- Scope: standardize UI import convention.
+- Done when: consumers use barrel imports consistently.
+
+26. Finding #26 -> `STYLE-001`, `STYLE-002`:
+- Scope: remove hardcoded style literals and use tokenized/shared styles.
+- Done when: repeated gradients/shadows/buttons use token-driven classes/variants.
+
+27. Finding #27 -> `STYLE-001`:
+- Scope: reduce oversized inline className strings.
+- Done when: repeated utility groups move to semantic classes.
+
+28. Finding #28 -> `PERF-003`, `PERF-004`, `PERF-005`:
+- Scope: optimize rerender hotspots in products/registration/claim forms.
+- Done when: derived state and reset logic are centralized/memoized with lower render churn.
+
+29. Finding #29 -> `STYLE-002`:
+- Scope: shared primary action button variant.
+- Done when: repeated gradient primary button classes are replaced.
+
+30. Finding #30 -> `DRY-007`:
+- Scope: unify query-param mutation behavior.
+- Done when: one adapter handles set/delete/reset-page rules.
+
+31. Finding #31 -> `PERF-006`:
+- Scope: optimize conversation list row rendering.
+- Done when: unseen lookup uses Set and item handlers are stable.
+
+32. Finding #32 -> `PERF-007`, `DRY-013`:
+- Scope: stop recreating formatter instances in complaints views.
+- Done when: formatter instances/presets are shared and reused.
+
+33. Finding #33 -> `PERF-008`:
+- Scope: precompute audit timeline row view-models.
+- Done when: heavy transforms are outside render JSX mapping path.
+
+34. Finding #34 -> `PERF-009`:
+- Scope: single-pass action counters in audit logs page.
+- Done when: one reducer replaces repeated filter passes.
+
+35. Finding #35 -> `DRY-008`:
+- Scope: shared text/phone sanitizers for forms.
+- Done when: manual/registration forms consume shared sanitizer helpers.
+
+36. Finding #36 -> `DRY-009`:
+- Scope: shared dialog lifecycle hook.
+- Done when: modal reset/close semantics are centralized.
+
+37. Finding #37 -> `DRY-010`, `ARCH-008`:
+- Scope: guard+mutation+toast orchestration reuse.
+- Done when: detail hooks no longer duplicate this pattern.
+
+38. Finding #38 -> `ARCH-010`:
+- Scope: split registration detail hook by responsibility.
+- Done when: query/actions/payload builder live in separate modules.
+
+39. Finding #39 -> `DRY-011`:
+- Scope: centralized toast/message constants.
+- Done when: repeated domain message literals are replaced with constants.
+
+40. Finding #40 -> `DRY-012`:
+- Scope: centralized UI text placeholders/hints.
+- Done when: repeated text strings use `uiText` constants.
+
+41. Finding #41 -> `RULE-009`:
+- Scope: remove inline closures in hot list/render paths.
+- Done when: stable callbacks/data-attribute identity are used.
+
+42. Finding #42 -> `DRY-013`:
+- Scope: unify date/time wrappers via shared presets/utilities.
+- Done when: local duplicate wrappers are removed from domain components.
+
+## 6) Audit Commands (Repeatable)
 
 Run from `/Dulux-FE`:
 
@@ -594,7 +767,7 @@ rg -n "localStorage|ACCESS_TOKEN|REFRESH_TOKEN" src
 find src -name '*.tsx' -o -name '*.ts' | while read -r f; do lc=$(wc -l < "$f"); if [ "$lc" -gt 300 ]; then echo "$f:$lc"; fi; done
 ```
 
-## 6) Success Metrics
+## 7) Success Metrics
 
 - Security: 0 token writes to localStorage.
 - Bundle: main entry chunk reduced by >= 40% in phase-1/2.
