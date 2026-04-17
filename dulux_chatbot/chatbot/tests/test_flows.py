@@ -529,6 +529,30 @@ class FlowTests(TestCase):
         self.assertEqual(registration.state, RegistrationState.SUBMITTED)
         self.assertIsNone(self.session.flow)
 
+    def test_registration_resubmit_flow_rejects_too_long_postal_code(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="postal_code", note="Please provide the postal code.")
+        self.session.flow = "REGISTRATION"
+        self.session.current_step = "postal_code"
+        self.session.session_data = {
+            "postal_code": registration.postal_code,
+            "paint_pairs": [],
+            "paint_pair_invoices": [],
+            "resubmit_registration_id": registration.id,
+            "resubmit_steps": ["postal_code"],
+            "resubmit_step_index": 0,
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        self.dispatch_text("1" * 21)
+
+        registration.refresh_from_db()
+        self.session.refresh_from_db()
+        self.assertNotEqual(registration.postal_code, "1" * 21)
+        self.assertEqual(registration.state, RegistrationState.RESUBMIT)
+        self.assertEqual(self.session.current_step, "postal_code")
+        self.assertIn("under 20 characters", self.client.text_messages[-1]["text"])
+
     def test_expired_resubmit_session_shows_fallback_message(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
         self.session.flow = "REGISTRATION"

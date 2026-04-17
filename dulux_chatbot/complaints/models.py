@@ -16,11 +16,13 @@ class Complaint(TimeStampedModel):
         blank=True,
         related_name="complaints",
     )
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, db_index=True)
     customer_name = models.CharField(max_length=255)
     subject = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN)
+    status = models.CharField(
+        max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN, db_index=True
+    )
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
