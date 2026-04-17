@@ -6,3 +6,4 @@ export * from './registrationNotificationTemplates';
 export * from './claimNotificationTemplates';
 export * from './date';
 export * from './registrations';
+export * from './auditTimelineViewModels';
