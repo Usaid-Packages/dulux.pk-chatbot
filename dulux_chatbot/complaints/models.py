@@ -16,14 +16,13 @@ class Complaint(TimeStampedModel):
         blank=True,
         related_name="complaints",
     )
-    # TODO(audit F-4 Important): phone_number and status lack db_index despite
-    # being used in dashboard card-count aggregates, list filters, and search_fields.
-    # Add db_index=True to both — same issue already flagged on warranty models.
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, db_index=True)
     customer_name = models.CharField(max_length=255)
     subject = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN)
+    status = models.CharField(
+        max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN, db_index=True
+    )
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

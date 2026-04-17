@@ -246,6 +246,29 @@ class ComplaintAPITests(TestCase):
         send_text_mock.assert_called_once_with(complaint.phone_number, "Need an update")
 
     @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_rejects_blank_text_without_sending_whatsapp(self, send_text_mock):
+        complaint = create_complaint(phone_number="923214840050")
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": complaint.id})
+
+        response = self.client.post(url, {"text": "   "}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("text", response.data)
+        send_text_mock.assert_not_called()
+        self.assertFalse(ChatMessage.objects.filter(complaint=complaint).exists())
+
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
+    def test_create_message_returns_404_for_unknown_complaint_without_sending_whatsapp(self, send_text_mock):
+        self.client.force_authenticate(user=self.user)
+        url = reverse("complaint_message_list_create", kwargs={"complaint_id": 999999})
+
+        response = self.client.post(url, {"text": "Need an update"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        send_text_mock.assert_not_called()
+
+    @patch("dulux_chatbot.complaints.api.v1.views.WhatsAppClient.send_text")
     def test_create_message_does_not_save_when_whatsapp_send_fails(self, send_text_mock):
         send_text_mock.side_effect = WhatsAppAPIError("WhatsApp send failed.")
         complaint = create_complaint(phone_number="923214840049")
