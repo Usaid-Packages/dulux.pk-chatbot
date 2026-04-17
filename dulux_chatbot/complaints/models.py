@@ -34,10 +34,6 @@ class Complaint(TimeStampedModel):
     closed_at = models.DateTimeField(null=True, blank=True)
     closure_note = models.CharField(max_length=500, blank=True)
 
-    # TODO(audit F-5 Suggestion): __str__ includes phone_number (PII). This feeds
-    # into admin, shell, audit_logs object_repr, and error pages. Use
-    # f"Complaint #{self.id}: {self.subject}" to avoid leaking customer data.
-    # Not needed because this project does not expose complaint __str__ output to end users.
     def __str__(self) -> str:
         return f"{self.phone_number} - {self.subject}"
 

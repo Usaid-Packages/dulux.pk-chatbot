@@ -7,10 +7,6 @@ from dulux_chatbot.chatbot.constants import STEP_MENU
 
 class WhatsAppSession(TimeStampedModel):
     phone_number = models.CharField(max_length=20, unique=True)
-    # TODO(audit P1-11 Suggestion): null=True on CharField creates two empty states
-    # (NULL and ""). Django convention: strings use blank=True, default="".
-    # Needs data migration to backfill existing NULLs before schema change.
-    # Not needed for this system because None represents no active flow.
     flow = models.CharField(max_length=20, choices=FlowType.choices, null=True, blank=True)
     current_step = models.CharField(max_length=50, default=STEP_MENU)
     session_data = models.JSONField(default=dict)
@@ -20,9 +16,6 @@ class WhatsAppSession(TimeStampedModel):
         return self.phone_number
 
 
-# TODO(audit P1-5 Important): Grows unbounded — every inbound webhook creates a
-# row and nothing prunes. Add a Celery Beat task to purge rows older than 7 days.
-# Not needed because inbound webhook message IDs must be preserved for audit/idempotency.
 class ProcessedMessage(models.Model):
     message_id = models.CharField(max_length=100, unique=True)
     processed_at = models.DateTimeField(auto_now_add=True)

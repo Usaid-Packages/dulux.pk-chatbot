@@ -85,10 +85,6 @@ class ComplaintRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         return ComplaintDetailSerializer
 
 
-# TODO(audit F-3 Important): get_object_or_404(Complaint, pk=...) is called
-# three times for the same row — in get_queryset(), get_serializer_context(),
-# and list(). Three DB queries per request for the same complaint. Use a
-# @cached_property that fetches once and is reused across all three methods.
 class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
 
@@ -114,14 +110,6 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
         serializer = ComplaintChatItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # TODO(audit F-2 Critical): WhatsApp send happens BEFORE serializer.save().
-    # If send succeeds but save() fails (DB error, constraint), the customer
-    # receives a reply that has no record in the system. Reverse the order:
-    # save first (data is validated), then send. If send fails, the message
-    # still exists in DB — return 502 with the saved message payload so FE
-    # can show "saved but not delivered" instead of losing it entirely.
-    # Not needed because serializer validity is checked first, then the third-party
-    # send is verified before saving so failed WhatsApp delivery cannot create a local message.
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
