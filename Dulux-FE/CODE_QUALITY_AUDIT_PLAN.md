@@ -534,7 +534,7 @@ Deliverables:
 2. `PERF-001`: Implement route-level lazy loading in router. (Covers Findings: #3)
 3. `PERF-002`: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
 4. `ARCH-001`: Split `AuditTimelinePanel.tsx` into renderer subcomponents. (Covers Findings: #2, #33)
-5. `ARCH-002`: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
+5. `ARCH-002` [DONE 2026-04-17]: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
 6. `ARCH-003`: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
 7. `ARCH-004`: Split `ProductsListPage.tsx` into tab containers. (Covers Findings: #2, #28)
 8. `ARCH-005`: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
