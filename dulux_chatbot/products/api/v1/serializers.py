@@ -169,6 +169,12 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         return product
 
+    # TODO(audit F-8 Important): to_representation re-serializes nested objects by
+    # iterating prefetched managers and building fresh serializer instances. If the
+    # view's prefetch_related doesn't perfectly match these traversals, this fires
+    # N+1 queries. Declaring nested serializer fields on the class (e.g.
+    # surface_types = SurfaceTypeSerializer(source="surface_mappings", many=True))
+    # is more transparent and lets DRF handle the representation consistently.
     def to_representation(self, instance: Product) -> dict:
         data = super().to_representation(instance)
         mappings = instance.surface_mappings.all()

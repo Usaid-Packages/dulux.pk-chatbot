@@ -6,6 +6,9 @@ from dulux_chatbot.products.choices import Environment, ProductType
 
 class Product(TimeStampedModel):
     name = models.CharField(max_length=255)
+    # TODO(audit F-9 Important): product_type and is_active are used in filter()
+    # across chatbot flows, registration serializer validation, and product list
+    # views but have no db_index. Add db_index=True to both.
     product_type = models.CharField(max_length=10, choices=ProductType.choices)
     warranty_years = models.PositiveSmallIntegerField()
     features = models.TextField()

@@ -224,6 +224,11 @@ CACHES = {
     }
 }
 
+# TODO(audit F-10 Critical): Redis hostname hardcoded as "redis" instead of
+# using REDIS_URL (which is already loaded from env). In staging/prod with a
+# managed Redis (ElastiCache, different hostname), WebSockets silently fail.
+# Parse REDIS_URL: from urllib.parse import urlparse; _r = urlparse(REDIS_URL);
+# then use (_r.hostname, _r.port or 6379) in the hosts list.
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

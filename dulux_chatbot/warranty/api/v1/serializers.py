@@ -284,6 +284,10 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
         paint_pairs = validated_data.pop("paint_pairs")
         paint_pair_invoices = validated_data.pop("paint_pair_invoices", [])
         request = self.context.get("request")
+        # TODO(audit F-1 Important): getattr(request, "user", None) is dead code on
+        # authenticated routes — IsAuthenticated guarantees request.user exists. 19
+        # identical occurrences across warranty (9), complaints (3), products (7).
+        # Replace all with: actor = self.context["request"].user
         actor = getattr(request, "user", None)
         validated_data["registration_code"] = generate_registration_code()
         registration = super().create(validated_data)

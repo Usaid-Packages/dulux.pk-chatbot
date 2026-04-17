@@ -16,6 +16,9 @@ class Complaint(TimeStampedModel):
         blank=True,
         related_name="complaints",
     )
+    # TODO(audit F-4 Important): phone_number and status lack db_index despite
+    # being used in dashboard card-count aggregates, list filters, and search_fields.
+    # Add db_index=True to both — same issue already flagged on warranty models.
     phone_number = models.CharField(max_length=20)
     customer_name = models.CharField(max_length=255)
     subject = models.CharField(max_length=255)
@@ -31,6 +34,9 @@ class Complaint(TimeStampedModel):
     closed_at = models.DateTimeField(null=True, blank=True)
     closure_note = models.CharField(max_length=500, blank=True)
 
+    # TODO(audit F-5 Suggestion): __str__ includes phone_number (PII). This feeds
+    # into admin, shell, audit_logs object_repr, and error pages. Use
+    # f"Complaint #{self.id}: {self.subject}" to avoid leaking customer data.
     def __str__(self) -> str:
         return f"{self.phone_number} - {self.subject}"
 

@@ -20,6 +20,9 @@ from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
 class IsDashboardUser(permissions.BasePermission):
     allowed_roles = {UserRole.CS_AGENT, UserRole.QUALITY_REVIEWER, UserRole.ADMIN}
 
+    # TODO(audit F-7 Suggestion): Combined with IsAuthenticated in permission_classes,
+    # user.is_authenticated is guaranteed True. getattr defensive checks are dead
+    # code. Simplify to: return user.role in self.allowed_roles
     def has_permission(self, request, _view) -> bool:
         user = request.user
         return bool(getattr(user, "is_authenticated", False) and getattr(user, "role", None) in self.allowed_roles)
@@ -91,6 +94,12 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
                             state__in=(RegistrationState.SUBMITTED, RegistrationState.RESUBMIT)
                         ).count(),
                     },
+                    # TODO(audit F-6 Important): Secondary stats query
+                    # WarrantyRegistration.objects directly, bypassing the
+                    # date-filtered registration_queryset. When a CS agent
+                    # filters "last 7 days", these stats still show all-time
+                    # counts — a logic bug. Use registration_queryset.filter(...)
+                    # instead. Same issue on all secondary stats below.
                     "secondaryStat": {
                         "label": "Approved Today",
                         "value": WarrantyRegistration.objects.filter(
