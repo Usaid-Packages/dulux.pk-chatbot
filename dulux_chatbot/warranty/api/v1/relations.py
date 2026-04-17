@@ -6,12 +6,11 @@ from django.db.models import Model
 RelatedModel = TypeVar("RelatedModel", bound=Model)
 
 
-# TODO(audit P2-11 Suggestion): Loads ALL prefetched reviews into Python to find
-# the latest via max(). For normal use (1-5 per claim) this is fine, but unbounded
-# — if a claim accumulates hundreds of reviews (admin tool, migration), it grows
-# linearly. Consider a Prefetch object with queryset.order_by("-created", "-id")[:1]
-# to limit at the DB level instead of loading all into memory.
-def latest_prefetched(instance: Model, related_name: str) -> RelatedModel | None:
+def latest_prefetched(instance: Model, related_name: str, prefetched_attr: str | None = None) -> RelatedModel | None:
+    if prefetched_attr and hasattr(instance, prefetched_attr):
+        related_items = getattr(instance, prefetched_attr)
+        return related_items[0] if related_items else None
+
     prefetched_objects = getattr(instance, "_prefetched_objects_cache", {})
     if related_name in prefetched_objects:
         related_items = prefetched_objects[related_name]

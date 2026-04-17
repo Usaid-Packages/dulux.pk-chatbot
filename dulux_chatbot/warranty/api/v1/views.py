@@ -1,4 +1,4 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -24,7 +24,22 @@ from dulux_chatbot.warranty.api.v1.serializers import (
     WarrantyRegistrationUpdateSerializer,
 )
 from dulux_chatbot.warranty.choices import ClaimState, RegistrationState
-from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
+from dulux_chatbot.warranty.models import ClaimQualityReview, ClaimResubmission, WarrantyClaim, WarrantyRegistration
+
+
+def latest_quality_review_prefetch(*, with_required_items: bool = False) -> Prefetch:
+    queryset = ClaimQualityReview.objects.order_by("-created", "-id")
+    if with_required_items:
+        queryset = queryset.prefetch_related("required_items")
+    return Prefetch("quality_reviews", queryset=queryset[:1], to_attr="latest_quality_reviews")
+
+
+def latest_resubmission_prefetch() -> Prefetch:
+    return Prefetch(
+        "resubmissions",
+        queryset=ClaimResubmission.objects.prefetch_related("entries__image").order_by("-created", "-id")[:1],
+        to_attr="latest_resubmissions",
+    )
 
 
 class CardCountBaseAPIView(APIView):
@@ -169,7 +184,7 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
         "paint_pair__topcoat",
         "paint_pair__basecoat",
         "approved_by",
-    ).prefetch_related("images__image", "quality_reviews")
+    ).prefetch_related("images__image", latest_quality_review_prefetch())
     filterset_fields = ["state", "issue_type"]
     search_fields = ["registration__registration_code", "registration__phone_number"]
     ordering = ["-created"]
@@ -209,8 +224,8 @@ class WarrantyClaimRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         "approved_by",
     ).prefetch_related(
         "images__image",
-        "quality_reviews__required_items",
-        "resubmissions__entries__image",
+        latest_quality_review_prefetch(with_required_items=True),
+        latest_resubmission_prefetch(),
     )
     permission_classes = [IsAuthenticated]
 
@@ -234,8 +249,8 @@ class ClaimActionAPIView(generics.GenericAPIView):
         "approved_by",
     ).prefetch_related(
         "images__image",
-        "quality_reviews__required_items",
-        "resubmissions__entries__image",
+        latest_quality_review_prefetch(with_required_items=True),
+        latest_resubmission_prefetch(),
     )
     detail_serializer_class = WarrantyClaimDetailSerializer
 
@@ -243,8 +258,7 @@ class ClaimActionAPIView(generics.GenericAPIView):
     # private Django attribute to force re-fetch after mutation. Fragile across
     # Django upgrades. Prefer: claim = self.get_queryset().get(pk=claim.pk)
     def _build_response(self, claim: WarrantyClaim) -> Response:
-        if hasattr(claim, "_prefetched_objects_cache"):
-            claim._prefetched_objects_cache = {}
+        claim = self.get_queryset().get(pk=claim.pk)
         serializer = self.detail_serializer_class(claim, context=self.get_serializer_context())
         return Response(serializer.data, status=status.HTTP_200_OK)
 

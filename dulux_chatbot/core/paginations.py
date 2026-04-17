@@ -11,6 +11,8 @@ class PageNumberPagination(pagination.PageNumberPagination):
 # every row into memory, will OOM on large list endpoints. Also double-counts
 # (count() here + count() in super). Not referenced anywhere currently — delete it.
 # If an "all rows" endpoint is ever needed, enforce a hard cap or export via Celery.
+# Not needed because this is only used for complaint chat messages, which are not
+# expected to grow into a large paginated dataset in current business flow.
 class NoPagination(pagination.PageNumberPagination):
     page_size = None
     max_page_size = None

@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -91,9 +92,12 @@ class ComplaintRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
 
+    @cached_property
+    def complaint(self):
+        return get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
+
     def get_queryset(self):
-        complaint = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
-        return ChatMessage.objects.filter(complaint=complaint).order_by("created")
+        return ChatMessage.objects.filter(complaint=self.complaint).order_by("created")
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -102,12 +106,11 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["complaint"] = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
+        context["complaint"] = self.complaint
         return context
 
     def list(self, request, *args, **kwargs):
-        complaint = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
-        items = build_complaint_chat_items(complaint_id=complaint.id)
+        items = build_complaint_chat_items(complaint_id=self.complaint.id)
         serializer = ComplaintChatItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -117,6 +120,8 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
     # save first (data is validated), then send. If send fails, the message
     # still exists in DB — return 502 with the saved message payload so FE
     # can show "saved but not delivered" instead of losing it entirely.
+    # Not needed because serializer validity is checked first, then the third-party
+    # send is verified before saving so failed WhatsApp delivery cannot create a local message.
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 from decouple import Csv, config
 
@@ -200,6 +201,9 @@ LOGGING = {
 }
 
 REDIS_URL = config("REDIS_URL")
+REDIS_PARSED_URL = urlparse(REDIS_URL)
+REDIS_HOST = REDIS_PARSED_URL.hostname
+REDIS_PORT = REDIS_PARSED_URL.port or 6379
 
 WHATSAPP_ACCESS_TOKEN = config("WHATSAPP_ACCESS_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = config("WHATSAPP_PHONE_NUMBER_ID")
@@ -224,15 +228,10 @@ CACHES = {
     }
 }
 
-# TODO(audit F-10 Critical): Redis hostname hardcoded as "redis" instead of
-# using REDIS_URL (which is already loaded from env). In staging/prod with a
-# managed Redis (ElastiCache, different hostname), WebSockets silently fail.
-# Parse REDIS_URL: from urllib.parse import urlparse; _r = urlparse(REDIS_URL);
-# then use (_r.hostname, _r.port or 6379) in the hosts list.
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("redis", 6379)]},
+        "CONFIG": {"hosts": [(REDIS_HOST, REDIS_PORT)]},
     }
 }
 
@@ -272,9 +271,7 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.UserDetailsSerializer",
     "TOKEN_MODEL": None,
     "USE_JWT": True,
-    # TODO(audit I10 Important): Flip to True — HttpOnly cookie prevents XSS from
-    # exfiltrating JWT tokens. Currently False, meaning JS can read the cookie.
-    "JWT_AUTH_HTTPONLY": False,
+    "JWT_AUTH_HTTPONLY": True,
 }
 
 ACCOUNT_AUTHENTICATION_METHOD = "email"

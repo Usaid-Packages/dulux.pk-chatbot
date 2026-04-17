@@ -38,9 +38,9 @@ class WhatsAppAPIError(Exception):
 
 
 class WhatsAppClient:
-    # TODO(audit S4 Suggestion): Hardcoded — blocks pointing stage at Meta's sandbox
-    # without code change. Move to settings.WHATSAPP_API_BASE_URL via decouple.
-    base_url = "https://graph.facebook.com/v20.0"
+    @property
+    def base_url(self) -> str:
+        return config.WHATSAPP_API_BASE_URL.rstrip("/")
 
     def send_text(self, to: str, text: str) -> dict:
         payload = {

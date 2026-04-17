@@ -140,8 +140,8 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data: dict) -> Complaint:
         images = validated_data.pop("images", [])
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
+        request = self.context["request"]
+        actor = request.user
         complaint = super().create(validated_data)
         for image_data in images:
             ComplaintImage.objects.create(complaint=complaint, **image_data)
@@ -209,8 +209,8 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance: Complaint, validated_data: dict) -> Complaint:
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
+        request = self.context["request"]
+        actor = request.user
         before_data = build_complaint_before_snapshot(instance)
         action = validated_data.pop("action", None)
         images = validated_data.pop("images", None)
@@ -268,8 +268,8 @@ class ChatMessageCreateSerializer(serializers.ModelSerializer):
         complaint = self.context["complaint"]
         validated_data.update({"complaint": complaint, "sender": MessageSender.CS_AGENT})
         message = super().create(validated_data)
-        request = self.context.get("request")
-        actor = getattr(request, "user", None)
+        request = self.context["request"]
+        actor = request.user
         complaint_snapshot = build_complaint_snapshot(complaint)
         log_event(
             actor=actor,
