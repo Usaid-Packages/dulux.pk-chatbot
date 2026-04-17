@@ -38,7 +38,9 @@ class WhatsAppAPIError(Exception):
 
 
 class WhatsAppClient:
-    base_url = "https://graph.facebook.com/v20.0"
+    @property
+    def base_url(self) -> str:
+        return config.WHATSAPP_API_BASE_URL.rstrip("/")
 
     def send_text(self, to: str, text: str) -> dict:
         payload = {

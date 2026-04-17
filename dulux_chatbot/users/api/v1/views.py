@@ -21,8 +21,7 @@ class IsDashboardUser(permissions.BasePermission):
     allowed_roles = {UserRole.CS_AGENT, UserRole.QUALITY_REVIEWER, UserRole.ADMIN}
 
     def has_permission(self, request, _view) -> bool:
-        user = request.user
-        return bool(getattr(user, "is_authenticated", False) and getattr(user, "role", None) in self.allowed_roles)
+        return request.user.role in self.allowed_roles
 
 
 class DashboardBaseAPIView(APIView):
@@ -93,7 +92,7 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
                     },
                     "secondaryStat": {
                         "label": "Approved Today",
-                        "value": WarrantyRegistration.objects.filter(
+                        "value": registration_queryset.filter(
                             state=RegistrationState.APPROVED,
                             approved_at__date=today,
                         ).count(),
@@ -110,7 +109,7 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
                     },
                     "secondaryStat": {
                         "label": "Submitted Today",
-                        "value": WarrantyRegistration.objects.filter(
+                        "value": registration_queryset.filter(
                             channel=RegistrationChannel.WEBFORM,
                             created__date=today,
                         ).count(),
@@ -135,7 +134,7 @@ class DashboardCardsAPIView(DashboardBaseAPIView):
                     },
                     "secondaryStat": {
                         "label": "Resolved Today",
-                        "value": WarrantyClaim.objects.filter(
+                        "value": claim_queryset.filter(
                             state__in=(ClaimState.APPROVED, ClaimState.REJECTED),
                             modified__date=today,
                         ).count(),

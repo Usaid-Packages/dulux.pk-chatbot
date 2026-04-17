@@ -53,6 +53,10 @@ class RegistrationFlow(BaseFlow):
         self._send_step_prompt("Please share dealer address.")
 
     def prompt_postal_code(self) -> None:
+        if not is_registration_resubmit_session(self.session.session_data or {}):
+            self.prompt_topcoat_select()
+            self._advance_to("topcoat_select")
+            return
         self._send_step_prompt("Please share postal code.")
 
     def prompt_topcoat_select(self) -> None:
@@ -255,6 +259,10 @@ class RegistrationFlow(BaseFlow):
         self._advance_to("topcoat_select")
 
     def handle_postal_code(self, message: dict) -> None:
+        if not is_registration_resubmit_session(self.session.session_data or {}):
+            self.prompt_topcoat_select()
+            self._advance_to("topcoat_select")
+            return
         postal_code = self._get_text(message)
         if not postal_code:
             self._send_validation_error("Postal code is required.")

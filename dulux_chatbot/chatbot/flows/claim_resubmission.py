@@ -148,9 +148,7 @@ class ClaimResubmissionFlow(BaseFlow):
         locked_session.current_step = STEP_MENU
         locked_session.session_data = {}
         locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
-        self.session.flow = None
-        self.session.current_step = STEP_MENU
-        self.session.session_data = {}
+        self.session.refresh_from_db(fields=["flow", "current_step", "session_data"])
         self.client.send_text(
             self.session.phone_number,
             "Thank you. Your additional claim details have been received and sent back to the Quality team.",
