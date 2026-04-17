@@ -8,9 +8,6 @@ from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 
 
-# TODO(audit P1-1 Critical): OTP missing. PRD: "verifies the user via OTP."
-# Carrier number recycling lets new phone owner reissue previous customer's
-# warranty PDF. See registration.py P1-1 for full context.
 class ReissuanceFlow(BaseFlow):
     initial_step = "phone_lookup"
 
