@@ -20,6 +20,10 @@ from dulux_chatbot.warranty.choices import (
 class WarrantyRegistration(TimeStampedModel):
     registration_code = models.CharField(max_length=10, unique=True, editable=False)
     channel = models.CharField(max_length=10, choices=RegistrationChannel.choices, default=RegistrationChannel.WHATSAPP)
+    # TODO(audit P2-6 Important): state and phone_number are used in every
+    # dashboard card-count aggregate, list filter, search_fields, and reissuance
+    # flow lookup — but have no db_index. Django does NOT auto-index CharField
+    # choices. Add db_index=True to both. Same applies to WarrantyClaim.state.
     state = models.CharField(max_length=20, choices=RegistrationState.choices, default=RegistrationState.SUBMITTED)
     customer_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20)

@@ -239,6 +239,9 @@ class ClaimActionAPIView(generics.GenericAPIView):
     )
     detail_serializer_class = WarrantyClaimDetailSerializer
 
+    # TODO(audit P2-9 Suggestion): Clearing _prefetched_objects_cache is accessing a
+    # private Django attribute to force re-fetch after mutation. Fragile across
+    # Django upgrades. Prefer: claim = self.get_queryset().get(pk=claim.pk)
     def _build_response(self, claim: WarrantyClaim) -> Response:
         if hasattr(claim, "_prefetched_objects_cache"):
             claim._prefetched_objects_cache = {}

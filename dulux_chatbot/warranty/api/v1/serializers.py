@@ -94,6 +94,10 @@ class CardCountQuerySerializer(serializers.Serializer):
         return attrs
 
 
+# TODO(audit P2-7 Suggestion): topcoat_name, basecoat_name, and approved_by_email
+# (below) use SerializerMethodField for simple FK dereferences. Per DRF best
+# practice, prefer model @property — reusable in admin, shell, templates, and
+# other serializers without re-declaring the method each time.
 class RegistrationPaintPairSerializer(serializers.ModelSerializer):
     topcoat_name = serializers.SerializerMethodField()
     basecoat_name = serializers.SerializerMethodField()
@@ -190,6 +194,11 @@ class RejectionFieldWriteSerializer(serializers.Serializer):
 
 
 class RegistrationPaintPairWriteSerializer(serializers.Serializer):
+    # TODO(audit P2-3 Important): Unfiltered queryset allows referencing soft-deleted
+    # or wrong-type products. validate() catches it, but the DRF browsable API shows
+    # all products and error messages reference wrong items. Filter to active records:
+    #   queryset=Product.objects.filter(is_active=True, product_type=ProductType.TOPCOAT)
+    # Same applies to basecoat below and Image.objects.all() on lines 183, 627, 927.
     topcoat = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     topcoat_quantity = serializers.DecimalField(max_digits=8, decimal_places=2)
     basecoat = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), required=False, allow_null=True)
@@ -250,6 +259,11 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
             "paint_pair_invoices",
         )
 
+    # TODO(audit P2-4 Important): validate_purchase_date and validate_phone_number
+    # are duplicated verbatim on WarrantyRegistrationUpdateSerializer below. Extract
+    # to standalone validators (e.g. warranty/validators.py) and wire via field
+    # `validators=[validate_registration_purchase_date]` so the rule lives in one
+    # place. If the 60-day window changes, only one file needs updating.
     def validate_purchase_date(self, value):
         if value > date.today():
             raise serializers.ValidationError("Purchase date cannot be in the future.")
@@ -274,6 +288,9 @@ class WarrantyRegistrationCreateSerializer(serializers.ModelSerializer):
         validated_data["registration_code"] = generate_registration_code()
         registration = super().create(validated_data)
 
+        # TODO(audit P2-8 Suggestion): Loop-create fires N INSERT statements. Use
+        # bulk_create for paint pairs, invoices, claim images, quality review items,
+        # and resubmission entries throughout this file (8+ occurrences).
         for paint_pair_data in paint_pairs:
             RegistrationPaintPair.objects.create(registration=registration, **paint_pair_data)
 
@@ -771,6 +788,12 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
+# TODO(audit P2-1 Important): ClaimQualityApproveSerializer and
+# ClaimQualityRejectSerializer below are 90% identical — same validate, same
+# save() shape (snapshot → create review → update claim → 2x audit log). Only
+# differences: decision_type, technical_reason field, event labels. ~80 lines of
+# duplication. Extract a BaseClaimQualityDecisionSerializer with shared save()
+# logic; subclasses set decision_type, extra fields, and labels.
 class ClaimQualityApproveSerializer(serializers.Serializer):
     technical_notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
 
@@ -990,6 +1013,12 @@ class ClaimResubmissionRequestSerializer(serializers.Serializer):
         }
 
 
+# TODO(audit P2-2 Important): save() below is near-identical to
+# ClaimCSRResubmissionCreateSerializer.save() further down — both create
+# ClaimResubmission + loop-create entries + set claim state to QA_REVIEW +
+# conditional notes update + audit log. Only difference is `source` field and
+# CSR's extra requested-item validation. Extract shared save logic into a base
+# class or a service function to eliminate the copy-paste.
 class ClaimResubmissionCreateSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
     entries = ClaimResubmissionEntryWriteSerializer(many=True, required=False)
