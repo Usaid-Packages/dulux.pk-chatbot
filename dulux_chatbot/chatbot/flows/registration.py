@@ -19,6 +19,12 @@ from dulux_chatbot.warranty.models import WarrantyRegistration
 from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
 
 
+# TODO(audit P1-1 Critical): OTP verification entirely missing. PRD mandates it
+# for registration ("verifies phone number via OTP") and reissuance (same in
+# reissuance.py). WhatsApp ties the phone to the sender, so registration OTP is
+# partly redundant — but reissuance is genuinely at risk for carrier number
+# recycling. Implement shared chatbot/services/otp.py with send, verify,
+# rate-limit, and expiry using existing constance MAX_OTP_RETRIES / OTP_EXPIRY_MINUTES.
 class RegistrationFlow(BaseFlow):
     initial_step = "consent"
 
@@ -52,6 +58,9 @@ class RegistrationFlow(BaseFlow):
     def prompt_dealer_address(self) -> None:
         self._send_step_prompt("Please share dealer address.")
 
+    # TODO(audit P1-8 Suggestion): postal_code handlers exist but are unreachable —
+    # dealer_address jumps straight to topcoat_select, and payload hardcodes
+    # postal_code="". Either wire into the flow or delete the dead methods.
     def prompt_postal_code(self) -> None:
         self._send_step_prompt("Please share postal code.")
 

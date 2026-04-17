@@ -272,6 +272,8 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.UserDetailsSerializer",
     "TOKEN_MODEL": None,
     "USE_JWT": True,
+    # TODO(audit I10 Important): Flip to True — HttpOnly cookie prevents XSS from
+    # exfiltrating JWT tokens. Currently False, meaning JS can read the cookie.
     "JWT_AUTH_HTTPONLY": False,
 }
 
