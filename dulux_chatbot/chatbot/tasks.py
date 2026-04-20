@@ -1,15 +1,41 @@
+import logging
+
 from celery import shared_task
 
 from dulux_chatbot.chatbot.helpers import format_product_message
+from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
 from dulux_chatbot.products.models import Product
+
+
+logger = logging.getLogger("dulux_chatbot")
 
 
 @shared_task
 def send_whatsapp_main_menu(phone_number: str, message: str) -> None:
     reset_whatsapp_session_to_main_menu(phone_number=phone_number)
     WhatsAppClient().send_text(phone_number, message)
+
+
+@shared_task
+def dispatch_whatsapp_message(session_id: int, message: dict) -> None:
+    from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
+
+    session = WhatsAppSession.objects.filter(pk=session_id).first()
+    if session is None:
+        logger.warning("WhatsApp dispatch skipped because session %s does not exist.", session_id)
+        return
+
+    client = WhatsAppClient()
+    try:
+        dispatch(session=session, message=message, client=client)
+    except Exception as e:
+        logger.exception("WhatsApp webhook dispatch failed: %s", e)
+        try:
+            client.send_text(session.phone_number, "Something went wrong. Please try again later.")
+        except Exception as fallback_error:
+            logger.exception("WhatsApp webhook fallback message failed: %s", fallback_error)
 
 
 @shared_task

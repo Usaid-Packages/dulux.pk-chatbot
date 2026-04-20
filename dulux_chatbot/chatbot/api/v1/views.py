@@ -8,10 +8,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.handlers.message_parser import parse_incoming_message
 from dulux_chatbot.chatbot.models import ProcessedMessage, WhatsAppSession
-from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.chatbot.tasks import dispatch_whatsapp_message
 
 
 logger = logging.getLogger("dulux_chatbot")
@@ -72,13 +71,5 @@ class WhatsAppWebhookView(APIView):
             return Response(status=200)
 
         session, _ = WhatsAppSession.objects.get_or_create(phone_number=phone_number)
-        client = WhatsAppClient()
-        try:
-            dispatch(session=session, message=message, client=client)
-        except Exception as e:
-            logger.exception("WhatsApp webhook dispatch failed: %s", e)
-            try:
-                client.send_text(phone_number, "Something went wrong. Please try again later.")
-            except Exception as fallback_error:
-                logger.exception("WhatsApp webhook fallback message failed: %s", fallback_error)
+        dispatch_whatsapp_message.delay(session.id, message)
         return Response({"processed_message_id": processed_message.id}, status=200)
