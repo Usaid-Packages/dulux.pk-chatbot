@@ -554,7 +554,7 @@ Deliverables:
 22. `RULE-006`: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper. (Covers Findings: #13)
 23. `DOC-001`: Add FE-local `.github/pull_request_template.md` (or approved exception note). (Covers Findings: #14)
 24. `RULE-007`: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception). (Covers Findings: #15)
-25. `ARCH-006`: Move product page data-layer imports into product hooks (`pages` composition-only refactor). (Covers Findings: #16)
+25. `ARCH-006` [✅ DONE 2026-04-20]: Move product page data-layer imports into product hooks (`pages` composition-only refactor). (Covers Findings: #16)
 26. `ARCH-007`: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
 27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
 28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`). (Covers Findings: #19)
