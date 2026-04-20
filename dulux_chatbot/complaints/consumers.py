@@ -72,10 +72,6 @@ class ComplaintChatConsumer(AuthenticatedConsumer):
             return False
         return True
 
-    # TODO(audit SEC-08 Medium): No object-level permission check on complaint chat.
-    # Any authenticated CS_AGENT/ADMIN can connect to any complaint's WebSocket and
-    # send messages, even if the complaint is assigned to another agent. Verify that
-    # complaint.assigned_to matches the connecting user (or user is ADMIN).
     async def receive_json(self, content: dict, **_kwargs) -> None:
         text = str(content.get("text", "")).strip()
         if not text:

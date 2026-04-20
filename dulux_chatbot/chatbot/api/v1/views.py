@@ -21,8 +21,8 @@ META_SIGNATURE_PREFIX = "sha256="
 def _webhook_signature_is_valid(*, raw_body: bytes, signature_header: str, app_secret: str) -> bool:
     if not signature_header.startswith(META_SIGNATURE_PREFIX):
         return False
-    expected_signature = hmac.new(
-        app_secret.encode("utf-8"),
+    expected_signature = hmac.HMAC(
+        key=app_secret.encode("utf-8"),
         msg=raw_body,
         digestmod=hashlib.sha256,
     ).hexdigest()
@@ -48,11 +48,6 @@ class WhatsAppWebhookView(APIView):
             return HttpResponse(challenge)
         return HttpResponse(status=403)
 
-    # TODO(audit WA-01 Critical): Missing X-Hub-Signature-256 verification on webhook POST
-    # Meta signs every webhook payload with HMAC-SHA256 using your app secret. Without
-    # verifying this header, any internet client can forge webhook payloads — injecting
-    # fake messages, triggering flows, or creating bogus registrations. Verify the
-    # signature before processing. See: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
     def post(self, request, *_args, **_kwargs):
         app_secret = settings.WHATSAPP_APP_SECRET
         if app_secret:

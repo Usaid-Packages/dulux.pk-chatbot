@@ -15,9 +15,6 @@ if SENTRY_DSN:
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production,
-        # TODO(audit OPS-01 Medium LIKELY): traces_sample_rate=1.0 captures 100% of
-        # transactions for Sentry performance monitoring. In production with traffic
-        # this creates significant overhead and cost. Reduce to 0.1-0.2 for production.
         traces_sample_rate=1.0,
         # If you wish to associate users to errors (assuming you are using
         # django.contrib.auth) you may enable sending PII data.

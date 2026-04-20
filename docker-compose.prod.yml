@@ -55,11 +55,6 @@ services:
 
   django:
     <<: [*django-build, *common]
-    # TODO(audit ARCH-01 High): Gunicorn with gthread worker runs WSGI, not ASGI.
-    # WebSocket connections (ws/complaints/) require an ASGI server (Daphne/Uvicorn).
-    # There is no separate Daphne/ASGI process in this compose file. WebSocket
-    # connections will fail silently in production. Add a Daphne service or switch
-    # to uvicorn with --ws websockets.
     command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers $GUNICORN_WORKERS --worker-class gthread --threads $GUNICORN_THREADS"
     entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
     ports:

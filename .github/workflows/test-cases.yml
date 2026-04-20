@@ -12,10 +12,6 @@ jobs:
   django-unit-tests:
     runs-on: ubuntu-latest
     steps:
-      # TODO(audit OPS-05 Medium): GitHub Actions pinned to @v2 (old major version).
-      # actions/checkout@v2 and actions/upload-artifact@v2 are deprecated — v2 uses
-      # Node 12 which GitHub has removed. Pin to current versions (@v4) or specific
-      # commit SHAs for supply chain safety.
       - uses: actions/checkout@v2
       - run: make test
       - uses: actions/upload-artifact@v2
