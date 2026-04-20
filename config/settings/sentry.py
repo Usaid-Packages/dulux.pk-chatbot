@@ -18,10 +18,6 @@ if SENTRY_DSN:
         traces_sample_rate=1.0,
         # If you wish to associate users to errors (assuming you are using
         # django.contrib.auth) you may enable sending PII data.
-        # TODO(audit PII-01 High): send_default_pii=True sends user IPs, emails,
-        # request bodies (which contain phone numbers, names, addresses) to Sentry.
-        # This exposes customer PII to a third-party service. Set to False and use
-        # Sentry's before_send callback to scrub sensitive fields if needed.
         send_default_pii=True,
         # By default the SDK will try to use the SENTRY_RELEASE
         # environment variable, or infer a git commit
