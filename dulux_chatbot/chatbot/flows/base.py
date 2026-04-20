@@ -3,8 +3,15 @@ import re
 from abc import ABC
 
 from django.core.files.base import ContentFile
+from rest_framework import serializers
 
-from dulux_chatbot.chatbot.constants import CMD_GO_BACK, CMD_MAIN_MENU, CMD_MAIN_MENU_WORDS, STEP_MENU
+from dulux_chatbot.chatbot.constants import (
+    CMD_GO_BACK,
+    CMD_MAIN_MENU,
+    CMD_MAIN_MENU_WORDS,
+    MAX_WHATSAPP_MEDIA_BYTES,
+    STEP_MENU,
+)
 from dulux_chatbot.chatbot.constants import IMAGE_UPLOAD_NOTE as DEFAULT_IMAGE_UPLOAD_NOTE
 from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT as DEFAULT_MAIN_MENU_TEXT
 from dulux_chatbot.core.models import Image
@@ -121,13 +128,18 @@ class BaseFlow(ABC):
             content = self.client.download_media(media_id)
             metadata = {}
         extension = self._get_media_file_extension(metadata.get("mime_type"))
+        if len(content) > MAX_WHATSAPP_MEDIA_BYTES:
+            raise serializers.ValidationError("Image size must be 50 MB or smaller.")
         return Image.objects.create(
             image=ContentFile(content, name=f"{filename_prefix}_{media_id}{extension}"),
         )
 
     def _get_media_file_extension(self, mime_type: str | None) -> str:
         normalized_mime_type = str(mime_type or "").lower().strip()
-        return IMAGE_MIME_TYPE_EXTENSIONS.get(normalized_mime_type, ".jpg")
+        extension = IMAGE_MIME_TYPE_EXTENSIONS.get(normalized_mime_type)
+        if extension is None:
+            raise serializers.ValidationError("Unsupported image type. Please upload a JPG, PNG, or WEBP image.")
+        return extension
 
     def send_initial_prompt(self) -> None:
         self.send_prompt()

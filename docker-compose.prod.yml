@@ -65,6 +65,18 @@ services:
     depends_on:
       - infisical-agent
 
+  daphne:
+    <<: [*django-build, *common]
+    command: bash -c "daphne -b 0.0.0.0 -p 8001 config.asgi:application"
+    entrypoint: ["/bin/sh", "/code/scripts/docker-entrypoint.sh"]
+    ports:
+      - "8001"
+    volumes:
+      - ./:/code
+      - infisical-secrets:/secrets:ro
+    depends_on:
+      - infisical-agent
+
   flower:
     <<: [*django-build, *common]
     command: bash -c "NEW_RELIC_CONFIG_FILE=newrelic.ini newrelic-admin run-program celery -A $PROJECT flower --conf=/code/config/settings/flowerconfig.py"
@@ -102,6 +114,7 @@ services:
       - ./data/certbot/www:/var/www/certbot
     depends_on:
       - django
+      - daphne
       - flower
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
     <<: *common

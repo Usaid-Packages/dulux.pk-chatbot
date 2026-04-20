@@ -4,6 +4,7 @@ from .base import *  # noqa
 DEBUG = True
 ENABLE_DEBUG_TOOLBAR = False
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+CORS_ALLOW_ALL_ORIGINS = True
 
 if ENABLE_DEBUG_TOOLBAR:
     INSTALLED_APPS += [  # noqa

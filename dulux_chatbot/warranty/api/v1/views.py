@@ -140,12 +140,7 @@ class QualityCardCountsAPIView(CardCountBaseAPIView):
 
 
 class WarrantyRegistrationListCreateAPIView(generics.ListCreateAPIView):
-    queryset = WarrantyRegistration.objects.select_related("approved_by").prefetch_related(
-        "paint_pairs__topcoat",
-        "paint_pairs__basecoat",
-        "invoices__image",
-        "rejection_fields",
-    )
+    queryset = WarrantyRegistration.objects.all()
     filterset_fields = ["state", "channel"]
     search_fields = ["registration_code", "phone_number", "customer_name"]
     ordering_fields = ["created", "purchase_date"]
@@ -183,6 +178,7 @@ class WarrantyClaimListCreateAPIView(generics.ListCreateAPIView):
         "registration",
         "paint_pair__topcoat",
         "paint_pair__basecoat",
+        "paint_pair__registration",
         "approved_by",
     ).prefetch_related("images__image", latest_quality_review_prefetch())
     filterset_fields = ["state", "issue_type"]
@@ -221,6 +217,7 @@ class WarrantyClaimRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
         "registration",
         "paint_pair__topcoat",
         "paint_pair__basecoat",
+        "paint_pair__registration",
         "approved_by",
     ).prefetch_related(
         "images__image",
@@ -246,6 +243,7 @@ class ClaimActionAPIView(generics.GenericAPIView):
         "registration",
         "paint_pair__topcoat",
         "paint_pair__basecoat",
+        "paint_pair__registration",
         "approved_by",
     ).prefetch_related(
         "images__image",
