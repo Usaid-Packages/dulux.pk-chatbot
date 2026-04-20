@@ -1,6 +1,12 @@
 import { toast } from 'react-toastify';
 
-import { REGISTRATION_INVOICE_TYPES } from '#/constants';
+import {
+  APPROVAL_TEMPLATE_FALLBACK_NOTE,
+  REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE,
+  REJECTION_TEMPLATE_FALLBACK_NOTE,
+  TOPCOAT_INVOICE_TYPE,
+  TRIMMED_FIELD_MAPPINGS,
+} from '#/constants';
 import {
   useApproveRegistrationMutation,
   useGetRegistrationByIdQuery,
@@ -8,15 +14,12 @@ import {
   useResubmitRegistrationMutation,
   useUpdateResubmitRegistrationMutation,
 } from '#/data-layer/registrations';
+import { executeGuardedDetailMutation, executeMutationWithFeedback } from '#/hooks/common/detailActionController';
 import type { ApproveFormValues, RejectFormValues, ResubmissionFormValues } from '#/schemas/registrations';
 import type { ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { RegistrationDetail, RegistrationResubmitUpdatePayload } from '#/types/registrations';
 import type { ResubmissionFieldName } from '#/types/registrations';
 import { createRegistrationApprovedTemplate, createRegistrationRejectedTemplate, getApiErrorMessage } from '#/utils';
-
-const APPROVAL_TEMPLATE_FALLBACK_NOTE = 'Approval confirmed.';
-const REJECTION_TEMPLATE_FALLBACK_NOTE = 'Rejected after review.';
-const TOPCOAT_INVOICE_TYPE = REGISTRATION_INVOICE_TYPES.TOPCOAT;
 
 const toIntegerOrNull = (value: string): number | null => {
   const normalizedValue = value.trim();
@@ -37,48 +40,12 @@ const buildResubmitUpdatePayload = (
     registration.rejectionFields.map(field => field.fieldName)
   );
 
-  if (requestedFieldNames.has('customer_name')) {
-    payload.customerName = (values.customerName ?? '').trim();
-  }
+  for (const mapping of TRIMMED_FIELD_MAPPINGS) {
+    if (!requestedFieldNames.has(mapping.requestedFieldName)) {
+      continue;
+    }
 
-  if (requestedFieldNames.has('phone_number')) {
-    payload.phoneNumber = (values.phoneNumber ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('email')) {
-    payload.email = (values.email ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('city')) {
-    payload.city = (values.city ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('province')) {
-    payload.province = (values.province ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('site_address')) {
-    payload.siteAddress = (values.siteAddress ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('purchase_date')) {
-    payload.purchaseDate = (values.purchaseDate ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('purchase_dealer')) {
-    payload.purchaseDealer = (values.purchaseDealer ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('purchase_dealer_city')) {
-    payload.purchaseDealerCity = (values.purchaseDealerCity ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('purchase_dealer_address')) {
-    payload.purchaseDealerAddress = (values.purchaseDealerAddress ?? '').trim();
-  }
-
-  if (requestedFieldNames.has('postal_code')) {
-    payload.postalCode = (values.postalCode ?? '').trim();
+    payload[mapping.payloadKey] = (values[mapping.valueKey] ?? '').trim();
   }
 
   if (requestedFieldNames.has('paint_pairs')) {
@@ -139,92 +106,66 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
   const updateResubmitMutation = useUpdateResubmitRegistrationMutation();
 
   const handleApproveRegistration = (values: ApproveFormValues, onSuccess?: () => void): void => {
-    const registration = detailQuery.data;
-    if (!registration) {
-      toast.error('Registration detail is not available.');
-      return;
-    }
+    executeGuardedDetailMutation({
+      detail: detailQuery.data,
+      missingDetailMessage: REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE,
+      payload: values,
+      buildPayload: (registration, formValues) => {
+        const normalizedNotes = formValues.notes.trim();
+        const templateNotes = normalizedNotes || APPROVAL_TEMPLATE_FALLBACK_NOTE;
 
-    const normalizedNotes = values.notes.trim();
-    const templateNotes = normalizedNotes || APPROVAL_TEMPLATE_FALLBACK_NOTE;
-
-    approveMutation.mutate(
-      {
-        id: registrationId,
-        notes: normalizedNotes,
-        notificationTemplate: createRegistrationApprovedTemplate(registration, templateNotes),
+        return {
+          id: registrationId,
+          notes: normalizedNotes,
+          notificationTemplate: createRegistrationApprovedTemplate(registration, templateNotes),
+        };
       },
-      {
-        onSuccess: () => {
-          toast.success('Registration approved successfully.');
-          if (onSuccess) {
-            onSuccess();
-          }
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      mutate: approveMutation.mutate,
+      successMessage: 'Registration approved successfully.',
+      onSuccess,
+    });
   };
 
   const handleRejectRegistration = (values: RejectFormValues, onSuccess?: () => void): void => {
-    const registration = detailQuery.data;
-    if (!registration) {
-      toast.error('Registration detail is not available.');
-      return;
-    }
+    executeGuardedDetailMutation({
+      detail: detailQuery.data,
+      missingDetailMessage: REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE,
+      payload: values,
+      buildPayload: (registration, formValues) => {
+        const normalizedNotes = formValues.notes.trim();
+        const templateNotes = normalizedNotes || REJECTION_TEMPLATE_FALLBACK_NOTE;
 
-    const normalizedNotes = values.notes.trim();
-    const templateNotes = normalizedNotes || REJECTION_TEMPLATE_FALLBACK_NOTE;
-
-    rejectMutation.mutate(
-      {
-        id: registrationId,
-        notes: normalizedNotes,
-        notificationTemplate: createRegistrationRejectedTemplate(registration, templateNotes),
+        return {
+          id: registrationId,
+          notes: normalizedNotes,
+          notificationTemplate: createRegistrationRejectedTemplate(registration, templateNotes),
+        };
       },
-      {
-        onSuccess: () => {
-          toast.success('Registration rejected successfully.');
-          if (onSuccess) {
-            onSuccess();
-          }
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      mutate: rejectMutation.mutate,
+      successMessage: 'Registration rejected successfully.',
+      onSuccess,
+    });
   };
 
   const handleResubmitRegistration = (values: ResubmissionFormValues, onSuccess?: () => void): void => {
     const normalizedNotes = values.notes.trim();
 
-    resubmitMutation.mutate(
-      {
+    executeMutationWithFeedback({
+      mutate: resubmitMutation.mutate,
+      payload: {
         id: registrationId,
         fields: values.fields,
         notes: normalizedNotes,
       },
-      {
-        onSuccess: () => {
-          toast.success('Resubmission request sent successfully.');
-          if (onSuccess) {
-            onSuccess();
-          }
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      successMessage: 'Resubmission request sent successfully.',
+      onSuccess,
+    });
   };
 
   const handleSubmitResubmitChanges = (values: ResubmitUpdateFormValues, onSuccess?: () => void): void => {
     const registration = detailQuery.data;
     if (!registration) {
-      toast.error('Registration detail is not available.');
+      toast.error(REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE);
       return;
     }
 
@@ -241,24 +182,16 @@ export const useRegistrationDetail = (registrationId: string): UseRegistrationDe
       return;
     }
 
-    updateResubmitMutation.mutate(
-      {
+    executeMutationWithFeedback({
+      mutate: updateResubmitMutation.mutate,
+      payload: {
         id: registrationId,
         payload,
         invoiceFiles: values.invoiceFiles,
       },
-      {
-        onSuccess: () => {
-          toast.success('Resubmission fields updated successfully.');
-          if (onSuccess) {
-            onSuccess();
-          }
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      successMessage: 'Resubmission fields updated successfully.',
+      onSuccess,
+    });
   };
 
   return {

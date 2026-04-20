@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
 import {
@@ -13,6 +12,7 @@ import {
   useSendToQualityMutation,
   useSubmitClaimCsrResubmissionMutation,
 } from '#/data-layer/claims';
+import { executeGuardedDetailMutation, executeMutationWithFeedback } from '#/hooks/common/detailActionController';
 import type {
   ApproveClaimPayload,
   ClaimCsrResubmissionSubmitPayload,
@@ -20,7 +20,7 @@ import type {
   RejectClaimPayload,
   SendToQualityPayload,
 } from '#/types/claims.types';
-import { createClaimApprovedTemplate, createClaimRejectedTemplate, getApiErrorMessage } from '#/utils';
+import { createClaimApprovedTemplate, createClaimRejectedTemplate } from '#/utils';
 
 interface UseClaimDetailResult {
   claimQuery: UseQueryResult<ClaimDetail, Error>;
@@ -73,13 +73,10 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   }, [claimQuery.data, id, markInReviewMutation]);
 
   const handleSendToQuality = (payload: SendToQualityPayload): void => {
-    sendToQualityMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Claim forwarded to quality.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
+    executeMutationWithFeedback({
+      mutate: sendToQualityMutation.mutate,
+      payload,
+      successMessage: 'Claim forwarded to quality.',
     });
   };
 
@@ -93,57 +90,36 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   return {
     claimQuery,
     handleApprove: payload => {
-      const claim = claimQuery.data;
-      if (!claim) {
-        toast.error('Claim detail is not available.');
-        return;
-      }
-
-      approveMutation.mutate(
-        {
-          ...payload,
-          notificationTemplate: createClaimApprovedTemplate(claim, payload.notes?.trim() || 'Claim approved.'),
-        },
-        {
-          onSuccess: () => {
-            toast.success('Claim finalized as approved.');
-          },
-          onError: error => {
-            toast.error(getApiErrorMessage(error));
-          },
-        }
-      );
+      executeGuardedDetailMutation({
+        detail: claimQuery.data,
+        missingDetailMessage: 'Claim detail is not available.',
+        payload,
+        buildPayload: (claim, actionPayload) => ({
+          ...actionPayload,
+          notificationTemplate: createClaimApprovedTemplate(claim, actionPayload.notes?.trim() || 'Claim approved.'),
+        }),
+        mutate: approveMutation.mutate,
+        successMessage: 'Claim finalized as approved.',
+      });
     },
     handleReject: payload => {
-      const claim = claimQuery.data;
-      if (!claim) {
-        toast.error('Claim detail is not available.');
-        return;
-      }
-
-      rejectMutation.mutate(
-        {
-          ...payload,
-          notificationTemplate: createClaimRejectedTemplate(claim, payload.notes),
-        },
-        {
-          onSuccess: () => {
-            toast.success('Claim finalized as rejected.');
-          },
-          onError: error => {
-            toast.error(getApiErrorMessage(error));
-          },
-        }
-      );
+      executeGuardedDetailMutation({
+        detail: claimQuery.data,
+        missingDetailMessage: 'Claim detail is not available.',
+        payload,
+        buildPayload: (claim, actionPayload) => ({
+          ...actionPayload,
+          notificationTemplate: createClaimRejectedTemplate(claim, actionPayload.notes),
+        }),
+        mutate: rejectMutation.mutate,
+        successMessage: 'Claim finalized as rejected.',
+      });
     },
     handleClaimCsrResubmissionSubmit: payload => {
-      submitClaimCsrResubmissionMutation.mutate(payload, {
-        onSuccess: () => {
-          toast.success('Resubmission submitted and claim moved to QA review.');
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
+      executeMutationWithFeedback({
+        mutate: submitClaimCsrResubmissionMutation.mutate,
+        payload,
+        successMessage: 'Resubmission submitted and claim moved to QA review.',
       });
     },
     handleSendToQuality,
