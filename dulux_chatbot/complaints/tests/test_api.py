@@ -25,6 +25,13 @@ from dulux_chatbot.users.choices import UserRole
 from dulux_chatbot.warranty.tests.factories import create_registration
 
 
+# TODO: Missing test coverage for complaints app:
+# 1. No assertNumQueries on complaint list endpoint — N+1 regressions will go undetected
+# 2. No invalid state transition tests (e.g., OPEN -> CLOSE should fail, CLOSED -> ASSIGN
+#    should fail) — state machine enforcement is untested for negative paths
+# 3. No test for complaint detail GET (retrieve endpoint exists but no read test)
+# 4. No test verifying assigned_to is set on ASSIGN action — only status is asserted
+# 5. No assertNumQueries on card count endpoint
 class ComplaintAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
