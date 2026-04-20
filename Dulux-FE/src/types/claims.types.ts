@@ -24,6 +24,10 @@ export const CLAIM_CSR_RESUBMISSION_INPUT_TYPES = ['IMAGE', 'TEXT'] as const;
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 export type ClaimWorkflowState = (typeof CLAIM_WORKFLOW_STATES)[number];
 export type ClaimIssueType = (typeof CLAIM_ISSUE_TYPES)[number];
+export interface ClaimIssueTypeOption {
+  label: string;
+  value: ClaimIssueType;
+}
 export type ClaimListStatusFilter = 'all' | ClaimStatus | 'submitted' | 'inReview';
 export type ClaimCsrResubmissionInputType = (typeof CLAIM_CSR_RESUBMISSION_INPUT_TYPES)[number];
 
