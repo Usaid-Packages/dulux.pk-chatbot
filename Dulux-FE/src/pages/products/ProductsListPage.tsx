@@ -1,366 +1,63 @@
-import * as React from 'react';
+import type { JSX } from 'react';
 
-import { useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { DeleteConfirmModal, SurfaceTypeModal } from '#/components/products';
+import { PRODUCTS_LIST_TABS, PRODUCT_STATUS_FILTER_VALUES } from '#/constants';
+import { useProductsListPageController } from '#/hooks/products';
+import { cn } from '#/utils';
+import { ProductsTabContainer, SurfaceTypesTabContainer } from './components';
 
-import { DeleteConfirmModal, ProductTable, SurfaceTypeModal, SurfaceTypeTable } from '#/components/products';
-import {
-  Button,
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Skeleton,
-} from '#/components/ui';
-import {
-  useCreateSurfaceTypeMutation,
-  useDeleteSurfaceTypeMutation,
-  useGetProductsQuery,
-  useGetSurfaceTypesQuery,
-  useUpdateSurfaceTypeMutation,
-} from '#/data-layer/products';
-import { useDebouncedValue } from '#/hooks';
-import { mapSurfaceTypeFormToPayload } from '#/hooks/products';
-import { PRODUCT_TYPES } from '#/types/products';
-import type {
-  Product,
-  ProductEnvironment,
-  ProductType,
-  SurfaceType,
-  SurfaceTypeFormValues,
-  SurfaceTypeQueryParams,
-} from '#/types/products';
-import { cn, getApiErrorMessage } from '#/utils';
-
-const FIRST_PAGE = 1;
-const PRODUCT_PAGE_SIZE = 10;
-const SURFACE_TYPE_PAGE_SIZE = 10;
-const INVALID_PAGE_ERROR_MESSAGE = 'Invalid page.';
-const EMPTY_PRODUCTS: Product[] = [];
-const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
-
-type ProductTab = 'products' | 'surface-types';
-type ProductTypeFilter = ProductType | 'ALL';
-type ProductStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
-type ProductOrdering = 'name' | '-name' | 'created' | '-created';
-type SurfaceEnvironmentFilter = ProductEnvironment | 'ALL';
-
-const isProductTab = (value: string | null): value is ProductTab => {
-  return value === 'products' || value === 'surface-types';
-};
-
-const isProductTypeFilter = (value: string | null): value is ProductTypeFilter => {
-  return value === 'ALL' || value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT;
-};
-
-const isProductStatusFilter = (value: string | null): value is ProductStatusFilter => {
-  return value === 'ALL' || value === 'ACTIVE' || value === 'INACTIVE';
-};
-
-const isProductOrdering = (value: string | null): value is ProductOrdering => {
-  return value === 'name' || value === '-name' || value === 'created' || value === '-created';
-};
-
-const isSurfaceEnvironmentFilter = (value: string | null): value is SurfaceEnvironmentFilter => {
-  return value === 'ALL' || value === 'INTERIOR' || value === 'EXTERIOR';
-};
-
-const parsePageFromSearchParam = (value: string | null): number => {
-  const parsedPage = Number.parseInt(value ?? String(FIRST_PAGE), 10);
-  return Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : FIRST_PAGE;
-};
-
-const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number> => {
-  return products.reduce<Record<number, number>>((accumulator, product) => {
-    product.surfaceTypes.forEach(surfaceType => {
-      const currentCount = accumulator[surfaceType.id] ?? 0;
-      accumulator[surfaceType.id] = currentCount + 1;
-    });
-
-    return accumulator;
-  }, {});
-};
-
-export const ProductsListPage = (): React.JSX.Element => {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const tabParam = searchParams.get('tab');
-  const activeTab: ProductTab = isProductTab(tabParam) ? tabParam : 'products';
-
-  const [productSearch, setProductSearch] = React.useState<string>(() => searchParams.get('productSearch') ?? '');
-  const [productTypeFilter, setProductTypeFilter] = React.useState<ProductTypeFilter>(() => {
-    const value = searchParams.get('productType');
-    return isProductTypeFilter(value) ? value : 'ALL';
-  });
-  const [productStatusFilter, setProductStatusFilter] = React.useState<ProductStatusFilter>(() => {
-    const value = searchParams.get('productStatus');
-    return isProductStatusFilter(value) ? value : 'ALL';
-  });
-  const [productOrdering, setProductOrdering] = React.useState<ProductOrdering>(() => {
-    const value = searchParams.get('productOrdering');
-    return isProductOrdering(value) ? value : '-created';
-  });
-  const [productPage, setProductPage] = React.useState<number>(() =>
-    parsePageFromSearchParam(searchParams.get('productPage'))
-  );
-
-  const [surfaceSearch, setSurfaceSearch] = React.useState<string>(() => searchParams.get('surfaceSearch') ?? '');
-  const [surfaceEnvironmentFilter, setSurfaceEnvironmentFilter] = React.useState<SurfaceEnvironmentFilter>(() => {
-    const value = searchParams.get('surfaceEnvironment');
-    return isSurfaceEnvironmentFilter(value) ? value : 'ALL';
-  });
-  const [surfacePage, setSurfacePage] = React.useState<number>(() =>
-    parsePageFromSearchParam(searchParams.get('surfacePage'))
-  );
-  const debouncedProductSearch = useDebouncedValue(productSearch);
-  const debouncedSurfaceSearch = useDebouncedValue(surfaceSearch);
-
-  const [isSurfaceTypeModalOpen, setSurfaceTypeModalOpen] = React.useState<boolean>(false);
-  const [surfaceTypeEditTarget, setSurfaceTypeEditTarget] = React.useState<SurfaceType | null>(null);
-  const [surfaceTypeDeleteTarget, setSurfaceTypeDeleteTarget] = React.useState<SurfaceType | null>(null);
-
-  const productQuery = useGetProductsQuery({
-    search: debouncedProductSearch.trim() || undefined,
-    product_type: productTypeFilter === 'ALL' ? undefined : productTypeFilter,
-    is_active: productStatusFilter === 'ALL' ? undefined : productStatusFilter === 'ACTIVE',
-    ordering: productOrdering,
-    page_size: PRODUCT_PAGE_SIZE,
-    page: productPage,
-  });
-
-  const surfaceTypeParams: SurfaceTypeQueryParams = {
-    search: debouncedSurfaceSearch.trim() || undefined,
-    environment: surfaceEnvironmentFilter === 'ALL' ? undefined : surfaceEnvironmentFilter,
-    page: surfacePage,
-    page_size: SURFACE_TYPE_PAGE_SIZE,
-  };
-
-  const surfaceTypesQuery = useGetSurfaceTypesQuery(surfaceTypeParams);
-
-  const createSurfaceTypeMutation = useCreateSurfaceTypeMutation();
-  const deleteSurfaceTypeMutation = useDeleteSurfaceTypeMutation();
-  const updateSurfaceTypeMutation = useUpdateSurfaceTypeMutation();
-
-  const products = productQuery.data?.results ?? EMPTY_PRODUCTS;
-  const surfaceTypes = surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES;
-  const productTotalItems = productQuery.data?.count ?? 0;
-  const productTotalPages = Math.max(1, Math.ceil(productTotalItems / PRODUCT_PAGE_SIZE));
-  const surfaceTypeTotalItems = surfaceTypesQuery.data?.count ?? 0;
-  const surfaceTypeTotalPages = Math.max(1, Math.ceil(surfaceTypeTotalItems / SURFACE_TYPE_PAGE_SIZE));
-  const isSurfaceTypesInvalidPageError =
-    surfaceTypesQuery.isError && getApiErrorMessage(surfaceTypesQuery.error).includes(INVALID_PAGE_ERROR_MESSAGE);
-
-  const linkedProductCountMap = React.useMemo<Record<number, number>>(() => {
-    return buildSurfaceLinkedCountMap(products);
-  }, [products]);
-  const searchParamsString = searchParams.toString();
-
-  React.useEffect(() => {
-    const nextParams = new URLSearchParams();
-    nextParams.set('tab', activeTab);
-
-    if (debouncedProductSearch.trim().length > 0) {
-      nextParams.set('productSearch', debouncedProductSearch.trim());
-    }
-    if (productTypeFilter !== 'ALL') {
-      nextParams.set('productType', productTypeFilter);
-    }
-    if (productStatusFilter !== 'ALL') {
-      nextParams.set('productStatus', productStatusFilter);
-    }
-    if (productOrdering !== '-created') {
-      nextParams.set('productOrdering', productOrdering);
-    }
-    if (productPage !== FIRST_PAGE) {
-      nextParams.set('productPage', String(productPage));
-    }
-    if (debouncedSurfaceSearch.trim().length > 0) {
-      nextParams.set('surfaceSearch', debouncedSurfaceSearch.trim());
-    }
-    if (surfaceEnvironmentFilter !== 'ALL') {
-      nextParams.set('surfaceEnvironment', surfaceEnvironmentFilter);
-    }
-    if (surfacePage !== FIRST_PAGE) {
-      nextParams.set('surfacePage', String(surfacePage));
-    }
-
-    if (nextParams.toString() !== searchParamsString) {
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [
+/**
+ * ProductsListPage renders product catalog and surface-type management tabs.
+ */
+export const ProductsListPage = (): JSX.Element => {
+  const {
     activeTab,
+    productSearch,
+    productTypeFilter,
+    productStatusFilter,
     productOrdering,
     productPage,
-    debouncedProductSearch,
-    productStatusFilter,
-    productTypeFilter,
-    searchParamsString,
-    setSearchParams,
+    productTotalPages,
+    products,
+    surfaceSearch,
     surfaceEnvironmentFilter,
     surfacePage,
-    debouncedSurfaceSearch,
-  ]);
-
-  React.useEffect(() => {
-    if (!productQuery.isLoading && !productQuery.isError && productPage > productTotalPages) {
-      setProductPage(productTotalPages);
-    }
-  }, [productPage, productQuery.isError, productQuery.isLoading, productTotalPages]);
-
-  React.useEffect(() => {
-    if (!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfacePage > surfaceTypeTotalPages) {
-      setSurfacePage(surfaceTypeTotalPages);
-    }
-  }, [surfacePage, surfaceTypeTotalPages, surfaceTypesQuery.isError, surfaceTypesQuery.isLoading]);
-
-  React.useEffect(() => {
-    if (surfacePage > FIRST_PAGE && isSurfaceTypesInvalidPageError) {
-      setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
-    }
-  }, [isSurfaceTypesInvalidPageError, surfacePage]);
-
-  const setTab = (tab: ProductTab): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('tab', tab);
-      return nextParams;
-    });
-  };
-
-  const handleProductSearchChange = (value: string): void => {
-    setProductSearch(value);
-    setProductPage(FIRST_PAGE);
-  };
-
-  const handleProductTypeFilterChange = (value: string): void => {
-    setProductTypeFilter(value === 'ALL' ? 'ALL' : (value as ProductType));
-    setProductPage(FIRST_PAGE);
-  };
-
-  const handleProductStatusFilterChange = (value: string): void => {
-    setProductStatusFilter(value as ProductStatusFilter);
-    setProductPage(FIRST_PAGE);
-  };
-
-  const handleProductOrderingChange = (value: string): void => {
-    setProductOrdering(value as ProductOrdering);
-    setProductPage(FIRST_PAGE);
-  };
-
-  const openCreateSurfaceTypeModal = (): void => {
-    setSurfaceTypeEditTarget(null);
-    setSurfaceTypeModalOpen(true);
-  };
-
-  const openEditSurfaceTypeModal = (surfaceType: SurfaceType): void => {
-    setSurfaceTypeEditTarget(surfaceType);
-    setSurfaceTypeModalOpen(true);
-  };
-
-  const closeSurfaceTypeModal = (): void => {
-    setSurfaceTypeModalOpen(false);
-    setSurfaceTypeEditTarget(null);
-  };
-
-  const openDeleteSurfaceTypeModal = (surfaceType: SurfaceType): void => {
-    setSurfaceTypeDeleteTarget(surfaceType);
-  };
-
-  const closeDeleteSurfaceTypeModal = (): void => {
-    setSurfaceTypeDeleteTarget(null);
-  };
-
-  const submitSurfaceType = (values: SurfaceTypeFormValues): void => {
-    if (surfaceTypeEditTarget) {
-      updateSurfaceTypeMutation.mutate(
-        {
-          id: String(surfaceTypeEditTarget.id),
-          payload: mapSurfaceTypeFormToPayload(values),
-        },
-        {
-          onSuccess: () => {
-            toast.success('Surface type updated successfully.');
-            closeSurfaceTypeModal();
-          },
-          onError: error => {
-            toast.error(getApiErrorMessage(error));
-          },
-        }
-      );
-
-      return;
-    }
-
-    createSurfaceTypeMutation.mutate(mapSurfaceTypeFormToPayload(values), {
-      onSuccess: () => {
-        toast.success('Surface type created successfully.');
-        closeSurfaceTypeModal();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
-  };
-
-  const handleDeleteSurfaceType = (): void => {
-    if (!surfaceTypeDeleteTarget) {
-      return;
-    }
-
-    deleteSurfaceTypeMutation.mutate(String(surfaceTypeDeleteTarget.id), {
-      onSuccess: () => {
-        if (surfacePage > FIRST_PAGE && surfaceTypes.length === 1) {
-          setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
-        }
-        toast.success('Surface type deleted successfully.');
-        closeDeleteSurfaceTypeModal();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
-    });
-  };
-
-  const handleSurfaceSearchChange = (value: string): void => {
-    setSurfaceSearch(value);
-    setSurfacePage(FIRST_PAGE);
-  };
-
-  const handleSurfaceEnvironmentFilterChange = (value: string): void => {
-    setSurfaceEnvironmentFilter(value as SurfaceEnvironmentFilter);
-    setSurfacePage(FIRST_PAGE);
-  };
-
-  const goToProductNextPage = (): void => {
-    if (productQuery.data?.next) {
-      setProductPage(previousPage => previousPage + 1);
-    }
-  };
-
-  const goToProductPreviousPage = (): void => {
-    if (productPage > FIRST_PAGE) {
-      setProductPage(previousPage => previousPage - 1);
-    }
-  };
-
-  const goToSurfaceNextPage = (): void => {
-    if (surfaceTypesQuery.data?.next) {
-      setSurfacePage(previousPage => previousPage + 1);
-    }
-  };
-
-  const goToSurfacePreviousPage = (): void => {
-    if (surfacePage > FIRST_PAGE) {
-      setSurfacePage(previousPage => previousPage - 1);
-    }
-  };
+    surfaceTypeTotalPages,
+    surfaceTypes,
+    linkedProductCountMap,
+    isSurfaceTypeModalOpen,
+    surfaceTypeEditTarget,
+    surfaceTypeDeleteTarget,
+    isProductLoading,
+    isProductError,
+    productErrorMessage,
+    hasProductNextPage,
+    isSurfaceTypesLoading,
+    isSurfaceTypesError,
+    surfaceTypesErrorMessage,
+    hasSurfaceTypesNextPage,
+    isSurfaceTypeSubmitting,
+    isSurfaceTypeDeletePending,
+    setProductsTab,
+    setSurfaceTypesTab,
+    handleProductSearchChange,
+    handleProductTypeFilterChange,
+    handleProductStatusFilterChange,
+    handleProductOrderingChange,
+    goToProductPreviousPage,
+    goToProductNextPage,
+    handleSurfaceSearchChange,
+    handleSurfaceEnvironmentFilterChange,
+    goToSurfacePreviousPage,
+    goToSurfaceNextPage,
+    openCreateSurfaceTypeModal,
+    openEditSurfaceTypeModal,
+    closeSurfaceTypeModal,
+    openDeleteSurfaceTypeModal,
+    closeDeleteSurfaceTypeModal,
+    submitSurfaceType,
+    handleDeleteSurfaceType,
+  } = useProductsListPageController();
 
   return (
     <section className='wf-list-shell gap-4'>
@@ -368,231 +65,69 @@ export const ProductsListPage = (): React.JSX.Element => {
         <div className='flex flex-wrap gap-2'>
           <button
             type='button'
-            className={cn('wf-filter-tab', activeTab === 'products' ? 'wf-filter-tab-active' : '')}
-            onClick={() => setTab('products')}
+            className={cn('wf-filter-tab', activeTab === PRODUCTS_LIST_TABS.PRODUCTS ? 'wf-filter-tab-active' : '')}
+            onClick={setProductsTab}
           >
             Products
           </button>
           <button
             type='button'
-            className={cn('wf-filter-tab', activeTab === 'surface-types' ? 'wf-filter-tab-active' : '')}
-            onClick={() => setTab('surface-types')}
+            className={cn(
+              'wf-filter-tab',
+              activeTab === PRODUCTS_LIST_TABS.SURFACE_TYPES ? 'wf-filter-tab-active' : ''
+            )}
+            onClick={setSurfaceTypesTab}
           >
             Surface Types
           </button>
         </div>
       </section>
 
-      {activeTab === 'products' ? (
-        <>
-          <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
-            <div className='grid items-center gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]'>
-              <Input
-                type='search'
-                value={productSearch}
-                onChange={event => handleProductSearchChange(event.target.value)}
-                placeholder='Search by product name'
-                className='h-11 rounded-xl border-primary/25 bg-white'
-                aria-label='Search products'
-              />
-              <Select value={productTypeFilter} onValueChange={handleProductTypeFilterChange}>
-                <SelectTrigger aria-label='Filter products by type'>
-                  <SelectValue placeholder='Type: All' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>Type: All</SelectItem>
-                  <SelectItem value={PRODUCT_TYPES.TOPCOAT}>Topcoat</SelectItem>
-                  <SelectItem value={PRODUCT_TYPES.BASECOAT}>Basecoat</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={productStatusFilter} onValueChange={handleProductStatusFilterChange}>
-                <SelectTrigger aria-label='Filter products by status'>
-                  <SelectValue placeholder='Status: All' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>Status: All</SelectItem>
-                  <SelectItem value='ACTIVE'>Active</SelectItem>
-                  <SelectItem value='INACTIVE'>Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={productOrdering} onValueChange={handleProductOrderingChange}>
-                <SelectTrigger aria-label='Order products'>
-                  <SelectValue placeholder='Order By' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='-created'>Newest first</SelectItem>
-                  <SelectItem value='created'>Oldest first</SelectItem>
-                  <SelectItem value='name'>Name (A-Z)</SelectItem>
-                  <SelectItem value='-name'>Name (Z-A)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </section>
-
-          {productQuery.isLoading ? (
-            <section className='space-y-2 wf-card wf-card-p4'>
-              <Skeleton className='h-9 w-full' />
-              <Skeleton className='h-9 w-full' />
-              <Skeleton className='h-9 w-full' />
-            </section>
-          ) : null}
-
-          {productQuery.isError ? (
-            <Empty>
-              <EmptyContent>
-                <EmptyHeader>
-                  <EmptyTitle>Failed to load products</EmptyTitle>
-                  <EmptyDescription>{productQuery.error?.message ?? 'Unable to fetch products.'}</EmptyDescription>
-                </EmptyHeader>
-              </EmptyContent>
-            </Empty>
-          ) : null}
-
-          {!productQuery.isLoading && !productQuery.isError && products.length === 0 ? (
-            <Empty>
-              <EmptyContent>
-                <EmptyHeader>
-                  <EmptyTitle>No products found</EmptyTitle>
-                  <EmptyDescription>Try adjusting your filters.</EmptyDescription>
-                </EmptyHeader>
-              </EmptyContent>
-            </Empty>
-          ) : null}
-
-          {!productQuery.isLoading && !productQuery.isError && products.length > 0 ? (
-            <>
-              <ProductTable products={products} />
-
-              <section className='wf-pagination-panel'>
-                <p className='text-sm text-text-muted'>
-                  Page {productPage} of {productTotalPages}
-                </p>
-                <div className='flex w-full gap-2 sm:w-auto'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={productPage <= FIRST_PAGE}
-                    onClick={goToProductPreviousPage}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={!productQuery.data?.next}
-                    onClick={goToProductNextPage}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </section>
-            </>
-          ) : null}
-        </>
+      {activeTab === PRODUCTS_LIST_TABS.PRODUCTS ? (
+        <ProductsTabContainer
+          productSearch={productSearch}
+          productTypeFilter={productTypeFilter}
+          productStatusFilter={productStatusFilter}
+          productOrdering={productOrdering}
+          productPage={productPage}
+          productTotalPages={productTotalPages}
+          products={products}
+          isLoading={isProductLoading}
+          isError={isProductError}
+          errorMessage={productErrorMessage}
+          hasNextPage={hasProductNextPage}
+          onProductSearchChange={handleProductSearchChange}
+          onProductTypeFilterChange={handleProductTypeFilterChange}
+          onProductStatusFilterChange={handleProductStatusFilterChange}
+          onProductOrderingChange={handleProductOrderingChange}
+          onPreviousPage={goToProductPreviousPage}
+          onNextPage={goToProductNextPage}
+        />
       ) : (
-        <>
-          <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
-            <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-[2fr_1fr_auto]'>
-              <Input
-                type='search'
-                value={surfaceSearch}
-                onChange={event => handleSurfaceSearchChange(event.target.value)}
-                placeholder='Search by surface name'
-                className='h-11 rounded-xl border-primary/25 bg-white'
-                aria-label='Search surface types'
-              />
-              <Select value={surfaceEnvironmentFilter} onValueChange={handleSurfaceEnvironmentFilterChange}>
-                <SelectTrigger aria-label='Filter surface types by category'>
-                  <SelectValue placeholder='Category: All' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='ALL'>Category: All</SelectItem>
-                  <SelectItem value='INTERIOR'>Interior</SelectItem>
-                  <SelectItem value='EXTERIOR'>Exterior</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                type='button'
-                className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
-                onClick={openCreateSurfaceTypeModal}
-              >
-                Add Surface Type
-              </Button>
-            </div>
-          </section>
-
-          {surfaceTypesQuery.isLoading ? (
-            <section className='space-y-2 wf-card wf-card-p4'>
-              <Skeleton className='h-9 w-full' />
-              <Skeleton className='h-9 w-full' />
-              <Skeleton className='h-9 w-full' />
-            </section>
-          ) : null}
-
-          {surfaceTypesQuery.isError ? (
-            <Empty>
-              <EmptyContent>
-                <EmptyHeader>
-                  <EmptyTitle>Failed to load surface types</EmptyTitle>
-                  <EmptyDescription>
-                    {surfaceTypesQuery.error?.message ?? 'Unable to fetch surface types.'}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </EmptyContent>
-            </Empty>
-          ) : null}
-
-          {!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfaceTypes.length === 0 ? (
-            <Empty>
-              <EmptyContent>
-                <EmptyHeader>
-                  <EmptyTitle>No surface types found</EmptyTitle>
-                  <EmptyDescription>Add a surface type to continue.</EmptyDescription>
-                </EmptyHeader>
-              </EmptyContent>
-            </Empty>
-          ) : null}
-
-          {!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfaceTypes.length > 0 ? (
-            <>
-              <SurfaceTypeTable
-                surfaceTypes={surfaceTypes}
-                linkedProductCountMap={linkedProductCountMap}
-                onEdit={openEditSurfaceTypeModal}
-                onDelete={openDeleteSurfaceTypeModal}
-              />
-
-              <section className='wf-pagination-panel'>
-                <p className='text-sm text-text-muted'>
-                  Page {surfacePage} of {surfaceTypeTotalPages}
-                </p>
-                <div className='flex w-full gap-2 sm:w-auto'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={surfacePage <= FIRST_PAGE}
-                    onClick={goToSurfacePreviousPage}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={!surfaceTypesQuery.data?.next}
-                    onClick={goToSurfaceNextPage}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </section>
-            </>
-          ) : null}
-        </>
+        <SurfaceTypesTabContainer
+          surfaceSearch={surfaceSearch}
+          surfaceEnvironmentFilter={surfaceEnvironmentFilter}
+          surfacePage={surfacePage}
+          surfaceTypeTotalPages={surfaceTypeTotalPages}
+          surfaceTypes={surfaceTypes}
+          linkedProductCountMap={linkedProductCountMap}
+          isLoading={isSurfaceTypesLoading}
+          isError={isSurfaceTypesError}
+          errorMessage={surfaceTypesErrorMessage}
+          hasNextPage={hasSurfaceTypesNextPage}
+          onSurfaceSearchChange={handleSurfaceSearchChange}
+          onSurfaceEnvironmentFilterChange={handleSurfaceEnvironmentFilterChange}
+          onOpenCreateSurfaceTypeModal={openCreateSurfaceTypeModal}
+          onOpenEditSurfaceTypeModal={openEditSurfaceTypeModal}
+          onOpenDeleteSurfaceTypeModal={openDeleteSurfaceTypeModal}
+          onPreviousPage={goToSurfacePreviousPage}
+          onNextPage={goToSurfaceNextPage}
+        />
       )}
 
       <SurfaceTypeModal
         isOpen={isSurfaceTypeModalOpen}
-        isSubmitting={createSurfaceTypeMutation.isPending || updateSurfaceTypeMutation.isPending}
+        isSubmitting={isSurfaceTypeSubmitting}
         title={surfaceTypeEditTarget ? 'Edit Surface Type' : 'Add Surface Type'}
         description='Provide a name and category for this surface type.'
         initialValues={
@@ -601,7 +136,7 @@ export const ProductsListPage = (): React.JSX.Element => {
                 name: surfaceTypeEditTarget.name,
                 environment: surfaceTypeEditTarget.environment,
                 description: '',
-                status: 'ACTIVE',
+                status: PRODUCT_STATUS_FILTER_VALUES.ACTIVE,
               }
             : undefined
         }
@@ -612,7 +147,7 @@ export const ProductsListPage = (): React.JSX.Element => {
 
       <DeleteConfirmModal
         isOpen={Boolean(surfaceTypeDeleteTarget)}
-        isSubmitting={deleteSurfaceTypeMutation.isPending}
+        isSubmitting={isSurfaceTypeDeletePending}
         title='Delete Surface Type'
         description={
           surfaceTypeDeleteTarget
