@@ -263,6 +263,11 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
             "paint_pair_invoices",
         )
 
+    # TODO(audit QUAL-01 Low): validate_purchase_date duplicates logic from
+    # RegistrationValidationMixin.validate_purchase_date (which delegates to
+    # validate_registration_purchase_date). This class inherits the mixin but then
+    # overrides validate_purchase_date with nearly identical code. The mixin version
+    # calls the shared validator; this override inlines it. Pick one path.
     def validate_purchase_date(self, value):
         if value > date.today():
             raise serializers.ValidationError("Purchase date cannot be in the future.")
@@ -270,6 +275,11 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
             raise serializers.ValidationError("Purchase date is outside the allowed registration window.")
         return value
 
+    # TODO(audit QUAL-02 Medium): `validate_pakistan_phone_number` is not imported in this
+    # file — only `validate_registration_phone_number` is (line 73). This will raise
+    # NameError at runtime for admin-panel (WEBFORM) registrations. Fix: change to
+    # `return validate_registration_phone_number(value)` to match the mixin, or add
+    # the missing import from dulux_chatbot.core.validators.
     def validate_phone_number(self, value: str) -> str:
         return validate_pakistan_phone_number(value)
 
@@ -302,6 +312,11 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
 
         return registration
 
+    # TODO(audit DATA-04 Medium): Delete-then-recreate pattern on invoices during create.
+    # On a brand-new registration this deletes 0 rows, but if the serializer is ever
+    # reused on an existing registration, it silently destroys all invoices. The
+    # WarrantyRegistrationUpdateSerializer has the same pattern — the delete-all approach
+    # loses invoice IDs that may be referenced by external systems or audit logs.
     def _sync_paint_pair_invoices(
         self, *, registration: WarrantyRegistration, paint_pair_invoices: list[dict]
     ) -> list[PaintPairInvoice]:
@@ -311,6 +326,10 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
         )
 
 
+# TODO(audit DATA-01 Medium): No self-approval prevention. A CS_AGENT or ADMIN can approve
+# their own manually-created registration. Add a check in validate() that
+# request.user != instance creator (or the user who submitted the form).
+# See AUDIT_FINDINGS.md DATA-01 for full analysis.
 class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration_code", read_only=True)
     action = serializers.ChoiceField(
@@ -686,6 +705,8 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         return claim
 
 
+# TODO(audit DATA-01 Medium): Same self-approval concern as registrations — a CS agent
+# can approve a claim they themselves forwarded. See AUDIT_FINDINGS.md DATA-01.
 class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
     action = serializers.ChoiceField(

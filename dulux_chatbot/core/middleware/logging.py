@@ -30,6 +30,10 @@ class LoggingMiddleware:
 
         response = self.get_response(request)
 
+        # TODO(audit PII-02 Medium): Response bodies are logged, which may include customer PII
+        # (names, phone numbers, emails, addresses) from warranty/complaint API responses.
+        # Either exclude PII-heavy endpoints from body logging or redact sensitive fields
+        # before logging.
         response_body = "-"
         if "application/json" in response.get("content-type", "") and hasattr(response, "data"):
             response_body = self._truncate_large_response_body(deepcopy(response.data))

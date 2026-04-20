@@ -114,6 +114,11 @@ class BaseFlow(ABC):
         message_type = self._message_type(message)
         return not message_type or message_type == expected_type
 
+    # TODO(audit SEC-05 Medium): Missing file size limit on WhatsApp media downloads.
+    # A crafted media_id could point to a very large file, causing memory exhaustion.
+    # Check Content-Length from metadata before downloading the full content.
+    # Also validate MIME type from metadata against IMAGE_MIME_TYPE_EXTENSIONS allowlist
+    # before saving — currently the extension is derived from MIME type but any content is accepted.
     def _save_media_image(self, media_id: str, *, filename_prefix: str) -> Image:
         if hasattr(self.client, "download_media_with_metadata"):
             content, metadata = self.client.download_media_with_metadata(media_id)

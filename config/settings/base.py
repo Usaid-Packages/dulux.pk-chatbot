@@ -235,6 +235,10 @@ CHANNEL_LAYERS = {
     }
 }
 
+# TODO(audit SEC-01 High): CORS_ALLOW_ALL_ORIGINS = True allows any origin to make
+# authenticated cross-origin requests. Combined with JWT in cookies (JWT_AUTH_HTTPONLY=True),
+# a malicious site can exfiltrate data from any authenticated admin session. Restrict to
+# the actual React panel origin(s) via CORS_ALLOWED_ORIGINS in prod/stage settings.
 CORS_ALLOW_ALL_ORIGINS = True
 
 CONSTANCE_BACKEND = "constance.backends.redisd.RedisBackend"

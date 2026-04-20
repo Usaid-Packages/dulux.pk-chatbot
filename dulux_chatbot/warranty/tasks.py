@@ -26,6 +26,10 @@ logger = logging.getLogger("dulux_chatbot")
 HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
+# TODO(audit OPS-02 Medium): Celery tasks lack retry/timeout configuration. If the
+# WhatsApp API or email service is down, tasks fail silently (no retry). Add:
+# @shared_task(bind=True, max_retries=3, default_retry_delay=60, time_limit=120)
+# and self.retry(exc=exc) in exception handlers. Applies to all @shared_task in this file.
 @shared_task
 def generate_and_send_certificate(registration_id: int) -> None:
     registration = WarrantyRegistration.objects.prefetch_related("paint_pairs__topcoat", "paint_pairs__basecoat").get(
@@ -77,6 +81,11 @@ def _build_claim_status_whatsapp_message(*, claim: WarrantyClaim) -> str:
     return f"Your claim for registration: {claim.registration.registration_code} is {status_label}."
 
 
+# TODO(audit SEC-06 High): notification_template is raw HTML passed from the client request
+# through Celery and sent directly to customers via email. A malicious admin panel user
+# can inject arbitrary HTML/JS into emails (XSS in email clients, phishing links).
+# Sanitize the HTML with a library like nh3 or bleach before sending, or use
+# server-side templates with only variable substitution.
 @shared_task
 def send_registration_status_notification(registration_id: int, notification_template: str | None = None) -> None:
     registration = WarrantyRegistration.objects.prefetch_related("paint_pairs__topcoat", "paint_pairs__basecoat").get(
@@ -100,6 +109,11 @@ def send_registration_status_notification(registration_id: int, notification_tem
     if should_send_certificate:
         registration = _ensure_registration_certificate(registration)
 
+    # TODO(audit ERR-01 Medium): Email send has no try/except. If Brevo SMTP is down,
+    # the entire task fails and the customer never receives the WhatsApp notification
+    # either (code below never runs). Consider splitting email and WhatsApp into separate
+    # error-handling blocks, or at minimum catch and log email failures so WhatsApp
+    # delivery can still proceed.
     email = EmailMultiAlternatives(
         subject=notification_content["email_subject"],
         body=notification_content["email_text"],
@@ -129,6 +143,8 @@ def send_registration_status_notification(registration_id: int, notification_tem
     send_whatsapp_main_menu.apply_async(args=[registration.phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
 
 
+# TODO(audit SEC-06 High): Same HTML injection risk as registration notifications.
+# See AUDIT_FINDINGS.md SEC-06 for full analysis.
 @shared_task
 def send_claim_status_notification(claim_id: int, notification_template: str | None = None) -> None:
     claim = WarrantyClaim.objects.select_related("registration").get(pk=claim_id)
@@ -184,6 +200,10 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
     )
 
 
+# TODO(audit DATA-02 Medium): Resubmit notification overwrites WhatsApp session state
+# without checking if user is mid-flow. If a customer is in the middle of a different
+# registration or claim, this silently replaces their session_data. Consider checking
+# session.flow before overwriting, or queuing the resubmit prompt until session is idle.
 @shared_task
 def send_registration_resubmit_notification(registration_id: int) -> None:
     from dulux_chatbot.chatbot.flows.registration import RegistrationFlow
@@ -253,6 +273,8 @@ def send_registration_resubmit_notification(registration_id: int) -> None:
     RegistrationFlow(session=session, client=client).send_prompt()
 
 
+# TODO(audit DATA-02 Medium): Same session-overwrite concern as registration resubmit.
+# See AUDIT_FINDINGS.md DATA-02.
 @shared_task
 def send_claim_resubmit_notification(claim_id: int) -> None:
     from dulux_chatbot.chatbot.choices import FlowType

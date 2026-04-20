@@ -2,6 +2,10 @@ from dulux_chatbot.audit_logs.services import build_instance_snapshot
 from dulux_chatbot.warranty.models import ClaimQualityReview, WarrantyClaim, WarrantyRegistration
 
 
+# TODO(audit DATA-03 Medium): Snapshot functions fire 3 additional queries per call
+# (paint_pairs, invoices, rejection_fields) and are called twice per update (before + after).
+# That's 6 extra queries per registration update inside the transaction. Use the already-
+# prefetched relations from the view queryset instead of issuing new queries here.
 def build_registration_snapshot(registration: WarrantyRegistration) -> dict:
     return build_instance_snapshot(
         registration,
@@ -25,6 +29,9 @@ def build_registration_snapshot(registration: WarrantyRegistration) -> dict:
     )
 
 
+# TODO(audit DATA-03 Medium): Same N+1 snapshot concern as registration. Claim snapshots
+# fire queries for images, quality_reviews, and resubmissions (with nested entries).
+# See AUDIT_FINDINGS.md DATA-03.
 def build_claim_snapshot(claim: WarrantyClaim) -> dict:
     return build_instance_snapshot(
         claim,
