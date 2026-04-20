@@ -301,6 +301,11 @@ class Command(BaseCommand):
                 created_count += 1
         return created_count
 
+    # TODO(audit DATA-05 Low): SSRF risk in historical import command. URLs from CSV
+    # are fetched without validation — an attacker-controlled CSV could point to internal
+    # network addresses (e.g., http://169.254.169.254/). Since this is a one-time admin
+    # command (not API-exposed), risk is low. Consider URL scheme/host validation if
+    # the command is reused.
     def _download_invoice_image(self, *, attachment: dict[str, Any]) -> Image | None:
         for url_key in ("contentUrl", "sidContentUrl", "oldContentUrl"):
             url = str(attachment.get(url_key) or "").strip()

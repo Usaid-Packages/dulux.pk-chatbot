@@ -46,6 +46,14 @@ def build_notification_template(*, title: str = "Warranty Update") -> str:
     return f"<html><body><h1>{title}</h1><p>Hello Customer Name</p></body></html>"
 
 
+# TODO(audit TEST-01 Medium): Missing test coverage for critical state machine transitions:
+# 1. Invalid transitions (e.g., APPROVED -> APPROVE, REJECTED -> APPROVE) are never tested
+# 2. Concurrent approval race condition (two agents approve simultaneously)
+# 3. Registration field update outside RESUBMIT state (only tested for rejection_fields)
+# 4. Claim duplicate prevention across all CLAIM_BLOCKING_STATES
+# 5. Audit log creation is never verified (tests mock notifications but don't check AuditLog)
+# 6. No assertNumQueries on list endpoints to catch N+1 regressions
+# See AUDIT_FINDINGS.md TEST-01 for full analysis.
 class WarrantyRegistrationAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()

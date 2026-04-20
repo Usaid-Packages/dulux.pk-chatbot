@@ -1,0 +1,77 @@
+# TODO(audit OPS-05 Medium): GitHub Actions pinned to @v2 (old major version).
+      # actions/checkout@v2 and actions/upload-artifact@v2 are deprecated — v2 uses
+      # Node 12 which GitHub has removed. Pin to current versions (@v4) or specific
+      # commit SHAs for supply chain safety.
+      A: This is not deprecated till now we will upgrade this in near future.
+
+
+ # TODO(audit SEC-04 High): Flower (Celery monitoring dashboard) is exposed without
+    # authentication at /flower. Anyone with the URL can view task queues, arguments
+    # (which contain registration IDs, phone numbers), and worker status. Add HTTP
+    # basic auth via Nginx (auth_basic) or restrict to VPN/internal network.
+A: It will be in internal network in production
+
+ # TODO(audit OPS-01 Medium LIKELY): traces_sample_rate=1.0 captures 100% of
+        # transactions for Sentry performance monitoring. In production with traffic
+        # this creates significant overhead and cost. Reduce to 0.1-0.2 for production.
+A: In more traffic we can analyze this and reduce it.
+
+ # TODO(audit SEC-10 Medium): AuthMiddlewareStack provides Django session auth for
+# WebSockets, but the consumers use manual JWT parsing from query string. The
+# AuthMiddlewareStack layer is effectively bypassed/redundant. This dual-auth setup is
+# confusing — either use TokenAuthMiddleware wrapping JWT properly, or remove
+# AuthMiddlewareStack. The current JWT-in-query-string approach also exposes tokens
+# in server access logs and browser history.
+A: We are checking the Auth in websocket level so it can be bypass.
+
+
+# TODO(audit SEC-08 Medium): No object-level permission check on complaint chat.
+    # Any authenticated CS_AGENT/ADMIN can connect to any complaint's WebSocket and
+    # send messages, even if the complaint is assigned to another agent. Verify that
+    # complaint.assigned_to matches the connecting user (or user is ADMIN).
+A: this is intentional anyone can reply to any chat
+
+# TODO(audit SEC-03 Medium): Missing file content-type validation on image upload.
+    # Only file size is checked. A malicious user can upload executable files (.html, .svg
+    # with JS, .php) with an image extension. Validate the MIME type against an allowlist
+    # (image/jpeg, image/png, image/webp) by reading file magic bytes, not just the
+    # Content-Type header. Also consider sanitizing filenames to prevent path traversal.
+    A: No need of that strict security as we already has the image type.
+
+ # TODO(audit SEC-09 Low): random.choices uses Python's Mersenne Twister PRNG which is
+# predictable. Registration codes are 10-digit numeric strings. An attacker who observes
+# a few codes could predict future ones. Use secrets.choice() for cryptographically
+# secure generation if codes serve as any form of authentication/lookup token.
+A: Already discussed we are using random.
+
+ # TODO(audit DATA-05 Low): SSRF risk in historical import command. URLs from CSV
+    # are fetched without validation — an attacker-controlled CSV could point to internal
+    # network addresses (e.g., http://169.254.169.254/). Since this is a one-time admin
+    # command (not API-exposed), risk is low. Consider URL scheme/host validation if
+    # the command is reused.
+    A: This one time and done by support itself so no need of risk assessment.
+
+
+ # TODO(audit SEC-07 Medium): GET on registration detail is guarded only by IsAuthenticated
+# (no role check). A QUALITY_REVIEWER can read any registration detail including customer
+# PII (name, address, email, phone, invoices). If QA reviewers should not see full
+# registration data, add role-based read permission or filter sensitive fields.
+A: QA can read the registration data.
+
+# TODO(audit DATA-01 Medium): Same self-approval concern as registrations — a CS agent
+# can approve a claim they themselves forwarded. See AUDIT_FINDINGS.md DATA-01.
+
+# TODO(audit DATA-01 Medium): No self-approval prevention. A CS_AGENT or ADMIN can approve
+# their own manually-created registration. Add a check in validate() that
+# request.user != instance creator (or the user who submitted the form).
+# See AUDIT_FINDINGS.md DATA-01 for full analysis.
+A: CS or admin can approve their warranty created.
+
+
+ # TODO(audit DATA-04 Medium): Delete-then-recreate pattern on invoices during create.
+    # On a brand-new registration this deletes 0 rows, but if the serializer is ever
+    # reused on an existing registration, it silently destroys all invoices. The
+    # WarrantyRegistrationUpdateSerializer has the same pattern — the delete-all approach
+    # loses invoice IDs that may be referenced by external systems or audit logs.
+
+    A: We are using delete-then-recreate pattern intentionally as it is only update in resubmit.

@@ -139,6 +139,11 @@ class QualityCardCountsAPIView(CardCountBaseAPIView):
         return Response(payload, status=status.HTTP_200_OK)
 
 
+# TODO(audit DATA-06 Medium): List endpoint prefetches paint_pairs, invoices, and
+# rejection_fields for every registration in the page. The list serializer only uses
+# id, registration_code, customer_name, phone_number, channel, state, purchase_date,
+# created — none of the prefetched relations. Move the heavy prefetches to the detail
+# view only. This wastes 3 JOINs per list page.
 class WarrantyRegistrationListCreateAPIView(generics.ListCreateAPIView):
     queryset = WarrantyRegistration.objects.all()
     filterset_fields = ["state", "channel"]
@@ -153,6 +158,10 @@ class WarrantyRegistrationListCreateAPIView(generics.ListCreateAPIView):
         return WarrantyRegistrationListSerializer
 
 
+# TODO(audit SEC-07 Medium): GET on registration detail is guarded only by IsAuthenticated
+# (no role check). A QUALITY_REVIEWER can read any registration detail including customer
+# PII (name, address, email, phone, invoices). If QA reviewers should not see full
+# registration data, add role-based read permission or filter sensitive fields.
 class WarrantyRegistrationRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     queryset = WarrantyRegistration.objects.select_related("approved_by").prefetch_related(
         "paint_pairs__topcoat",

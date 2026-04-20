@@ -276,6 +276,10 @@ def _build_product_rows(registration) -> list[dict[str, str]]:
     return topcoat_rows
 
 
+# TODO(audit ERR-02 Medium): No error handling around PDF generation. If ReportLab fails
+# (e.g., missing font, corrupted header image, extremely long customer name overflowing
+# layout), the exception propagates up and kills the Celery task. Wrap in try/except,
+# log the error, and either retry or notify the admin that certificate generation failed.
 def generate_warranty_certificate(registration):
     registration = registration.__class__.objects.prefetch_related("paint_pairs__topcoat", "paint_pairs__basecoat").get(
         pk=registration.pk

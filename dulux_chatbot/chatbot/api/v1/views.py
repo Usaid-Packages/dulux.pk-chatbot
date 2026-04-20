@@ -30,6 +30,11 @@ def _webhook_signature_is_valid(*, raw_body: bytes, signature_header: str, app_s
     return hmac.compare_digest(received_signature, expected_signature)
 
 
+# TODO(audit PERF-01 Medium): Webhook handler runs dispatch() synchronously. If DB is
+# slow or select_for_update contention is high, Meta will timeout (20s) and retry.
+# ProcessedMessage deduplication catches retries, but the response is delayed. For high
+# throughput, consider deferring dispatch to a Celery task and returning 200 immediately.
+# At current scale this is likely acceptable, but monitor webhook response latency.
 class WhatsAppWebhookView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -43,6 +48,11 @@ class WhatsAppWebhookView(APIView):
             return HttpResponse(challenge)
         return HttpResponse(status=403)
 
+    # TODO(audit WA-01 Critical): Missing X-Hub-Signature-256 verification on webhook POST
+    # Meta signs every webhook payload with HMAC-SHA256 using your app secret. Without
+    # verifying this header, any internet client can forge webhook payloads — injecting
+    # fake messages, triggering flows, or creating bogus registrations. Verify the
+    # signature before processing. See: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
     def post(self, request, *_args, **_kwargs):
         app_secret = settings.WHATSAPP_APP_SECRET
         if app_secret:
