@@ -543,7 +543,7 @@ class WarrantyRegistrationAPITests(TestCase):
             "Basecoat must be linked to the selected topcoat product.",
         )
 
-    def test_registration_update_rejects_fields_not_in_rejection_fields(self):
+    def test_registration_update_allows_any_detail_field_in_resubmit(self):
         registration = create_registration(state=RegistrationState.RESUBMIT)
         registration.rejection_fields.create(field_name="email")
         self.client.force_authenticate(user=self.cs_user)
@@ -554,15 +554,50 @@ class WarrantyRegistrationAPITests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["detail"][0],
-            "Only fields requested for resubmission can be updated. Invalid fields: city.",
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.RESUBMIT)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(registration.id),
+                event_label="Registration updated",
+                changes__city__after="Lahore",
+            ).exists()
         )
 
-    def test_registration_field_update_outside_resubmit_returns_400(self):
-        registration = create_registration(state=RegistrationState.SUBMITTED)
+    def test_registration_update_submits_when_all_rejection_fields_are_updated(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
         registration.rejection_fields.create(field_name="email")
+        registration.rejection_fields.create(field_name="city")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "email": "updated@example.com",
+                "city": "Lahore",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], "updated@example.com")
+        self.assertEqual(response.data["city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.SUBMITTED)
+        registration.refresh_from_db()
+        self.assertEqual(registration.rejection_fields.count(), 0)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(registration.id),
+                event_label="Registration updated",
+                changes__state__after=RegistrationState.SUBMITTED,
+                changes__email__after="updated@example.com",
+                changes__city__after="Lahore",
+            ).exists()
+        )
+
+    def test_registration_field_update_terminal_state_returns_400(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
         self.client.force_authenticate(user=self.cs_user)
 
         response = self.client.patch(
@@ -574,12 +609,12 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data["detail"][0],
-            "Registration fields can only be updated when the registration is in RESUBMIT state.",
+            "Registration fields can only be updated when the registration is in "
+            "SUBMITTED, IN_PROGRESS, or RESUBMIT state.",
         )
 
-    def test_registration_update_allows_fields_in_rejection_fields(self):
-        registration = create_registration(state=RegistrationState.RESUBMIT)
-        registration.rejection_fields.create(field_name="email")
+    def test_registration_field_update_submitted_state_is_allowed(self):
+        registration = create_registration(state=RegistrationState.SUBMITTED)
         self.client.force_authenticate(user=self.cs_user)
 
         response = self.client.patch(
@@ -591,6 +626,20 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "updated@example.com")
         self.assertEqual(response.data["state"], RegistrationState.SUBMITTED)
+
+    def test_registration_field_update_in_progress_state_is_allowed(self):
+        registration = create_registration(state=RegistrationState.IN_PROGRESS)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"purchase_dealer_city": "Lahore"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["purchase_dealer_city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.IN_PROGRESS)
 
     def test_registration_update_rejects_mixing_rejected_fields_with_notes(self):
         registration = create_registration(state=RegistrationState.RESUBMIT)

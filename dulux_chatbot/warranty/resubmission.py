@@ -95,8 +95,8 @@ def build_resubmit_steps(field_names: list[str]) -> tuple[list[str], list[str]]:
 
 def fallback_resubmit_message() -> str:
     return (
-        "If you are unable to complete the resubmission in this active session, "
-        "please raise a complaint and live chat with a Customer Service Representative."
+        "Your warranty resubmission session expired. "
+        "Please raise a complaint and live chat with a Customer Service Representative."
     )
 
 

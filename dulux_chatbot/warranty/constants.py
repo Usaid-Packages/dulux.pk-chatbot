@@ -38,6 +38,11 @@ REGISTRATION_FIELD_UPDATE_FIELDS = {
     "paint_pair_invoices",
 }
 REGISTRATION_CONTROL_UPDATE_FIELDS = {"action", "notes", "notification_template", "rejection_fields"}
+REGISTRATION_DETAIL_EDITABLE_STATES = {
+    RegistrationState.SUBMITTED,
+    RegistrationState.IN_PROGRESS,
+    RegistrationState.RESUBMIT,
+}
 
 REGISTRATION_ACTION_ALLOWED_TRANSITIONS = {
     REGISTRATION_ACTION_IN_PROGRESS: {RegistrationState.SUBMITTED},

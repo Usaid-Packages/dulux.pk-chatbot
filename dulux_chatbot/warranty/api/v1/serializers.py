@@ -48,6 +48,7 @@ from dulux_chatbot.warranty.constants import (
     REGISTRATION_ACTION_RESUBMIT,
     REGISTRATION_ACTION_STATE_MAP,
     REGISTRATION_CONTROL_UPDATE_FIELDS,
+    REGISTRATION_DETAIL_EDITABLE_STATES,
     REGISTRATION_FIELD_UPDATE_FIELDS,
 )
 from dulux_chatbot.warranty.helpers import generate_registration_code
@@ -347,7 +348,7 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
         attrs = super().validate(attrs)
         action = attrs.get("action")
         notification_template = attrs.get("notification_template")
-        self._validate_rejected_field_update()
+        self._validate_registration_detail_update()
         if action is not None:
             current_state = self.instance.state
 
@@ -366,7 +367,7 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
 
         return attrs
 
-    def _validate_rejected_field_update(self) -> None:
+    def _validate_registration_detail_update(self) -> None:
         incoming_fields = set(self.initial_data)
         registration_update_fields = incoming_fields & REGISTRATION_FIELD_UPDATE_FIELDS
         if not registration_update_fields:
@@ -382,19 +383,12 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
                 }
             )
 
-        if self.instance.state != RegistrationState.RESUBMIT:
-            raise serializers.ValidationError(
-                {"detail": "Registration fields can only be updated when the registration is in RESUBMIT state."}
-            )
-
-        allowed_fields = set(self.instance.rejection_fields.values_list("field_name", flat=True))
-        disallowed_fields = registration_update_fields - allowed_fields
-        if disallowed_fields:
+        if self.instance.state not in REGISTRATION_DETAIL_EDITABLE_STATES:
             raise serializers.ValidationError(
                 {
                     "detail": (
-                        "Only fields requested for resubmission can be updated. Invalid fields: "
-                        f"{', '.join(sorted(disallowed_fields))}."
+                        "Registration fields can only be updated when the registration is in "
+                        "SUBMITTED, IN_PROGRESS, or RESUBMIT state."
                     )
                 }
             )
@@ -414,10 +408,15 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
                 {"action": f"Cannot transition registration from {instance.state} using {action}."}
             )
 
-        has_resubmission_field_update = bool(set(getattr(self, "initial_data", {})) & REGISTRATION_FIELD_UPDATE_FIELDS)
-        if has_resubmission_field_update and instance.state != RegistrationState.RESUBMIT:
+        has_registration_field_update = bool(set(getattr(self, "initial_data", {})) & REGISTRATION_FIELD_UPDATE_FIELDS)
+        if has_registration_field_update and instance.state not in REGISTRATION_DETAIL_EDITABLE_STATES:
             raise serializers.ValidationError(
-                {"detail": "Registration fields can only be updated when the registration is in RESUBMIT state."}
+                {
+                    "detail": (
+                        "Registration fields can only be updated when the registration is in "
+                        "SUBMITTED, IN_PROGRESS, or RESUBMIT state."
+                    )
+                }
             )
 
         before_data = build_registration_snapshot(instance)
@@ -431,9 +430,6 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
             if action == REGISTRATION_ACTION_APPROVE:
                 validated_data["approved_by"] = self.context["request"].user
                 validated_data["approved_at"] = timezone.now()
-        elif has_resubmission_field_update:
-            validated_data["state"] = RegistrationState.SUBMITTED
-
         instance = super().update(instance, validated_data)
 
         if paint_pairs is not None:
@@ -441,6 +437,14 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
 
         if paint_pair_invoices is not None:
             self._sync_paint_pair_invoices(instance=instance, paint_pair_invoices=paint_pair_invoices)
+
+        if self._should_submit_after_registration_detail_update(
+            instance=instance,
+            updated_fields=set(getattr(self, "initial_data", {})) & REGISTRATION_FIELD_UPDATE_FIELDS,
+        ):
+            instance.state = RegistrationState.SUBMITTED
+            instance.save(update_fields=["state", "modified"])
+            instance.rejection_fields.all().delete()
 
         if action is not None:
             self._sync_rejection_fields(instance=instance, rejection_fields=rejection_fields)
@@ -463,6 +467,17 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
         )
 
         return instance
+
+    def _should_submit_after_registration_detail_update(
+        self,
+        *,
+        instance: WarrantyRegistration,
+        updated_fields: set[str],
+    ) -> bool:
+        if instance.state != RegistrationState.RESUBMIT:
+            return False
+        requested_fields = set(instance.rejection_fields.values_list("field_name", flat=True))
+        return bool(requested_fields) and requested_fields.issubset(updated_fields)
 
     def _sync_paint_pairs(
         self,

@@ -622,7 +622,11 @@ class FlowTests(TestCase):
 
         self.dispatch_text("updated@example.com")
 
-        self.assertIn("raise a complaint and live chat", self.client.text_messages[-2]["text"].lower())
+        self.assertEqual(
+            self.client.text_messages[-2]["text"],
+            "Your warranty resubmission session expired. "
+            "Please raise a complaint and live chat with a Customer Service Representative.",
+        )
 
     def test_registration_consent_no_returns_to_main_menu(self):
         self.dispatch_text("1")
