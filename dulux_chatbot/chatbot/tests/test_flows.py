@@ -388,6 +388,45 @@ class FlowTests(TestCase):
         self.assertEqual(claim.resubmissions.count(), 1)
         self.assertEqual(claim.resubmissions.first().entries.count(), 1)
 
+    def test_expired_claim_resubmission_session_does_not_save_customer_evidence(self):
+        registration = create_registration(state=RegistrationState.APPROVED, phone_number=self.phone_number)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.REQUEST_INFO,
+            notes="Need more photos.",
+            created_by=create_quality_user(email="expired-resubmit-qa@example.com"),
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
+        )
+        self.session.flow = "CLAIM_RESUBMISSION"
+        self.session.current_step = "claim_resubmission_item"
+        self.session.session_data = {
+            "claim_resubmission_claim_id": claim.id,
+            "claim_resubmission_review_id": quality_review.id,
+            "claim_resubmission_items": ["CLOSE_UP_DAMAGE_PHOTOS"],
+            "claim_resubmission_item_index": 0,
+            "claim_resubmission_entries": [],
+            "claim_resubmission_current_images": [],
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(last_activity=timezone.now() - timedelta(minutes=6))
+        self.session.refresh_from_db()
+
+        self.dispatch_image("expired-claim-resubmit-media")
+
+        claim.refresh_from_db()
+        self.assertEqual(claim.state, ClaimState.RESUBMIT)
+        self.assertEqual(claim.resubmissions.count(), 0)
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(self.session.session_data, {})
+        self.assertIn("claim resubmission session expired", self.client.text_messages[-2]["text"].lower())
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+
     def test_claim_resubmission_prompt_includes_image_note(self):
         self.session.flow = "CLAIM_RESUBMISSION"
         self.session.current_step = "claim_resubmission_item"

@@ -12,7 +12,7 @@ from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError
 from dulux_chatbot.complaints.choices import ComplaintStatus
-from dulux_chatbot.complaints.models import ChatMessage
+from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.complaints.tests.factories import (
     create_chat_message,
@@ -55,6 +55,31 @@ class ComplaintAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_complaint_allows_zero_images(self):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "phone_number": registration.phone_number,
+                "customer_name": "Complaint Customer",
+                "subject": "Damaged paint",
+                "description": "Description",
+                "images": [],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        complaint = Complaint.objects.get(
+            registration=registration,
+            phone_number=registration.phone_number,
+            subject="Damaged paint",
+        )
+        self.assertEqual(complaint.images.count(), 0)
 
     @patch("dulux_chatbot.complaints.api.v1.views.broadcast_complaint_created")
     def test_create_complaint_broadcasts_new_complaint_to_queue(self, broadcast_mock):
@@ -103,6 +128,21 @@ class ComplaintAPITests(TestCase):
             "Phone number must start with 92 and include 10 digits after it.",
         )
 
+    def test_retrieve_complaint_detail(self):
+        registration = create_registration()
+        complaint = create_complaint(registration=registration)
+        message = create_chat_message(complaint=complaint, text="Customer support message")
+        complaint_image = create_complaint_image(complaint=complaint)
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(reverse("complaint_detail", kwargs={"pk": complaint.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], complaint.id)
+        self.assertEqual(response.data["registration_number"], registration.registration_code)
+        self.assertEqual(response.data["messages"][0]["id"], message.id)
+        self.assertEqual(response.data["images"][0]["id"], complaint_image.id)
+
     def test_update_complaint_status(self):
         complaint = create_complaint()
         assigned_user = create_user(email="assigned@example.com")
@@ -116,6 +156,54 @@ class ComplaintAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], ComplaintStatus.IN_PROGRESS)
+        self.assertEqual(response.data["assigned_to"], assigned_user.id)
+        complaint.refresh_from_db()
+        self.assertEqual(complaint.assigned_to_id, assigned_user.id)
+
+    def test_open_complaint_cannot_be_closed_directly(self):
+        complaint = create_complaint(status=ComplaintStatus.OPEN)
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "CLOSE"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["action"][0], "Cannot transition complaint from OPEN using CLOSE.")
+        complaint.refresh_from_db()
+        self.assertEqual(complaint.status, ComplaintStatus.OPEN)
+
+    def test_closed_complaint_cannot_be_assigned(self):
+        complaint = create_complaint(status=ComplaintStatus.CLOSED)
+        assigned_user = create_user(email="closed-assigned@example.com")
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "ASSIGN", "assigned_to": assigned_user.id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["action"][0], "Cannot transition complaint from CLOSED using ASSIGN.")
+        complaint.refresh_from_db()
+        self.assertEqual(complaint.status, ComplaintStatus.CLOSED)
+        self.assertIsNone(complaint.assigned_to_id)
+
+    def test_assign_complaint_requires_assigned_user(self):
+        complaint = create_complaint(status=ComplaintStatus.OPEN)
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            reverse("complaint_detail", kwargs={"pk": complaint.id}),
+            {"action": "ASSIGN"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["assigned_to"][0], "Assigned user is required for assign action.")
 
     def test_close_allows_empty_closure_note(self):
         complaint = create_complaint(status=ComplaintStatus.RESOLVED)
@@ -326,6 +414,24 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(main_menu_mock.call_args.kwargs["countdown"], 2)
         self.assertEqual(main_menu_mock.call_args.kwargs["args"], [phone_number, MAIN_MENU_TEXT])
 
+    def test_complaint_list_query_count_stays_constant(self):
+        for index in range(3):
+            registration = create_registration(phone_number=f"92300222{index:04d}")
+            assigned_to = create_user(email=f"list-assigned-{index}@example.com")
+            complaint = create_complaint(
+                registration=registration,
+                assigned_to=assigned_to,
+                phone_number=registration.phone_number,
+            )
+            create_complaint_image(complaint=complaint)
+        self.client.force_authenticate(user=self.user)
+
+        with self.assertNumQueries(4):
+            response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 3)
+
 
 class LiveChatCardCountAPITests(TestCase):
     def setUp(self):
@@ -347,7 +453,8 @@ class LiveChatCardCountAPITests(TestCase):
         create_complaint(status=ComplaintStatus.CLOSED, assigned_to=self.cs_user, phone_number="923001111113")
 
         self.client.force_authenticate(user=self.cs_user)
-        response = self.client.get(self.live_chat_counts_url)
+        with self.assertNumQueries(1):
+            response = self.client.get(self.live_chat_counts_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {"open": 1, "in_progress": 1, "closed": 1})

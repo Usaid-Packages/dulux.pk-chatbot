@@ -845,6 +845,33 @@ class WarrantyClaimAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_claim_with_more_than_required_photo_types_returns_400(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        images = [create_image(image_name=f"too-many-claim-photos/{index}.jpg") for index in range(4)]
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                    {"image_id": images[3].id, "photo_type": PhotoType.LONG_SHOT},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["images"][0], "Photo types must be unique.")
+
     def test_create_claim_with_valid_images(self):
         registration = create_registration(state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)

@@ -1,9 +1,6 @@
-from urllib.parse import parse_qs
-
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from dulux_chatbot.chatbot.services.sessions import activate_complaint_chat_session
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
@@ -16,11 +13,7 @@ class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
     group_name: str
 
     async def connect(self) -> None:
-        self.user = await self._get_user()
-
-        if self.user is None:
-            await self.close(code=4401)
-            return
+        self.user = self.scope["user"]
 
         if not self._user_has_complaint_access():
             await self.close(code=4403)
@@ -38,25 +31,6 @@ class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, _close_code: int) -> None:
         if hasattr(self, "group_name"):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
-
-    async def _get_user(self):
-        query_string = self.scope.get("query_string", b"").decode()
-        token = parse_qs(query_string).get("token", [None])[0]
-        if not token:
-            return None
-
-        return await sync_to_async(self._authenticate_token)(token)
-
-    def _authenticate_token(self, token: str):
-        try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except Exception:
-            return None
-        if user is None or not user.is_authenticated:
-            return None
-        return user
 
     def _user_has_complaint_access(self) -> bool:
         return self.user.role in COMPLAINT_WEBSOCKET_ALLOWED_ROLES

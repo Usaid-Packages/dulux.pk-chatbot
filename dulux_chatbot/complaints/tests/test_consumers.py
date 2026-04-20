@@ -27,6 +27,13 @@ class ComplaintConsumerTests(TransactionTestCase):
 
         self.assertFalse(connected)
 
+    async def test_queue_consumer_rejects_invalid_token(self):
+        communicator = WebsocketCommunicator(application, "/ws/complaints/queue/?token=invalid-token")
+
+        connected, _ = await communicator.connect()
+
+        self.assertFalse(connected)
+
     async def test_queue_consumer_accepts_cs_user(self):
         user = await sync_to_async(create_user)()
         token = str(AccessToken.for_user(user))

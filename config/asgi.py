@@ -10,11 +10,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 django_asgi_app = get_asgi_application()
 
 from dulux_chatbot.complaints.routing import websocket_urlpatterns
+from dulux_chatbot.core.websocket_auth import JWTAuthMiddleware
 
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+        "websocket": JWTAuthMiddleware(AuthMiddlewareStack(URLRouter(websocket_urlpatterns))),
     }
 )
