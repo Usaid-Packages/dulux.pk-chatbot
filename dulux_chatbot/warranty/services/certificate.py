@@ -137,24 +137,27 @@ def _draw_first_page(canvas, _doc, *, include_footer: bool = False) -> None:
     canvas.restoreState()
 
 
-def _draw_later_pages(canvas, _doc) -> None:
-    canvas.saveState()
-    _draw_footer(canvas)
-    canvas.restoreState()
-
-
 class WarrantyCertificateCanvas(reportlab_canvas.Canvas):
-    def __init__(self, *args, include_footer_on_first_page: bool = False, **kwargs):
-        self.include_footer_on_first_page = include_footer_on_first_page
+    def __init__(self, *args, **kwargs):
+        self._saved_page_states = []
         super().__init__(*args, **kwargs)
 
     def showPage(self):
-        self._draw_page_footer()
-        super().showPage()
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        total_pages = len(self._saved_page_states)
+
+        for page_state in self._saved_page_states:
+            self.__dict__.update(page_state)
+            if self._pageNumber == total_pages:
+                self._draw_page_footer()
+            super().showPage()
+
+        super().save()
 
     def _draw_page_footer(self) -> None:
-        if self._pageNumber == 1 and not self.include_footer_on_first_page:
-            return
         self.saveState()
         _draw_footer(self)
         self.restoreState()
@@ -260,6 +263,24 @@ def _estimate_story_height(flowables: list) -> float:
     return total_height
 
 
+def _needs_footer_page(*, content_height: float, footer_fits_first_page: bool) -> bool:
+    if footer_fits_first_page:
+        return False
+
+    page_height_without_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN
+    page_height_with_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT
+
+    if content_height <= page_height_without_footer:
+        return True
+
+    remaining_height = content_height - page_height_without_footer
+    last_page_used_height = remaining_height % page_height_without_footer
+    if last_page_used_height == 0:
+        last_page_used_height = page_height_without_footer
+
+    return last_page_used_height > page_height_with_footer
+
+
 def _build_product_rows(registration) -> list[dict[str, str]]:
     paint_pairs = list(registration.paint_pairs.select_related("topcoat", "basecoat").all())
     topcoat_rows: list[dict[str, str]] = []
@@ -296,6 +317,10 @@ def generate_warranty_certificate(registration):
     first_page_content_height = _estimate_story_height(story)
     first_page_height_with_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT
     include_footer_on_first_page = len(topcoat_rows) <= 1 and first_page_content_height <= first_page_height_with_footer
+    add_footer_page = _needs_footer_page(
+        content_height=first_page_content_height,
+        footer_fits_first_page=include_footer_on_first_page,
+    )
 
     document = SimpleDocTemplate(
         buffer,
@@ -309,7 +334,7 @@ def generate_warranty_certificate(registration):
         pageCompression=0,
     )
 
-    if not include_footer_on_first_page:
+    if add_footer_page:
         story.extend([PageBreak(), Spacer(1, 1 * mm)])
 
     def _draw_first_page_callback(canvas, doc) -> None:
@@ -318,12 +343,7 @@ def generate_warranty_certificate(registration):
     document.build(
         story,
         onFirstPage=_draw_first_page_callback,
-        onLaterPages=_draw_later_pages,
-        canvasmaker=lambda *args, **kwargs: WarrantyCertificateCanvas(
-            *args,
-            include_footer_on_first_page=include_footer_on_first_page,
-            **kwargs,
-        ),
+        canvasmaker=WarrantyCertificateCanvas,
     )
     content = buffer.getvalue()
     buffer.close()
