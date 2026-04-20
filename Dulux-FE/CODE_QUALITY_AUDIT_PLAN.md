@@ -537,7 +537,7 @@ Deliverables:
 5. `ARCH-002` [✅ DONE 2026-04-17]: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
 6. `ARCH-003` [✅ DONE 2026-04-20]: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
 7. `ARCH-004` [✅ DONE 2026-04-20]: Split `ProductsListPage.tsx` into tab containers. (Covers Findings: #2, #28)
-8. `ARCH-005`: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
+8. `ARCH-005` [✅ DONE 2026-04-20]: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
 9. `DRY-001`: Create shared `PaginationFooter` component. (Covers Findings: #7)
 10. `DRY-002`: Create shared `ListStateBlock` component. (Covers Findings: #7)
 11. `DRY-003`: Create shared `StatsCardGrid` component. (Covers Findings: #7)

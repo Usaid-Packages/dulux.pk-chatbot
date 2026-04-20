@@ -1,8 +1,4 @@
-import type { ChangeEvent, JSX } from 'react';
-import { useEffect, useMemo } from 'react';
-
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import type { JSX } from 'react';
 
 import {
   Button,
@@ -12,19 +8,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
-import { useGetRegistrationByIdQuery, useGetRegistrationsQuery } from '#/data-layer/registrations';
-import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.schema';
+import { CLAIM_ISSUE_TYPE_OPTIONS, CLAIM_NO_BASECOAT_OPTION_VALUE } from '#/constants';
+import { useAddClaimForm } from '#/hooks/claims';
 import type { CreateClaimPayload } from '#/types/claims.types';
-import type { RegistrationPaintPair } from '#/types/registrations';
+import {
+  AddClaimDetailsSection,
+  AddClaimPhotosSection,
+  AddClaimProductsSection,
+  AddClaimRegistrationIssueSection,
+} from './addClaim';
 
 interface AddClaimModalProps {
   isOpen: boolean;
@@ -33,32 +26,6 @@ interface AddClaimModalProps {
   onSubmit: (payload: CreateClaimPayload) => void;
 }
 
-const NO_BASECOAT_OPTION_VALUE = 'NONE';
-const EMPTY_PAINT_PAIRS: RegistrationPaintPair[] = [];
-
-const ISSUE_TYPE_OPTIONS: ReadonlyArray<{ label: string; value: CreateClaimFormValues['issueType'] }> = [
-  { label: 'Peeling / Cracking', value: 'PEELING_CRACKING' },
-  { label: 'Color Fading', value: 'COLOR_FADING' },
-  { label: 'Algae / Fungus', value: 'ALGAE_FUNGUS' },
-  { label: 'Water Ingress', value: 'WATER_INGRESS' },
-  { label: 'Coverage Variance', value: 'COVERAGE_VARIANCE' },
-  { label: 'Non-uniform Finish', value: 'NON_UNIFORM_FINISH' },
-  { label: 'Others', value: 'OTHERS' },
-];
-
-const getSelectedFile = (event: ChangeEvent<HTMLInputElement>): File | null => {
-  const selectedFile = event.currentTarget.files?.[0];
-  return selectedFile ?? null;
-};
-
-const toNumericId = (value: string): number | null => {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return null;
-  }
-  return parsed;
-};
-
 /**
  * AddClaimModal captures all fields required for creating a warranty claim.
  *
@@ -66,227 +33,40 @@ const toNumericId = (value: string): number | null => {
  * @returns Add-claim modal.
  */
 export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddClaimModalProps): JSX.Element => {
-  const registrationsQuery = useGetRegistrationsQuery({
-    state: 'APPROVED',
-    ordering: '-created',
-  });
-
   const {
-    register,
+    alternateAnglePhoto,
+    basecoatOptions,
+    closeShotPhoto,
     control,
-    setValue,
-    setError,
-    clearErrors,
+    errors,
+    handleAlternateAngleChange,
+    handleCloseShotChange,
+    handleFormSubmit,
+    handleLongShotChange,
+    handleModalOpenChange,
     handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreateClaimFormValues>({
-    resolver: zodResolver(createClaimSchema),
-    defaultValues: {
-      registrationId: '',
-      paintPairId: '',
-      topcoatProductId: '',
-      basecoatProductId: NO_BASECOAT_OPTION_VALUE,
-      issueType: 'PEELING_CRACKING',
-      affectedAreaSqft: undefined,
-      notes: '',
-      longShotPhoto: undefined,
-      closeShotPhoto: undefined,
-      alternateAnglePhoto: undefined,
-    },
+    handleTopcoatChange,
+    hasTopcoatSelection,
+    isBasecoatSelectDisabled,
+    isNoBasecoatFlow,
+    isRegistrationDetailLoading,
+    isRegistrationSelected,
+    isRegistrationsLoading,
+    isTopcoatSelectDisabled,
+    longShotPhoto,
+    registrationId,
+    registrationOptions,
+    register,
+    selectedPaintPairId,
+    topcoatOptions,
+    topcoatProductId,
+  } = useAddClaimForm({
+    onClose,
+    onSubmit,
   });
-
-  const registrationId = useWatch({ control, name: 'registrationId' });
-  const topcoatProductId = useWatch({ control, name: 'topcoatProductId' });
-  const basecoatProductId = useWatch({ control, name: 'basecoatProductId' });
-  const longShotPhoto = useWatch({ control, name: 'longShotPhoto' });
-  const closeShotPhoto = useWatch({ control, name: 'closeShotPhoto' });
-  const alternateAnglePhoto = useWatch({ control, name: 'alternateAnglePhoto' });
-
-  const registrationDetailQuery = useGetRegistrationByIdQuery(registrationId);
-  const registrationPaintPairs = registrationDetailQuery.data?.paintPairs ?? EMPTY_PAINT_PAIRS;
-
-  const registrationOptions = useMemo(() => {
-    return (registrationsQuery.data?.results ?? []).map(registration => ({
-      id: String(registration.id),
-      label: `${registration.registrationCode} - ${registration.customerName}`,
-    }));
-  }, [registrationsQuery.data?.results]);
-
-  const topcoatOptions = useMemo(() => {
-    const topcoatMap = new Map<number, string>();
-
-    registrationPaintPairs.forEach(pair => {
-      if (!topcoatMap.has(pair.topcoat.id)) {
-        topcoatMap.set(pair.topcoat.id, pair.topcoat.name);
-      }
-    });
-
-    return Array.from(topcoatMap.entries()).map(([id, label]) => ({
-      id: String(id),
-      label,
-    }));
-  }, [registrationPaintPairs]);
-
-  const selectedTopcoatId = toNumericId(topcoatProductId);
-  const isRegistrationSelected = registrationId.trim().length > 0;
-  const hasTopcoatSelection = topcoatProductId.trim().length > 0;
-
-  const basecoatOptions = useMemo(() => {
-    if (selectedTopcoatId === null) {
-      return {
-        hasNoBasecoat: false,
-        items: [] as Array<{ id: string; label: string }>,
-      };
-    }
-
-    const selectedTopcoatPairs = registrationPaintPairs.filter(pair => pair.topcoat.id === selectedTopcoatId);
-    const hasNoBasecoat = selectedTopcoatPairs.some(pair => pair.basecoat === null);
-    const basecoatMap = new Map<number, string>();
-
-    selectedTopcoatPairs.forEach(pair => {
-      if (pair.basecoat && !basecoatMap.has(pair.basecoat.id)) {
-        basecoatMap.set(pair.basecoat.id, pair.basecoat.name);
-      }
-    });
-
-    return {
-      hasNoBasecoat,
-      items: Array.from(basecoatMap.entries()).map(([id, label]) => ({
-        id: String(id),
-        label,
-      })),
-    };
-  }, [registrationPaintPairs, selectedTopcoatId]);
-
-  const isNoBasecoatFlow = basecoatOptions.hasNoBasecoat && basecoatOptions.items.length === 0;
-  const isTopcoatSelectDisabled = !isRegistrationSelected || registrationDetailQuery.isLoading;
-  const isBasecoatSelectDisabled = !hasTopcoatSelection || isNoBasecoatFlow || registrationDetailQuery.isLoading;
-
-  const selectedPaintPairId = useMemo(() => {
-    if (!registrationDetailQuery.data) {
-      return '';
-    }
-
-    const selectedTopcoatId = toNumericId(topcoatProductId);
-    const normalizedBasecoatValue = basecoatProductId ?? NO_BASECOAT_OPTION_VALUE;
-    const selectedBasecoatId =
-      normalizedBasecoatValue === NO_BASECOAT_OPTION_VALUE ? null : toNumericId(normalizedBasecoatValue);
-
-    if (
-      selectedTopcoatId === null ||
-      (normalizedBasecoatValue !== NO_BASECOAT_OPTION_VALUE && selectedBasecoatId === null)
-    ) {
-      return '';
-    }
-
-    const matchingPaintPair = registrationDetailQuery.data.paintPairs.find(pair => {
-      const currentBasecoatId = pair.basecoat?.id ?? null;
-      return pair.topcoat.id === selectedTopcoatId && currentBasecoatId === selectedBasecoatId;
-    });
-
-    return matchingPaintPair ? String(matchingPaintPair.id) : '';
-  }, [registrationPaintPairs, topcoatProductId, basecoatProductId]);
-
-  useEffect(() => {
-    setValue('paintPairId', selectedPaintPairId, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  }, [selectedPaintPairId, setValue]);
-
-  useEffect(() => {
-    setValue('topcoatProductId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: false,
-    });
-    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    clearErrors(['topcoatProductId', 'basecoatProductId', 'paintPairId']);
-  }, [clearErrors, registrationId, setValue]);
-
-  useEffect(() => {
-    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: false,
-    });
-    setValue('paintPairId', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-    clearErrors(['basecoatProductId', 'paintPairId']);
-  }, [clearErrors, setValue, topcoatProductId]);
-
-  useEffect(() => {
-    if (!isNoBasecoatFlow) {
-      return;
-    }
-
-    setValue('basecoatProductId', NO_BASECOAT_OPTION_VALUE, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: false,
-    });
-    clearErrors('basecoatProductId');
-  }, [clearErrors, isNoBasecoatFlow, setValue]);
-
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset();
-      onClose();
-    }
-  };
-
-  const handleLongShotChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setValue('longShotPhoto', getSelectedFile(event), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-  };
-
-  const handleCloseShotChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setValue('closeShotPhoto', getSelectedFile(event), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-  };
-
-  const handleAlternateAngleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setValue('alternateAnglePhoto', getSelectedFile(event), {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
-
-  const handleFormSubmit = (values: CreateClaimFormValues): void => {
-    const registrationNumericId = toNumericId(values.registrationId);
-    const paintPairNumericId = toNumericId(values.paintPairId) ?? toNumericId(selectedPaintPairId);
-
-    if (!registrationNumericId) {
-      setError('registrationId', { type: 'manual', message: 'Registration is required.' });
-      return;
-    }
-
-    if (!paintPairNumericId) {
-      setError('paintPairId', {
-        type: 'manual',
-        message: 'Please reselect topcoat/basecoat. Matching paint pair was not resolved.',
-      });
-      return;
-    }
-    clearErrors('paintPairId');
-
-    onSubmit({
-      registration: registrationNumericId,
-      paintPair: paintPairNumericId,
-      issueType: values.issueType,
-      affectedAreaSqft: String(values.affectedAreaSqft),
-      notes: values.notes?.trim() ?? '',
-      photos: {
-        longShot: values.longShotPhoto,
-        closeShot: values.closeShotPhoto,
-        alternateAngle: values.alternateAnglePhoto,
-      },
-    });
-  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleModalOpenChange}>
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>Add New Claim</DialogTitle>
@@ -296,246 +76,43 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
         </DialogHeader>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <label htmlFor='claim-registration' className='text-sm font-medium text-text-primary'>
-                Approved Registration <span className='text-destructive'>*</span>
-              </label>
-              <Controller
-                control={control}
-                name='registrationId'
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-registration'>
-                      <SelectValue
-                        placeholder={registrationsQuery.isLoading ? 'Loading registrations...' : 'Select registration'}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {registrationOptions.map(option => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.registrationId ? (
-                <p className='text-xs text-destructive'>{errors.registrationId.message}</p>
-              ) : null}
-            </div>
+          <AddClaimRegistrationIssueSection
+            control={control}
+            errors={errors}
+            issueTypeOptions={CLAIM_ISSUE_TYPE_OPTIONS}
+            isRegistrationsLoading={isRegistrationsLoading}
+            registrationOptions={registrationOptions}
+          />
 
-            <div className='space-y-2'>
-              <label htmlFor='claim-issue-type' className='text-sm font-medium text-text-primary'>
-                Issue Type <span className='text-destructive'>*</span>
-              </label>
-              <Controller
-                control={control}
-                name='issueType'
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-issue-type'>
-                      <SelectValue placeholder='Select issue type' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ISSUE_TYPE_OPTIONS.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.issueType ? <p className='text-xs text-destructive'>{errors.issueType.message}</p> : null}
-            </div>
-          </div>
+          <AddClaimProductsSection
+            basecoatOptions={basecoatOptions}
+            control={control}
+            errors={errors}
+            hasTopcoatSelection={hasTopcoatSelection}
+            isBasecoatSelectDisabled={isBasecoatSelectDisabled}
+            isNoBasecoatFlow={isNoBasecoatFlow}
+            isRegistrationDetailLoading={isRegistrationDetailLoading}
+            isRegistrationSelected={isRegistrationSelected}
+            isTopcoatSelectDisabled={isTopcoatSelectDisabled}
+            noBasecoatOptionValue={CLAIM_NO_BASECOAT_OPTION_VALUE}
+            onTopcoatChange={handleTopcoatChange}
+            registrationId={registrationId}
+            selectedPaintPairId={selectedPaintPairId}
+            topcoatOptions={topcoatOptions}
+            topcoatProductId={topcoatProductId}
+          />
 
-          <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <label htmlFor='claim-topcoat' className='text-sm font-medium text-text-primary'>
-                Topcoat Product <span className='text-destructive'>*</span>
-              </label>
-              <Controller
-                control={control}
-                name='topcoatProductId'
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={value => {
-                      field.onChange(value);
-                      clearErrors('topcoatProductId');
-                    }}
-                  >
-                    <SelectTrigger id='claim-topcoat' disabled={isTopcoatSelectDisabled}>
-                      <SelectValue
-                        placeholder={
-                          isRegistrationSelected
-                            ? registrationDetailQuery.isLoading
-                              ? 'Loading topcoats...'
-                              : 'Select topcoat'
-                            : 'Select registration first'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {topcoatOptions.map(option => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.topcoatProductId ? (
-                <p className='text-xs text-destructive'>{errors.topcoatProductId.message}</p>
-              ) : null}
-              {!isRegistrationSelected ? (
-                <p className='text-xs text-text-muted'>Select approved registration first to load topcoat options.</p>
-              ) : null}
-              {isRegistrationSelected && !registrationDetailQuery.isLoading && topcoatOptions.length === 0 ? (
-                <p className='text-xs text-text-muted'>No topcoat is available for the selected registration.</p>
-              ) : null}
-            </div>
+          <AddClaimDetailsSection errors={errors} register={register} />
 
-            <div className='space-y-2'>
-              <label htmlFor='claim-basecoat' className='text-sm font-medium text-text-primary'>
-                Basecoat Product
-              </label>
-              <Controller
-                control={control}
-                name='basecoatProductId'
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id='claim-basecoat' disabled={isBasecoatSelectDisabled}>
-                      <SelectValue
-                        placeholder={
-                          hasTopcoatSelection
-                            ? registrationDetailQuery.isLoading
-                              ? 'Loading basecoats...'
-                              : 'Select basecoat'
-                            : 'Select topcoat first'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {basecoatOptions.hasNoBasecoat ? (
-                        <SelectItem value={NO_BASECOAT_OPTION_VALUE}>No basecoat</SelectItem>
-                      ) : null}
-                      {basecoatOptions.items.map(option => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.basecoatProductId ? (
-                <p className='text-xs text-destructive'>{errors.basecoatProductId.message}</p>
-              ) : null}
-              {!hasTopcoatSelection ? (
-                <p className='text-xs text-text-muted'>Select topcoat first to enable basecoat.</p>
-              ) : null}
-              {isNoBasecoatFlow ? (
-                <p className='text-xs text-text-muted'>No related basecoat found for the selected topcoat.</p>
-              ) : null}
-            </div>
-          </div>
-
-          {registrationId && topcoatProductId ? (
-            <p className={selectedPaintPairId ? 'text-xs text-text-muted' : 'text-xs text-destructive'}>
-              {selectedPaintPairId
-                ? 'Matching registration paint pair found.'
-                : 'No matching paint pair found for selected registration + topcoat/basecoat.'}
-            </p>
-          ) : null}
-          {errors.paintPairId ? <p className='text-xs text-destructive'>{errors.paintPairId.message}</p> : null}
-
-          <div className='space-y-2'>
-            <label htmlFor='claim-area' className='text-sm font-medium text-text-primary'>
-              Affected Area (sq ft) <span className='text-destructive'>*</span>
-            </label>
-            <Input
-              id='claim-area'
-              type='number'
-              step='0.01'
-              inputMode='decimal'
-              className='rounded-xl border-primary/20 bg-white'
-              {...register('affectedAreaSqft')}
-              aria-invalid={Boolean(errors.affectedAreaSqft)}
-            />
-            {errors.affectedAreaSqft ? (
-              <p className='text-xs text-destructive'>{errors.affectedAreaSqft.message}</p>
-            ) : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='claim-notes' className='text-sm font-medium text-text-primary'>
-              Notes
-            </label>
-            <Textarea
-              id='claim-notes'
-              className='rounded-xl border-primary/20 bg-white'
-              maxLength={NOTES_MAX_LENGTH}
-              {...register('notes')}
-              aria-invalid={Boolean(errors.notes)}
-            />
-            <p className='text-xs text-text-muted'>{NOTES_MAX_LENGTH_HELPER_TEXT}</p>
-            {errors.notes ? <p className='text-xs text-destructive'>{errors.notes.message}</p> : null}
-          </div>
-
-          <div className='grid gap-4 md:grid-cols-3'>
-            <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
-                Long Shot <span className='text-destructive'>*</span>
-              </span>
-              <Input
-                type='file'
-                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
-                accept='.jpg,.jpeg,.png,.webp'
-                onChange={handleLongShotChange}
-              />
-              {longShotPhoto ? <p className='text-xs text-text-muted'>Selected: {longShotPhoto.name}</p> : null}
-              {errors.longShotPhoto ? <p className='text-xs text-destructive'>{errors.longShotPhoto.message}</p> : null}
-            </label>
-
-            <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
-                Close Shot <span className='text-destructive'>*</span>
-              </span>
-              <Input
-                type='file'
-                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
-                accept='.jpg,.jpeg,.png,.webp'
-                onChange={handleCloseShotChange}
-              />
-              {closeShotPhoto ? <p className='text-xs text-text-muted'>Selected: {closeShotPhoto.name}</p> : null}
-              {errors.closeShotPhoto ? (
-                <p className='text-xs text-destructive'>{errors.closeShotPhoto.message}</p>
-              ) : null}
-            </label>
-
-            <label className='space-y-2'>
-              <span className='block whitespace-nowrap text-sm font-medium text-text-primary'>
-                Alternate Angle <span className='text-destructive'>*</span>
-              </span>
-              <Input
-                type='file'
-                className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
-                accept='.jpg,.jpeg,.png,.webp'
-                onChange={handleAlternateAngleChange}
-              />
-              {alternateAnglePhoto ? (
-                <p className='text-xs text-text-muted'>Selected: {alternateAnglePhoto.name}</p>
-              ) : null}
-              {errors.alternateAnglePhoto ? (
-                <p className='text-xs text-destructive'>{errors.alternateAnglePhoto.message}</p>
-              ) : null}
-            </label>
-          </div>
+          <AddClaimPhotosSection
+            alternateAnglePhoto={alternateAnglePhoto}
+            closeShotPhoto={closeShotPhoto}
+            errors={errors}
+            longShotPhoto={longShotPhoto}
+            onAlternateAngleChange={handleAlternateAngleChange}
+            onCloseShotChange={handleCloseShotChange}
+            onLongShotChange={handleLongShotChange}
+          />
 
           <DialogFooter>
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>

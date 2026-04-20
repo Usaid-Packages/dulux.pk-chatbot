@@ -1,7 +1,7 @@
 export { default as useSentry } from './useSentry';
 export { useAuditLogs } from './auditLogs';
 export { useForgotPassword, useLogin, useLogout, useResetPassword } from './auth';
-export { useClaimDetail, useClaims } from './claims';
+export { useAddClaimForm, useClaimDetail, useClaims } from './claims';
 export { useComplaintThread, useComplaints } from './complaints';
 export { useDashboard } from './dashboard';
 export { useManualRegistration } from './manualRegistration';

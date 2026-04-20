@@ -39,8 +39,8 @@
   one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
 - STRICT: Do not change `eslint.config.ts` to bypass `import/order`; always fix import shape/order in source files.
 - STRICT: For files using React hooks + React types, avoid fragile import layouts that trigger `import/order` crashes
-  (for example separate `import type ... from 'react'` plus value imports in unstable order); prefer a stable shape
-  such as `React.ReactNode` / `React.JSX.Element` type usage when needed.
+  (for example separate `import type ... from 'react'` plus value imports in unstable order); prefer a stable shape such
+  as `React.ReactNode` / `React.JSX.Element` type usage when needed.
 - Never add file-level `import/order` disable comments in source files.
 - On claim detail page open, fetch claim detail and if backend state is `SUBMITTED`, trigger a follow-up claim action
   transition to `IN_REVIEW`.
@@ -61,8 +61,8 @@
   so long content does not break layout.
 - Keep reusable domain constants in `src/constants/**` (not inside page/component files). Components should consume
   exported constants and avoid local constant duplication for shared config.
-- Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id)
-  and must not include any secondary metadata paragraph under the heading unless explicitly requested.
+- Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id) and
+  must not include any secondary metadata paragraph under the heading unless explicitly requested.
 - Do not define per-item wrapper handlers inside `.map()` render blocks for tables/lists; keep action handlers at
   component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
 - For complaint threads, always fetch `/api/v1/complaints/{id}/messages/` for message timeline rendering; never infer
@@ -321,8 +321,8 @@
 
 - Issue: As pages were redesigned one-by-one, primary action placement and filter layout drifted between modules (for
   example `Add Claim` placement and claim filter density did not initially match registration patterns).
-- Fix: Standardized primary CTA placement in hero headers, unified hover interaction treatment for dark CTA buttons,
-  and aligned claims filter structure with registration filter style.
+- Fix: Standardized primary CTA placement in hero headers, unified hover interaction treatment for dark CTA buttons, and
+  aligned claims filter structure with registration filter style.
 - Rule: In staged redesign work, re-check new page changes against already-updated modules before finalizing to prevent
   UI drift.
 
@@ -391,10 +391,10 @@
 
 ### 2026-04-06 16:35 - Claim detail view missed required state transition
 
-- Issue: Claim detail flow only fetched `GET /api/v1/warranty/claims/{id}/` and did not trigger the required
-  `PATCH` action transition from `SUBMITTED` to `IN_REVIEW` when opening View Detail.
-- Fix: Added one-time auto transition in claim detail hook using dedicated claims mutation
-  (`action: IN_REVIEW`) guarded by normalized backend workflow state.
+- Issue: Claim detail flow only fetched `GET /api/v1/warranty/claims/{id}/` and did not trigger the required `PATCH`
+  action transition from `SUBMITTED` to `IN_REVIEW` when opening View Detail.
+- Fix: Added one-time auto transition in claim detail hook using dedicated claims mutation (`action: IN_REVIEW`) guarded
+  by normalized backend workflow state.
 - Rule: For claim review entry flow, always perform detail fetch first, then transition `SUBMITTED -> IN_REVIEW` once
   when applicable.
 
@@ -407,8 +407,8 @@
 
 ### 2026-04-06 17:20 - Workflow-state constant used as object keys though it was an array
 
-- Issue: Auto-transition guard compared against `CLAIM_WORKFLOW_STATES.SUBMITTED` even though
-  `CLAIM_WORKFLOW_STATES` is an array, causing the check value to be `undefined` and incorrectly skipping patch.
+- Issue: Auto-transition guard compared against `CLAIM_WORKFLOW_STATES.SUBMITTED` even though `CLAIM_WORKFLOW_STATES` is
+  an array, causing the check value to be `undefined` and incorrectly skipping patch.
 - Fix: Switched runtime comparisons/assignments to explicit literal states (`'SUBMITTED'`, `'IN_REVIEW'`) in claim
   detail auto-transition flow.
 - Rule: Never use array-typed enum lists as keyed objects at runtime; use explicit literals or a dedicated keyed enum
@@ -419,15 +419,15 @@
 - Issue: ESLint still crashed with `sourceCode.getTokenOrCommentAfter is not a function` on
   `src/data-layer/quality/mutations/approveClaim.ts` after import-shape cleanup.
 - Fix: Applied a narrow file-level `/* eslint import/order: off */` override on the impacted file only.
-- Rule: If this known plugin crash persists after import cleanup, use the smallest file-scoped override on the
-  affected file and continue enforcing import-order everywhere else.
+- Rule: If this known plugin crash persists after import cleanup, use the smallest file-scoped override on the affected
+  file and continue enforcing import-order everywhere else.
 
 ### 2026-04-06 15:30 - Additional quality files hit the same `import/order` plugin crash
 
 - Issue: After fixing `approveClaim.ts`, lint crashed on `rejectClaim.ts` with the same plugin error and could continue
   failing file-by-file in the same quality module.
-- Fix: Applied the same narrow file-scoped `/* eslint import/order: off */` override to the related quality mutation
-  and query files that participate in this flow.
+- Fix: Applied the same narrow file-scoped `/* eslint import/order: off */` override to the related quality mutation and
+  query files that participate in this flow.
 - Rule: For this toolchain bug, once one file in a tightly-related new module crashes, proactively harden sibling files
   in that module with minimal scoped overrides to avoid repeated lint interruptions.
 
@@ -471,7 +471,8 @@
   `'delete'`) instead of shared constants.
 - Fix: Replaced literals with `GET`, `POST`, `PATCH`, `DELETE` imports from `src/constants/generic.ts` across product
   data-layer files.
-- Rule: Never hardcode request method strings in data-layer; always use method constants from `src/constants/generic.ts`.
+- Rule: Never hardcode request method strings in data-layer; always use method constants from
+  `src/constants/generic.ts`.
 
 ### 2026-04-07 19:45 - `import/order` plugin crash on new complaints socket integration files
 
@@ -479,8 +480,8 @@
   `helperFunctions.ts`) with `sourceCode.getTokenOrCommentBefore is not a function`.
 - Fix: Added narrow scoped ESLint config override (`import/order: off`) for the exact impacted files in
   `eslint.config.ts`; no source-file disable comments were added.
-- Rule: For this repo/toolchain, if `import/order` crashes on newly touched files, apply the smallest scoped override
-  in ESLint config and keep all other lint rules active.
+- Rule: For this repo/toolchain, if `import/order` crashes on newly touched files, apply the smallest scoped override in
+  ESLint config and keep all other lint rules active.
 
 ### 2026-04-07 20:20 - Added unnecessary defensive throw in login mapper
 
@@ -498,8 +499,8 @@
 ### 2026-04-07 20:45 - Missed internal import alphabetical order in registrations mutation
 
 - Issue: `useCreateManualRegistrationMutation.ts` had internal type imports out of alphabetical order
-  (`#/types/products` before `#/types/manualRegistration`), which triggered `import/order`; in this toolchain that
-  then crashed with `sourceCode.getTokenOrCommentBefore`.
+  (`#/types/products` before `#/types/manualRegistration`), which triggered `import/order`; in this toolchain that then
+  crashed with `sourceCode.getTokenOrCommentBefore`.
 - Fix: Reordered internal imports to strict alphabetical path order and re-checked the file lint target.
 - Rule: Before finalizing any touched file, enforce internal import path alphabetization exactly to avoid triggering the
   known `import/order` crash path.
@@ -508,8 +509,8 @@
 
 - Issue: `src/utils/helperFunctions.ts` still triggered `import/order` crash path due internal alias order drift, and
   had an unused function argument left behind.
-- Fix: Reordered imports to strict path order (including `#env` placement) and removed the unused `assignedTo`
-  argument from status mapper + call sites.
+- Fix: Reordered imports to strict path order (including `#env` placement) and removed the unused `assignedTo` argument
+  from status mapper + call sites.
 - Rule: Always run targeted lint on every touched file group (including utility files) before final handoff, and clear
   all remaining non-import lint errors in the same pass.
 
@@ -526,8 +527,8 @@
 - Issue: ESLint `import/order` crashed on `src/components/layout/PageWrapper.tsx` at import parsing stage.
 - Fix: Reworked React type usage to `React.ReactNode` / `React.JSX.Element` and kept external imports in stable order
   without touching `eslint.config.ts`.
-- Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout)
-  and keep lint config unchanged.
+- Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout) and
+  keep lint config unchanged.
 
 ### 2026-04-09 13:35 - Audit detail UI broke with long snapshot/note values
 
@@ -563,8 +564,8 @@
 
 ### 2026-04-10 19:25 - Registration detail runtime break after expandable-text refactor
 
-- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage
-  was left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
+- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage was
+  left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
   `/app/registrations/:id`.
 - Fix: Replaced the stale province call site with `<ExpandableDetailText value={registration.province} />` and reran
   targeted lint.
@@ -573,9 +574,10 @@
 
 ### 2026-04-10 19:58 - Reintroduced removed secondary line in live chat thread header
 
-- Issue: Live chat thread header still rendered the secondary metadata line (`claimNumber · registrationId · customerPhone`)
-  even after the user requested only the `h2` heading remain.
-- Fix: Removed the secondary paragraph from `ChatThreadPanel` header and kept only customer name heading + status/channel badges.
+- Issue: Live chat thread header still rendered the secondary metadata line
+  (`claimNumber · registrationId · customerPhone`) even after the user requested only the `h2` heading remain.
+- Fix: Removed the secondary paragraph from `ChatThreadPanel` header and kept only customer name heading +
+  status/channel badges.
 - Rule: When user explicitly asks to remove specific UI text blocks, treat those blocks as hard-removed and do not
   reintroduce them in later UI refinements unless asked.
 
@@ -699,7 +701,8 @@
 - Issue: Products module root used `space-y-4` instead of shared `wf-list-shell`, so pagination bottom-alignment rules
   were not applied consistently there.
 - Fix: Switched Products page root container to `wf-list-shell` (with `gap-4` to preserve visual spacing).
-- Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is consistent.
+- Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is
+  consistent.
 
 ### 2026-04-14 - React Query mixed imports retriggered `import/order` crash
 
@@ -742,12 +745,13 @@
   fields could be filtered out before UI rendering.
 - Fix: Updated complaint message schema to accept nullable `type/sender/text/created/createdAt/attachments/images/image`
   values and kept normalizer fallbacks for display text and attachments.
-- Rule: Treat chat payload optional fields as nullable-by-default unless backend contract explicitly guarantees non-null.
+- Rule: Treat chat payload optional fields as nullable-by-default unless backend contract explicitly guarantees
+  non-null.
 
 ### 2026-04-14 - Strict attachment URL validation blocked relative media paths
 
-- Issue: Chat attachment schema required absolute URLs, but backend can return relative media paths
-  (for example `/django-media/...`), causing thread parse/render failures.
+- Issue: Chat attachment schema required absolute URLs, but backend can return relative media paths (for example
+  `/django-media/...`), causing thread parse/render failures.
 - Fix: Relaxed attachment URL schema to non-empty string and added safe relative-path fallback in URL normalization.
 - Rule: For backend media fields, accept relative URLs and normalize to absolute when possible; never reject valid
   relative paths at schema level.
@@ -789,9 +793,8 @@
 
 ### 2026-04-14 - Debounce rollout lint run hit known `import/order` plugin crash again
 
-- Issue: During search debounce updates across multiple pages/hooks, standard targeted ESLint crashed on
-  `import/order` for touched page files (`ProductsListPage.tsx`, `QualityListPage.tsx`) with the known plugin/runtime
-  incompatibility.
+- Issue: During search debounce updates across multiple pages/hooks, standard targeted ESLint crashed on `import/order`
+  for touched page files (`ProductsListPage.tsx`, `QualityListPage.tsx`) with the known plugin/runtime incompatibility.
 - Fix: Kept source/config unchanged per project policy and completed verification with command-level
   `--rule "import/order: off"` for touched files.
 - Rule: When this known crash blocks verification on touched files, avoid source/config bypasses and use temporary
@@ -817,12 +820,28 @@
 
 ### 2026-04-14 - Missed ESLint import group separation from config
 
-- Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as its own group before other external imports), which caused lint instability and blocked full-repo validation.
-- Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved remaining formatting violations.
-- Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly (grouping + blank lines + alphabetical order).
+- Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as
+  its own group before other external imports), which caused lint instability and blocked full-repo validation.
+- Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved
+  remaining formatting violations.
+- Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly
+  (grouping + blank lines + alphabetical order).
 
 ### 2026-04-15 - Ran lint from wrong workspace root
 
-- Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json` and delayed validation.
+- Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json`
+  and delayed validation.
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
-- Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
+- Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains
+  `package.json`.
+
+### 2026-04-20 - Placed a logic hook and shared form types under component folder
+
+- Issue: During `AddClaimModal` refactor, I incorrectly placed `useAddClaimForm` and shared form type contracts under
+  `src/components/claims/addClaim`, which violated project folder boundaries (`hooks` for logic, `types` for shared
+  contracts).
+- Fix: Moved `useAddClaimForm` to `src/hooks/claims/useAddClaimForm.ts`, moved shared add-claim form types to
+  `src/types/claims.form.types.ts`, and rewired all imports/exports.
+- Rule: Do not place reusable hooks or cross-component type contracts inside component folders; enforce placement by
+  responsibility (`src/hooks/**` for logic hooks, `src/types/**` for shared type contracts, `src/components/**` for
+  presentation).
