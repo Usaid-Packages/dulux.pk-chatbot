@@ -1,4 +1,9 @@
-export const productTypes = ['TOPCOAT', 'BASECOAT'] as const;
+export const PRODUCT_TYPES = {
+  TOPCOAT: 'TOPCOAT',
+  BASECOAT: 'BASECOAT',
+} as const;
+
+export const productTypes = [PRODUCT_TYPES.TOPCOAT, PRODUCT_TYPES.BASECOAT] as const;
 export const productEnvironments = ['INTERIOR', 'EXTERIOR'] as const;
 
 export type ProductType = (typeof productTypes)[number];
