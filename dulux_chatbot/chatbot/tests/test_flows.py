@@ -5,6 +5,7 @@ from uuid import uuid4
 from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.utils import timezone
+from rest_framework import serializers
 
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
@@ -43,6 +44,7 @@ class DummyClient:
         self.documents = []
         self.images = []
         self.downloaded_media_ids = []
+        self.media_content = {}
         self.media_metadata = {}
 
     def send_text(self, to: str, text: str) -> None:
@@ -69,11 +71,14 @@ class DummyClient:
 
     def download_media(self, media_id: str) -> bytes:
         self.downloaded_media_ids.append(media_id)
-        return b"fake-image-bytes"
+        return self.media_content.get(media_id, b"fake-image-bytes")
 
     def download_media_with_metadata(self, media_id: str) -> tuple[bytes, dict]:
         self.downloaded_media_ids.append(media_id)
-        return b"fake-image-bytes", self.media_metadata.get(media_id, {"mime_type": "image/jpeg"})
+        return self.media_content.get(media_id, b"fake-image-bytes"), self.media_metadata.get(
+            media_id,
+            {"mime_type": "image/jpeg"},
+        )
 
 
 # TODO(audit P1-7 Important): Happy-path only. Missing: claim < 3 or > 3 photos,
@@ -126,6 +131,25 @@ class FlowTests(TestCase):
         )
 
         self.assertTrue(image.image.name.endswith(".png"))
+
+    def test_save_media_image_rejects_unsupported_mime_type(self):
+        self.client.media_metadata["pdf-media"] = {"mime_type": "application/pdf"}
+
+        with self.assertRaises(serializers.ValidationError):
+            BaseFlow(session=self.session, client=self.client)._save_media_image(
+                "pdf-media",
+                filename_prefix="test_upload",
+            )
+
+    def test_save_media_image_rejects_oversized_media(self):
+        self.client.media_metadata["large-media"] = {"mime_type": "image/jpeg"}
+        self.client.media_content["large-media"] = b"x" * ((50 * 1024 * 1024) + 1)
+
+        with self.assertRaises(serializers.ValidationError):
+            BaseFlow(session=self.session, client=self.client)._save_media_image(
+                "large-media",
+                filename_prefix="test_upload",
+            )
 
     def test_registration_flow_end_to_end(self):
         topcoat = create_product(name="Flow Topcoat")

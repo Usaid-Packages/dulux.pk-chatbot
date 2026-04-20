@@ -50,7 +50,7 @@ def _serialize_related_instance(value: Model | None) -> dict[str, Any] | None:
         if attr_value not in (None, ""):
             related_data[attr_name] = _serialize_value(attr_value)
 
-    registration = getattr(value, "registration", None)
+    registration = value._state.fields_cache.get("registration")
     registration_code = getattr(registration, "registration_code", None)
     if registration_code:
         related_data["registration_code"] = registration_code

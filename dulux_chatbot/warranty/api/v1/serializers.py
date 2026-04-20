@@ -412,17 +412,27 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
     def update(self, instance: WarrantyRegistration, validated_data: dict) -> WarrantyRegistration:
         request = get_optional_request_context(self)
         actor = get_optional_actor(self)
-        before_data = build_registration_snapshot(instance)
         action = validated_data.pop("action", None)
         notification_template = validated_data.pop("notification_template", None)
         rejection_fields = validated_data.pop("rejection_fields", [])
         paint_pairs = validated_data.pop("paint_pairs", None)
         paint_pair_invoices = validated_data.pop("paint_pair_invoices", None)
+        instance = WarrantyRegistration.objects.select_for_update().get(pk=instance.pk)
+        if action is not None and instance.state not in REGISTRATION_ACTION_ALLOWED_TRANSITIONS[action]:
+            raise serializers.ValidationError(
+                {"action": f"Cannot transition registration from {instance.state} using {action}."}
+            )
+
+        has_resubmission_field_update = bool(set(getattr(self, "initial_data", {})) & REGISTRATION_FIELD_UPDATE_FIELDS)
+        if has_resubmission_field_update and instance.state != RegistrationState.RESUBMIT:
+            raise serializers.ValidationError(
+                {"detail": "Registration fields can only be updated when the registration is in RESUBMIT state."}
+            )
+
+        before_data = build_registration_snapshot(instance)
         notes = validated_data.get("notes", "").strip()
         if "notes" in validated_data:
             validated_data["notes"] = notes
-
-        has_resubmission_field_update = bool(set(getattr(self, "initial_data", {})) & REGISTRATION_FIELD_UPDATE_FIELDS)
 
         if action is not None:
             validated_data["state"] = REGISTRATION_ACTION_STATE_MAP[action]
@@ -451,6 +461,7 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
             elif action == REGISTRATION_ACTION_REJECT:
                 send_registration_status_notification.delay(instance.id, notification_template=notification_template)
 
+        instance.refresh_from_db()
         log_update(
             actor=actor,
             instance=instance,
@@ -740,9 +751,15 @@ class WarrantyClaimUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance: WarrantyClaim, validated_data: dict) -> WarrantyClaim:
         request = self.context["request"]
         actor = request.user
-        before_data = build_claim_snapshot(instance)
         action = validated_data.pop("action", None)
         notification_template = validated_data.pop("notification_template", None)
+        instance = WarrantyClaim.objects.select_for_update().get(pk=instance.pk)
+        if action is not None and instance.state not in CLAIM_ACTION_ALLOWED_TRANSITIONS[action]:
+            raise serializers.ValidationError(
+                {"action": f"Cannot transition claim from {instance.state} using {action}."}
+            )
+
+        before_data = build_claim_snapshot(instance)
         notes = validated_data.get("notes", "").strip()
         if "notes" in validated_data:
             validated_data["notes"] = notes
