@@ -19,6 +19,7 @@ from dulux_chatbot.chatbot.services.dispatch_side_effects import (
     defer_dispatch_side_effect,
 )
 from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
+from dulux_chatbot.complaints.choices import ComplaintSubject
 from dulux_chatbot.complaints.models import Complaint
 from dulux_chatbot.warranty.resubmission import fallback_resubmit_message
 
@@ -160,7 +161,7 @@ def _should_send_complaint_context_reminder(*, session, now) -> bool:
 def _send_complaint_context_reminder(*, session, client) -> None:
     complaint_id = (session.session_data or {}).get("complaint_id")
     complaint = Complaint.objects.filter(pk=complaint_id).only("subject").first()
-    subject = complaint.subject if complaint is not None else "your complaint"
+    subject = _get_complaint_subject_label(complaint.subject) if complaint is not None else "your complaint"
     client.send_text(
         session.phone_number,
         (
@@ -168,6 +169,13 @@ def _send_complaint_context_reminder(*, session, client) -> None:
             "If you want to go to the main menu, press 00 or type MAIN MENU."
         ),
     )
+
+
+def _get_complaint_subject_label(subject: str) -> str:
+    try:
+        return ComplaintSubject(subject).label
+    except ValueError:
+        return subject
 
 
 def _session_expired(*, session, now) -> bool:

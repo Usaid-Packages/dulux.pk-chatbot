@@ -128,7 +128,7 @@ class AuditLogAPITests(TestCase):
         response = self.client.post(
             reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
             {
-                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PRODUCT_BATCH_NUMBER_PHOTO"],
+                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PROOF_OF_PURCHASE_INVOICE"],
                 "notes": "Need clearer technical evidence from the site.",
             },
             format="json",

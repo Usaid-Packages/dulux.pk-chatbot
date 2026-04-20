@@ -13,6 +13,7 @@ from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.tasks import send_find_product_results, send_whatsapp_main_menu
+from dulux_chatbot.complaints.choices import ComplaintSubject
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
@@ -161,7 +162,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -214,7 +214,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -238,7 +237,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text("not-a-date")
 
@@ -253,7 +251,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -279,7 +276,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -304,7 +300,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -446,7 +441,7 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.flow, "COMPLAINT")
         self.assertEqual(self.session.current_step, "subject")
 
-        self.dispatch_text("Wall damage")
+        self.dispatch_text("1")
         self.assertEqual(self.session.current_step, "description")
 
         self.dispatch_text("Paint is peeling after recent rain.")
@@ -468,7 +463,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -666,7 +660,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
 
         self.assertEqual(self.session.current_step, "purchase_date")
@@ -852,14 +845,16 @@ class FlowTests(TestCase):
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")
         self.assertEqual(self.session.current_step, "subject")
+        self.assertIn("1. Product Complaint", self.client.text_messages[-1]["text"])
+        self.assertIn("7. Other", self.client.text_messages[-1]["text"])
 
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_image("complaint-media-1")
         self.dispatch_text("DONE")
 
         complaint = Complaint.objects.get(phone_number=self.phone_number)
-        self.assertEqual(complaint.subject, "Paint damaged")
+        self.assertEqual(complaint.subject, ComplaintSubject.PRODUCT_COMPLAINT)
         self.assertEqual(complaint.images.count(), 1)
         self.assertEqual(complaint.messages.count(), 1)
         self.assertEqual(self.session.current_step, "chat")
@@ -875,7 +870,7 @@ class FlowTests(TestCase):
 
     def test_complaint_chat_session_expires_after_24_hours(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -904,7 +899,7 @@ class FlowTests(TestCase):
 
     def test_complaint_chat_reminds_user_after_one_hour_gap(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -916,12 +911,12 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.flow, "COMPLAINT")
         self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
-        self.assertIn("subject: Paint damaged", self.client.text_messages[-1]["text"])
+        self.assertIn("subject: Product Complaint", self.client.text_messages[-1]["text"])
         self.assertIn("press 00 or type MAIN MENU", self.client.text_messages[-1]["text"])
 
     def test_main_menu_command_takes_priority_over_complaint_chat(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -1112,7 +1107,7 @@ class FlowTests(TestCase):
 
     def test_main_menu_command_resets_active_flow(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
 
         self.dispatch_text("00")
 

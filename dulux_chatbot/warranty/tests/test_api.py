@@ -991,7 +991,7 @@ class WarrantyClaimAPITests(TestCase):
         response = self.client.post(
             reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
             {
-                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PRODUCT_BATCH_NUMBER_PHOTO"],
+                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PROOF_OF_PURCHASE_INVOICE"],
                 "notes": "Need clearer technical evidence from the site.",
             },
             format="json",
@@ -1016,6 +1016,24 @@ class WarrantyClaimAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_quality_request_info_rejects_removed_required_items(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REVIEW)
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.post(
+            reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
+            {
+                "required_items": ["PRODUCT_BATCH_NUMBER_PHOTO"],
+                "notes": "Need clearer technical evidence from the site.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("required_items", response.data)
 
     def test_quality_reject_moves_claim_to_qa_rejected(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -1304,11 +1322,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         self.client.force_authenticate(user=self.cs_user)
 
@@ -1319,10 +1337,10 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.data["claim_state"], ClaimState.RESUBMIT)
         self.assertEqual(response.data["quality_review_id"], quality_review.id)
         self.assertEqual(len(response.data["requested_items"]), 2)
-        self.assertEqual(response.data["requested_items"][0]["required_item"], "PRODUCT_BATCH_NUMBER_PHOTO")
+        self.assertEqual(response.data["requested_items"][0]["required_item"], "PROOF_OF_PURCHASE_INVOICE")
         self.assertEqual(response.data["requested_items"][0]["input_type"], "IMAGE")
-        self.assertEqual(response.data["requested_items"][1]["required_item"], "ISSUE_TIMELINE_DETAILS")
-        self.assertEqual(response.data["requested_items"][1]["input_type"], "TEXT")
+        self.assertEqual(response.data["requested_items"][1]["required_item"], "CLOSE_UP_DAMAGE_PHOTOS")
+        self.assertEqual(response.data["requested_items"][1]["input_type"], "IMAGE")
 
     def test_quality_user_cannot_get_csr_claim_resubmission_fields(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -1333,6 +1351,29 @@ class WarrantyClaimAPITests(TestCase):
         response = self.client.get(reverse("claim_csr_resubmission", kwargs={"pk": claim.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cs_get_csr_claim_resubmission_fields_handles_legacy_removed_items(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type="REQUEST_INFO",
+            notes="Legacy request from before required-item cleanup.",
+            created_by=self.quality_user,
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+        )
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(reverse("claim_csr_resubmission", kwargs={"pk": claim.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["requested_items"][0]["required_item"], "PRODUCT_BATCH_NUMBER_PHOTO")
+        self.assertEqual(response.data["requested_items"][0]["label"], "Product Batch Number Photo")
+        self.assertEqual(response.data["requested_items"][0]["input_type"], "IMAGE")
 
     def test_cs_get_csr_claim_resubmission_fields_requires_resubmit_state(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -1368,11 +1409,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1383,12 +1424,12 @@ class WarrantyClaimAPITests(TestCase):
                 "notes": "CSR collected all missing information from the customer.",
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     },
                     {
-                        "required_item": "ISSUE_TIMELINE_DETAILS",
-                        "response_text": "The issue first appeared after heavy rain last week.",
+                        "required_item": "CLOSE_UP_DAMAGE_PHOTOS",
+                        "image_id": image.id,
                     },
                 ],
             },
@@ -1415,11 +1456,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1429,7 +1470,7 @@ class WarrantyClaimAPITests(TestCase):
             {
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     }
                 ]
@@ -1452,7 +1493,7 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1462,12 +1503,12 @@ class WarrantyClaimAPITests(TestCase):
             {
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     },
                     {
-                        "required_item": "SITE_CONDITIONS_INFO",
-                        "response_text": "Sunny weather.",
+                        "required_item": "ADDITIONAL_PHOTOS_DIFFERENT_ANGLES",
+                        "image_id": image.id,
                     },
                 ]
             },

@@ -17,7 +17,7 @@ class ClaimResubmissionFlow(BaseFlow):
         QualityRequiredItem.ADDITIONAL_PHOTOS_DIFFERENT_ANGLES,
         QualityRequiredItem.CLOSE_UP_DAMAGE_PHOTOS,
         QualityRequiredItem.PROOF_OF_PURCHASE_INVOICE,
-        QualityRequiredItem.PRODUCT_BATCH_NUMBER_PHOTO,
+        "PRODUCT_BATCH_NUMBER_PHOTO",
     }
 
     def prompt_claim_resubmission_item(self) -> None:

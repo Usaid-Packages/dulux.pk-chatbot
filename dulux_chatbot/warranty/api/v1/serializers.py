@@ -36,6 +36,7 @@ from dulux_chatbot.warranty.constants import (
     CLAIM_ACTION_REJECT,
     CLAIM_ACTION_STATE_MAP,
     CLAIM_BLOCKING_STATES,
+    LEGACY_QUALITY_IMAGE_REQUIRED_ITEMS,
     QUALITY_IMAGE_INPUT_TYPE,
     QUALITY_IMAGE_REQUIRED_ITEMS,
     QUALITY_REQUESTED_ITEM_INPUT_TYPE_CHOICES,
@@ -866,8 +867,6 @@ class ClaimQualityRequestInfoSerializer(serializers.Serializer):
         claim = self.context["claim"]
         if claim.state != ClaimState.QA_REVIEW:
             raise serializers.ValidationError({"detail": "Only claims in QA_REVIEW can request more info."})
-        if QualityRequiredItem.OTHER in attrs["required_items"] and not attrs.get("other_text", "").strip():
-            raise serializers.ValidationError({"other_text": "other_text is required when OTHER is selected."})
         return attrs
 
     @transaction.atomic
@@ -965,11 +964,12 @@ class ClaimResubmissionRequestSerializer(serializers.Serializer):
             requested_items.append(
                 {
                     "required_item": item_value,
-                    "label": QualityRequiredItem(item_value).label,
+                    "label": _get_quality_required_item_label(item_value),
                     "input_type": QUALITY_IMAGE_INPUT_TYPE
-                    if item_value in QUALITY_IMAGE_REQUIRED_ITEMS
+                    if item_value in QUALITY_IMAGE_REQUIRED_ITEMS or item_value in LEGACY_QUALITY_IMAGE_REQUIRED_ITEMS
                     else QUALITY_TEXT_INPUT_TYPE,
-                    "is_multiple": item_value in QUALITY_IMAGE_REQUIRED_ITEMS,
+                    "is_multiple": item_value in QUALITY_IMAGE_REQUIRED_ITEMS
+                    or item_value in LEGACY_QUALITY_IMAGE_REQUIRED_ITEMS,
                 }
             )
 
@@ -982,6 +982,13 @@ class ClaimResubmissionRequestSerializer(serializers.Serializer):
             "requested_items": requested_items,
             "created": latest_quality_review.created,
         }
+
+
+def _get_quality_required_item_label(required_item: str) -> str:
+    try:
+        return QualityRequiredItem(required_item).label
+    except ValueError:
+        return required_item.replace("_", " ").title()
 
 
 class BaseClaimResubmissionCreateSerializer(serializers.Serializer):

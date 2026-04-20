@@ -161,8 +161,8 @@ class RegistrationFlow(BaseFlow):
         self._save_data("city", city)
         if self._advance_resubmit_after_current_step("city"):
             return
-        self.prompt_province()
-        self._advance_to("province")
+        self.prompt_site_address()
+        self._advance_to("site_address")
 
     def handle_province(self, message: dict) -> None:
         province = self._get_text(message)

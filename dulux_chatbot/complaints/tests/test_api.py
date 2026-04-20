@@ -11,7 +11,7 @@ from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.constants import MAIN_MENU_TEXT
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError
-from dulux_chatbot.complaints.choices import ComplaintStatus
+from dulux_chatbot.complaints.choices import ComplaintStatus, ComplaintSubject
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.complaints.tests.factories import (
@@ -47,7 +47,7 @@ class ComplaintAPITests(TestCase):
                 "registration": registration.id,
                 "phone_number": registration.phone_number,
                 "customer_name": "Complaint Customer",
-                "subject": "Damaged paint",
+                "subject": ComplaintSubject.PRODUCT_COMPLAINT,
                 "description": "Description",
                 "images": [{"image_id": image.id}],
             },
@@ -66,7 +66,7 @@ class ComplaintAPITests(TestCase):
                 "registration": registration.id,
                 "phone_number": registration.phone_number,
                 "customer_name": "Complaint Customer",
-                "subject": "Damaged paint",
+                "subject": ComplaintSubject.PRODUCT_COMPLAINT,
                 "description": "Description",
                 "images": [],
             },
@@ -77,7 +77,7 @@ class ComplaintAPITests(TestCase):
         complaint = Complaint.objects.get(
             registration=registration,
             phone_number=registration.phone_number,
-            subject="Damaged paint",
+            subject=ComplaintSubject.PRODUCT_COMPLAINT,
         )
         self.assertEqual(complaint.images.count(), 0)
 
@@ -93,7 +93,7 @@ class ComplaintAPITests(TestCase):
                 "registration": registration.id,
                 "phone_number": registration.phone_number,
                 "customer_name": "Complaint Customer",
-                "subject": "Damaged paint",
+                "subject": ComplaintSubject.PRODUCT_COMPLAINT,
                 "description": "Description",
                 "images": [{"image_id": image.id}],
             },
@@ -104,7 +104,7 @@ class ComplaintAPITests(TestCase):
         broadcast_mock.assert_called_once()
         broadcasted_complaint = broadcast_mock.call_args.kwargs["complaint"]
         self.assertEqual(broadcasted_complaint.customer_name, "Complaint Customer")
-        self.assertEqual(broadcasted_complaint.subject, "Damaged paint")
+        self.assertEqual(broadcasted_complaint.subject, ComplaintSubject.PRODUCT_COMPLAINT)
 
     def test_create_complaint_with_invalid_phone_number_returns_400(self):
         registration = create_registration()
@@ -116,7 +116,7 @@ class ComplaintAPITests(TestCase):
                 "registration": registration.id,
                 "phone_number": "3001234567",
                 "customer_name": "Complaint Customer",
-                "subject": "Damaged paint",
+                "subject": ComplaintSubject.PRODUCT_COMPLAINT,
                 "description": "Description",
             },
             format="json",
@@ -127,6 +127,25 @@ class ComplaintAPITests(TestCase):
             response.data["phone_number"][0],
             "Phone number must start with 92 and include 10 digits after it.",
         )
+
+    def test_create_complaint_with_invalid_subject_returns_400(self):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "phone_number": registration.phone_number,
+                "customer_name": "Complaint Customer",
+                "subject": "Damaged paint",
+                "description": "Description",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("subject", response.data)
 
     def test_retrieve_complaint_detail(self):
         registration = create_registration()
@@ -400,7 +419,7 @@ class ComplaintAPITests(TestCase):
             session_data={"complaint_id": 123},
         )
 
-        send_complaint_closed_notification(phone_number, "Paint damaged")
+        send_complaint_closed_notification(phone_number, ComplaintSubject.PRODUCT_COMPLAINT)
 
         session = WhatsAppSession.objects.get(phone_number=phone_number)
         self.assertIsNone(session.flow)
@@ -408,7 +427,7 @@ class ComplaintAPITests(TestCase):
         self.assertEqual(session.session_data, {})
         client_mock.return_value.send_text.assert_called_once_with(
             phone_number,
-            "Your complaint with subject: Paint damaged has been closed.",
+            "Your complaint with subject: Product Complaint has been closed.",
         )
         main_menu_mock.assert_called_once()
         self.assertEqual(main_menu_mock.call_args.kwargs["countdown"], 2)
