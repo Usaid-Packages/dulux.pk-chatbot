@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { PRODUCT_FORM_MAX_LENGTHS } from '#/constants';
-import { productTypes } from '#/types/products';
+import { PRODUCT_TYPES, productTypes } from '#/types/products';
 
 export const productTypeSchema = z.enum(productTypes);
 
@@ -47,7 +47,7 @@ export const productFormSchema = z
     basecoatIds: z.array(z.number().int().positive()).default([]),
   })
   .superRefine((values, context) => {
-    if (values.productType === 'TOPCOAT' && values.warrantyYears === undefined) {
+    if (values.productType === PRODUCT_TYPES.TOPCOAT && values.warrantyYears === undefined) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['warrantyYears'],
@@ -55,7 +55,7 @@ export const productFormSchema = z
       });
     }
 
-    if (values.productType !== 'TOPCOAT' && values.basecoatIds.length > 0) {
+    if (values.productType !== PRODUCT_TYPES.TOPCOAT && values.basecoatIds.length > 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatIds'],

@@ -28,6 +28,7 @@ import {
 } from '#/data-layer/products';
 import { useDebouncedValue } from '#/hooks';
 import { mapSurfaceTypeFormToPayload } from '#/hooks/products';
+import { PRODUCT_TYPES } from '#/types/products';
 import type {
   Product,
   ProductEnvironment,
@@ -56,7 +57,7 @@ const isProductTab = (value: string | null): value is ProductTab => {
 };
 
 const isProductTypeFilter = (value: string | null): value is ProductTypeFilter => {
-  return value === 'ALL' || value === 'TOPCOAT' || value === 'BASECOAT';
+  return value === 'ALL' || value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT;
 };
 
 const isProductStatusFilter = (value: string | null): value is ProductStatusFilter => {
@@ -400,8 +401,8 @@ export const ProductsListPage = (): React.JSX.Element => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='ALL'>Type: All</SelectItem>
-                  <SelectItem value='TOPCOAT'>Topcoat</SelectItem>
-                  <SelectItem value='BASECOAT'>Basecoat</SelectItem>
+                  <SelectItem value={PRODUCT_TYPES.TOPCOAT}>Topcoat</SelectItem>
+                  <SelectItem value={PRODUCT_TYPES.BASECOAT}>Basecoat</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={productStatusFilter} onValueChange={handleProductStatusFilterChange}>

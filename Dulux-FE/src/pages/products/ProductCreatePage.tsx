@@ -14,6 +14,7 @@ import {
   useUploadProductImageMutation,
 } from '#/data-layer/products';
 import { mapProductFormValuesToPayload } from '#/hooks/products';
+import { PRODUCT_TYPES } from '#/types/products';
 import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
 
@@ -25,7 +26,7 @@ export const ProductCreatePage = (): JSX.Element => {
   const navigate = useNavigate();
   const surfaceTypesQuery = useGetSurfaceTypesQuery();
   const basecoatOptionsQuery = useGetProductsQuery({
-    product_type: 'BASECOAT',
+    product_type: PRODUCT_TYPES.BASECOAT,
     ordering: 'name',
     page_size: 100,
   });

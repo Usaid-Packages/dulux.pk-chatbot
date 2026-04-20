@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES } from '#/constants';
+import { PRODUCT_TYPES } from '#/types/products';
 import type { Product } from '#/types/products';
 
 interface ProductTableProps {
@@ -11,7 +12,7 @@ interface ProductTableProps {
 }
 
 const getTypeBadgeClassName = (type: Product['productType']): string => {
-  return type === 'TOPCOAT'
+  return type === PRODUCT_TYPES.TOPCOAT
     ? 'bg-productType-topcoat-bg text-productType-topcoat-text'
     : 'bg-productType-basecoat-bg text-productType-basecoat-text';
 };
@@ -55,7 +56,7 @@ const renderSurfaceTypes = (product: Product): JSX.Element => {
 };
 
 const renderLinkedBasecoats = (product: Product): JSX.Element => {
-  if (product.productType !== 'TOPCOAT') {
+  if (product.productType !== PRODUCT_TYPES.TOPCOAT) {
     return <span className='text-xs text-text-muted'>N/A</span>;
   }
 
@@ -121,7 +122,7 @@ export const ProductTable = ({ products }: ProductTableProps): JSX.Element => {
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getTypeBadgeClassName(product.productType)}`}
                   >
-                    {product.productType === 'TOPCOAT' ? 'Topcoat' : 'Basecoat'}
+                    {product.productType === PRODUCT_TYPES.TOPCOAT ? 'Topcoat' : 'Basecoat'}
                   </span>
                 </TableCell>
                 <TableCell>{renderSurfaceTypes(product)}</TableCell>
