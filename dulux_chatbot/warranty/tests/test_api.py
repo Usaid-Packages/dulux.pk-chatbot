@@ -725,8 +725,9 @@ class WarrantyClaimAPITests(TestCase):
 
         prefetched_registration = (
             WarrantyRegistration.objects.prefetch_related(
-                "paint_pairs",
-                "invoices",
+                "paint_pairs__topcoat",
+                "paint_pairs__basecoat",
+                "invoices__image",
                 "rejection_fields",
             )
             .select_related("approved_by")
@@ -737,7 +738,11 @@ class WarrantyClaimAPITests(TestCase):
             snapshot = build_registration_snapshot(prefetched_registration)
 
         self.assertEqual(snapshot["paint_pairs"][0]["topcoat_quantity"], "10.00")
+        self.assertEqual(snapshot["paint_pairs"][0]["topcoat"]["name"], "Warranty Topcoat")
+        self.assertEqual(snapshot["paint_pairs"][0]["basecoat"]["name"], "Warranty Basecoat")
         self.assertEqual(snapshot["invoice_ids"], [registration.invoices.get().image_id])
+        self.assertEqual(snapshot["invoices"][0]["image_id"], registration.invoices.get().image_id)
+        self.assertTrue(snapshot["invoices"][0]["image_url"].endswith("/warranty/test.jpg"))
         self.assertEqual(snapshot["rejection_fields"][0]["field_name"], "postal_code")
 
     def test_claim_snapshot_uses_prefetched_relations(self):
