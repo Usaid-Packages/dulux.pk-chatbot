@@ -292,7 +292,6 @@ export const RegistrationDetailPage = (): JSX.Element => {
             objectId={String(registration.id)}
             title='Latest Timeline Changes'
             subtitle='Detailed admin activity log'
-            maxItems={6}
           />
         </div>
 

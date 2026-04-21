@@ -223,3 +223,19 @@ export interface RegistrationResubmitUpdatePayload extends Record<string, unknow
   paintPairs?: RegistrationResubmitUpdatePaintPair[];
   paintPairInvoices?: RegistrationResubmitUpdateInvoice[];
 }
+
+export interface RegistrationEditPayload extends Record<string, unknown> {
+  customerName?: string;
+  phoneNumber?: string;
+  email?: string;
+  city?: string;
+  province?: string;
+  siteAddress?: string;
+  purchaseDate?: string;
+  purchaseDealer?: string;
+  purchaseDealerCity?: string;
+  purchaseDealerAddress?: string;
+  postalCode?: string;
+  paintPairs?: RegistrationResubmitUpdatePaintPair[];
+  paintPairInvoices?: RegistrationResubmitUpdateInvoice[];
+}

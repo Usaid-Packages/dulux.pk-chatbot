@@ -67,8 +67,16 @@
   component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
 - For complaint threads, always fetch `/api/v1/complaints/{id}/messages/` for message timeline rendering; never infer
   per-message image ownership from complaint detail-level `images`.
+- Use direct React hook imports (`import { useState } from 'react'`) and call hooks directly (`useState(...)`), not
+  `React.useState(...)`.
 
 ## Mistake Log (Short)
+
+### 2026-04-21 12:45 - Request-info options not fully aligned with latest UX instruction
+
+- Issue: Request-more-info flows still exposed legacy items (batch number/application details/timeline/site conditions/other) after UX direction changed.
+- Fix: Removed these options from claims and quality request-info sources and removed stale "Other details" schema/UI/payload branches.
+- Rule: When option sets are changed by product request, update constants + form schema + modal UI + mutation payload together in one pass.
 
 ### 2026-04-02 12:40 - Import order + ImportMeta typing
 
@@ -826,3 +834,9 @@
 - Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json` and delayed validation.
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
+
+### 2026-04-21 - Forgot command-level `import/order` override on first lint pass
+
+- Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
+- Fix: Re-ran lint with command-level override, kept source/config unchanged, and completed lint verification successfully.
+- Rule: For touched frontend files in this repo, start with command-level `import/order` override when needed by the known tooling instability and keep import structure clean.

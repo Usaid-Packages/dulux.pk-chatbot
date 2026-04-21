@@ -11,6 +11,7 @@ interface RegistrationTableProps {
   registrations: RegistrationListItem[];
   isLoading: boolean;
   onOpenDetail: (id: string) => void;
+  onOpenEdit: (id: string) => void;
 }
 
 const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | 'rejected' | 'info' => {
@@ -45,12 +46,27 @@ const truncateCustomerName = (value: string): string => {
  * @param props - Table rows and callbacks.
  * @returns Registrations table section.
  */
-export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: RegistrationTableProps): JSX.Element => {
+const EDITABLE_REGISTRATION_STATES: readonly RegistrationStatus[] = ['SUBMITTED', 'IN_PROGRESS', 'RESUBMIT'] as const;
+
+export const RegistrationTable = ({
+  registrations,
+  isLoading,
+  onOpenDetail,
+  onOpenEdit,
+}: RegistrationTableProps): JSX.Element => {
   const handleOpenDetailClick = (event: MouseEvent<HTMLButtonElement>): void => {
     const registrationId = event.currentTarget.dataset.registrationId;
 
     if (registrationId) {
       onOpenDetail(registrationId);
+    }
+  };
+
+  const handleOpenEditClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    const registrationId = event.currentTarget.dataset.registrationId;
+
+    if (registrationId) {
+      onOpenEdit(registrationId);
     }
   };
 
@@ -118,16 +134,30 @@ export const RegistrationTable = ({ registrations, isLoading, onOpenDetail }: Re
                 </Badge>
               </TableCell>
               <TableCell className='align-middle'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='rounded-lg border-primary/25 bg-white text-primary hover:bg-primary/10'
-                  data-registration-id={String(registration.id)}
-                  onClick={handleOpenDetailClick}
-                >
-                  View Detail
-                </Button>
+                <div className='flex items-center gap-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='rounded-lg border-primary/25 bg-white text-primary hover:bg-primary/10'
+                    data-registration-id={String(registration.id)}
+                    onClick={handleOpenDetailClick}
+                  >
+                    View Detail
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='wf-table-link h-auto px-0 py-0'
+                    data-registration-id={String(registration.id)}
+                    onClick={handleOpenEditClick}
+                    disabled={!EDITABLE_REGISTRATION_STATES.includes(registration.state)}
+                    aria-label={`Edit ${registration.registrationCode}`}
+                  >
+                    Edit
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
