@@ -96,6 +96,7 @@ export const RegistrationsListPage = (): React.JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isEditModalOpen, setIsEditModalOpen] = React.useState<boolean>(false);
+  const [isEditModalRequested, setIsEditModalRequested] = React.useState<boolean>(false);
   const [editingRegistrationId, setEditingRegistrationId] = React.useState<string>('');
 
   const {
@@ -123,8 +124,9 @@ export const RegistrationsListPage = (): React.JSX.Element => {
   };
 
   const openEditModal = (id: string): void => {
+    setIsEditModalRequested(true);
+    setIsEditModalOpen(false);
     setEditingRegistrationId(id);
-    setIsEditModalOpen(true);
   };
 
   const closeEditModal = (): void => {
@@ -132,9 +134,37 @@ export const RegistrationsListPage = (): React.JSX.Element => {
       return;
     }
 
+    setIsEditModalRequested(false);
     setIsEditModalOpen(false);
-    setEditingRegistrationId('');
   };
+
+  React.useEffect(() => {
+    if (!isEditModalRequested || !editingRegistrationId) {
+      return;
+    }
+
+    if (editRegistrationQuery.isError) {
+      toast.error(getApiErrorMessage(editRegistrationQuery.error));
+      setIsEditModalRequested(false);
+      return;
+    }
+
+    if (editRegistrationQuery.isLoading || editRegistrationQuery.isFetching) {
+      return;
+    }
+
+    if (editRegistrationQuery.data) {
+      setIsEditModalOpen(true);
+    }
+  }, [
+    editRegistrationQuery.data,
+    editRegistrationQuery.error,
+    editRegistrationQuery.isError,
+    editRegistrationQuery.isFetching,
+    editRegistrationQuery.isLoading,
+    editingRegistrationId,
+    isEditModalRequested,
+  ]);
 
   const handleEditSubmit = (values: RegistrationEditFormValues): void => {
     if (!editingRegistrationId) {

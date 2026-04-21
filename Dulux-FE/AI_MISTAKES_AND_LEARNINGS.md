@@ -850,3 +850,9 @@
 - Issue: While removing Postal Code from `RegistrationEditModal.tsx`, an extra blank line remained and failed `prettier/prettier` in lint.
 - Fix: Removed the stray blank line and reran full lint to green.
 - Rule: After removing JSX blocks from form layouts, run a quick local formatting check around the edited section before full lint.
+
+### 2026-04-21 - Timeline paint-pair UI changed pattern instead of preserving established before/after consistency
+
+- Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
+- Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
+- Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.
