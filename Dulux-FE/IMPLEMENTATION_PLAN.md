@@ -4090,6 +4090,13 @@ Audit checks executed:
 
 ### 15.2 Explicit "Done" Items Marked from Recent Updates
 
+- [x] Registration list `Edit` flow now waits for detail fetch completion before opening the edit modal (avoids large in-modal loading experience).
+- [x] Registration edit modal close/open lifecycle stabilized to remove transition jitter (no close-time content collapse/reset).
+- [x] Shared dialog motion updated to remove zoom-in/zoom-out scale effect that caused perceived shrink on modal close.
+- [x] Registration/claim timeline paint-pair rendering now resolves product names from payload (topcoat/basecoat objects) with backward-safe fallbacks.
+- [x] Paint-pair timeline details keep consistent inline `Before -> After` presentation (no alternate per-field layout pattern).
+- [x] Paint-pair timeline labels now hide product IDs and show names + quantities only, matching requested UX.
+- [x] Paint-pair timeline detail text contrast increased for readability.
 - [x] Live chat thread header reduced to a single heading line.
 - [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
 - [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
@@ -4113,7 +4120,6 @@ Audit checks executed:
 - [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
 - [ ] Add `.env.example` with required env keys.
 - [ ] Add automated tests for critical paths (currently no test files discovered).
-- [ ] Add `.github/pull_request_template.md` to satisfy required project-file standard.
 
 ### 15.4 Evidence References
 
