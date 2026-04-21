@@ -54,7 +54,7 @@ export const RESUBMISSION_FIELDS = [
   { id: 'customer_name', label: 'Full Name', hint: 'Customer full name' },
   { id: 'phone_number', label: 'Phone Number', hint: 'Customer phone number' },
   { id: 'email', label: 'Email', hint: 'Customer email address' },
-  { id: 'city', label: 'City', hint: 'Project city' },
+  { id: 'city', label: 'Customer City', hint: 'Customer city' },
   { id: 'province', label: 'Province', hint: 'Customer province' },
   { id: 'site_address', label: 'Site Address', hint: 'Customer site address' },
   { id: 'purchase_date', label: 'Purchase Date', hint: 'Purchase invoice date' },

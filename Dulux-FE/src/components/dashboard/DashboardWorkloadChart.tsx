@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import type { DashboardWorkloadPoint } from '#/types/dashboard.types';
 
@@ -16,6 +16,33 @@ interface WorkloadTooltipProps {
   label?: string;
   payload?: WorkloadTooltipPayloadItem[];
 }
+
+const STACK_TOP_RADIUS = 10;
+const STACK_BASE_RADIUS: [number, number, number, number] = [0, 0, 0, 0];
+
+const getPendingRadius = (item: DashboardWorkloadPoint): [number, number, number, number] => {
+  if (item.pending > 0 && item.inReview === 0 && item.resolved === 0) {
+    return [STACK_TOP_RADIUS, STACK_TOP_RADIUS, 0, 0];
+  }
+
+  return STACK_BASE_RADIUS;
+};
+
+const getInReviewRadius = (item: DashboardWorkloadPoint): [number, number, number, number] => {
+  if (item.inReview > 0 && item.resolved === 0) {
+    return [STACK_TOP_RADIUS, STACK_TOP_RADIUS, 0, 0];
+  }
+
+  return STACK_BASE_RADIUS;
+};
+
+const getResolvedRadius = (item: DashboardWorkloadPoint): [number, number, number, number] => {
+  if (item.resolved > 0) {
+    return [STACK_TOP_RADIUS, STACK_TOP_RADIUS, 0, 0];
+  }
+
+  return STACK_BASE_RADIUS;
+};
 
 const WorkloadTooltipContent = ({ active, label, payload }: WorkloadTooltipProps): JSX.Element | null => {
   if (!active || !payload || payload.length === 0) {
@@ -139,31 +166,43 @@ export const DashboardWorkloadChart = ({ data }: DashboardWorkloadChartProps): J
                 name='Pending'
                 stackId='queue'
                 fill='url(#pendingFill)'
-                radius={[8, 8, 0, 0]}
                 isAnimationActive={true}
                 animationDuration={1000}
+                animationEasing='ease-out'
                 barSize={34}
-              />
+              >
+                {data.map(item => (
+                  <Cell key={`${item.module}-pending`} radius={getPendingRadius(item)} />
+                ))}
+              </Bar>
               <Bar
                 dataKey='inReview'
                 name='In Review'
                 stackId='queue'
                 fill='url(#inReviewFill)'
-                radius={[8, 8, 0, 0]}
                 isAnimationActive={true}
                 animationDuration={1200}
+                animationEasing='ease-out'
                 barSize={34}
-              />
+              >
+                {data.map(item => (
+                  <Cell key={`${item.module}-in-review`} radius={getInReviewRadius(item)} />
+                ))}
+              </Bar>
               <Bar
                 dataKey='resolved'
                 name='Resolved'
                 stackId='queue'
                 fill='url(#resolvedFill)'
-                radius={[8, 8, 0, 0]}
                 isAnimationActive={true}
                 animationDuration={1400}
+                animationEasing='ease-out'
                 barSize={34}
-              />
+              >
+                {data.map(item => (
+                  <Cell key={`${item.module}-resolved`} radius={getResolvedRadius(item)} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

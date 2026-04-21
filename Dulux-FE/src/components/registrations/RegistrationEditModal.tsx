@@ -857,15 +857,20 @@ export const RegistrationEditModal = ({
           <Input
             id='registration-edit-invoices'
             type='file'
+            className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
             multiple
             accept='.jpg,.jpeg,.png'
             onChange={handleInvoiceFilesChange}
           />
           <p className='text-xs text-text-muted'>Upload clear invoice images (JPG or PNG). Max size: 5MB each.</p>
           {selectedInvoiceFiles.length > 0 ? (
-            <ul className='space-y-1 text-xs text-text-muted'>
+            <ul className='flex flex-col gap-1'>
               {selectedInvoiceFiles.map(file => (
-                <li key={file.name}>{file.name}</li>
+                <li key={file.name}>
+                  <span className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'>
+                    {file.name}
+                  </span>
+                </li>
               ))}
             </ul>
           ) : null}

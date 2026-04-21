@@ -41,6 +41,7 @@ export interface QualityLatestResubmission {
 export interface QualityQueueItem {
   id: string;
   claimNumber: string;
+  registrationNumber: string;
   customerName: string;
   issueType: string;
   city: string;

@@ -125,6 +125,25 @@ const toId = (value: number | string | undefined): string => {
   return '';
 };
 
+const toClaimNumber = (claimId: string, ...candidateValues: Array<string | undefined>): string => {
+  for (const candidateValue of candidateValues) {
+    const normalizedValue = candidateValue?.trim();
+    if (!normalizedValue) {
+      continue;
+    }
+
+    if (/^CLM-\d+$/i.test(normalizedValue)) {
+      return `CLM-${normalizedValue.replace(/^CLM-/i, '')}`;
+    }
+
+    if (/^\d+$/.test(normalizedValue)) {
+      return `CLM-${normalizedValue}`;
+    }
+  }
+
+  return `CLM-${claimId || '0'}`;
+};
+
 const toAbsoluteUrl = (urlValue: string | undefined): string | undefined => {
   if (!urlValue || urlValue.trim().length === 0) {
     return undefined;
@@ -207,12 +226,13 @@ const toQueueItem = (claim: WarrantyClaimApiResponse): QualityQueueItem => {
 
   return {
     id: claimId,
-    claimNumber:
-      claim.claimNumber ??
-      claim.claim_number ??
+    claimNumber: toClaimNumber(claimId, claim.claimNumber, claim.claim_number),
+    registrationNumber:
       claim.registrationNumber ??
       claim.registration_number ??
-      `CLM-${claimId || '0'}`,
+      linkedRegistration?.registrationCode ??
+      linkedRegistration?.registration_code ??
+      UNKNOWN_VALUE,
     customerName:
       claim.customerName ??
       claim.customer_name ??
@@ -266,12 +286,7 @@ export const mapQualityClaimDetail = (claim: WarrantyClaimApiResponse): QualityD
   const latestResubmission = claim.latestResubmission ?? claim.latest_resubmission;
   const normalizedClaim: QualityDetail = {
     id: claimId,
-    claimNumber:
-      claim.claimNumber ??
-      claim.claim_number ??
-      claim.registrationNumber ??
-      claim.registration_number ??
-      `CLM-${claimId || '0'}`,
+    claimNumber: toClaimNumber(claimId, claim.claimNumber, claim.claim_number),
     customerName:
       claim.customerName ??
       claim.customer_name ??

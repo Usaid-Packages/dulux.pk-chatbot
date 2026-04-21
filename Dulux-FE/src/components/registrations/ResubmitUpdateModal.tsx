@@ -38,7 +38,7 @@ const FIELD_LABELS: Record<RegistrationRejectionField['fieldName'], string> = {
   customer_name: 'Full Name',
   phone_number: 'Phone Number',
   email: 'Email',
-  city: 'City',
+  city: 'Customer City',
   province: 'Province',
   site_address: 'Site Address',
   purchase_date: 'Purchase Date',
@@ -226,6 +226,7 @@ export const ResubmitUpdateModal = ({
     name: 'paintPairs',
   });
   const watchedPaintPairs = watch('paintPairs') ?? [];
+  const selectedInvoiceFiles = watch('invoiceFiles') ?? [];
   const selectedTopcoatIds = useMemo(() => {
     return watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0);
   }, [watchedPaintPairs]);
@@ -401,7 +402,7 @@ export const ResubmitUpdateModal = ({
 
             {requestedFieldNames.includes('city') ? (
               <div>
-                <label className='text-sm font-medium text-text-primary'>City</label>
+                <label className='text-sm font-medium text-text-primary'>Customer City</label>
                 <Input
                   placeholder='e.g. Lahore'
                   maxLength={CITY_MAX_LENGTH}
@@ -642,14 +643,29 @@ export const ResubmitUpdateModal = ({
                   render={({ field }) => (
                     <Input
                       type='file'
+                      className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
                       accept='image/png,image/jpeg,image/jpg'
                       multiple
+                      ref={field.ref}
+                      onBlur={field.onBlur}
                       onChange={event => {
                         handleInvoiceFilesChange(field.onChange, event);
                       }}
                     />
                   )}
                 />
+                {selectedInvoiceFiles.length > 0 ? (
+                  <div className='flex flex-col gap-1'>
+                    {selectedInvoiceFiles.map(file => (
+                      <span
+                        key={`${file.name}-${file.size}-${file.lastModified}`}
+                        className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'
+                      >
+                        {file.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 <p className='text-xs text-text-muted'>
                   Existing invoices: {registration.paintPairInvoices.length} ({REGISTRATION_INVOICE_TYPES.TOPCOAT}/
                   {REGISTRATION_INVOICE_TYPES.BASECOAT})
