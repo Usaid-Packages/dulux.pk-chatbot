@@ -18,11 +18,4 @@ export const CLAIM_REJECTION_REASONS = [
   'Duplicate claim',
 ] as const;
 
-export const REQUEST_INFO_ITEMS = [
-  'Additional photos (different angles)',
-  'Proof of purchase / Invoice',
-  'Product batch number',
-  'Application details (method, coats, surface prep)',
-  'Timeline of issue occurrence',
-  'Other',
-] as const;
+export const REQUEST_INFO_ITEMS = ['Additional photos (different angles)', 'Proof of purchase / Invoice'] as const;

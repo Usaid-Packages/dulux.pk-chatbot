@@ -169,7 +169,6 @@ export const LiveChatPage = (): JSX.Element => {
             objectId={threadId}
             title='Latest Timeline Changes'
             subtitle='Detailed admin activity log'
-            maxItems={6}
           />
         </div>
       </section>

@@ -30,12 +30,18 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
 });
 
 const LONG_TEXT_LIMIT = 180;
-const JSON_PREVIEW_LIMIT = 240;
 const STATE_CHANGE_FIELDS = new Set(['state', 'workflow_state', 'workflowState', 'status']);
 const IMAGE_CHANGE_FIELDS = new Set(['images', 'image_ids', 'imageids']);
 const ASSIGNEE_CHANGE_FIELDS = new Set(['assigned_to', 'assignedto']);
 const ID_LIST_CHANGE_FIELDS = new Set(['quality_review_ids', 'qualityreviewids']);
 const RESUBMISSION_CHANGE_FIELDS = new Set(['resubmissions', 'resubmission']);
+const INVOICE_ID_CHANGE_FIELDS = new Set([
+  'invoice_ids',
+  'invoiceids',
+  'paint_pair_invoice_ids',
+  'paintpairinvoiceids',
+]);
+const PAINT_PAIR_CHANGE_FIELDS = new Set(['paint_pairs', 'paintpairs']);
 const FIELD_LABEL_OVERRIDES: Record<string, string> = {
   approved_at: 'Approved at',
   approvedat: 'Approved at',
@@ -95,6 +101,14 @@ interface ResubmissionSummary {
   source: string | null;
   note: string | null;
   entries: ResubmissionEntrySummary[];
+}
+
+interface PaintPairSummaryItem {
+  id: number | null;
+  topcoatId: number | null;
+  basecoatId: number | null;
+  topcoatQuantity: string | null;
+  basecoatQuantity: string | null;
 }
 
 const isRejectionFieldsField = (fieldName: string): boolean => {
@@ -181,6 +195,14 @@ const isIdListChangeField = (fieldName: string): boolean => {
 
 const isResubmissionChangeField = (fieldName: string): boolean => {
   return RESUBMISSION_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const isInvoiceIdChangeField = (fieldName: string): boolean => {
+  return INVOICE_ID_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const isPaintPairChangeField = (fieldName: string): boolean => {
+  return PAINT_PAIR_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
 };
 
 const formatTokenLabel = (value: string): string => {
@@ -390,11 +412,6 @@ const getComplexValueSummary = (value: unknown): string => {
   return formatRawValue(value);
 };
 
-const getJsonPreview = (value: unknown): string => {
-  const rawValue = formatRawValue(value);
-  return rawValue.length > JSON_PREVIEW_LIMIT ? `${rawValue.slice(0, JSON_PREVIEW_LIMIT)}...` : rawValue;
-};
-
 const toNumericIdList = (value: unknown): number[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -415,6 +432,78 @@ const formatNumericIdListSummary = (values: number[]): string => {
   }
 
   return `[${values.join(', ')}]`;
+};
+
+const formatPaintPairSummary = (value: unknown): string => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return 'No pairs';
+  }
+
+  return `${value.length} pair${value.length === 1 ? '' : 's'}`;
+};
+
+const toPaintPairSummaryItems = (value: unknown): PaintPairSummaryItem[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.reduce<PaintPairSummaryItem[]>((accumulator, item) => {
+    if (!isRecordValue(item)) {
+      return accumulator;
+    }
+
+    const topcoatQuantity =
+      typeof item.topcoat_quantity === 'string' && item.topcoat_quantity.trim().length > 0
+        ? item.topcoat_quantity.trim()
+        : typeof item.topcoatQuantity === 'string' && item.topcoatQuantity.trim().length > 0
+          ? item.topcoatQuantity.trim()
+          : null;
+
+    const basecoatQuantity =
+      typeof item.basecoat_quantity === 'string' && item.basecoat_quantity.trim().length > 0
+        ? item.basecoat_quantity.trim()
+        : typeof item.basecoatQuantity === 'string' && item.basecoatQuantity.trim().length > 0
+          ? item.basecoatQuantity.trim()
+          : null;
+
+    accumulator.push({
+      id: getNumericIdFromUnknown(item.id),
+      topcoatId: getNumericIdFromUnknown(item.topcoat_id ?? item.topcoatId),
+      basecoatId: getNumericIdFromUnknown(item.basecoat_id ?? item.basecoatId),
+      topcoatQuantity,
+      basecoatQuantity,
+    });
+
+    return accumulator;
+  }, []);
+};
+
+const formatPaintPairItem = (item: PaintPairSummaryItem): string => {
+  const pairIdPart = item.id !== null ? `Paint Pair #${item.id}` : 'Paint Pair';
+  const topcoatPart = `Topcoat ID ${item.topcoatId ?? 'N/A'} (Qty: ${item.topcoatQuantity ?? 'N/A'})`;
+  const basecoatPart =
+    item.basecoatId !== null
+      ? `Basecoat ID ${item.basecoatId} (Qty: ${item.basecoatQuantity ?? 'N/A'})`
+      : 'Basecoat: None';
+
+  return `${pairIdPart}: ${topcoatPart}, ${basecoatPart}`;
+};
+
+const formatPaintPairDetailSummary = (value: unknown): string => {
+  const paintPairs = toPaintPairSummaryItems(value);
+  if (paintPairs.length === 0) {
+    return 'None';
+  }
+
+  const MAX_PAIRS_IN_SUMMARY = 2;
+  const visiblePairs = paintPairs.slice(0, MAX_PAIRS_IN_SUMMARY).map(formatPaintPairItem);
+  const remainingCount = paintPairs.length - visiblePairs.length;
+
+  if (remainingCount <= 0) {
+    return visiblePairs.join(' | ');
+  }
+
+  return `${visiblePairs.join(' | ')} | +${remainingCount} more`;
 };
 
 const toTimelineImagePreviewItems = (value: unknown): TimelineImagePreviewItem[] => {
@@ -652,10 +741,6 @@ const renderImagePreviewRow = (heading: string, previewItems: TimelineImagePrevi
 const renderComplexChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
   const beforeSummary = getComplexValueSummary(beforeValue);
   const afterSummary = getComplexValueSummary(afterValue);
-  const beforeRaw = formatRawValue(beforeValue);
-  const afterRaw = formatRawValue(afterValue);
-  const beforePreview = getJsonPreview(beforeValue);
-  const afterPreview = getJsonPreview(afterValue);
 
   return (
     <div key={`${id}-${fieldName}`} className='space-y-1.5'>
@@ -665,22 +750,6 @@ const renderComplexChange = (fieldName: string, beforeValue: unknown, afterValue
         <span className='mx-1 text-primary'>{'\u2192'}</span>
         <span className='font-medium'>{afterSummary}</span>
       </p>
-      <p className='text-[11px] text-text-muted'>
-        <span title={beforeRaw}>{beforePreview}</span>
-        <span className='mx-1 text-primary'>{'\u2192'}</span>
-        <span title={afterRaw}>{afterPreview}</span>
-      </p>
-      <details className='rounded-lg border border-border/70 bg-white px-2 py-1.5'>
-        <summary className='cursor-pointer text-[11px] font-semibold text-primary'>View full payload</summary>
-        <div className='mt-2 space-y-2'>
-          <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
-            {beforeRaw}
-          </pre>
-          <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
-            {afterRaw}
-          </pre>
-        </div>
-      </details>
     </div>
   );
 };
@@ -767,6 +836,47 @@ const renderResubmissionChange = (
 };
 
 const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: unknown, id: number): JSX.Element => {
+  if (isInvoiceIdChangeField(fieldName)) {
+    const beforeIds = toNumericIdList(beforeValue);
+    const afterIds = toNumericIdList(afterValue);
+    const beforeSummary = formatNumericIdListSummary(beforeIds);
+    const afterSummary = formatNumericIdListSummary(afterIds);
+
+    return (
+      <div key={`${id}-${fieldName}`} className='space-y-1.5'>
+        <p className='text-xs text-text-primary'>
+          <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+          <span>{beforeSummary}</span>
+          <span className='mx-1 text-primary'>{'\u2192'}</span>
+          <span>{afterSummary}</span>
+        </p>
+      </div>
+    );
+  }
+
+  if (isPaintPairChangeField(fieldName)) {
+    const beforeSummary = formatPaintPairSummary(beforeValue);
+    const afterSummary = formatPaintPairSummary(afterValue);
+    const beforeDetailSummary = formatPaintPairDetailSummary(beforeValue);
+    const afterDetailSummary = formatPaintPairDetailSummary(afterValue);
+
+    return (
+      <div key={`${id}-${fieldName}`} className='space-y-1.5'>
+        <p className='text-xs text-text-primary'>
+          <span className='font-semibold text-text-muted'>{formatFieldLabel(fieldName)}:</span>{' '}
+          <span>{beforeSummary}</span>
+          <span className='mx-1 text-primary'>{'\u2192'}</span>
+          <span>{afterSummary}</span>
+        </p>
+        <p className='text-[11px] text-text-muted'>
+          <span title={beforeDetailSummary}>{beforeDetailSummary}</span>
+          <span className='mx-1 text-primary'>{'\u2192'}</span>
+          <span title={afterDetailSummary}>{afterDetailSummary}</span>
+        </p>
+      </div>
+    );
+  }
+
   if (isImageChangeField(fieldName)) {
     const beforeSummary = formatImageIdsValue(beforeValue);
     const afterSummary = formatImageIdsValue(afterValue);
@@ -867,7 +977,7 @@ export const AuditTimelinePanel = ({
   title,
   subtitle,
   className,
-  maxItems = 6,
+  maxItems,
 }: AuditTimelinePanelProps): JSX.Element | null => {
   const { isAdmin, timelineQuery } = useAuditTimeline(type, objectId);
 
@@ -900,7 +1010,11 @@ export const AuditTimelinePanel = ({
     );
   }
 
-  const timelineItems = (timelineQuery.data?.results ?? []).slice(-maxItems).reverse();
+  const allTimelineItems = timelineQuery.data?.results ?? [];
+  const timelineItems =
+    typeof maxItems === 'number' && maxItems > 0
+      ? allTimelineItems.slice(-maxItems).reverse()
+      : [...allTimelineItems].reverse();
 
   return (
     <section
