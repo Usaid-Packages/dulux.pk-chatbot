@@ -107,6 +107,8 @@ interface PaintPairSummaryItem {
   id: number | null;
   topcoatId: number | null;
   basecoatId: number | null;
+  topcoatName: string | null;
+  basecoatName: string | null;
   topcoatQuantity: string | null;
   basecoatQuantity: string | null;
 }
@@ -442,6 +444,19 @@ const formatPaintPairSummary = (value: unknown): string => {
   return `${value.length} pair${value.length === 1 ? '' : 's'}`;
 };
 
+const getNamedPaintProduct = (value: unknown): { id: number | null; name: string | null } => {
+  if (!isRecordValue(value)) {
+    return { id: null, name: null };
+  }
+
+  const name = typeof value.name === 'string' && value.name.trim().length > 0 ? value.name.trim() : null;
+
+  return {
+    id: getNumericIdFromUnknown(value.id),
+    name,
+  };
+};
+
 const toPaintPairSummaryItems = (value: unknown): PaintPairSummaryItem[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -451,6 +466,21 @@ const toPaintPairSummaryItems = (value: unknown): PaintPairSummaryItem[] => {
     if (!isRecordValue(item)) {
       return accumulator;
     }
+
+    const topcoatProduct = getNamedPaintProduct(item.topcoat);
+    const basecoatProduct = getNamedPaintProduct(item.basecoat);
+    const topcoatName =
+      typeof item.topcoat_name === 'string' && item.topcoat_name.trim().length > 0
+        ? item.topcoat_name.trim()
+        : typeof item.topcoatName === 'string' && item.topcoatName.trim().length > 0
+          ? item.topcoatName.trim()
+          : topcoatProduct.name;
+    const basecoatName =
+      typeof item.basecoat_name === 'string' && item.basecoat_name.trim().length > 0
+        ? item.basecoat_name.trim()
+        : typeof item.basecoatName === 'string' && item.basecoatName.trim().length > 0
+          ? item.basecoatName.trim()
+          : basecoatProduct.name;
 
     const topcoatQuantity =
       typeof item.topcoat_quantity === 'string' && item.topcoat_quantity.trim().length > 0
@@ -468,8 +498,10 @@ const toPaintPairSummaryItems = (value: unknown): PaintPairSummaryItem[] => {
 
     accumulator.push({
       id: getNumericIdFromUnknown(item.id),
-      topcoatId: getNumericIdFromUnknown(item.topcoat_id ?? item.topcoatId),
-      basecoatId: getNumericIdFromUnknown(item.basecoat_id ?? item.basecoatId),
+      topcoatId: getNumericIdFromUnknown(item.topcoat_id ?? item.topcoatId ?? topcoatProduct.id),
+      basecoatId: getNumericIdFromUnknown(item.basecoat_id ?? item.basecoatId ?? basecoatProduct.id),
+      topcoatName,
+      basecoatName,
       topcoatQuantity,
       basecoatQuantity,
     });
@@ -478,12 +510,20 @@ const toPaintPairSummaryItems = (value: unknown): PaintPairSummaryItem[] => {
   }, []);
 };
 
+const formatPaintProductLabel = (name: string | null): string => {
+  if (name) {
+    return name;
+  }
+
+  return 'N/A';
+};
+
 const formatPaintPairItem = (item: PaintPairSummaryItem): string => {
   const pairIdPart = item.id !== null ? `Paint Pair #${item.id}` : 'Paint Pair';
-  const topcoatPart = `Topcoat ID ${item.topcoatId ?? 'N/A'} (Qty: ${item.topcoatQuantity ?? 'N/A'})`;
+  const topcoatPart = `Topcoat ${formatPaintProductLabel(item.topcoatName)} (Qty: ${item.topcoatQuantity ?? 'N/A'})`;
   const basecoatPart =
-    item.basecoatId !== null
-      ? `Basecoat ID ${item.basecoatId} (Qty: ${item.basecoatQuantity ?? 'N/A'})`
+    item.basecoatId !== null || item.basecoatName !== null
+      ? `Basecoat ${formatPaintProductLabel(item.basecoatName)} (Qty: ${item.basecoatQuantity ?? 'N/A'})`
       : 'Basecoat: None';
 
   return `${pairIdPart}: ${topcoatPart}, ${basecoatPart}`;
@@ -868,7 +908,7 @@ const renderArrowChange = (fieldName: string, beforeValue: unknown, afterValue: 
           <span className='mx-1 text-primary'>{'\u2192'}</span>
           <span>{afterSummary}</span>
         </p>
-        <p className='text-[11px] text-text-muted'>
+        <p className='text-[11px] text-text-primary'>
           <span title={beforeDetailSummary}>{beforeDetailSummary}</span>
           <span className='mx-1 text-primary'>{'\u2192'}</span>
           <span title={afterDetailSummary}>{afterDetailSummary}</span>

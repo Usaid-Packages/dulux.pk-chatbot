@@ -44,6 +44,7 @@ const DEALER_NAME_MAX_LENGTH = 120;
 const DEALER_CITY_MAX_LENGTH = 80;
 const DEALER_ADDRESS_MAX_LENGTH = 180;
 const NO_BASECOAT_VALUE = '__none__';
+const EDIT_MODAL_BODY_MIN_HEIGHT_CLASS = 'min-h-[620px]';
 
 const parsePurchaseDate = (value: string): Date | undefined => {
   if (!value) {
@@ -254,7 +255,6 @@ export const RegistrationEditModal = ({
 
   const handleModalClose = (): void => {
     setIsCalendarOpen(false);
-    reset(EMPTY_EDIT_VALUES);
     onClose();
   };
 
@@ -362,7 +362,7 @@ export const RegistrationEditModal = ({
 
   const renderLoadingState = (): JSX.Element => {
     return (
-      <div className='space-y-3 py-2'>
+      <div className={`${EDIT_MODAL_BODY_MIN_HEIGHT_CLASS} flex items-center`}>
         <p className='rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-sm text-text-primary'>
           Loading registration details...
         </p>
@@ -372,7 +372,7 @@ export const RegistrationEditModal = ({
 
   const renderMissingDataState = (): JSX.Element => {
     return (
-      <div className='space-y-3 py-2'>
+      <div className={`${EDIT_MODAL_BODY_MIN_HEIGHT_CLASS} flex items-center`}>
         <p className='rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive'>
           Unable to load selected registration for editing.
         </p>
@@ -388,7 +388,7 @@ export const RegistrationEditModal = ({
     );
 
     return (
-      <form className='space-y-4' onSubmit={handleSubmit(onSubmit)}>
+      <form className={`${EDIT_MODAL_BODY_MIN_HEIGHT_CLASS} space-y-4`} onSubmit={handleSubmit(onSubmit)}>
         <div className='grid gap-4 md:grid-cols-2'>
           <div className='space-y-2'>
             <label htmlFor='registration-edit-customer-name' className='text-sm font-medium text-text-primary'>
