@@ -7,15 +7,6 @@ import type {
 export const MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export const MANUAL_REGISTRATION_ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'] as const;
-export const MANUAL_REGISTRATION_PROVINCE_OPTIONS = [
-  'Punjab',
-  'Sindh',
-  'Khyber Pakhtunkhwa',
-  'Balochistan',
-  'Islamabad Capital Territory',
-  'Gilgit-Baltistan',
-  'Azad Jammu and Kashmir',
-] as const;
 
 export const MANUAL_REGISTRATION_STEPS: ManualRegistrationStep[] = [
   { id: 1, label: 'Personal Info' },
@@ -30,7 +21,6 @@ export const MANUAL_REGISTRATION_DEFAULT_VALUES: ManualRegistrationFormValues = 
   phoneNumber: '92',
   email: '',
   city: '',
-  province: '',
   siteAddress: '',
   postalCode: '',
   purchaseDate: '',
@@ -50,7 +40,7 @@ export const MANUAL_REGISTRATION_STEP_FIELDS: Record<
   ManualRegistrationStepId,
   readonly (keyof ManualRegistrationFormValues)[]
 > = {
-  1: ['customerName', 'phoneNumber', 'email', 'city', 'province', 'siteAddress'],
+  1: ['customerName', 'phoneNumber', 'email', 'city', 'siteAddress'],
   2: ['purchaseDate', 'purchaseDealer', 'purchaseDealerCity', 'purchaseDealerAddress', 'notes'],
   3: ['topcoatProductId', 'topcoatQuantity', 'basecoatProductId', 'basecoatQuantity', 'additionalPaintPairs'],
   4: ['invoices'],

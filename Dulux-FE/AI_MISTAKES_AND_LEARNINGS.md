@@ -270,14 +270,6 @@
 - Rule: When build errors mention CSS syntax in shared styles, verify surrounding selector blocks for unmatched braces
   before assuming feature code regressions.
 
-### 2026-04-13 - RHF controller wiring miss during input-to-select refactor
-
-- Issue: While converting manual registration `province` from `<Input>` to `Controller` + `Select`, `control` was not
-  initially destructured from `useFormContext`, causing a compile-time reference error.
-- Fix: Added `control` to form-context destructuring before finalizing and verified with targeted ESLint run.
-- Rule: Every `Controller` refactor must include a quick checklist: `control` is in scope, `name` matches schema, and
-  `onValueChange` is wired to `field.onChange`.
-
 ### 2026-04-13 - Nullish + ternary expression formatting caused syntax churn
 
 - Issue: A combined `??` + ternary expression in `src/utils/helperFunctions.ts` triggered Prettier errors and briefly
@@ -571,10 +563,10 @@
 
 ### 2026-04-10 19:25 - Registration detail runtime break after expandable-text refactor
 
-- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage
+- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one city usage
   was left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
   `/app/registrations/:id`.
-- Fix: Replaced the stale province call site with `<ExpandableDetailText value={registration.province} />` and reran
+- Fix: Replaced the stale city call site with `<ExpandableDetailText value={registration.city} />` and reran
   targeted lint.
 - Rule: After helper/component renames in a page, run a symbol-level search for old identifiers and verify no stale
   references remain before handoff.
@@ -840,3 +832,9 @@
 - Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
 - Fix: Re-ran lint with command-level override, kept source/config unchanged, and completed lint verification successfully.
 - Rule: For touched frontend files in this repo, start with command-level `import/order` override when needed by the known tooling instability and keep import structure clean.
+
+### 2026-04-21 - Missed immediate formatter pass after import cleanup
+
+- Issue: After removing an import block during refactor, one touched file failed `prettier/prettier` on the first ESLint run.
+- Fix: Applied formatter-compatible import layout and reran lint before continuing.
+- Rule: After removing or regrouping imports in touched files, run a quick formatting check immediately before full lint.

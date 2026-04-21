@@ -274,12 +274,6 @@ export const RegistrationDetailPage = (): JSX.Element => {
                   <ExpandableDetailText value={registration.purchaseDealerAddress} />
                 </dd>
               </div>
-              <div>
-                <dt className='text-text-muted'>Province</dt>
-                <dd className='font-medium text-text-primary'>
-                  <ExpandableDetailText value={registration.province} />
-                </dd>
-              </div>
               <div className='md:col-span-2'>
                 <dt className='text-text-muted'>Site address</dt>
                 <dd className='font-medium text-text-primary'>{registration.siteAddress}</dd>

@@ -59,7 +59,6 @@ export const registrationEditSchema = z
     phoneNumber: z.string().trim().regex(phonePattern, 'Phone number must be in 923XXXXXXXXX format.'),
     email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email address.'),
     city: z.string().trim().min(1, 'City is required.').max(80, 'City is too long.'),
-    province: z.string().trim().min(1, 'Province is required.'),
     siteAddress: z.string().trim().min(1, 'Site address is required.').max(180, 'Site address is too long.'),
     purchaseDate: z.string().trim().min(1, 'Purchase date is required.'),
     purchaseDealer: z.string().trim().min(1, 'Dealer name is required.').max(120, 'Dealer name is too long.'),

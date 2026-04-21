@@ -62,7 +62,6 @@ def create_registration(
         phone_number=phone_number,
         email="customer@example.com",
         city="Karachi",
-        province="Sindh",
         site_address="123 Street",
         purchase_date=date.today() - timedelta(days=5),
         purchase_dealer="Dealer",

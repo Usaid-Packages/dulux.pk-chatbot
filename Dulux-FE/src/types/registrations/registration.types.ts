@@ -54,7 +54,6 @@ export interface RegistrationDetail {
   phoneNumber: string;
   email: string;
   city: string;
-  province: string;
   siteAddress: string;
   purchaseDate: string;
   purchaseDealer: string;
@@ -105,7 +104,6 @@ export type ResubmissionFieldName =
   | 'phone_number'
   | 'email'
   | 'city'
-  | 'province'
   | 'site_address'
   | 'purchase_date'
   | 'purchase_dealer'
@@ -174,7 +172,6 @@ export interface RegistrationDetailApiResponse {
   phoneNumber?: string;
   email?: string;
   city?: string;
-  province?: string;
   siteAddress?: string;
   purchaseDate?: string;
   purchaseDealer?: string;
@@ -213,7 +210,6 @@ export interface RegistrationResubmitUpdatePayload extends Record<string, unknow
   phoneNumber?: string;
   email?: string;
   city?: string;
-  province?: string;
   siteAddress?: string;
   purchaseDate?: string;
   purchaseDealer?: string;
@@ -229,7 +225,6 @@ export interface RegistrationEditPayload extends Record<string, unknown> {
   phoneNumber?: string;
   email?: string;
   city?: string;
-  province?: string;
   siteAddress?: string;
   purchaseDate?: string;
   purchaseDealer?: string;

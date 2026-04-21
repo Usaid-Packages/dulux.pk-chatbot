@@ -34,9 +34,6 @@ class RegistrationFlow(BaseFlow):
     def prompt_city(self) -> None:
         self._send_step_prompt("Which city is the site located in?")
 
-    def prompt_province(self) -> None:
-        self._send_step_prompt("Please share the province.")
-
     def prompt_site_address(self) -> None:
         self._send_step_prompt("Please share the site address.")
 
@@ -160,20 +157,6 @@ class RegistrationFlow(BaseFlow):
             return
         self._save_data("city", city)
         if self._advance_resubmit_after_current_step("city"):
-            return
-        self.prompt_site_address()
-        self._advance_to("site_address")
-
-    def handle_province(self, message: dict) -> None:
-        province = self._get_text(message)
-        if not province:
-            self._send_validation_error("Province is required.")
-            return
-        if not self._is_plain_text_value(province) or not self._is_not_all_digits(province):
-            self._send_validation_error("Please provide a valid province.")
-            return
-        self._save_data("province", province)
-        if self._advance_resubmit_after_current_step("province"):
             return
         self.prompt_site_address()
         self._advance_to("site_address")
@@ -375,7 +358,6 @@ class RegistrationFlow(BaseFlow):
                 "phone_number": self.session.phone_number,
                 "email": data.get("email", ""),
                 "city": data.get("city", ""),
-                "province": data.get("province", ""),
                 "site_address": data.get("site_address", ""),
                 "purchase_date": data.get("purchase_date"),
                 "purchase_dealer": data.get("purchase_dealer", ""),
