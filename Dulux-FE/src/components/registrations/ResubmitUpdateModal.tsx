@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
-import { MANUAL_REGISTRATION_PROVINCE_OPTIONS, REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { REGISTRATION_INVOICE_TYPES } from '#/constants';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { resubmitUpdateSchema, type ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
@@ -39,7 +39,6 @@ const FIELD_LABELS: Record<RegistrationRejectionField['fieldName'], string> = {
   phone_number: 'Phone Number',
   email: 'Email',
   city: 'Customer City',
-  province: 'Province',
   site_address: 'Site Address',
   purchase_date: 'Purchase Date',
   purchase_dealer: 'Dealer Name',
@@ -55,7 +54,6 @@ const REQUESTED_FIELD_ORDER: RegistrationRejectionField['fieldName'][] = [
   'phone_number',
   'email',
   'city',
-  'province',
   'site_address',
   'purchase_date',
   'purchase_dealer',
@@ -209,7 +207,6 @@ export const ResubmitUpdateModal = ({
       phoneNumber: registration.phoneNumber,
       email: registration.email,
       city: registration.city,
-      province: registration.province,
       siteAddress: registration.siteAddress,
       purchaseDate: registration.purchaseDate,
       purchaseDealer: registration.purchaseDealer,
@@ -409,31 +406,6 @@ export const ResubmitUpdateModal = ({
                   {...cityField}
                   onChange={handleCityChange}
                 />
-              </div>
-            ) : null}
-
-            {requestedFieldNames.includes('province') ? (
-              <div>
-                <label className='text-sm font-medium text-text-primary'>Province</label>
-                <Controller
-                  control={control}
-                  name='province'
-                  render={({ field: provinceField }) => (
-                    <Select value={provinceField.value ?? ''} onValueChange={provinceField.onChange}>
-                      <SelectTrigger aria-label='Select province'>
-                        <SelectValue placeholder='Select province' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
-                          <SelectItem key={province} value={province}>
-                            {province}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.province ? <p className='mt-1 text-xs text-destructive'>{errors.province.message}</p> : null}
               </div>
             ) : null}
 

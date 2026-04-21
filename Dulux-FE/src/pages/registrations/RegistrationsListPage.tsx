@@ -191,11 +191,6 @@ export const RegistrationsListPage = (): React.JSX.Element => {
         nextValue: parsedValues.data.city,
       },
       {
-        key: 'province',
-        previousValue: registration.province,
-        nextValue: parsedValues.data.province,
-      },
-      {
         key: 'siteAddress',
         previousValue: registration.siteAddress,
         nextValue: parsedValues.data.siteAddress,

@@ -1,10 +1,9 @@
 import type { ChangeEvent, FocusEvent, JSX } from 'react';
 import { useEffect } from 'react';
 
-import { Controller, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
-import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
-import { MANUAL_REGISTRATION_PROVINCE_OPTIONS } from '#/constants';
+import { Input } from '#/components/ui';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 
 const CITY_MAX_LENGTH = 80;
@@ -16,7 +15,6 @@ const CITY_MAX_LENGTH = 80;
  */
 export const PersonalInfoStep = (): JSX.Element => {
   const {
-    control,
     getValues,
     register,
     setValue,
@@ -103,31 +101,6 @@ export const PersonalInfoStep = (): JSX.Element => {
           </span>
           <Input placeholder='e.g. Lahore' maxLength={CITY_MAX_LENGTH} {...cityField} onChange={handleCityChange} />
           {errors.city ? <p className='text-xs text-destructive'>{errors.city.message}</p> : null}
-        </label>
-
-        <label className='space-y-2'>
-          <span className='text-sm font-medium text-text-primary'>
-            Province <span className='text-destructive'>*</span>
-          </span>
-          <Controller
-            control={control}
-            name='province'
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger aria-label='Select province'>
-                  <SelectValue placeholder='Select province' />
-                </SelectTrigger>
-                <SelectContent>
-                  {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
-                    <SelectItem key={province} value={province}>
-                      {province}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
         </label>
 
         <label className='space-y-2'>

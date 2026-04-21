@@ -44,7 +44,6 @@ class AuditLogAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "audit@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",

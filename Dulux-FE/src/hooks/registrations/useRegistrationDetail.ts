@@ -53,10 +53,6 @@ const buildResubmitUpdatePayload = (
     payload.city = (values.city ?? '').trim();
   }
 
-  if (requestedFieldNames.has('province')) {
-    payload.province = (values.province ?? '').trim();
-  }
-
   if (requestedFieldNames.has('site_address')) {
     payload.siteAddress = (values.siteAddress ?? '').trim();
   }

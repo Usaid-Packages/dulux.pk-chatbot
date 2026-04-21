@@ -179,7 +179,6 @@ class Command(BaseCommand):
             phone_number=self._required(row, "phoneNumber", row_index=row_index),
             email=self._required(row, "email", row_index=row_index),
             city=self._required(row, "customerCity", row_index=row_index),
-            province="",
             site_address=self._required(row, "siteAddress", row_index=row_index),
             purchase_date=self._parse_date(self._required(row, "purchaseDate", row_index=row_index)),
             purchase_dealer=str(row.get("purchaseDealer") or "").strip(),

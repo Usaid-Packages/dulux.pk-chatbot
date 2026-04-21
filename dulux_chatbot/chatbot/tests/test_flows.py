@@ -537,7 +537,6 @@ class FlowTests(TestCase):
             "customer_name": registration.customer_name,
             "email": registration.email,
             "city": registration.city,
-            "province": registration.province,
             "site_address": registration.site_address,
             "purchase_date": registration.purchase_date.isoformat(),
             "purchase_dealer": registration.purchase_dealer,

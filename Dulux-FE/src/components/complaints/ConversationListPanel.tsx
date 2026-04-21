@@ -150,16 +150,13 @@ export const ConversationListPanel = ({
                     <div className='flex w-full items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
                         <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
-                        <p className='truncate text-xs text-text-muted'>
-                          {item.issueType} · {item.customerPhone}
-                        </p>
                       </div>
                       <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>
                         {formatConversationTime(item.lastMessageAt)}
                       </p>
                     </div>
 
-                    <p className='line-clamp-2 w-full text-xs text-text-secondary'>{item.lastMessagePreview}</p>
+                    <p className='line-clamp-2 w-full text-xs text-text-muted'>{item.lastMessagePreview}</p>
 
                     <div className='flex w-full flex-wrap items-center gap-2'>
                       <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.apiStatus])}>

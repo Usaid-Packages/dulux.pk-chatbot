@@ -22,11 +22,7 @@ import {
   SelectValue,
 } from '#/components/ui';
 import { Calendar } from '#/components/ui/Calendar';
-import {
-  MANUAL_REGISTRATION_ALLOWED_FILE_TYPES,
-  MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES,
-  MANUAL_REGISTRATION_PROVINCE_OPTIONS,
-} from '#/constants';
+import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { registrationEditSchema, type RegistrationEditFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
@@ -48,38 +44,6 @@ const DEALER_NAME_MAX_LENGTH = 120;
 const DEALER_CITY_MAX_LENGTH = 80;
 const DEALER_ADDRESS_MAX_LENGTH = 180;
 const NO_BASECOAT_VALUE = '__none__';
-
-const toProvinceLookupKey = (value: string): string =>
-  value
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[^a-z]/g, '');
-
-const PROVINCE_NORMALIZATION_ALIASES: Readonly<Record<string, string>> = {
-  kp: 'Khyber Pakhtunkhwa',
-  kpk: 'Khyber Pakhtunkhwa',
-  khyberpakhtoonkhwa: 'Khyber Pakhtunkhwa',
-  khyberpakhtunkhawa: 'Khyber Pakhtunkhwa',
-};
-
-const normalizeProvinceForSelect = (value: string): string => {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    return '';
-  }
-
-  const provinceKey = toProvinceLookupKey(normalizedValue);
-  const aliasMatch = PROVINCE_NORMALIZATION_ALIASES[provinceKey];
-  if (aliasMatch) {
-    return aliasMatch;
-  }
-
-  const matchedProvince = MANUAL_REGISTRATION_PROVINCE_OPTIONS.find(
-    provinceOption => toProvinceLookupKey(provinceOption) === provinceKey
-  );
-
-  return matchedProvince ?? '';
-};
 
 const parsePurchaseDate = (value: string): Date | undefined => {
   if (!value) {
@@ -135,7 +99,6 @@ const EMPTY_EDIT_VALUES: RegistrationEditFormValues = {
   phoneNumber: '92',
   email: '',
   city: '',
-  province: '',
   siteAddress: '',
   purchaseDate: '',
   purchaseDealer: '',
@@ -247,7 +210,6 @@ export const RegistrationEditModal = ({
       phoneNumber: registration.phoneNumber,
       email: registration.email,
       city: registration.city,
-      province: normalizeProvinceForSelect(registration.province),
       siteAddress: registration.siteAddress,
       purchaseDate: registration.purchaseDate,
       purchaseDealer: registration.purchaseDealer,
@@ -482,31 +444,6 @@ export const RegistrationEditModal = ({
               aria-invalid={Boolean(errors.city)}
             />
             {errors.city ? <p className='text-xs text-destructive'>{errors.city.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='registration-edit-province' className='text-sm font-medium text-text-primary'>
-              Province <span className='text-destructive'>*</span>
-            </label>
-            <Controller
-              control={control}
-              name='province'
-              render={({ field }) => (
-                <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                  <SelectTrigger id='registration-edit-province' className='rounded-xl border-primary/20 bg-white'>
-                    <SelectValue placeholder='Select province' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(provinceOption => (
-                      <SelectItem key={provinceOption} value={provinceOption}>
-                        {provinceOption}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.province ? <p className='text-xs text-destructive'>{errors.province.message}</p> : null}
           </div>
 
           <div className='space-y-2'>

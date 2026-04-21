@@ -484,7 +484,6 @@ class WarrantyRegistration(TimeStampedModel):
     phone_number            = CharField(max_length=20, unique=True, db_index=True)
     email                   = EmailField()
     city                    = CharField(max_length=100)
-    province                = CharField(max_length=100, blank=True)
     site_address            = TextField()
     purchase_date           = DateField()
     purchase_dealer         = CharField(max_length=255)
@@ -1065,7 +1064,7 @@ dulux_chatbot/chatbot/
 Steps:
 ```
 consent → otp_send → otp_verify →
-name → email → city → province → site_address → purchase_date →
+name → email → city → site_address → purchase_date →
 dealer_name → dealer_address →
 topcoat_select → topcoat_quantity →
 basecoat_select → basecoat_quantity →
