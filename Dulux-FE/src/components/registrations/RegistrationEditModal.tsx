@@ -104,7 +104,6 @@ const EMPTY_EDIT_VALUES: RegistrationEditFormValues = {
   purchaseDealer: '',
   purchaseDealerCity: '',
   purchaseDealerAddress: '',
-  postalCode: '',
   paintPairs: [DEFAULT_PAINT_PAIR],
   existingInvoiceImageIds: [],
   invoiceFiles: [],
@@ -215,7 +214,6 @@ export const RegistrationEditModal = ({
       purchaseDealer: registration.purchaseDealer,
       purchaseDealerCity: registration.purchaseDealerCity,
       purchaseDealerAddress: registration.purchaseDealerAddress,
-      postalCode: registration.postalCode,
       paintPairs: defaultPaintPairs,
       existingInvoiceImageIds: registration.paintPairInvoices.map(invoice => invoice.image.id),
       invoiceFiles: [],
@@ -254,11 +252,15 @@ export const RegistrationEditModal = ({
     });
   }, [registration, setValue, topcoatProducts, watchedPaintPairs]);
 
+  const handleModalClose = (): void => {
+    setIsCalendarOpen(false);
+    reset(EMPTY_EDIT_VALUES);
+    onClose();
+  };
+
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
-      setIsCalendarOpen(false);
-      reset(EMPTY_EDIT_VALUES);
-      onClose();
+      handleModalClose();
     }
   };
 
@@ -595,19 +597,6 @@ export const RegistrationEditModal = ({
               <p className='text-xs text-destructive'>{errors.purchaseDealerAddress.message}</p>
             ) : null}
           </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='registration-edit-postal-code' className='text-sm font-medium text-text-primary'>
-              Postal Code
-            </label>
-            <Input
-              id='registration-edit-postal-code'
-              className='rounded-xl border-primary/20 bg-white'
-              {...register('postalCode')}
-              aria-invalid={Boolean(errors.postalCode)}
-            />
-            {errors.postalCode ? <p className='text-xs text-destructive'>{errors.postalCode.message}</p> : null}
-          </div>
         </div>
 
         <div className='space-y-3 rounded-xl border border-primary/15 bg-surface p-3'>
@@ -817,7 +806,7 @@ export const RegistrationEditModal = ({
         </div>
 
         <DialogFooter>
-          <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
+          <Button type='button' variant='outline' onClick={handleModalClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button

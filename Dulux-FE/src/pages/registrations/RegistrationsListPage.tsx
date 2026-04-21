@@ -215,11 +215,6 @@ export const RegistrationsListPage = (): React.JSX.Element => {
         previousValue: registration.purchaseDealerAddress,
         nextValue: parsedValues.data.purchaseDealerAddress,
       },
-      {
-        key: 'postalCode',
-        previousValue: registration.postalCode,
-        nextValue: parsedValues.data.postalCode ?? '',
-      },
     ];
 
     scalarFieldUpdates.forEach(fieldUpdate => {
