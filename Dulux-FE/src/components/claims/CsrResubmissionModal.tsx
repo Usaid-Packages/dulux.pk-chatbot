@@ -96,12 +96,16 @@ const CsrResubmissionEntryField = ({
                 <Button
                   type='button'
                   variant='outline'
-                  className='w-full justify-start rounded-xl border-primary/20 bg-white'
+                  className='w-full justify-start rounded-full border-primary/20 bg-primary/5 px-4 text-primary hover:bg-primary/10'
                   onClick={() => inputRef.current?.click()}
                 >
                   {selectedFileName ? 'Change image' : 'Upload image'}
                 </Button>
-                {selectedFileName ? <p className='text-xs text-text-muted'>Selected: {selectedFileName}</p> : null}
+                {selectedFileName ? (
+                  <span className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'>
+                    Selected: {selectedFileName}
+                  </span>
+                ) : null}
                 {imageFileError ? <p className='text-xs text-destructive'>{imageFileError}</p> : null}
               </div>
             );

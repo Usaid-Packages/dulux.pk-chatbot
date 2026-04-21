@@ -60,8 +60,14 @@ export const router = createBrowserRouter(
           <Route path=':id' element={<ClaimDetailPage />} />
         </Route>
         <Route path={ROUTES.REGISTRATIONS}>
-          <Route index element={<RegistrationsListPage />} />
-          <Route path=':id' element={<RegistrationDetailPage />} />
+          <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS]} />}>
+            <Route index element={<RegistrationsListPage />} />
+          </Route>
+          <Route
+            element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS, APP_USER_ROLES.QUALITY]} />}
+          >
+            <Route path=':id' element={<RegistrationDetailPage />} />
+          </Route>
         </Route>
         <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.QUALITY]} />}>
           <Route path={ROUTES.QUALITY}>
@@ -73,15 +79,19 @@ export const router = createBrowserRouter(
           <Route index element={<LiveChatPage />} />
           <Route path=':id' element={<LiveChatPage />} />
         </Route>
-        <Route path={ROUTES.MANUAL_REGISTRATION_ROOT} element={<ManualRegistrationLayout />}>
-          <Route index element={<Navigate to='step/1' replace />} />
-          <Route path='step/:stepId' element={<ManualStepPage />} />
-          <Route path='success' element={<ManualRegistrationSuccessPage />} />
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS]} />}>
+          <Route path={ROUTES.MANUAL_REGISTRATION_ROOT} element={<ManualRegistrationLayout />}>
+            <Route index element={<Navigate to='step/1' replace />} />
+            <Route path='step/:stepId' element={<ManualStepPage />} />
+            <Route path='success' element={<ManualRegistrationSuccessPage />} />
+          </Route>
         </Route>
-        <Route path={ROUTES.PRODUCTS}>
-          <Route index element={<ProductsListPage />} />
-          <Route path='new' element={<ProductCreatePage />} />
-          <Route path=':id/edit' element={<ProductEditPage />} />
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN]} />}>
+          <Route path={ROUTES.PRODUCTS}>
+            <Route index element={<ProductsListPage />} />
+            <Route path='new' element={<ProductCreatePage />} />
+            <Route path=':id/edit' element={<ProductEditPage />} />
+          </Route>
         </Route>
       </Route>
 

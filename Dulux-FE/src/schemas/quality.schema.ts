@@ -7,6 +7,7 @@ import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quali
 export const qualityQueueItemSchema = z.object({
   id: z.string().min(1),
   claimNumber: z.string().min(1),
+  registrationNumber: z.string().min(1),
   customerName: z.string().min(1),
   issueType: z.string().min(1),
   city: z.string().min(1),
