@@ -30,6 +30,7 @@ class WarrantyRegistration(TimeStampedModel):
     phone_number = models.CharField(max_length=20, db_index=True)
     email = models.EmailField()
     city = models.CharField(max_length=100)
+    province = models.CharField(max_length=100, blank=True, default="")
     site_address = models.TextField()
     purchase_date = models.DateField()
     purchase_dealer = models.CharField(max_length=255, blank=True)

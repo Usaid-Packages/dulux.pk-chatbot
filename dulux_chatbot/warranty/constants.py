@@ -27,6 +27,7 @@ REGISTRATION_FIELD_UPDATE_FIELDS = {
     "phone_number",
     "email",
     "city",
+    "province",
     "site_address",
     "purchase_date",
     "purchase_dealer",
