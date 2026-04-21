@@ -16,7 +16,7 @@ from dulux_chatbot.warranty.api.v1.serializers import (
 )
 from dulux_chatbot.warranty.choices import RegistrationState
 from dulux_chatbot.warranty.models import WarrantyRegistration
-from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
+from dulux_chatbot.warranty.utils.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
 
 
 class RegistrationFlow(BaseFlow):

@@ -12,13 +12,6 @@ from dulux_chatbot.core.models import Image
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product
 from dulux_chatbot.warranty.api.v1.relations import latest_prefetched
-from dulux_chatbot.warranty.audit import (
-    build_claim_event_label,
-    build_claim_snapshot,
-    build_quality_review_snapshot,
-    build_registration_event_label,
-    build_registration_snapshot,
-)
 from dulux_chatbot.warranty.choices import (
     ClaimResubmissionSource,
     ClaimState,
@@ -51,7 +44,6 @@ from dulux_chatbot.warranty.constants import (
     REGISTRATION_DETAIL_EDITABLE_STATES,
     REGISTRATION_FIELD_UPDATE_FIELDS,
 )
-from dulux_chatbot.warranty.helpers import generate_registration_code
 from dulux_chatbot.warranty.models import (
     ClaimImage,
     ClaimQualityReview,
@@ -71,6 +63,14 @@ from dulux_chatbot.warranty.tasks import (
     send_registration_status_notification,
     send_whatsapp_status_notification,
 )
+from dulux_chatbot.warranty.utils.audit import (
+    build_claim_event_label,
+    build_claim_snapshot,
+    build_quality_review_snapshot,
+    build_registration_event_label,
+    build_registration_snapshot,
+)
+from dulux_chatbot.warranty.utils.helpers import generate_registration_code
 from dulux_chatbot.warranty.validators import (
     validate_registration_phone_number,
     validate_registration_purchase_date,

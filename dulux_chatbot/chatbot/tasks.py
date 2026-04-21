@@ -2,10 +2,10 @@ import logging
 
 from celery import shared_task
 
-from dulux_chatbot.chatbot.helpers import format_product_message
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.chatbot.utils.helpers import format_product_message
 from dulux_chatbot.products.models import Product
 
 

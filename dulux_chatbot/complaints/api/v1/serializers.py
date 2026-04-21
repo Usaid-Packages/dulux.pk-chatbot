@@ -5,14 +5,14 @@ from rest_framework import serializers
 from dulux_chatbot.audit_logs.choices import AuditAction
 from dulux_chatbot.audit_logs.services import log_create, log_event, log_update
 from dulux_chatbot.chatbot.services.sessions import end_complaint_chat_session
-from dulux_chatbot.complaints.audit import (
+from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
+from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
+from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
+from dulux_chatbot.complaints.utils.audit import (
     build_complaint_before_snapshot,
     build_complaint_event_label,
     build_complaint_snapshot,
 )
-from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
-from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
-from dulux_chatbot.complaints.tasks import send_complaint_closed_notification
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.core.validators import validate_pakistan_phone_number

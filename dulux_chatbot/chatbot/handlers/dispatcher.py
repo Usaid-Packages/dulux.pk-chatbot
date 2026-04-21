@@ -21,7 +21,7 @@ from dulux_chatbot.chatbot.services.dispatch_side_effects import (
 from dulux_chatbot.chatbot.services.sessions import reset_whatsapp_session_to_main_menu
 from dulux_chatbot.complaints.choices import ComplaintSubject
 from dulux_chatbot.complaints.models import Complaint
-from dulux_chatbot.warranty.resubmission import fallback_resubmit_message
+from dulux_chatbot.warranty.utils.resubmission import fallback_resubmit_message
 
 
 COMPLAINT_CONTEXT_REMINDER_AFTER = timedelta(hours=1)

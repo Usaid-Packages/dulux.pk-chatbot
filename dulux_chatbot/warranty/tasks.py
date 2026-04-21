@@ -12,14 +12,14 @@ from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
 from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import ClaimState, QualityDecisionType, QualityRequiredItem, RegistrationState
 from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
-from dulux_chatbot.warranty.resubmission import (
+from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
+from dulux_chatbot.warranty.utils.resubmission import (
     build_resubmit_steps,
     fallback_resubmit_message,
     get_resubmission_field_label,
     initial_resubmit_session_data,
     resubmit_flow_type,
 )
-from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 
 
 logger = logging.getLogger("dulux_chatbot")

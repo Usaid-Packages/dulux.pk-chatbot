@@ -18,7 +18,6 @@ from dulux_chatbot.warranty.api.v1.serializers import (
     WarrantyClaimUpdateSerializer,
     WarrantyRegistrationUpdateSerializer,
 )
-from dulux_chatbot.warranty.audit import build_claim_snapshot, build_registration_snapshot
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationChannel, RegistrationState
 from dulux_chatbot.warranty.constants import CLAIM_BLOCKING_STATES
 from dulux_chatbot.warranty.models import (
@@ -40,6 +39,7 @@ from dulux_chatbot.warranty.tests.factories import (
     create_quality_user,
     create_registration,
 )
+from dulux_chatbot.warranty.utils.audit import build_claim_snapshot, build_registration_snapshot
 
 
 def build_notification_template(*, title: str = "Warranty Update") -> str:

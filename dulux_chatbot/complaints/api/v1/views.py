@@ -21,9 +21,9 @@ from dulux_chatbot.complaints.api.v1.serializers import (
     ComplaintUpdateSerializer,
 )
 from dulux_chatbot.complaints.choices import ComplaintStatus
-from dulux_chatbot.complaints.helpers import build_complaint_chat_items
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
-from dulux_chatbot.complaints.realtime import broadcast_complaint_created
+from dulux_chatbot.complaints.utils.helpers import build_complaint_chat_items
+from dulux_chatbot.complaints.utils.realtime import broadcast_complaint_created
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
 
 

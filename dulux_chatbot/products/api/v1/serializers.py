@@ -4,9 +4,9 @@ from rest_framework import serializers
 from dulux_chatbot.audit_logs.services import build_instance_snapshot, log_create, log_delete, log_update
 from dulux_chatbot.core.api.v1.serializers import ImageSerializer
 from dulux_chatbot.core.models import Image
-from dulux_chatbot.products.audit import build_product_snapshot
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product, ProductBasecoat, ProductImage, ProductSurfaceMapping, SurfaceType
+from dulux_chatbot.products.utils.audit import build_product_snapshot
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

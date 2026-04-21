@@ -6,7 +6,7 @@ from dulux_chatbot.chatbot.constants import STEP_CHAT
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.complaints.choices import ComplaintSubject, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
-from dulux_chatbot.complaints.realtime import broadcast_complaint_created
+from dulux_chatbot.complaints.utils.realtime import broadcast_complaint_created
 from dulux_chatbot.warranty.models import WarrantyRegistration
 
 
