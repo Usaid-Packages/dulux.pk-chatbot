@@ -68,7 +68,6 @@ export const registrationEditSchema = z
       .trim()
       .min(1, 'Dealer address is required.')
       .max(180, 'Dealer address is too long.'),
-    postalCode: z.string().trim().max(20, 'Postal code is too long.').optional(),
     paintPairs: z.array(registrationEditPaintPairSchema).min(1, 'At least one paint pair is required.'),
     existingInvoiceImageIds: z.array(z.number().int().nonnegative()),
     invoiceFiles: z.array(invoiceFileSchema),

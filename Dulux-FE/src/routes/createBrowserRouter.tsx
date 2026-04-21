@@ -86,9 +86,11 @@ export const router = createBrowserRouter(
             <Route path='success' element={<ManualRegistrationSuccessPage />} />
           </Route>
         </Route>
-        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN]} />}>
-          <Route path={ROUTES.PRODUCTS}>
+        <Route path={ROUTES.PRODUCTS}>
+          <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS]} />}>
             <Route index element={<ProductsListPage />} />
+          </Route>
+          <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.CS]} />}>
             <Route path='new' element={<ProductCreatePage />} />
             <Route path=':id/edit' element={<ProductEditPage />} />
           </Route>

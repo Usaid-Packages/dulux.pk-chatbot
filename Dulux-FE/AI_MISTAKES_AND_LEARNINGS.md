@@ -838,3 +838,15 @@
 - Issue: After removing an import block during refactor, one touched file failed `prettier/prettier` on the first ESLint run.
 - Fix: Applied formatter-compatible import layout and reran lint before continuing.
 - Rule: After removing or regrouping imports in touched files, run a quick formatting check immediately before full lint.
+
+### 2026-04-21 16:07 - Product-role update needed a second pass due formatting lint
+
+- Issue: While expanding CS permissions for product management, a wrapped boolean assignment in `ProductsListPage.tsx` failed Prettier during lint.
+- Fix: Simplified the assignment formatting and reran full lint to green.
+- Rule: After role-access edits, run lint immediately and resolve formatting issues in the same pass before final handoff.
+
+### 2026-04-21 16:12 - Extra blank line after field removal caused Prettier lint failure
+
+- Issue: While removing Postal Code from `RegistrationEditModal.tsx`, an extra blank line remained and failed `prettier/prettier` in lint.
+- Fix: Removed the stray blank line and reran full lint to green.
+- Rule: After removing JSX blocks from form layouts, run a quick local formatting check around the edited section before full lint.
