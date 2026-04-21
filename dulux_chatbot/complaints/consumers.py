@@ -1,13 +1,11 @@
-from urllib.parse import parse_qs
-
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from dulux_chatbot.chatbot.services.sessions import activate_complaint_chat_session
 from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError, WhatsAppClient
 from dulux_chatbot.complaints.choices import MessageSender
+from dulux_chatbot.complaints.constants import COMPLAINT_WEBSOCKET_ALLOWED_ROLES
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 
 
@@ -15,10 +13,10 @@ class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
     group_name: str
 
     async def connect(self) -> None:
-        self.user = await self._get_user()
+        self.user = self.scope["user"]
 
-        if self.user is None:
-            await self.close(code=4401)
+        if not self._user_has_complaint_access():
+            await self.close(code=4403)
             return
 
         is_valid = await self._connect_validated()
@@ -34,24 +32,8 @@ class AuthenticatedConsumer(AsyncJsonWebsocketConsumer):
         if hasattr(self, "group_name"):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def _get_user(self):
-        query_string = self.scope.get("query_string", b"").decode()
-        token = parse_qs(query_string).get("token", [None])[0]
-        if not token:
-            return None
-
-        return await sync_to_async(self._authenticate_token)(token)
-
-    def _authenticate_token(self, token: str):
-        try:
-            jwt_authentication = JWTAuthentication()
-            validated_token = jwt_authentication.get_validated_token(token)
-            user = jwt_authentication.get_user(validated_token)
-        except Exception:
-            return None
-        if user is None or not user.is_authenticated:
-            return None
-        return user
+    def _user_has_complaint_access(self) -> bool:
+        return self.user.role in COMPLAINT_WEBSOCKET_ALLOWED_ROLES
 
 
 class ComplaintChatConsumer(AuthenticatedConsumer):
@@ -70,13 +52,13 @@ class ComplaintChatConsumer(AuthenticatedConsumer):
             await self.send_json({"error": "Text is required."})
             return
 
-        message = await self._create_message(sender=MessageSender.CS_AGENT, text=text)
         phone_number = await self._get_complaint_phone_number()
         try:
             await sync_to_async(WhatsAppClient().send_text)(phone_number, text)
         except WhatsAppAPIError:
-            await self.send_json({"error": "Message saved but could not be sent to WhatsApp.", "message": message})
+            await self.send_json({"error": "Message could not be sent to WhatsApp."})
             return
+        message = await self._create_message(sender=MessageSender.CS_AGENT, text=text)
         await sync_to_async(activate_complaint_chat_session)(phone_number=phone_number, complaint_id=self.complaint_id)
         await self.channel_layer.group_send(
             self.group_name,

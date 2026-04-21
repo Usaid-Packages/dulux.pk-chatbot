@@ -29,7 +29,6 @@ interface RegistrationCreatePayload {
   phoneNumber: string;
   email: string;
   city: string;
-  province: string;
   siteAddress: string;
   purchaseDate: string;
   purchaseDealer: string;
@@ -134,7 +133,6 @@ const buildCreateRegistrationPayload = async (
     phoneNumber: normalizedPhoneNumber,
     email: values.email.trim(),
     city: values.city.trim(),
-    province: values.province.trim(),
     siteAddress: values.siteAddress.trim(),
     purchaseDate: values.purchaseDate.trim(),
     purchaseDealer: values.purchaseDealer.trim(),

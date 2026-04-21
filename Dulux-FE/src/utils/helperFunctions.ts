@@ -17,7 +17,7 @@
  * - Complexity: O(1)
  */
 
-import { DEFAULT_API_ERROR_MESSAGE, REGISTRATION_INVOICE_TYPES, REGISTRATION_PRODUCT_TYPES } from '#/constants';
+import { COMPLAINT_SUBJECT_LABELS, DEFAULT_API_ERROR_MESSAGE } from '#/constants';
 import type {
   AuditLogApiDetailResponse,
   AuditLogApiListResponse,
@@ -66,6 +66,26 @@ const readErrorString = (value: unknown): string | undefined => {
   }
 
   return undefined;
+};
+
+const formatComplaintSubject = (subject: string): string => {
+  const normalizedSubject = subject.trim();
+  const mappedSubject = COMPLAINT_SUBJECT_LABELS[normalizedSubject as keyof typeof COMPLAINT_SUBJECT_LABELS];
+
+  if (mappedSubject) {
+    return mappedSubject;
+  }
+
+  if (!normalizedSubject.includes('_')) {
+    return normalizedSubject;
+  }
+
+  return normalizedSubject
+    .toLowerCase()
+    .split('_')
+    .filter(part => part.length > 0)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 };
 
 export const getApiErrorMessage = (error: unknown): string => {
@@ -141,7 +161,6 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
     'phone_number',
     'email',
     'city',
-    'province',
     'site_address',
     'purchase_date',
     'purchase_dealer',
@@ -210,7 +229,6 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
     phoneNumber: response.phoneNumber ?? '',
     email: response.email ?? '',
     city: response.city ?? '',
-    province: response.province ?? '',
     siteAddress: response.siteAddress ?? '',
     purchaseDate: response.purchaseDate ?? '',
     purchaseDealer: response.purchaseDealer ?? '',
@@ -615,6 +633,7 @@ const readQueueNullableNumberValue = (
 
 const toConversationListItem = (item: ComplaintListApiResponse['results'][number]): ConversationListItem => {
   const apiStatus = normalizeComplaintApiStatus(item.status);
+  const subjectLabel = formatComplaintSubject(item.subject);
 
   return {
     id: String(item.id),
@@ -622,14 +641,14 @@ const toConversationListItem = (item: ComplaintListApiResponse['results'][number
     customerName: item.customerName,
     customerPhone: item.phoneNumber,
     city: UNKNOWN_CITY,
-    issueType: item.subject,
+    issueType: subjectLabel,
     apiStatus,
     status: mapComplaintApiStatusToConversationStatus(apiStatus),
     channel: 'whatsapp',
     unreadCount: 0,
     assignedToId: item.assignedTo ?? null,
     assignedAgent: item.assignedToEmail ?? undefined,
-    lastMessagePreview: item.subject,
+    lastMessagePreview: subjectLabel,
     lastMessageAt: item.created,
   };
 };
@@ -651,6 +670,7 @@ export const normalizeComplaintQueueSocketItem = (payload: unknown): Conversatio
   const customerName = readQueueStringValue(complaintPayload, 'customerName', 'customer_name');
   const customerPhone = readQueueStringValue(complaintPayload, 'phoneNumber', 'phone_number');
   const subject = readQueueStringValue(complaintPayload, 'subject', 'subject');
+  const subjectLabel = subject ? formatComplaintSubject(subject) : '';
   const createdAt = readQueueStringValue(complaintPayload, 'created', 'created') || new Date().toISOString();
   const assignedToId = readQueueNullableNumberValue(complaintPayload, 'assignedTo', 'assigned_to');
   const assignedAgent = readQueueNullableStringValue(complaintPayload, 'assignedToEmail', 'assigned_to_email');
@@ -662,14 +682,14 @@ export const normalizeComplaintQueueSocketItem = (payload: unknown): Conversatio
     customerName: customerName || customerPhone || 'Unknown Customer',
     customerPhone,
     city: UNKNOWN_CITY,
-    issueType: subject || 'Complaint',
+    issueType: subjectLabel || 'Complaint',
     apiStatus,
     status: mapComplaintApiStatusToConversationStatus(apiStatus),
     channel: 'whatsapp',
     unreadCount: 0,
     assignedToId,
     assignedAgent: assignedAgent ?? undefined,
-    lastMessagePreview: subject || 'New complaint created',
+    lastMessagePreview: subjectLabel || 'New complaint created',
     lastMessageAt: createdAt,
   };
 };
@@ -708,6 +728,7 @@ export const normalizeComplaintDetailResponse = (
     (typeof response.registration === 'number' ? String(response.registration) : undefined) ??
     threadId;
   const messageSource = responseMessages ?? response.messages ?? [];
+  const subjectLabel = formatComplaintSubject(response.subject);
   const normalizedMessages = messageSource.map(message => normalizeComplaintApiMessage(message, threadId));
   const latestMessage = normalizedMessages.at(-1);
   const detailAttachments = (response.images ?? []).flatMap(imageItem => {
@@ -747,7 +768,7 @@ export const normalizeComplaintDetailResponse = (
     closureNote: response.closureNote ?? '',
     closedAt: response.closedAt ?? null,
     city: UNKNOWN_CITY,
-    issueType: response.subject,
+    issueType: subjectLabel,
     apiStatus,
     status: mapComplaintApiStatusToConversationStatus(apiStatus),
     channel: 'whatsapp',
@@ -761,7 +782,7 @@ export const normalizeComplaintDetailResponse = (
       pastComplaints: 0,
     },
     complaintImages,
-    lastMessagePreview: latestMessage?.text ?? response.subject,
+    lastMessagePreview: latestMessage?.text ?? subjectLabel,
     lastMessageAt: latestMessage?.createdAt ?? response.modified ?? response.created ?? submittedAt,
     lastResolvedAt: response.closedAt ?? undefined,
     messages: normalizedMessages,

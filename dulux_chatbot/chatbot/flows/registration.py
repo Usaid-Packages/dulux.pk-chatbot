@@ -16,7 +16,7 @@ from dulux_chatbot.warranty.api.v1.serializers import (
 )
 from dulux_chatbot.warranty.choices import RegistrationState
 from dulux_chatbot.warranty.models import WarrantyRegistration
-from dulux_chatbot.warranty.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
+from dulux_chatbot.warranty.utils.resubmission import STEP_TO_MODEL_FIELD, is_registration_resubmit_session
 
 
 class RegistrationFlow(BaseFlow):
@@ -34,9 +34,6 @@ class RegistrationFlow(BaseFlow):
     def prompt_city(self) -> None:
         self._send_step_prompt("Which city is the site located in?")
 
-    def prompt_province(self) -> None:
-        self._send_step_prompt("Please share the province.")
-
     def prompt_site_address(self) -> None:
         self._send_step_prompt("Please share the site address.")
 
@@ -53,6 +50,10 @@ class RegistrationFlow(BaseFlow):
         self._send_step_prompt("Please share dealer address.")
 
     def prompt_postal_code(self) -> None:
+        if not is_registration_resubmit_session(self.session.session_data or {}):
+            self.prompt_topcoat_select()
+            self._advance_to("topcoat_select")
+            return
         self._send_step_prompt("Please share postal code.")
 
     def prompt_topcoat_select(self) -> None:
@@ -157,20 +158,6 @@ class RegistrationFlow(BaseFlow):
         self._save_data("city", city)
         if self._advance_resubmit_after_current_step("city"):
             return
-        self.prompt_province()
-        self._advance_to("province")
-
-    def handle_province(self, message: dict) -> None:
-        province = self._get_text(message)
-        if not province:
-            self._send_validation_error("Province is required.")
-            return
-        if not self._is_plain_text_value(province) or not self._is_not_all_digits(province):
-            self._send_validation_error("Please provide a valid province.")
-            return
-        self._save_data("province", province)
-        if self._advance_resubmit_after_current_step("province"):
-            return
         self.prompt_site_address()
         self._advance_to("site_address")
 
@@ -255,6 +242,10 @@ class RegistrationFlow(BaseFlow):
         self._advance_to("topcoat_select")
 
     def handle_postal_code(self, message: dict) -> None:
+        if not is_registration_resubmit_session(self.session.session_data or {}):
+            self.prompt_topcoat_select()
+            self._advance_to("topcoat_select")
+            return
         postal_code = self._get_text(message)
         if not postal_code:
             self._send_validation_error("Postal code is required.")
@@ -367,7 +358,6 @@ class RegistrationFlow(BaseFlow):
                 "phone_number": self.session.phone_number,
                 "email": data.get("email", ""),
                 "city": data.get("city", ""),
-                "province": data.get("province", ""),
                 "site_address": data.get("site_address", ""),
                 "purchase_date": data.get("purchase_date"),
                 "purchase_dealer": data.get("purchase_dealer", ""),

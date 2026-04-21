@@ -3,6 +3,7 @@ export * from './auditTimeline.constants';
 export * from './authRoles';
 export * from './claimsApiMappings';
 export * from './claims.constants';
+export * from './complaints.constants';
 export * from './dashboardFlowConfigs';
 export * from './dashboardIconMap';
 export * from './layout/navigation';

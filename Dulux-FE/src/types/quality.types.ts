@@ -16,11 +16,6 @@ export const QUALITY_REQUIRED_ITEMS = [
   'ADDITIONAL_PHOTOS_DIFFERENT_ANGLES',
   'CLOSE_UP_DAMAGE_PHOTOS',
   'PROOF_OF_PURCHASE_INVOICE',
-  'PRODUCT_BATCH_NUMBER_PHOTO',
-  'APPLICATION_DETAILS_METHOD_COATS_PREP',
-  'ISSUE_TIMELINE_DETAILS',
-  'SITE_CONDITIONS_INFO',
-  'OTHER',
 ] as const;
 
 export type QualityQueueStatusFilter = 'all' | 'forwarded' | 'infoRequested' | 'resolved';
@@ -46,6 +41,7 @@ export interface QualityLatestResubmission {
 export interface QualityQueueItem {
   id: string;
   claimNumber: string;
+  registrationNumber: string;
   customerName: string;
   issueType: string;
   city: string;
@@ -99,7 +95,6 @@ export interface QualityRequestInfoPayload extends Record<string, unknown> {
   id: string;
   requiredItems: QualityRequiredItem[];
   notes?: string;
-  otherText?: string;
 }
 
 export interface QualityDetail extends ClaimDetail {

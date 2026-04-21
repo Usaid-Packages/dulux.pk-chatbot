@@ -22,7 +22,7 @@ from dulux_chatbot.warranty.models import (
     WarrantyClaim,
     WarrantyRegistration,
 )
-from dulux_chatbot.warranty.utils import generate_registration_code
+from dulux_chatbot.warranty.utils.helpers import generate_registration_code
 
 
 User = get_user_model()
@@ -62,7 +62,6 @@ def create_registration(
         phone_number=phone_number,
         email="customer@example.com",
         city="Karachi",
-        province="Sindh",
         site_address="123 Street",
         purchase_date=date.today() - timedelta(days=5),
         purchase_dealer="Dealer",

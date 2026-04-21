@@ -29,7 +29,7 @@ export const AuditTimelinePanel = ({
   title,
   subtitle,
   className,
-  maxItems = 6,
+  maxItems,
 }: AuditTimelinePanelProps): JSX.Element | null => {
   const { isAdmin, timelineQuery } = useAuditTimeline(type, objectId);
 

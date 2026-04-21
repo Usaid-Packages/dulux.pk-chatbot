@@ -1,5 +1,6 @@
 export * from './ApproveRegistrationModal';
 export * from './RegistrationDetailPanel';
+export * from './RegistrationEditModal';
 export * from './RegistrationFilters';
 export * from './RegistrationTable';
 export * from './RejectRegistrationModal';

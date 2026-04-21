@@ -4103,6 +4103,29 @@ Audit checks executed for this refresh:
 - [x] Complaints Live Chat: queue/list/thread workspace with realtime sockets, thread-safe reconnect handling, and resolve/close flow.
 - [x] Products: product CRUD (`list/new/edit`) with image upload/attach/remove and surface-type management (list/create/update/delete).
 - [x] Audit features: audit timeline panel integrated across detail screens; dedicated `AuditLogsPage` implemented (not yet route-wired).
+- [x] Registration list `Edit` flow now waits for detail fetch completion before opening the edit modal (avoids large in-modal loading experience).
+- [x] Registration edit modal close/open lifecycle stabilized to remove transition jitter (no close-time content collapse/reset).
+- [x] Shared dialog motion updated to remove zoom-in/zoom-out scale effect that caused perceived shrink on modal close.
+- [x] Registration/claim timeline paint-pair rendering now resolves product names from payload (topcoat/basecoat objects) with backward-safe fallbacks.
+- [x] Paint-pair timeline details keep consistent inline `Before -> After` presentation (no alternate per-field layout pattern).
+- [x] Paint-pair timeline labels now hide product IDs and show names + quantities only, matching requested UX.
+- [x] Paint-pair timeline detail text contrast increased for readability.
+- [x] Live chat thread header reduced to a single heading line.
+- [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
+- [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
+- [x] Complaint thread socket lifecycle hardened: when switching `/app/complaints/:id`, previous thread socket is closed and stale reconnect handlers are ignored so only one active thread connection remains.
+- [x] Complaint chat message-mixing regression addressed by isolating socket receive/reconnect logic to the currently active thread effect session.
+- [x] Complaint details panel long-text resilience improved (bounded detail area + internal scroll + show more/less for long fields).
+- [x] Search bars preserve spaces while typing (no premature trim in URL/state setters).
+- [x] Registration detail expandable text placement fixed (`Show more/Show less` always trailing).
+- [x] Manual registration dealer-address validation behavior fixed (input handling + schema message).
+- [x] Registration/claim timeline UX upgraded to avoid raw JSON in primary presentation for complex fields (`resubmissions`, `quality_review_ids`): show concise arrow-based summaries and structured field cards.
+- [x] Timeline noise reduced: suppress "No field-level changes available" when a state transition is already displayed for the same event.
+- [x] Surface type `Delete` action removed from product listing table UI.
+- [x] Claims detail Action Center now shows `CSR Resubmission` when claim state is `RESUBMIT`.
+- [x] CSR resubmission modal flow is implemented on claim detail: fetch requested fields via `GET /claims/:id/csr-resubmission`, allow edit/upload per `input_type`, and submit all fields via `POST /claims/:id/csr-resubmission`.
+- [x] Claims data-layer now includes CSR resubmission query/mutation wiring with query-key and endpoint constants for cache-safe integration.
+- [x] Warranty-options over-fetching reduced: manual-products query now supports lazy enablement and selected-topcoat scoping so registration resubmission/detail flows do not prefetch basecoats for every topcoat on page open.
 
 ### 15.3 Remaining Required Action Items
 
@@ -4113,6 +4136,10 @@ Audit checks executed for this refresh:
 - [ ] Fix manual registration success flow to navigate to `/manual-registration/success` on successful submit (currently success redirects to registrations list).
 - [ ] Add `Dulux-FE/.env.example` with required env keys from `env.mjs`.
 - [ ] Add automated tests for critical user/business flows (currently no test files found).
+- [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to align with Step 1/plan scope.
+- [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
+- [ ] Add `.env.example` with required env keys.
+- [ ] Add automated tests for critical paths (currently no test files discovered).
 
 ### 15.4 Evidence References
 

@@ -1,6 +1,7 @@
 import csv
 import json
 import re
+import sys
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -26,6 +27,7 @@ from dulux_chatbot.warranty.services.certificate import generate_warranty_certif
 
 
 HISTORICAL_APPROVER_EMAIL = "duluxhistoricaldata@gmail.com"
+CSV_FIELD_SIZE_LIMIT = sys.maxsize
 STATE_MAP = {
     "REG_IN_PROGRESS": RegistrationState.IN_PROGRESS,
     "REG_SUBMITTED": RegistrationState.SUBMITTED,
@@ -139,6 +141,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"... and {len(skipped_rows) - 50} more skipped rows."))
 
     def _read_rows(self, csv_path: Path) -> list[dict[str, str]]:
+        csv.field_size_limit(CSV_FIELD_SIZE_LIMIT)
         with csv_path.open(newline="", encoding="utf-8-sig") as csv_file:
             return list(csv.DictReader(csv_file))
 
@@ -176,7 +179,6 @@ class Command(BaseCommand):
             phone_number=self._required(row, "phoneNumber", row_index=row_index),
             email=self._required(row, "email", row_index=row_index),
             city=self._required(row, "customerCity", row_index=row_index),
-            province="",
             site_address=self._required(row, "siteAddress", row_index=row_index),
             purchase_date=self._parse_date(self._required(row, "purchaseDate", row_index=row_index)),
             purchase_dealer=str(row.get("purchaseDealer") or "").strip(),

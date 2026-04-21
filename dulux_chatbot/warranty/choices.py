@@ -66,14 +66,6 @@ class QualityRequiredItem(models.TextChoices):
     )
     CLOSE_UP_DAMAGE_PHOTOS = "CLOSE_UP_DAMAGE_PHOTOS", "Close Up Damage Photos"
     PROOF_OF_PURCHASE_INVOICE = "PROOF_OF_PURCHASE_INVOICE", "Proof Of Purchase Invoice"
-    PRODUCT_BATCH_NUMBER_PHOTO = "PRODUCT_BATCH_NUMBER_PHOTO", "Product Batch Number Photo"
-    APPLICATION_DETAILS_METHOD_COATS_PREP = (
-        "APPLICATION_DETAILS_METHOD_COATS_PREP",
-        "Application Details Method Coats Prep",
-    )
-    ISSUE_TIMELINE_DETAILS = "ISSUE_TIMELINE_DETAILS", "Issue Timeline Details"
-    SITE_CONDITIONS_INFO = "SITE_CONDITIONS_INFO", "Site Conditions Info"
-    OTHER = "OTHER", "Other"
 
 
 class QualityDecisionType(models.TextChoices):
