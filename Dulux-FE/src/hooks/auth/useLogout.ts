@@ -2,7 +2,12 @@ import { toast } from 'react-toastify';
 
 import { useAuthContext } from '#/context';
 
-export const useLogout = () => {
+interface UseLogoutResult {
+  handleLogout: () => void;
+  isLogoutPending: boolean;
+}
+
+export const useLogout = (): UseLogoutResult => {
   const { logout } = useAuthContext();
 
   const handleLogout = (): void => {

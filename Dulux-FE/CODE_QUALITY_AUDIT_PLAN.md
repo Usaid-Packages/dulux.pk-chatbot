@@ -541,10 +541,10 @@ Deliverables:
 9. `DRY-001`: Create shared `PaginationFooter` component. (Covers Findings: #7)
 10. `DRY-002`: Create shared `ListStateBlock` component. (Covers Findings: #7)
 11. `DRY-003`: Create shared `StatsCardGrid` component. (Covers Findings: #7)
-12. `RULE-001`: Remove `import/order` file-level disables. (Covers Findings: #5)
-13. `RULE-002`: Restore sidebar Manual Registration item. (Covers Findings: #6)
-14. `RULE-003`: Add explicit return types to exported hooks. (Covers Findings: #10)
-15. `RULE-004`: Add explicit return types to exported route components. (Covers Findings: #10)
+12. `RULE-001` [✅ DONE 2026-04-22]: Remove `import/order` file-level disables. (Covers Findings: #5)
+13. `RULE-002` [✅ DONE 2026-04-22]: Restore sidebar Manual Registration item. (Covers Findings: #6)
+14. `RULE-003` [✅ DONE 2026-04-22]: Add explicit return types to exported hooks. (Covers Findings: #10)
+15. `RULE-004` [✅ DONE 2026-04-22]: Add explicit return types to exported route components. (Covers Findings: #10)
 16. `RULE-005`: Replace inline JSX arrows in top 10 touched files. (Covers Findings: #11, #41)
 17. `UTIL-001`: Split `helperFunctions.ts` into domain normalizers. (Covers Findings: #9)
 18. `TEST-001`: Add auth critical-flow RTL/MSW tests. (Cross-cutting regression safety for Findings: #1, #13, #21)
@@ -605,10 +605,12 @@ Deliverables:
 5. Finding #5 -> `RULE-001`:
 - Scope: remove `import/order` disable comments and stabilize imports.
 - Done when: source files have zero file-level import-order disables.
+- Status: ✅ Done (2026-04-22)
 
 6. Finding #6 -> `RULE-002`:
 - Scope: restore manual registration sidebar item.
 - Done when: nav includes Manual Registration route consistently.
+- Status: ✅ Done (2026-04-22)
 
 7. Finding #7 -> `DRY-001`, `DRY-002`, `DRY-003`:
 - Scope: common list-page primitives for pagination/state/stats.
@@ -625,6 +627,7 @@ Deliverables:
 10. Finding #10 -> `RULE-003`, `RULE-004`:
 - Scope: explicit return types on exported hooks/routes/components.
 - Done when: exported API surfaces have explicit return types.
+- Status: `RULE-003` ✅ Done (2026-04-22), `RULE-004` ✅ Done (2026-04-22).
 
 11. Finding #11 -> `RULE-005`, `RULE-009`:
 - Scope: reduce/remove inline JSX arrow handlers in priority files.

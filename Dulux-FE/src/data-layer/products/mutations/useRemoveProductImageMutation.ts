@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { apiEndpoints, DELETE, queryKeys } from '#/constants';
