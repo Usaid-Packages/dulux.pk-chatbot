@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
 import { getClaimCardCounts, getClaims, useCreateClaimMutation } from '#/data-layer/claims';
+import { executeMutationWithFeedback } from '#/hooks/common/mutationFeedback';
 import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
@@ -15,7 +15,6 @@ import type {
   CreateClaimPayload,
 } from '#/types/claims.types';
 import { CLAIM_ISSUE_TYPES as CLAIM_ISSUE_TYPE_VALUES } from '#/types/claims.types';
-import { getApiErrorMessage } from '#/utils';
 
 const DEFAULT_FILTERS: ClaimsListRequestParams = {
   status: 'all',
@@ -111,13 +110,12 @@ export const useClaims = (): UseClaimsResult => {
   };
 
   const handleCreateClaim = (payload: CreateClaimPayload, options?: { onSuccess?: () => void }): void => {
-    createClaimMutation.mutate(payload, {
+    executeMutationWithFeedback({
+      mutate: createClaimMutation.mutate,
+      payload,
+      successMessage: 'Claim created successfully.',
       onSuccess: () => {
-        toast.success('Claim created successfully.');
         options?.onSuccess?.();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
       },
     });
   };

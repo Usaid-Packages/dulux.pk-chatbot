@@ -9,6 +9,7 @@ import {
   useGetSurfaceTypesQuery,
   useUploadProductImageMutation,
 } from '#/data-layer/products';
+import { executeMutationWithFeedback } from '#/hooks/common/mutationFeedback';
 import { PRODUCT_TYPES } from '#/types/products';
 import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
@@ -52,7 +53,11 @@ export const useProductCreatePageController = (): UseProductCreatePageController
   };
 
   const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
-    createProductMutation.mutate(mapProductFormValuesToPayload(values), {
+    executeMutationWithFeedback({
+      mutate: createProductMutation.mutate,
+      payload: mapProductFormValuesToPayload(values),
+      successMessage: 'Product created successfully.',
+      showSuccessToast: false,
       onSuccess: createdProduct => {
         const createdProductId = String(createdProduct.id);
         const navigateToProducts = (): void => {
@@ -73,9 +78,6 @@ export const useProductCreatePageController = (): UseProductCreatePageController
             navigateToProducts();
           },
         });
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
       },
     });
   };
