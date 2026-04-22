@@ -11,6 +11,7 @@ import {
   useUpdateProductMutation,
   useUploadProductImageMutation,
 } from '#/data-layer/products';
+import { executeMutationWithFeedback } from '#/hooks/common/mutationFeedback';
 import { PRODUCT_TYPES } from '#/types/products';
 import type {
   LinkedBasecoat,
@@ -73,54 +74,46 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
   };
 
   const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
-    updateProductMutation.mutate(
-      {
+    executeMutationWithFeedback({
+      mutate: updateProductMutation.mutate,
+      payload: {
         id: productId,
         payload: mapProductFormValuesToPayload(values),
       },
-      {
-        onSuccess: () => {
-          const navigateToProducts = (): void => {
-            navigate(`${ROUTES.PRODUCTS}${location.search}`);
-          };
+      successMessage: 'Product updated successfully.',
+      showSuccessToast: false,
+      onSuccess: () => {
+        const navigateToProducts = (): void => {
+          navigate(`${ROUTES.PRODUCTS}${location.search}`);
+        };
 
-          orchestrateProductImageMutations({
-            productId,
-            imageFile,
-            uploadProductImageMutation,
-            attachProductImageMutation,
-            onSuccess: () => {
-              toast.success('Product updated successfully.');
-              navigateToProducts();
-            },
-            onError: error => {
-              toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
-              navigateToProducts();
-            },
-          });
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+        orchestrateProductImageMutations({
+          productId,
+          imageFile,
+          uploadProductImageMutation,
+          attachProductImageMutation,
+          onSuccess: () => {
+            toast.success('Product updated successfully.');
+            navigateToProducts();
+          },
+          onError: error => {
+            toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
+            navigateToProducts();
+          },
+        });
+      },
+    });
   };
 
   const handleRemoveImage = (imageId: string): void => {
-    removeProductImageMutation.mutate(
-      {
+    executeMutationWithFeedback({
+      mutate: removeProductImageMutation.mutate,
+      payload: {
         productId,
         imageId,
       },
-      {
-        onSuccess: () => {
-          toast.success('Product image removed.');
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
+      successMessage: 'Product image removed.',
+    });
   };
 
   return {

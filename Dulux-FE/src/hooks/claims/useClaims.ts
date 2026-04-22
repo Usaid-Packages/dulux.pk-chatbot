@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
 
 import { queryKeys } from '#/constants';
 import { getClaimCardCounts, getClaims, useCreateClaimMutation } from '#/data-layer/claims';
+import { executeMutationWithFeedback } from '#/hooks/common/mutationFeedback';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
   ClaimsCardCounts,
@@ -15,7 +15,6 @@ import type {
   CreateClaimPayload,
 } from '#/types/claims.types';
 import { CLAIM_ISSUE_TYPES as CLAIM_ISSUE_TYPE_VALUES } from '#/types/claims.types';
-import { getApiErrorMessage } from '#/utils';
 
 const DEFAULT_FILTERS: ClaimsListRequestParams = {
   status: 'all',
@@ -56,7 +55,7 @@ interface UseClaimsResult {
  * @returns Query state plus filter setters for claims list page.
  */
 export const useClaims = (): UseClaimsResult => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_FILTERS.page });
   const createFiltersFromSearchParams = (): ClaimsListRequestParams => {
     const statusParam = searchParams.get('status');
     const status = CLAIM_STATUS_FILTER_VALUES.includes(statusParam as ClaimListStatusFilter)
@@ -99,52 +98,24 @@ export const useClaims = (): UseClaimsResult => {
   });
 
   const setStatusFilter = (status: ClaimListStatusFilter): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('status', status);
-      nextParams.set('page', '1');
-      return nextParams;
-    });
+    setParam('status', status, { resetPage: true, removeWhenEmpty: false });
   };
 
   const setIssueTypeFilter = (issueType: 'all' | ClaimIssueType): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('issueType', issueType);
-      nextParams.set('page', '1');
-      return nextParams;
-    });
+    setParam('issueType', issueType, { resetPage: true, removeWhenEmpty: false });
   };
 
   const setSearch = (search?: string): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      if (search && search.length > 0) {
-        nextParams.set('search', search);
-      } else {
-        nextParams.delete('search');
-      }
-      nextParams.set('page', '1');
-      return nextParams;
-    });
-  };
-
-  const setPage = (page: number): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('page', String(page));
-      return nextParams;
-    });
+    setParam('search', search, { resetPage: true });
   };
 
   const handleCreateClaim = (payload: CreateClaimPayload, options?: { onSuccess?: () => void }): void => {
-    createClaimMutation.mutate(payload, {
+    executeMutationWithFeedback({
+      mutate: createClaimMutation.mutate,
+      payload,
+      successMessage: 'Claim created successfully.',
       onSuccess: () => {
-        toast.success('Claim created successfully.');
         options?.onSuccess?.();
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
       },
     });
   };

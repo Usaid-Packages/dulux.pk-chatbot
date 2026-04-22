@@ -211,6 +211,7 @@ Implication:
   - set/reset page to `1`
   - set/delete search/status/type params
 - Plan: introduce shared `useUrlFilters` + `setQueryParam` helpers to centralize query-param mutation rules.
+- Status: DONE (2026-04-22) for DRY-004 via shared `useUrlFilters` (`src/hooks/common/useUrlFilters.ts`) integrated into claims, registrations, quality, audit logs, and products filter modules.
 
 21. Mutation toast orchestration is repeated and can be standardized
 - Standards reference: `DRY`, `Error handling consistency`
@@ -331,6 +332,7 @@ Implication:
   - drift in subtle behaviors (trimming, reset-to-page-1, deleting empty params).
 - Plan:
   - centralize into one query-param adapter utility and remove duplicated `new URLSearchParams` blocks.
+- Status: DONE (2026-04-22) under DRY-004 by migrating duplicated URL param mutation code to `useUrlFilters`.
 
 31. Conversation list has avoidable per-item rerender overhead
 - Standards reference: `Performance`, `Avoid unnecessary rerenders`
@@ -563,8 +565,8 @@ Deliverables:
 26. `ARCH-007` [✅ DONE 2026-04-20]: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
 27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
 28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`). (Covers Findings: #19)
-29. `DRY-004`: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
-30. `DRY-005`: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
+29. `DRY-004` [✅ DONE 2026-04-22]: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
+30. `DRY-005` [✅ DONE 2026-04-22]: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
 31. `ARCH-008` [✅ DONE 2026-04-20]: Introduce shared detail-action controller helpers used by claims/quality/registrations detail hooks. (Covers Findings: #8, #22, #37)
 32. `DRY-006`: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
 33. `ARCH-009` [✅ DONE 2026-04-20]: Split `ResubmitUpdateModal`, `AddClaimModal`, and `ProductForm` into hook + section component architecture. (Covers Findings: #2, #24)
@@ -678,10 +680,12 @@ Deliverables:
 20. Finding #20 -> `DRY-004`, `DRY-007`:
 - Scope: shared URL query-param mutation utilities.
 - Done when: list hooks/pages use shared adapter and duplicate blocks are removed.
+- Status: `DRY-004` ✅ Done (2026-04-22).
 
 21. Finding #21 -> `DRY-005`, `DRY-011`:
 - Scope: central mutation feedback/toast behavior.
 - Done when: success/error mapping is standardized and message literals reduced.
+- Status: `DRY-005` ✅ Done (2026-04-22).
 
 22. Finding #22 -> `ARCH-008`, `DRY-010`:
 - Scope: shared guarded detail-action orchestration helpers.
@@ -751,9 +755,10 @@ Deliverables:
 - Scope: split registration detail hook by responsibility.
 - Done when: query/actions/payload builder live in separate modules.
 
-39. Finding #39 -> `DRY-011`:
+39. Finding #39 -> `DRY-005`, `DRY-011`:
 - Scope: centralized toast/message constants.
 - Done when: repeated domain message literals are replaced with constants.
+- Status: `DRY-005` ✅ Done (2026-04-22) for shared feedback wrapper; `DRY-011` remains for message-constant centralization.
 
 40. Finding #40 -> `DRY-012`:
 - Scope: centralized UI text placeholders/hints.

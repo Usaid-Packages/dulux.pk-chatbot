@@ -1,9 +1,6 @@
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-
 import {
   FIRST_PAGE,
   INVALID_PAGE_ERROR_MESSAGE,
@@ -23,6 +20,8 @@ import {
   useUpdateSurfaceTypeMutation,
 } from '#/data-layer/products';
 import { useDebouncedValue } from '#/hooks';
+import { executeMutationWithFeedback } from '#/hooks/common/mutationFeedback';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import type { SurfaceType, SurfaceTypeFormValues, SurfaceTypeQueryParams } from '#/types/products';
 import {
   buildProductsListSearchParams,
@@ -43,7 +42,7 @@ import {
 import { mapSurfaceTypeFormToPayload } from './productHelpers';
 
 export const useProductsListPageController = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { replaceAllParams, searchParams, setParam } = useUrlFilters();
 
   const activeTabParam = searchParams.get('tab'),
     activeTab: ProductTab = isProductTab(activeTabParam) ? activeTabParam : PRODUCTS_LIST_TABS.PRODUCTS;
@@ -131,7 +130,7 @@ export const useProductsListPageController = () => {
     });
 
     if (nextParams.toString() !== searchParamsString) {
-      setSearchParams(nextParams, { replace: true });
+      replaceAllParams(nextParams);
     }
   }, [
     activeTab,
@@ -144,7 +143,7 @@ export const useProductsListPageController = () => {
     surfaceEnvironmentFilter,
     surfacePage,
     searchParamsString,
-    setSearchParams,
+    replaceAllParams,
   ]);
 
   useEffect(() => {
@@ -166,42 +165,33 @@ export const useProductsListPageController = () => {
   }, [isSurfaceTypesInvalidPageError, surfacePage]);
 
   const setTab = (tab: ProductTab): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('tab', tab);
-      return nextParams;
-    });
+    setParam('tab', tab, { removeWhenEmpty: false });
   };
 
   const submitSurfaceType = (values: SurfaceTypeFormValues): void => {
     if (surfaceTypeEditTarget) {
-      updateSurfaceTypeMutation.mutate(
-        {
+      executeMutationWithFeedback({
+        mutate: updateSurfaceTypeMutation.mutate,
+        payload: {
           id: String(surfaceTypeEditTarget.id),
           payload: mapSurfaceTypeFormToPayload(values),
         },
-        {
-          onSuccess: () => {
-            toast.success('Surface type updated successfully.');
-            setSurfaceTypeModalOpen(false);
-            setSurfaceTypeEditTarget(null);
-          },
-          onError: error => {
-            toast.error(getApiErrorMessage(error));
-          },
-        }
-      );
+        successMessage: 'Surface type updated successfully.',
+        onSuccess: () => {
+          setSurfaceTypeModalOpen(false);
+          setSurfaceTypeEditTarget(null);
+        },
+      });
       return;
     }
 
-    createSurfaceTypeMutation.mutate(mapSurfaceTypeFormToPayload(values), {
+    executeMutationWithFeedback({
+      mutate: createSurfaceTypeMutation.mutate,
+      payload: mapSurfaceTypeFormToPayload(values),
+      successMessage: 'Surface type created successfully.',
       onSuccess: () => {
-        toast.success('Surface type created successfully.');
         setSurfaceTypeModalOpen(false);
         setSurfaceTypeEditTarget(null);
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
       },
     });
   };
@@ -209,16 +199,15 @@ export const useProductsListPageController = () => {
   const handleDeleteSurfaceType = (): void => {
     if (!surfaceTypeDeleteTarget) return;
 
-    deleteSurfaceTypeMutation.mutate(String(surfaceTypeDeleteTarget.id), {
+    executeMutationWithFeedback({
+      mutate: deleteSurfaceTypeMutation.mutate,
+      payload: String(surfaceTypeDeleteTarget.id),
+      successMessage: 'Surface type deleted successfully.',
       onSuccess: () => {
         if (surfacePage > FIRST_PAGE && surfaceTypes.length === 1) {
           setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));
         }
-        toast.success('Surface type deleted successfully.');
         setSurfaceTypeDeleteTarget(null);
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
       },
     });
   };
