@@ -16,7 +16,7 @@ interface AdditionalPaintPairFieldsProps {
   isTopcoatFetchingNextPage: boolean;
   topcoatHasNextPage: boolean;
   onTopcoatScroll: (event: UIEvent<HTMLDivElement>) => void;
-  onRemove: () => void;
+  onRemove: (pairId: string) => void;
 }
 
 const SCROLL_BOTTOM_THRESHOLD_PX = 24;
@@ -55,6 +55,9 @@ const AdditionalPaintPairFields = ({
   const hasBasecoat = Boolean(selectedBasecoat);
   const basecoatProducts = basecoatQuery.options;
   const pairErrors = errors.additionalPaintPairs?.[index];
+  const handleRemovePairClick = (): void => {
+    onRemove(pairId);
+  };
 
   const handleBasecoatScroll = useCallback(
     (event: UIEvent<HTMLDivElement>): void => {
@@ -87,7 +90,7 @@ const AdditionalPaintPairFields = ({
     <article key={pairId} className='space-y-4 rounded-md border border-border p-4'>
       <div className='flex items-center justify-between gap-2'>
         <h4 className='text-sm font-semibold text-text-primary'>Paint Pair {index + 2}</h4>
-        <Button type='button' variant='outline' onClick={onRemove}>
+        <Button type='button' variant='outline' onClick={handleRemovePairClick}>
           Remove Pair
         </Button>
       </div>
@@ -279,6 +282,18 @@ export const ProductsStep = (): JSX.Element => {
     });
   };
 
+  const handleRemovePaintPair = useCallback(
+    (pairId: string): void => {
+      const pairIndex = fields.findIndex(field => field.id === pairId);
+      if (pairIndex < 0) {
+        return;
+      }
+
+      remove(pairIndex);
+    },
+    [fields, remove]
+  );
+
   useEffect(() => {
     if (!selectedBasecoat) {
       return;
@@ -424,7 +439,7 @@ export const ProductsStep = (): JSX.Element => {
             isTopcoatFetchingNextPage={topcoatQuery.isFetchingNextPage}
             topcoatHasNextPage={topcoatQuery.hasNextPage}
             onTopcoatScroll={handleTopcoatScroll}
-            onRemove={() => remove(index)}
+            onRemove={handleRemovePaintPair}
           />
         ))}
       </div>

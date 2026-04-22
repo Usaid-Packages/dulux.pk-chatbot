@@ -13,6 +13,7 @@ import { PRODUCT_TYPES } from '#/types/products';
 import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
 import { mapProductFormValuesToPayload } from './productHelpers';
+import { orchestrateProductImageMutations } from './productImageMutationOrchestrator';
 
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 const EMPTY_BASECOAT_OPTIONS: LinkedBasecoat[] = [];
@@ -50,29 +51,28 @@ export const useProductCreatePageController = (): UseProductCreatePageController
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const uploadAndAttachImage = async (productId: string, imageFile: File): Promise<void> => {
-    const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
-    await attachProductImageMutation.mutateAsync({
-      productId,
-      payload: {
-        image_id: imageId,
-      },
-    });
-  };
-
   const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
     createProductMutation.mutate(mapProductFormValuesToPayload(values), {
-      onSuccess: async createdProduct => {
-        try {
-          if (imageFile) {
-            await uploadAndAttachImage(String(createdProduct.id), imageFile);
-          }
-          toast.success('Product created successfully.');
-        } catch (error) {
-          toast.warn(`Product created, but image upload failed: ${getApiErrorMessage(error)}`);
-        } finally {
+      onSuccess: createdProduct => {
+        const createdProductId = String(createdProduct.id);
+        const navigateToProducts = (): void => {
           navigate(`${ROUTES.PRODUCTS}${location.search}`);
-        }
+        };
+
+        orchestrateProductImageMutations({
+          productId: createdProductId,
+          imageFile,
+          uploadProductImageMutation,
+          attachProductImageMutation,
+          onSuccess: () => {
+            toast.success('Product created successfully.');
+            navigateToProducts();
+          },
+          onError: error => {
+            toast.warn(`Product created, but image upload failed: ${getApiErrorMessage(error)}`);
+            navigateToProducts();
+          },
+        });
       },
       onError: error => {
         toast.error(getApiErrorMessage(error));

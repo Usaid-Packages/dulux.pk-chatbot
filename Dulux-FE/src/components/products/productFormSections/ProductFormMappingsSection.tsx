@@ -56,6 +56,18 @@ export const ProductFormMappingsSection = ({
   onToggleSurfaceSelection,
   onToggleBasecoatSelection,
 }: ProductFormMappingsSectionProps): JSX.Element => {
+  const handleInteriorDropdownToggle = (): void => {
+    onToggleDropdown('interior');
+  };
+
+  const handleExteriorDropdownToggle = (): void => {
+    onToggleDropdown('exterior');
+  };
+
+  const handleBasecoatDropdownToggle = (): void => {
+    onToggleDropdown('basecoat');
+  };
+
   return (
     <>
       <fieldset className='space-y-3'>
@@ -74,7 +86,7 @@ export const ProductFormMappingsSection = ({
             emptyMessage='No interior surfaces match this search.'
             options={interiorDropdownOptions}
             selectedIds={selectedSurfaceTypeIds}
-            onToggle={() => onToggleDropdown('interior')}
+            onToggle={handleInteriorDropdownToggle}
             onSearchChange={onInteriorSurfaceSearchChange}
             onToggleOption={onToggleSurfaceSelection}
           />
@@ -89,7 +101,7 @@ export const ProductFormMappingsSection = ({
             emptyMessage='No exterior surfaces match this search.'
             options={exteriorDropdownOptions}
             selectedIds={selectedSurfaceTypeIds}
-            onToggle={() => onToggleDropdown('exterior')}
+            onToggle={handleExteriorDropdownToggle}
             onSearchChange={onExteriorSurfaceSearchChange}
             onToggleOption={onToggleSurfaceSelection}
           />
@@ -111,7 +123,7 @@ export const ProductFormMappingsSection = ({
             emptyMessage='No basecoat products match this search.'
             options={basecoatDropdownOptions}
             selectedIds={selectedBasecoatIds}
-            onToggle={() => onToggleDropdown('basecoat')}
+            onToggle={handleBasecoatDropdownToggle}
             onSearchChange={onLinkedBasecoatSearchChange}
             onToggleOption={onToggleBasecoatSelection}
           />
