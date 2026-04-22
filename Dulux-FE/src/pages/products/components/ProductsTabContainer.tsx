@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { ProductTable } from '#/components/products';
+import { PaginationFooter } from '#/components/shared';
 import {
-  Button,
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -161,19 +161,14 @@ export const ProductsTabContainer = ({
         <>
           <ProductTable products={products} />
 
-          <section className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {productPage} of {productTotalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' disabled={productPage <= 1} onClick={onPreviousPage}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' disabled={!hasNextPage} onClick={onNextPage}>
-                Next
-              </Button>
-            </div>
-          </section>
+          <PaginationFooter
+            currentPage={productPage}
+            totalPages={productTotalPages}
+            disablePrevious={productPage <= 1}
+            disableNext={!hasNextPage}
+            onPreviousPage={onPreviousPage}
+            onNextPage={onNextPage}
+          />
         </>
       )}
     </>

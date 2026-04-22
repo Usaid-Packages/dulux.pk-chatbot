@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 
 import { AuditLogDetailDialog, AuditLogsFilters, AuditLogsTable } from '#/components/auditLogs';
-import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
+import { PaginationFooter } from '#/components/shared';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { useAuditLogs } from '#/hooks/auditLogs';
 import { getApiErrorMessage } from '#/utils';
 
@@ -118,19 +119,14 @@ export const AuditLogsPage = (): JSX.Element => {
       {!auditLogsQuery.isLoading && !auditLogsQuery.isError && auditLogsItems.length > 0 ? (
         <>
           <AuditLogsTable items={auditLogsItems} onOpenDetail={openDetail} />
-          <section className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {filters.page} of {totalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' onClick={handlePreviousPage} disabled={filters.page <= 1}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' onClick={handleNextPage} disabled={filters.page >= totalPages}>
-                Next
-              </Button>
-            </div>
-          </section>
+          <PaginationFooter
+            currentPage={filters.page}
+            totalPages={totalPages}
+            disablePrevious={filters.page <= 1}
+            disableNext={filters.page >= totalPages}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
+          />
         </>
       ) : null}
 

@@ -3,8 +3,8 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { AddClaimModal, CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
+import { PaginationFooter } from '#/components/shared';
 import {
-  Button,
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -189,19 +189,14 @@ export const ClaimsListPage = (): React.JSX.Element => {
       {!claimsQuery.isLoading && !claimsQuery.isError && claimsItems.length > 0 ? (
         <>
           <ClaimsTable claims={claimsItems} />
-          <div className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {filters.page} of {totalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' onClick={handlePrevPage} disabled={filters.page <= 1}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' onClick={handleNextPage} disabled={filters.page >= totalPages}>
-                Next
-              </Button>
-            </div>
-          </div>
+          <PaginationFooter
+            currentPage={filters.page}
+            totalPages={totalPages}
+            disablePrevious={filters.page <= 1}
+            disableNext={filters.page >= totalPages}
+            onPreviousPage={handlePrevPage}
+            onNextPage={handleNextPage}
+          />
         </>
       ) : null}
 

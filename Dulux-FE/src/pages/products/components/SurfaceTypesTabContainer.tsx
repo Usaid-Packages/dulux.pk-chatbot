@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { SurfaceTypeTable } from '#/components/products';
+import { PaginationFooter } from '#/components/shared';
 import {
   Button,
   Empty,
@@ -137,19 +138,14 @@ export const SurfaceTypesTabContainer = ({
             onDelete={onOpenDeleteSurfaceTypeModal}
           />
 
-          <section className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {surfacePage} of {surfaceTypeTotalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' disabled={surfacePage <= 1} onClick={onPreviousPage}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' disabled={!hasNextPage} onClick={onNextPage}>
-                Next
-              </Button>
-            </div>
-          </section>
+          <PaginationFooter
+            currentPage={surfacePage}
+            totalPages={surfaceTypeTotalPages}
+            disablePrevious={surfacePage <= 1}
+            disableNext={!hasNextPage}
+            onPreviousPage={onPreviousPage}
+            onNextPage={onNextPage}
+          />
         </>
       ) : null}
     </>

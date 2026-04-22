@@ -541,7 +541,7 @@ Deliverables:
 6. `ARCH-003` [✅ DONE 2026-04-20]: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
 7. `ARCH-004` [✅ DONE 2026-04-20]: Split `ProductsListPage.tsx` into tab containers. (Covers Findings: #2, #28)
 8. `ARCH-005` [✅ DONE 2026-04-20]: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
-9. `DRY-001`: Create shared `PaginationFooter` component. (Covers Findings: #7)
+9. `DRY-001` [✅ DONE 2026-04-22]: Create shared `PaginationFooter` component. (Covers Findings: #7)
 10. `DRY-002`: Create shared `ListStateBlock` component. (Covers Findings: #7)
 11. `DRY-003`: Create shared `StatsCardGrid` component. (Covers Findings: #7)
 12. `RULE-001` [✅ DONE 2026-04-22]: Remove `import/order` file-level disables. (Covers Findings: #5)
@@ -618,6 +618,7 @@ Deliverables:
 7. Finding #7 -> `DRY-001`, `DRY-002`, `DRY-003`:
 - Scope: common list-page primitives for pagination/state/stats.
 - Done when: at least pilot pages use shared primitives and duplicate blocks are removed.
+- Status: `DRY-001` ✅ Done (2026-04-22).
 
 8. Finding #8 -> `DRY-009`, `ARCH-008`:
 - Scope: shared modal lifecycle and action orchestration for detail pages.
