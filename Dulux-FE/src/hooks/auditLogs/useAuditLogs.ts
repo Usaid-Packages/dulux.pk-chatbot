@@ -2,10 +2,10 @@ import { useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys } from '#/constants';
 import { getAuditLogDetail, getAuditLogs } from '#/data-layer/auditLogs';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import type {
   AuditLogActionFilter,
@@ -65,7 +65,7 @@ interface UseAuditLogsResult {
  * @returns Audit logs list and detail query state with filter + selection actions.
  */
 export const useAuditLogs = (): UseAuditLogsResult => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
   const [selectedAuditLogId, setSelectedAuditLogId] = useState('');
 
   const pageParam = Number.parseInt(searchParams.get('page') ?? String(DEFAULT_PAGE), 10);
@@ -101,18 +101,7 @@ export const useAuditLogs = (): UseAuditLogsResult => {
   });
 
   const updateSearchParam = (key: string, value: string): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-
-      if (value.trim().length > 0) {
-        nextParams.set(key, value.trim());
-      } else {
-        nextParams.delete(key);
-      }
-
-      nextParams.set('page', String(DEFAULT_PAGE));
-      return nextParams;
-    });
+    setParam(key, value, { trimValue: true, resetPage: true });
   };
 
   const setActionFilter = (action: AuditLogActionFilter): void => {
@@ -149,30 +138,7 @@ export const useAuditLogs = (): UseAuditLogsResult => {
   };
 
   const setSearch = (search: string): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-
-      if (search.length > 0) {
-        nextParams.set('search', search);
-      } else {
-        nextParams.delete('search');
-      }
-
-      nextParams.set('page', String(DEFAULT_PAGE));
-      return nextParams;
-    });
-  };
-
-  const setPage = (nextPage: number): void => {
-    if (!Number.isFinite(nextPage) || nextPage < 1) {
-      return;
-    }
-
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('page', String(nextPage));
-      return nextParams;
-    });
+    setParam('search', search, { resetPage: true });
   };
 
   const openDetail = (id: string): void => {

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys } from '#/constants';
 import { getQualityCardCounts, getQualityQueue } from '#/data-layer/quality';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import type {
   QualityCardCounts,
   QualityQueueRequestParams,
@@ -31,7 +31,7 @@ interface UseQualityQueueResult {
  * @returns Query state plus queue filter setters.
  */
 export const useQualityQueue = (): UseQualityQueueResult => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_FILTERS.page });
   const statusParam = searchParams.get('status');
   const status: QualityQueueStatusFilter =
     statusParam === 'all' ||
@@ -58,20 +58,7 @@ export const useQualityQueue = (): UseQualityQueueResult => {
   });
 
   const setStatusFilter = (status: QualityQueueStatusFilter): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('status', status);
-      nextParams.set('page', '1');
-      return nextParams;
-    });
-  };
-
-  const setPage = (page: number): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('page', String(page));
-      return nextParams;
-    });
+    setParam('status', status, { resetPage: true, removeWhenEmpty: false });
   };
 
   return {

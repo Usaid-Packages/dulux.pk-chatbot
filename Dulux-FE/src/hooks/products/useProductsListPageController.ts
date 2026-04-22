@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import {
@@ -23,6 +22,7 @@ import {
   useUpdateSurfaceTypeMutation,
 } from '#/data-layer/products';
 import { useDebouncedValue } from '#/hooks';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import type { SurfaceType, SurfaceTypeFormValues, SurfaceTypeQueryParams } from '#/types/products';
 import {
   buildProductsListSearchParams,
@@ -43,7 +43,7 @@ import {
 import { mapSurfaceTypeFormToPayload } from './productHelpers';
 
 export const useProductsListPageController = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { replaceAllParams, searchParams, setParam } = useUrlFilters();
 
   const activeTabParam = searchParams.get('tab'),
     activeTab: ProductTab = isProductTab(activeTabParam) ? activeTabParam : PRODUCTS_LIST_TABS.PRODUCTS;
@@ -131,7 +131,7 @@ export const useProductsListPageController = () => {
     });
 
     if (nextParams.toString() !== searchParamsString) {
-      setSearchParams(nextParams, { replace: true });
+      replaceAllParams(nextParams);
     }
   }, [
     activeTab,
@@ -144,7 +144,7 @@ export const useProductsListPageController = () => {
     surfaceEnvironmentFilter,
     surfacePage,
     searchParamsString,
-    setSearchParams,
+    replaceAllParams,
   ]);
 
   useEffect(() => {
@@ -166,11 +166,7 @@ export const useProductsListPageController = () => {
   }, [isSurfaceTypesInvalidPageError, surfacePage]);
 
   const setTab = (tab: ProductTab): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('tab', tab);
-      return nextParams;
-    });
+    setParam('tab', tab, { removeWhenEmpty: false });
   };
 
   const submitSurfaceType = (values: SurfaceTypeFormValues): void => {

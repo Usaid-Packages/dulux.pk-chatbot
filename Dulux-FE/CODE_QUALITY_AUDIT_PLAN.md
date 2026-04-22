@@ -211,6 +211,7 @@ Implication:
   - set/reset page to `1`
   - set/delete search/status/type params
 - Plan: introduce shared `useUrlFilters` + `setQueryParam` helpers to centralize query-param mutation rules.
+- Status: DONE (2026-04-22) for DRY-004 via shared `useUrlFilters` (`src/hooks/common/useUrlFilters.ts`) integrated into claims, registrations, quality, audit logs, and products filter modules.
 
 21. Mutation toast orchestration is repeated and can be standardized
 - Standards reference: `DRY`, `Error handling consistency`
@@ -331,6 +332,7 @@ Implication:
   - drift in subtle behaviors (trimming, reset-to-page-1, deleting empty params).
 - Plan:
   - centralize into one query-param adapter utility and remove duplicated `new URLSearchParams` blocks.
+- Status: DONE (2026-04-22) under DRY-004 by migrating duplicated URL param mutation code to `useUrlFilters`.
 
 31. Conversation list has avoidable per-item rerender overhead
 - Standards reference: `Performance`, `Avoid unnecessary rerenders`
