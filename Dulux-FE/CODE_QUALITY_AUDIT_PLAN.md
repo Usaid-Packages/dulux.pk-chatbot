@@ -565,7 +565,7 @@ Deliverables:
 26. `ARCH-007` [✅ DONE 2026-04-20]: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
 27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
 28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`). (Covers Findings: #19)
-29. `DRY-004`: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
+29. `DRY-004` [✅ DONE 2026-04-22]: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
 30. `DRY-005`: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
 31. `ARCH-008` [✅ DONE 2026-04-20]: Introduce shared detail-action controller helpers used by claims/quality/registrations detail hooks. (Covers Findings: #8, #22, #37)
 32. `DRY-006`: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
@@ -680,6 +680,7 @@ Deliverables:
 20. Finding #20 -> `DRY-004`, `DRY-007`:
 - Scope: shared URL query-param mutation utilities.
 - Done when: list hooks/pages use shared adapter and duplicate blocks are removed.
+- Status: `DRY-004` ✅ Done (2026-04-22).
 
 21. Finding #21 -> `DRY-005`, `DRY-011`:
 - Scope: central mutation feedback/toast behavior.
