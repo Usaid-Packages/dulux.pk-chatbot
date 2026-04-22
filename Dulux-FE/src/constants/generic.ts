@@ -12,3 +12,4 @@ export const EMAIL = 'email';
 export const PASSWORD = 'password';
 export const NOTES_MAX_LENGTH = 500;
 export const NOTES_MAX_LENGTH_HELPER_TEXT = `Maximum ${NOTES_MAX_LENGTH} characters.`;
+export const LIST_PAGE_SIZE = 10;

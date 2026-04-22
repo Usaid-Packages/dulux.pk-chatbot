@@ -3,28 +3,13 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { AddClaimModal, CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
-import { PaginationFooter } from '#/components/shared';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Skeleton,
-} from '#/components/ui';
-import { getClaimIssueTypeLabel } from '#/constants';
+import { ListStateBlock, PaginationFooter } from '#/components/shared';
+import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
+import { LIST_PAGE_SIZE, getClaimIssueTypeLabel } from '#/constants';
 import { useClaims } from '#/hooks/claims';
 import { CLAIM_ISSUE_TYPES } from '#/types/claims.types';
 import type { CreateClaimPayload } from '#/types/claims.types';
 import { cn } from '#/utils';
-
-const PAGE_SIZE = 10;
 
 const STAT_CARD_STYLES = ['', '', '', ''] as const;
 
@@ -52,7 +37,7 @@ export const ClaimsListPage = (): React.JSX.Element => {
   const claimsData = claimsQuery.data;
   const claimsItems = claimsData?.items ?? [];
   const totalItems = claimsData?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / LIST_PAGE_SIZE));
 
   const handlePrevPage = (): void => {
     if (filters.page > 1) {
@@ -158,35 +143,15 @@ export const ClaimsListPage = (): React.JSX.Element => {
         </div>
       </section>
 
-      {claimsQuery.isLoading ? (
-        <section className='space-y-2 wf-card wf-card-p4'>
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-        </section>
-      ) : null}
-
-      {claimsQuery.isError ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Failed to load claims</EmptyTitle>
-            <EmptyDescription>{claimsQuery.error?.message ?? 'Unable to fetch claims.'}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : null}
-
-      {!claimsQuery.isLoading && !claimsQuery.isError && claimsItems.length === 0 ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>No claims found</EmptyTitle>
-              <EmptyDescription>Adjust filters to see more records.</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!claimsQuery.isLoading && !claimsQuery.isError && claimsItems.length > 0 ? (
+      <ListStateBlock
+        isLoading={claimsQuery.isLoading}
+        isError={claimsQuery.isError}
+        isEmpty={claimsItems.length === 0}
+        errorTitle='Failed to load claims'
+        errorDescription={claimsQuery.error?.message ?? 'Unable to fetch claims.'}
+        emptyTitle='No claims found'
+        emptyDescription='Adjust filters to see more records.'
+      >
         <>
           <ClaimsTable claims={claimsItems} />
           <PaginationFooter
@@ -198,7 +163,7 @@ export const ClaimsListPage = (): React.JSX.Element => {
             onNextPage={handleNextPage}
           />
         </>
-      ) : null}
+      </ListStateBlock>
 
       <AddClaimModal
         isOpen={isAddClaimModalOpen}

@@ -98,6 +98,7 @@ Implication:
   - `ListPageStateBlock` (loading/error/empty)
   - `PaginationFooter`
   - `StatsCardGrid`
+- Status: DONE (2026-04-22) for DRY-002 via shared `ListStateBlock` (`src/components/shared/ListStateBlock.tsx`) integrated into claims, quality, and audit logs list pages.
 
 8. Repeated detail-page modal orchestration
 - Similar open/close/submit modal patterns in:
