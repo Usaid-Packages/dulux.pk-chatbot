@@ -6,7 +6,6 @@ export const RESUBMIT_FIELD_LABELS: Record<RegistrationRejectionField['fieldName
   phone_number: 'Phone Number',
   email: 'Email',
   city: 'City',
-  province: 'Province',
   site_address: 'Site Address',
   purchase_date: 'Purchase Date',
   purchase_dealer: 'Dealer Name',
@@ -22,7 +21,6 @@ export const REQUESTED_FIELD_ORDER: RegistrationRejectionField['fieldName'][] = 
   'phone_number',
   'email',
   'city',
-  'province',
   'site_address',
   'purchase_date',
   'purchase_dealer',
@@ -52,7 +50,6 @@ type TrimmedResubmitPayloadField =
   | 'phoneNumber'
   | 'email'
   | 'city'
-  | 'province'
   | 'siteAddress'
   | 'purchaseDate'
   | 'purchaseDealer'
@@ -65,7 +62,6 @@ type TrimmedResubmitValueField =
   | 'phoneNumber'
   | 'email'
   | 'city'
-  | 'province'
   | 'siteAddress'
   | 'purchaseDate'
   | 'purchaseDealer'
@@ -82,7 +78,6 @@ export const TRIMMED_FIELD_MAPPINGS: ReadonlyArray<{
   { requestedFieldName: 'phone_number', valueKey: 'phoneNumber', payloadKey: 'phoneNumber' },
   { requestedFieldName: 'email', valueKey: 'email', payloadKey: 'email' },
   { requestedFieldName: 'city', valueKey: 'city', payloadKey: 'city' },
-  { requestedFieldName: 'province', valueKey: 'province', payloadKey: 'province' },
   { requestedFieldName: 'site_address', valueKey: 'siteAddress', payloadKey: 'siteAddress' },
   { requestedFieldName: 'purchase_date', valueKey: 'purchaseDate', payloadKey: 'purchaseDate' },
   { requestedFieldName: 'purchase_dealer', valueKey: 'purchaseDealer', payloadKey: 'purchaseDealer' },

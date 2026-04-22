@@ -17,7 +17,12 @@
  * - Complexity: O(1)
  */
 
-import { COMPLAINT_SUBJECT_LABELS, DEFAULT_API_ERROR_MESSAGE } from '#/constants';
+import {
+  COMPLAINT_SUBJECT_LABELS,
+  DEFAULT_API_ERROR_MESSAGE,
+  REGISTRATION_INVOICE_TYPES,
+  REGISTRATION_PRODUCT_TYPES,
+} from '#/constants';
 import type {
   AuditLogApiDetailResponse,
   AuditLogApiListResponse,

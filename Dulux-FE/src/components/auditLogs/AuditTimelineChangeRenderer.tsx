@@ -151,22 +151,6 @@ export const AuditTimelineChangeRenderer = ({ change }: AuditTimelineChangeRende
           <span className='mx-1 text-primary'>{'\u2192'}</span>
           <span className='font-medium'>{change.afterSummary}</span>
         </p>
-        <p className='text-[11px] text-text-muted'>
-          <span title={change.beforeRaw}>{change.beforePreview}</span>
-          <span className='mx-1 text-primary'>{'\u2192'}</span>
-          <span title={change.afterRaw}>{change.afterPreview}</span>
-        </p>
-        <details className='rounded-lg border border-border/70 bg-white px-2 py-1.5'>
-          <summary className='cursor-pointer text-[11px] font-semibold text-primary'>View full payload</summary>
-          <div className='mt-2 space-y-2'>
-            <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
-              {change.beforeRaw}
-            </pre>
-            <pre className='max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/60 bg-surface-subtle/40 p-2 text-[11px] text-text-primary'>
-              {change.afterRaw}
-            </pre>
-          </div>
-        </details>
       </div>
     );
   }

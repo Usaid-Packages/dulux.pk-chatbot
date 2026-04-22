@@ -14,7 +14,6 @@ interface AuditTimelinePanelProps {
   title: string;
   subtitle: string;
   className?: string;
-  maxItems?: number;
 }
 
 /**
@@ -29,13 +28,12 @@ export const AuditTimelinePanel = ({
   title,
   subtitle,
   className,
-  maxItems,
 }: AuditTimelinePanelProps): JSX.Element | null => {
   const { isAdmin, timelineQuery } = useAuditTimeline(type, objectId);
 
   const timelineItems = useMemo(() => {
-    return (timelineQuery.data?.results ?? []).slice(-maxItems).reverse();
-  }, [maxItems, timelineQuery.data?.results]);
+    return [...(timelineQuery.data?.results ?? [])].reverse();
+  }, [timelineQuery.data?.results]);
 
   const timelineItemViewModels = useMemo(() => {
     return buildAuditTimelineItemViewModels(timelineItems);

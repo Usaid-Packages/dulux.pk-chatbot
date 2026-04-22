@@ -1,11 +1,8 @@
 import type { ChangeEvent, FocusEvent, JSX } from 'react';
 
 import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
-import { Controller } from 'react-hook-form';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
-import { MANUAL_REGISTRATION_PROVINCE_OPTIONS } from '#/constants';
 import {
   CITY_MAX_LENGTH,
   DEALER_ADDRESS_MAX_LENGTH,
@@ -36,7 +33,6 @@ interface ResubmitUpdateGeneralFieldsProps {
  */
 export const ResubmitUpdateGeneralFields = ({
   requestedFieldNames,
-  control,
   register,
   errors,
   onCityChange,
@@ -90,31 +86,6 @@ export const ResubmitUpdateGeneralFields = ({
         <div>
           <label className='text-sm font-medium text-text-primary'>City</label>
           <Input placeholder='e.g. Lahore' maxLength={CITY_MAX_LENGTH} {...cityField} onChange={onCityChange} />
-        </div>
-      ) : null}
-
-      {requestedFieldNames.includes('province') ? (
-        <div>
-          <label className='text-sm font-medium text-text-primary'>Province</label>
-          <Controller
-            control={control}
-            name='province'
-            render={({ field: provinceField }) => (
-              <Select value={provinceField.value ?? ''} onValueChange={provinceField.onChange}>
-                <SelectTrigger aria-label='Select province'>
-                  <SelectValue placeholder='Select province' />
-                </SelectTrigger>
-                <SelectContent>
-                  {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
-                    <SelectItem key={province} value={province}>
-                      {province}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.province ? <p className='mt-1 text-xs text-destructive'>{errors.province.message}</p> : null}
         </div>
       ) : null}
 

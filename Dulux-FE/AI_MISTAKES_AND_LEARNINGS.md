@@ -878,3 +878,9 @@
 - Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
 - Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
 - Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.
+
+### 2026-04-22 - Province cleanup and timeline UX cleanup were left partially applied
+
+- Issue: After removing `province` from registration flows, residual references remained in resubmission constants/form defaults and fixture data; timeline UI also still exposed `View full payload` raw JSON blocks.
+- Fix: Removed remaining `province` references from the affected FE files and simplified timeline rendering to keep concise field-level output only (no expandable raw payload view), while preserving full API event listing.
+- Rule: When a cross-cutting field removal or timeline UX directive is requested, run a final project-wide symbol search and verify all related constants/forms/tests/renderers are aligned before handoff.

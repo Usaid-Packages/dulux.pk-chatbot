@@ -79,7 +79,6 @@ export const useResubmitUpdateForm = ({
       phoneNumber: registration.phoneNumber,
       email: registration.email,
       city: registration.city,
-      province: registration.province,
       siteAddress: registration.siteAddress,
       purchaseDate: registration.purchaseDate,
       purchaseDealer: registration.purchaseDealer,

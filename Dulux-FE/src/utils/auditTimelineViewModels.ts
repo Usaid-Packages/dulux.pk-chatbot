@@ -4,7 +4,6 @@ import {
   AUDIT_TIMELINE_FIELD_LABEL_OVERRIDES,
   AUDIT_TIMELINE_ID_LIST_CHANGE_FIELDS,
   AUDIT_TIMELINE_IMAGE_CHANGE_FIELDS,
-  AUDIT_TIMELINE_JSON_PREVIEW_LIMIT,
   AUDIT_TIMELINE_LONG_TEXT_LIMIT,
   AUDIT_TIMELINE_RESUBMISSION_CHANGE_FIELDS,
   AUDIT_TIMELINE_STATE_CHANGE_FIELDS,
@@ -133,6 +132,11 @@ const isIdListChangeField = (fieldName: string): boolean => {
 
 const isResubmissionChangeField = (fieldName: string): boolean => {
   return AUDIT_TIMELINE_RESUBMISSION_CHANGE_FIELDS.has(toFieldLookupKey(fieldName));
+};
+
+const isPaintPairsField = (fieldName: string): boolean => {
+  const normalizedField = toFieldLookupKey(fieldName);
+  return normalizedField === 'paintpairs';
 };
 
 const formatTokenLabel = (value: string): string => {
@@ -338,13 +342,6 @@ const getComplexValueSummary = (value: unknown): string => {
   return formatRawValue(value);
 };
 
-const getJsonPreview = (value: unknown): string => {
-  const rawValue = formatRawValue(value);
-  return rawValue.length > AUDIT_TIMELINE_JSON_PREVIEW_LIMIT
-    ? `${rawValue.slice(0, AUDIT_TIMELINE_JSON_PREVIEW_LIMIT)}...`
-    : rawValue;
-};
-
 const toNumericIdList = (value: unknown): number[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -501,6 +498,77 @@ const getCompactValue = (fieldName: string, value: unknown): string => {
     : formattedValue;
 };
 
+const getTimelineProductName = (value: unknown): string => {
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : 'N/A';
+  }
+
+  if (!isRecordValue(value)) {
+    return 'N/A';
+  }
+
+  const candidateKeys = ['name', 'topcoatName', 'topcoat_name', 'basecoatName', 'basecoat_name', 'label'] as const;
+  for (const key of candidateKeys) {
+    const candidateValue = value[key];
+    if (typeof candidateValue === 'string' && candidateValue.trim().length > 0) {
+      return candidateValue.trim();
+    }
+  }
+
+  return 'N/A';
+};
+
+const getFirstAvailableProductName = (...values: unknown[]): string => {
+  for (const value of values) {
+    const normalizedName = getTimelineProductName(value);
+    if (normalizedName !== 'N/A') {
+      return normalizedName;
+    }
+  }
+
+  return 'N/A';
+};
+
+const getPaintQuantityValue = (value: unknown): string => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim();
+    return trimmedValue.length > 0 ? trimmedValue : 'N/A';
+  }
+
+  return 'N/A';
+};
+
+const formatPaintPairEntry = (value: unknown): string => {
+  if (!isRecordValue(value)) {
+    return 'Topcoat: N/A (N/A), Basecoat: None';
+  }
+
+  const topcoatName = getFirstAvailableProductName(value.topcoat, value.topcoatName, value.topcoat_name);
+  const topcoatQuantity = getPaintQuantityValue(value.topcoat_quantity ?? value.topcoatQuantity);
+  const basecoatRaw = value.basecoat ?? value.basecoat_id ?? value.basecoatId;
+  const basecoatQuantity = getPaintQuantityValue(value.basecoat_quantity ?? value.basecoatQuantity);
+  const basecoatName =
+    basecoatRaw === null || basecoatRaw === undefined
+      ? 'None'
+      : getFirstAvailableProductName(basecoatRaw, value.basecoatName, value.basecoat_name);
+  const basecoatSummary = basecoatName === 'None' ? 'None' : `${basecoatName} (${basecoatQuantity})`;
+
+  return `Topcoat: ${topcoatName} (${topcoatQuantity}), Basecoat: ${basecoatSummary}`;
+};
+
+const formatPaintPairsDiffValue = (value: unknown): string => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return 'No paint pairs';
+  }
+
+  return value.map(pairValue => formatPaintPairEntry(pairValue)).join(' | ');
+};
+
 const normalizeStateToken = (value: unknown): string | null => {
   if (typeof value !== 'string') {
     return null;
@@ -590,6 +658,27 @@ const toChangeViewModel = (
     };
   }
 
+  if (isPaintPairsField(fieldName)) {
+    const fullBefore = formatPaintPairsDiffValue(beforeValue);
+    const fullAfter = formatPaintPairsDiffValue(afterValue);
+
+    return {
+      kind: 'default',
+      key,
+      fieldLabel,
+      fullBefore,
+      fullAfter,
+      compactBefore:
+        fullBefore.length > AUDIT_TIMELINE_LONG_TEXT_LIMIT
+          ? `${fullBefore.slice(0, AUDIT_TIMELINE_LONG_TEXT_LIMIT)}...`
+          : fullBefore,
+      compactAfter:
+        fullAfter.length > AUDIT_TIMELINE_LONG_TEXT_LIMIT
+          ? `${fullAfter.slice(0, AUDIT_TIMELINE_LONG_TEXT_LIMIT)}...`
+          : fullAfter,
+    };
+  }
+
   const shouldKeepArrowLayout =
     isActorField(fieldName) ||
     isAssigneeChangeField(fieldName) ||
@@ -605,8 +694,8 @@ const toChangeViewModel = (
       afterSummary: getComplexValueSummary(afterValue),
       beforeRaw: formatRawValue(beforeValue),
       afterRaw: formatRawValue(afterValue),
-      beforePreview: getJsonPreview(beforeValue),
-      afterPreview: getJsonPreview(afterValue),
+      beforePreview: '',
+      afterPreview: '',
     };
   }
 
