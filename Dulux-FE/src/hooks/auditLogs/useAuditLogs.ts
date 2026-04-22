@@ -65,7 +65,7 @@ interface UseAuditLogsResult {
  * @returns Audit logs list and detail query state with filter + selection actions.
  */
 export const useAuditLogs = (): UseAuditLogsResult => {
-  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
+  const { searchParams, setPage, setFilterParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
   const [selectedAuditLogId, setSelectedAuditLogId] = useState('');
 
   const pageParam = Number.parseInt(searchParams.get('page') ?? String(DEFAULT_PAGE), 10);
@@ -101,7 +101,7 @@ export const useAuditLogs = (): UseAuditLogsResult => {
   });
 
   const updateSearchParam = (key: string, value: string): void => {
-    setParam(key, value, { trimValue: true, resetPage: true });
+    setFilterParam(key, value, { trimValue: true });
   };
 
   const setActionFilter = (action: AuditLogActionFilter): void => {
@@ -138,7 +138,7 @@ export const useAuditLogs = (): UseAuditLogsResult => {
   };
 
   const setSearch = (search: string): void => {
-    setParam('search', search, { resetPage: true });
+    setFilterParam('search', search);
   };
 
   const openDetail = (id: string): void => {

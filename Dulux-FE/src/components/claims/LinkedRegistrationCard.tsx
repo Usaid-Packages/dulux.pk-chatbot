@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { ROUTES } from '#/constants';
 import type { LinkedRegistrationSummary } from '#/types/claims.types';
-import { formatDate } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
 
 interface LinkedRegistrationCardProps {
   registration: LinkedRegistrationSummary;
@@ -38,7 +38,7 @@ export const LinkedRegistrationCard = ({ registration }: LinkedRegistrationCardP
         </div>
         <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
           <dt className='text-text-muted'>Purchase Date</dt>
-          <dd className='font-medium text-text-primary'>{formatDate(registration.purchaseDate)}</dd>
+          <dd className='font-medium text-text-primary'>{formatDisplayDate(registration.purchaseDate)}</dd>
         </div>
       </dl>
       {canOpenRegistration ? (

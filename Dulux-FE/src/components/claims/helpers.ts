@@ -1,7 +1,6 @@
 import type { BadgeProps } from '#/components/ui/Badge';
 import { getClaimWorkflowStateLabel } from '#/constants';
 import type { ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
-import { formatDisplayDate, formatDisplayDateTime } from '#/utils';
 
 const STATUS_LABELS: Record<ClaimStatus, string> = {
   pending: 'Pending',
@@ -19,14 +18,6 @@ const STATUS_VARIANTS: Record<ClaimStatus, NonNullable<BadgeProps['variant']>> =
   rejected: 'rejected',
   infoRequested: 'info',
   resolved: 'resolved',
-};
-
-export const formatDate = (dateValue: string): string => {
-  return formatDisplayDate(dateValue);
-};
-
-export const formatDateTime = (dateValue: string): string => {
-  return formatDisplayDateTime(dateValue);
 };
 
 const WORKFLOW_STATUS_VARIANTS: Record<ClaimWorkflowState, NonNullable<BadgeProps['variant']>> = {

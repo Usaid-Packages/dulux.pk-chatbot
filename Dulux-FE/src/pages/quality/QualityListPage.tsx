@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { useSearchParams } from 'react-router-dom';
-
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
 import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
 import { Input } from '#/components/ui';
@@ -15,9 +13,8 @@ import { cn } from '#/utils';
  * @returns Quality list page.
  */
 export const QualityListPage = (): React.JSX.Element => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { qualityQueueQuery, cardCountsQuery, filters, setStatusFilter, setPage } = useQualityQueue();
-  const searchValue = searchParams.get('search') ?? '';
+  const { qualityQueueQuery, cardCountsQuery, filters, searchValue, setStatusFilter, setSearch, setPage } =
+    useQualityQueue();
   const debouncedSearchValue = useDebouncedValue(searchValue);
 
   const queueData = qualityQueueQuery.data;
@@ -52,16 +49,7 @@ export const QualityListPage = (): React.JSX.Element => {
   };
 
   const handleSearchChange = (value: string): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      if (value.trim().length > 0) {
-        nextParams.set('search', value);
-      } else {
-        nextParams.delete('search');
-      }
-      nextParams.set('page', '1');
-      return nextParams;
-    });
+    setSearch(value);
   };
 
   return (
