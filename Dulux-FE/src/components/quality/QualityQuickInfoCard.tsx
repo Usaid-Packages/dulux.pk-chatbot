@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { formatDateTime } from './helpers';
+import { formatDisplayDateTime } from '#/utils/date';
 
 interface QualityQuickInfoCardProps {
   forwardedBy: string;
@@ -24,7 +24,7 @@ export const QualityQuickInfoCard = ({ forwardedBy, forwardedAt }: QualityQuickI
         </div>
         <div className='flex items-start justify-between gap-3 border-b border-border/50 pb-1'>
           <dt className='text-text-muted'>Forwarded On</dt>
-          <dd className='text-right font-medium text-text-primary'>{formatDateTime(forwardedAt)}</dd>
+          <dd className='text-right font-medium text-text-primary'>{formatDisplayDateTime(forwardedAt)}</dd>
         </div>
       </dl>
     </article>

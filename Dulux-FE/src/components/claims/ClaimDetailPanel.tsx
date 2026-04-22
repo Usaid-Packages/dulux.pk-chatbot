@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 import { Badge, Button } from '#/components/ui';
 import { getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimDetail } from '#/types/claims.types';
-import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
+import { getStatusLabel, getStatusVariant } from './helpers';
 
 interface ClaimDetailPanelProps {
   claim: ClaimDetail;
@@ -78,7 +79,7 @@ export const ClaimDetailPanel = ({
           </div>
           <div className='flex justify-between gap-3'>
             <dt className='text-text-muted'>Submitted</dt>
-            <dd className='font-medium text-text-primary'>{formatDate(claim.submittedAt)}</dd>
+            <dd className='font-medium text-text-primary'>{formatDisplayDate(claim.submittedAt)}</dd>
           </div>
         </dl>
 

@@ -1,7 +1,6 @@
 import type { BadgeProps } from '#/components/ui/Badge';
 import { getClaimWorkflowStateLabel } from '#/constants';
 import type { ClaimWorkflowState } from '#/types/claims.types';
-import { formatDisplayDate, formatDisplayDateTime } from '#/utils';
 
 const QUALITY_STATUS_LABELS: Record<string, string> = {
   forwarded: 'Awaiting Review',
@@ -29,14 +28,6 @@ const QUALITY_STATUS_VARIANTS: Record<string, NonNullable<BadgeProps['variant']>
   approved: 'approved',
   rejected: 'rejected',
   resolved: 'resolved',
-};
-
-export const formatDate = (dateValue: string): string => {
-  return formatDisplayDate(dateValue);
-};
-
-export const formatDateTime = (dateValue: string): string => {
-  return formatDisplayDateTime(dateValue);
 };
 
 export const getQualityStatusLabel = (status: string, workflowState?: ClaimWorkflowState): string => {

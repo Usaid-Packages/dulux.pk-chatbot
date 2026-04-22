@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 
 import { ImagePreviewGallery } from '#/components/ui';
 import type { QualityLatestResubmission } from '#/types/quality.types';
-import { formatDateTime } from './helpers';
+import { formatDisplayDateTime } from '#/utils/date';
 
 interface QualityResubmissionCardProps {
   latestResubmission?: QualityLatestResubmission;
@@ -41,7 +41,7 @@ export const QualityResubmissionCard = ({ latestResubmission }: QualityResubmiss
         <h2 className='text-md font-semibold text-text-primary'>Latest Resubmission</h2>
         <p className='text-xs text-text-muted'>
           Source: <span className='font-medium text-text-primary'>{latestResubmission.source}</span> • Submitted:{' '}
-          <span className='font-medium text-text-primary'>{formatDateTime(latestResubmission.createdAt)}</span>
+          <span className='font-medium text-text-primary'>{formatDisplayDateTime(latestResubmission.createdAt)}</span>
         </p>
         {latestResubmission.notes ? (
           <p className='rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>

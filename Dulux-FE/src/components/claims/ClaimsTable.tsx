@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimListItem } from '#/types/claims.types';
-import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
+import { getStatusLabel, getStatusVariant } from './helpers';
 
 interface ClaimsTableProps {
   claims: ClaimListItem[];
@@ -49,7 +50,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
                 <span className='chip-reg'>{claim.registrationId || 'N/A'}</span>
               </TableCell>
               <TableCell>{getClaimIssueTypeLabel(claim.issueType)}</TableCell>
-              <TableCell>{formatDate(claim.submittedAt)}</TableCell>
+              <TableCell>{formatDisplayDate(claim.submittedAt)}</TableCell>
               <TableCell>
                 <Badge variant={getStatusVariant(claim.status, claim.workflowState)}>
                   {getStatusLabel(claim.status, claim.workflowState)}

@@ -568,7 +568,7 @@ Deliverables:
 29. `DRY-004` [✅ DONE 2026-04-22]: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
 30. `DRY-005` [✅ DONE 2026-04-22]: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
 31. `ARCH-008` [✅ DONE 2026-04-20]: Introduce shared detail-action controller helpers used by claims/quality/registrations detail hooks. (Covers Findings: #8, #22, #37)
-32. `DRY-006`: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
+32. `DRY-006` [✅ DONE 2026-04-22]: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
 33. `ARCH-009` [✅ DONE 2026-04-20]: Split `ResubmitUpdateModal`, `AddClaimModal`, and `ProductForm` into hook + section component architecture. (Covers Findings: #2, #24)
 34. `UI-001`: Standardize UI imports to barrel usage and disallow mixed deep imports outside UI package. (Covers Findings: #25)
 35. `STYLE-001`: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`. (Covers Findings: #26, #27)
@@ -694,6 +694,7 @@ Deliverables:
 23. Finding #23 -> `DRY-006`, `DRY-013`:
 - Scope: remove duplicated claims/quality date wrappers.
 - Done when: formatters resolve through shared date utility presets.
+- Status: `DRY-006` ✅ Done (2026-04-22).
 
 24. Finding #24 -> `ARCH-002`, `ARCH-003`, `ARCH-005`, `ARCH-009`:
 - Scope: split complex forms into controller hooks + section components.

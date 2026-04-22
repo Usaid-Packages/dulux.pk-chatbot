@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { QualityQueueItem } from '#/types/quality.types';
-import { getQualityStatusLabel, getQualityStatusVariant, formatDate } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
+import { getQualityStatusLabel, getQualityStatusVariant } from './helpers';
 
 interface QualityQueueTableProps {
   items: QualityQueueItem[];
@@ -51,7 +52,7 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
               </TableCell>
               <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
               <TableCell>{item.forwardedBy}</TableCell>
-              <TableCell>{formatDate(item.submittedAt)}</TableCell>
+              <TableCell>{formatDisplayDate(item.submittedAt)}</TableCell>
               <TableCell>
                 <Badge variant={getQualityStatusVariant(item.status, item.workflowState)}>
                   {getQualityStatusLabel(item.status, item.workflowState)}

@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import type { ClaimTimelineItem } from '#/types/claims.types';
-import { formatDateTime } from './helpers';
+import { formatDisplayDateTime } from '#/utils/date';
 
 interface ClaimTimelineProps {
   timeline: ClaimTimelineItem[];
@@ -22,7 +22,7 @@ export const ClaimTimeline = ({ timeline }: ClaimTimelineProps): JSX.Element => 
           <li key={item.id} className='rounded-xl border border-primary/15 bg-primary/5 p-3'>
             <div className='flex flex-wrap items-start justify-between gap-2'>
               <p className='text-sm font-semibold text-text-primary'>{item.event}</p>
-              <p className='text-xs text-text-muted'>{formatDateTime(item.createdAt)}</p>
+              <p className='text-xs text-text-muted'>{formatDisplayDateTime(item.createdAt)}</p>
             </div>
             <p className='mt-1 text-sm text-text-muted'>By {item.actor}</p>
             {item.note ? <p className='mt-2 text-sm text-text-primary'>{item.note}</p> : null}
