@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { RegistrationEditModal, RegistrationTable } from '#/components/registrations';
-import { PaginationFooter } from '#/components/shared';
+import { PaginationFooter, StatsCardGrid } from '#/components/shared';
 import { Input } from '#/components/ui';
 import { REGISTRATION_FILTER_TAB_LABELS, ROUTES } from '#/constants';
 import { useEditRegistrationMutation, useGetRegistrationByIdQuery } from '#/data-layer/registrations';
@@ -313,20 +313,14 @@ export const RegistrationsListPage = (): React.JSX.Element => {
 
   return (
     <section className='wf-list-shell'>
-      <div className='wf-stat-grid-3'>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Registrations</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.total}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Pending Review</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.pending}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Approved</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.approved}</p>
-        </article>
-      </div>
+      <StatsCardGrid
+        columns={3}
+        items={[
+          { label: 'Total Registrations', value: stats.total },
+          { label: 'Pending Review', value: stats.pending },
+          { label: 'Approved', value: stats.approved },
+        ]}
+      />
 
       <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='flex items-center gap-3 overflow-x-auto'>

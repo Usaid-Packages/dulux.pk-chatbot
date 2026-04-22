@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import { AuditLogDetailDialog, AuditLogsFilters, AuditLogsTable } from '#/components/auditLogs';
-import { ListStateBlock, PaginationFooter } from '#/components/shared';
+import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
 import { LIST_PAGE_SIZE } from '#/constants';
 import { useAuditLogs } from '#/hooks/auditLogs';
 import { getApiErrorMessage } from '#/utils';
@@ -53,24 +53,14 @@ export const AuditLogsPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <section className='wf-stat-grid-4'>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Logs</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalItems}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Create Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalCreate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Update Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalUpdate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Delete Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalDelete}</p>
-        </article>
-      </section>
+      <StatsCardGrid
+        items={[
+          { label: 'Total Logs', value: totalItems },
+          { label: 'Create Events', value: totalCreate },
+          { label: 'Update Events', value: totalUpdate },
+          { label: 'Delete Events', value: totalDelete },
+        ]}
+      />
 
       <AuditLogsFilters
         filters={filters}

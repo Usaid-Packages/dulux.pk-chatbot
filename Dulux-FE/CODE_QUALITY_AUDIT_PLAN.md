@@ -99,6 +99,7 @@ Implication:
   - `PaginationFooter`
   - `StatsCardGrid`
 - Status: DONE (2026-04-22) for DRY-002 via shared `ListStateBlock` (`src/components/shared/ListStateBlock.tsx`) integrated into claims, quality, and audit logs list pages.
+- Status: DONE (2026-04-22) for DRY-003 via shared `StatsCardGrid` (`src/components/shared/StatsCardGrid.tsx`) integrated into claims, quality, audit logs, and registrations list pages.
 
 8. Repeated detail-page modal orchestration
 - Similar open/close/submit modal patterns in:
