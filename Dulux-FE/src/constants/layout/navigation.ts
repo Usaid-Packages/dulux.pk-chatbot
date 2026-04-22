@@ -30,13 +30,6 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     allowedRoles: ['admin', 'cs'],
   },
   {
-    icon: 'ScrollText',
-    label: 'Manual Registration',
-    path: ROUTES.MANUAL_REGISTRATION_STEP_1,
-    group: 'Warranty',
-    allowedRoles: ['admin', 'cs'],
-  },
-  {
     icon: 'ShieldCheck',
     label: 'Claims',
     path: ROUTES.CLAIMS,

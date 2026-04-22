@@ -3,16 +3,8 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
-import {
-  Button,
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-  Input,
-  Skeleton,
-} from '#/components/ui';
+import { PaginationFooter } from '#/components/shared';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Input, Skeleton } from '#/components/ui';
 import { useDebouncedValue, useQualityQueue } from '#/hooks';
 import { cn } from '#/utils';
 
@@ -155,19 +147,14 @@ export const QualityListPage = (): React.JSX.Element => {
       {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && filteredQueueItems.length > 0 ? (
         <>
           <QualityQueueTable items={filteredQueueItems} />
-          <div className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {filters.page} of {totalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' onClick={handlePrevPage} disabled={filters.page <= 1}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' onClick={handleNextPage} disabled={filters.page >= totalPages}>
-                Next
-              </Button>
-            </div>
-          </div>
+          <PaginationFooter
+            currentPage={filters.page}
+            totalPages={totalPages}
+            disablePrevious={filters.page <= 1}
+            disableNext={filters.page >= totalPages}
+            onPreviousPage={handlePrevPage}
+            onNextPage={handleNextPage}
+          />
         </>
       ) : null}
     </main>

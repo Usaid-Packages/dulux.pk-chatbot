@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import { RegistrationEditModal, RegistrationTable } from '#/components/registrations';
-import { Button, Input } from '#/components/ui';
+import { PaginationFooter } from '#/components/shared';
+import { Input } from '#/components/ui';
 import { REGISTRATION_FILTER_TAB_LABELS, ROUTES } from '#/constants';
 import { useEditRegistrationMutation, useGetRegistrationByIdQuery } from '#/data-layer/registrations';
 import { useRegistrations } from '#/hooks/registrations';
@@ -366,19 +367,14 @@ export const RegistrationsListPage = (): React.JSX.Element => {
         />
       )}
 
-      <section className='wf-pagination-panel'>
-        <p className='text-sm text-text-muted'>
-          Page {currentPage} of {totalPages}
-        </p>
-        <div className='flex w-full gap-2 sm:w-auto'>
-          <Button type='button' variant='outline' disabled={!hasPreviousPage || isLoading} onClick={goToPreviousPage}>
-            Previous
-          </Button>
-          <Button type='button' variant='outline' disabled={!hasNextPage || isLoading} onClick={goToNextPage}>
-            Next
-          </Button>
-        </div>
-      </section>
+      <PaginationFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        disablePrevious={!hasPreviousPage || isLoading}
+        disableNext={!hasNextPage || isLoading}
+        onPreviousPage={goToPreviousPage}
+        onNextPage={goToNextPage}
+      />
 
       <RegistrationEditModal
         isOpen={isEditModalOpen}
