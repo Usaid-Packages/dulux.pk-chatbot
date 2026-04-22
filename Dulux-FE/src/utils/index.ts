@@ -5,6 +5,7 @@ export * from './authSession';
 export * from './registrationNotificationTemplates';
 export * from './claimNotificationTemplates';
 export * from './date';
+export * from './formSanitizers';
 export * from './registrations';
 export * from './auditTimelineViewModels';
 export * from './productsListPage.helpers';

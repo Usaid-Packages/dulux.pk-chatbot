@@ -16,8 +16,8 @@ import {
   getRegistrationTopcoatFallbackOptions,
   getRequestedCorrectionNotes,
   mergeUniqueProductOptions,
-  removeDigits,
-  toPkPhoneWithPrefix,
+  normalizePkPhoneWithPrefix,
+  sanitizeLettersOnly,
 } from '#/utils';
 
 interface UseResubmitUpdateFormParams {
@@ -185,22 +185,22 @@ export const useResubmitUpdateForm = ({
   const purchaseDealerCityField = register('purchaseDealerCity');
 
   const handleCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     cityField.onChange(event);
   };
 
   const handlePurchaseDealerChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerField.onChange(event);
   };
 
   const handlePurchaseDealerCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerCityField.onChange(event);
   };
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = toPkPhoneWithPrefix(event.currentTarget.value);
+    event.currentTarget.value = normalizePkPhoneWithPrefix(event.currentTarget.value);
     phoneNumberField.onChange(event);
   };
 

@@ -2,6 +2,7 @@ import { REQUESTED_FIELD_ORDER } from '#/constants/registrations/resubmitUpdate.
 import type { ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail, RegistrationRejectionField, RequestedCorrectionNote } from '#/types/registrations';
+import { normalizePkPhoneWithPrefix, sanitizeLettersOnly } from '../formSanitizers';
 
 export const getRequestedFieldNames = (
   rejectionFields: RegistrationRejectionField[]
@@ -137,14 +138,5 @@ export const getRegistrationBasecoatFallbackByTopcoatId = (
   return fallbackMap;
 };
 
-export const removeDigits = (value: string): string => {
-  return value.replace(/\d/g, '');
-};
-
-export const toPkPhoneWithPrefix = (value: string): string => {
-  const digitsOnly = value.replace(/\D/g, '');
-  const withoutPrefix = digitsOnly.startsWith('92') ? digitsOnly.slice(2) : digitsOnly;
-  const normalizedLocalPart = withoutPrefix.startsWith('3') ? withoutPrefix : `3${withoutPrefix}`;
-  const limitedLocalPart = normalizedLocalPart.slice(0, 10);
-  return `92${limitedLocalPart}`;
-};
+export const removeDigits = sanitizeLettersOnly;
+export const toPkPhoneWithPrefix = normalizePkPhoneWithPrefix;

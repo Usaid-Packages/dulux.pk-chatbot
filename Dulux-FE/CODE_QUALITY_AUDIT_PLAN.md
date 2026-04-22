@@ -379,6 +379,7 @@ Implication:
 - Plan:
   - extract shared sanitizers to `src/utils/formSanitizers.ts` (or `src/utils/inputNormalization.ts`),
   - keep component handlers as thin adapters only.
+- Status: DONE (2026-04-22) under DRY-008 by introducing shared sanitizers in `src/utils/formSanitizers.ts` and migrating manual registration + resubmission handlers to consume them.
 
 36. Modal lifecycle handling is repeated across many dialog components
 - Standards reference: `DRY`, `Reusable UI behavior`
@@ -581,7 +582,7 @@ Deliverables:
 42. `PERF-007`: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls. (Covers Findings: #32, #42)
 43. `PERF-008`: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost. (Covers Findings: #33)
 44. `PERF-009`: Replace repeated action `.filter(...).length` counters in `AuditLogsPage` with a single memoized reducer. (Covers Findings: #34)
-45. `DRY-008`: Extract shared input sanitizers (letters-only + PK phone normalization) into `src/utils/*` and migrate manual/registration forms. (Covers Findings: #35)
+45. `DRY-008` [✅ DONE 2026-04-22]: Extract shared input sanitizers (letters-only + PK phone normalization) into `src/utils/*` and migrate manual/registration forms. (Covers Findings: #35)
 46. `DRY-009`: Create shared dialog lifecycle helper (`useDialogLifecycle`) and migrate modal open/close/reset patterns. (Covers Findings: #36)
 47. `DRY-010`: Implement shared guarded detail-action orchestration helper for claims/quality/registration hooks. (Covers Findings: #22, #37)
 48. `ARCH-010` [✅ DONE 2026-04-20]: Split `useRegistrationDetail` into query/actions/payload-builder modules for single-responsibility compliance. (Covers Findings: #2, #38)
@@ -745,6 +746,7 @@ Deliverables:
 35. Finding #35 -> `DRY-008`:
 - Scope: shared text/phone sanitizers for forms.
 - Done when: manual/registration forms consume shared sanitizer helpers.
+- Status: `DRY-008` ✅ Done (2026-04-22).
 
 36. Finding #36 -> `DRY-009`:
 - Scope: shared dialog lifecycle hook.

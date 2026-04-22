@@ -9,6 +9,7 @@ import { Input, Textarea } from '#/components/ui';
 import { Calendar } from '#/components/ui/Calendar';
 import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
+import { sanitizeLettersOnly } from '#/utils';
 
 const DATE_FORMAT = 'yyyy-MM-dd';
 const PURCHASE_DATE_RANGE_DAYS = 60;
@@ -31,10 +32,6 @@ const formatPurchaseDate = (value: Date | undefined): string => {
   }
 
   return format(value, DATE_FORMAT);
-};
-
-const handleLettersOnlyChange = (event: ChangeEvent<HTMLInputElement>): void => {
-  event.currentTarget.value = event.currentTarget.value.replace(/\d/g, '');
 };
 
 /**
@@ -81,12 +78,12 @@ export const PurchaseDealerStep = (): JSX.Element => {
   }, [isCalendarOpen]);
 
   const handlePurchaseDealerChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    handleLettersOnlyChange(event);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerField.onChange(event);
   };
 
   const handlePurchaseDealerCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    handleLettersOnlyChange(event);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerCityField.onChange(event);
   };
 
