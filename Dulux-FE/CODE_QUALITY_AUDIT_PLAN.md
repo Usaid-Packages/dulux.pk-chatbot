@@ -576,7 +576,7 @@ Deliverables:
 37. `PERF-003`: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook. (Covers Findings: #28, #30)
 38. `PERF-004`: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering. (Covers Findings: #28)
 39. `PERF-005`: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility. (Covers Findings: #28)
-40. `DRY-007`: Centralize query-param set/delete/reset-page behavior into shared adapter used by all list hooks. (Covers Findings: #20, #30)
+40. `DRY-007` [✅ DONE 2026-04-22]: Centralize query-param set/delete/reset-page behavior into shared adapter used by all list hooks. (Covers Findings: #20, #30)
 41. `PERF-006`: Optimize `ConversationListPanel` row rendering with `Set`-based unseen lookup and stable click handlers. (Covers Findings: #31)
 42. `PERF-007`: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls. (Covers Findings: #32, #42)
 43. `PERF-008`: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost. (Covers Findings: #33)
@@ -681,6 +681,7 @@ Deliverables:
 - Scope: shared URL query-param mutation utilities.
 - Done when: list hooks/pages use shared adapter and duplicate blocks are removed.
 - Status: `DRY-004` ✅ Done (2026-04-22).
+- Status: `DRY-007` ✅ Done (2026-04-22).
 
 21. Finding #21 -> `DRY-005`, `DRY-011`:
 - Scope: central mutation feedback/toast behavior.
@@ -723,6 +724,7 @@ Deliverables:
 30. Finding #30 -> `DRY-007`:
 - Scope: unify query-param mutation behavior.
 - Done when: one adapter handles set/delete/reset-page rules.
+- Status: `DRY-007` ✅ Done (2026-04-22).
 
 31. Finding #31 -> `PERF-006`:
 - Scope: optimize conversation list row rendering.

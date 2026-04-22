@@ -19,6 +19,11 @@ interface UseUrlFiltersResult {
     options?: { resetPage?: boolean; replace?: boolean }
   ) => void;
   setParam: (key: string, value: string | undefined, options?: SetUrlFilterParamOptions) => void;
+  setFilterParam: (
+    key: string,
+    value: string | undefined,
+    options?: Omit<SetUrlFilterParamOptions, 'resetPage'>
+  ) => void;
   replaceAllParams: (nextParams: URLSearchParams) => void;
 }
 
@@ -77,6 +82,18 @@ export const useUrlFilters = ({
     );
   };
 
+  const setFilterParam = (
+    key: string,
+    value: string | undefined,
+    options?: Omit<SetUrlFilterParamOptions, 'resetPage'>
+  ): void => {
+    setParam(key, value, {
+      resetPage: true,
+      trimValue: options?.trimValue,
+      removeWhenEmpty: options?.removeWhenEmpty,
+    });
+  };
+
   const setPage = (page: number): void => {
     if (!Number.isFinite(page) || page < 1) {
       return;
@@ -96,6 +113,7 @@ export const useUrlFilters = ({
     setPage,
     setParams,
     setParam,
+    setFilterParam,
     replaceAllParams,
   };
 };

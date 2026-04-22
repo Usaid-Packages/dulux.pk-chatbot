@@ -62,7 +62,7 @@ export interface UseRegistrationsResult {
  * @returns Registrations list state, actions, and query results.
  */
 export const useRegistrations = (): UseRegistrationsResult => {
-  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
+  const { searchParams, setPage, setFilterParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
 
   const activeTabParam = searchParams.get('tab');
   const activeTab = isRegistrationFilterTab(activeTabParam) ? activeTabParam : DEFAULT_TAB;
@@ -100,15 +100,15 @@ export const useRegistrations = (): UseRegistrationsResult => {
   };
 
   const handleSearchChange = (value: string): void => {
-    setParam('search', value, { resetPage: true });
+    setFilterParam('search', value);
   };
 
   const handleStatusChange = (value: RegistrationStatus | 'ALL'): void => {
-    setParam('status', value, { resetPage: true, removeWhenEmpty: false });
+    setFilterParam('status', value, { removeWhenEmpty: false });
   };
 
   const handleTabChange = (tab: RegistrationFilterTab): void => {
-    setParam('tab', tab, { resetPage: true, removeWhenEmpty: false });
+    setFilterParam('tab', tab, { removeWhenEmpty: false });
   };
 
   const goToNextPage = (): void => {

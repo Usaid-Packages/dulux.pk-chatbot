@@ -55,7 +55,7 @@ interface UseClaimsResult {
  * @returns Query state plus filter setters for claims list page.
  */
 export const useClaims = (): UseClaimsResult => {
-  const { searchParams, setPage, setParam } = useUrlFilters({ defaultPage: DEFAULT_FILTERS.page });
+  const { searchParams, setPage, setFilterParam } = useUrlFilters({ defaultPage: DEFAULT_FILTERS.page });
   const createFiltersFromSearchParams = (): ClaimsListRequestParams => {
     const statusParam = searchParams.get('status');
     const status = CLAIM_STATUS_FILTER_VALUES.includes(statusParam as ClaimListStatusFilter)
@@ -98,15 +98,15 @@ export const useClaims = (): UseClaimsResult => {
   });
 
   const setStatusFilter = (status: ClaimListStatusFilter): void => {
-    setParam('status', status, { resetPage: true, removeWhenEmpty: false });
+    setFilterParam('status', status, { removeWhenEmpty: false });
   };
 
   const setIssueTypeFilter = (issueType: 'all' | ClaimIssueType): void => {
-    setParam('issueType', issueType, { resetPage: true, removeWhenEmpty: false });
+    setFilterParam('issueType', issueType, { removeWhenEmpty: false });
   };
 
   const setSearch = (search?: string): void => {
-    setParam('search', search, { resetPage: true });
+    setFilterParam('search', search);
   };
 
   const handleCreateClaim = (payload: CreateClaimPayload, options?: { onSuccess?: () => void }): void => {
