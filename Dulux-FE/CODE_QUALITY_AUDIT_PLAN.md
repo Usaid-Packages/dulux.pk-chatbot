@@ -545,15 +545,15 @@ Deliverables:
 13. `RULE-002` [✅ DONE 2026-04-22]: Restore sidebar Manual Registration item. (Covers Findings: #6)
 14. `RULE-003` [✅ DONE 2026-04-22]: Add explicit return types to exported hooks. (Covers Findings: #10)
 15. `RULE-004` [✅ DONE 2026-04-22]: Add explicit return types to exported route components. (Covers Findings: #10)
-16. `RULE-005`: Replace inline JSX arrows in top 10 touched files. (Covers Findings: #11, #41)
+16. `RULE-005` [✅ DONE 2026-04-22]: Replace inline JSX arrows in top touched files. (Covers Findings: #11, #41)
 17. `UTIL-001`: Split `helperFunctions.ts` into domain normalizers. (Covers Findings: #9)
 18. `TEST-001`: Add auth critical-flow RTL/MSW tests. (Cross-cutting regression safety for Findings: #1, #13, #21)
 19. `TEST-002`: Add claim + registration action flow tests. (Cross-cutting regression safety for Findings: #17, #22, #38)
 20. `TEST-003`: Add complaint thread resilience tests. (Cross-cutting regression safety for Findings: #31, #33, #34)
 21. `ROUTE-001`: Introduce loader/action usage on priority routes (claims/quality lists). (Covers Findings: #12)
-22. `RULE-006`: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper. (Covers Findings: #13)
+22. `RULE-006` [✅ DONE 2026-04-22]: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper. (Covers Findings: #13)
 23. `DOC-001`: Add FE-local `.github/pull_request_template.md` (or approved exception note). (Covers Findings: #14)
-24. `RULE-007`: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception). (Covers Findings: #15)
+24. `RULE-007` [✅ DONE 2026-04-22]: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception). (Covers Findings: #15)
 25. `ARCH-006` [✅ DONE 2026-04-20]: Move product page data-layer imports into product hooks (`pages` composition-only refactor). (Covers Findings: #16)
 26. `ARCH-007` [✅ DONE 2026-04-20]: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
 27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
@@ -632,6 +632,7 @@ Deliverables:
 11. Finding #11 -> `RULE-005`, `RULE-009`:
 - Scope: reduce/remove inline JSX arrow handlers in priority files.
 - Done when: hot-path list/table handlers are stable and extracted.
+- Status: `RULE-005` ✅ Done (2026-04-22).
 
 12. Finding #12 -> `ROUTE-001`:
 - Scope: introduce Data Router loaders/actions on priority routes.
@@ -640,6 +641,7 @@ Deliverables:
 13. Finding #13 -> `RULE-006`:
 - Scope: replace product `mutateAsync` orchestration with callback style.
 - Done when: create/edit product action flows use callback mutation orchestration helper.
+- Status: `RULE-006` ✅ Done (2026-04-22).
 
 14. Finding #14 -> `DOC-001`:
 - Scope: FE-local PR template presence or documented exception.
@@ -648,6 +650,8 @@ Deliverables:
 15. Finding #15 -> `RULE-007`:
 - Scope: resolve one-component-per-file drift in UI primitives.
 - Done when: primitives are split or standards exception is documented.
+- Status: `RULE-007` ✅ Done (2026-04-22).
+- Note: `Table` primitives were split into single-component files. `Pagination` remains bundled as a documented temporary exception due reproducible `eslint-plugin-import` (`import/order`) crashes when split into separate files under current lint toolchain.
 
 16. Finding #16 -> `ARCH-006`:
 - Scope: remove page-level direct data-layer ownership in products module.
@@ -749,9 +753,10 @@ Deliverables:
 - Scope: centralized UI text placeholders/hints.
 - Done when: repeated text strings use `uiText` constants.
 
-41. Finding #41 -> `RULE-009`:
+41. Finding #41 -> `RULE-005`, `RULE-009`:
 - Scope: remove inline closures in hot list/render paths.
 - Done when: stable callbacks/data-attribute identity are used.
+- Status: `RULE-005` ✅ Done (2026-04-22).
 
 42. Finding #42 -> `DRY-013`:
 - Scope: unify date/time wrappers via shared presets/utilities.

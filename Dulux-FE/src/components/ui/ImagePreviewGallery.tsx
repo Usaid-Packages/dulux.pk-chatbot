@@ -1,5 +1,5 @@
-import type { JSX } from 'react';
-import { useState } from 'react';
+import type { JSX, MouseEvent, SyntheticEvent } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './Dialog';
 
@@ -38,6 +38,9 @@ export const ImagePreviewGallery = ({
   const [loadedImageMap, setLoadedImageMap] = useState<Record<string, boolean>>({});
 
   const toImageKey = (id: string | number): string => String(id);
+  const imageLookupMap = useMemo(() => {
+    return new Map(items.map(image => [toImageKey(image.id), image] as const));
+  }, [items]);
 
   const openImageModal = (image: ImagePreviewGalleryItem): void => {
     setActiveImage(image);
@@ -48,6 +51,33 @@ export const ImagePreviewGallery = ({
   const markImageLoaded = (id: string | number): void => {
     const imageKey = toImageKey(id);
     setLoadedImageMap(previous => ({ ...previous, [imageKey]: true }));
+  };
+
+  const handleGalleryItemClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    const imageId = event.currentTarget.dataset.imageId;
+    if (!imageId) {
+      return;
+    }
+
+    const image = imageLookupMap.get(imageId);
+    if (!image) {
+      return;
+    }
+
+    openImageModal(image);
+  };
+
+  const handleGalleryImageLoadState = (event: SyntheticEvent<HTMLImageElement>): void => {
+    const imageId = event.currentTarget.dataset.imageId;
+    if (!imageId) {
+      return;
+    }
+
+    markImageLoaded(imageId);
+  };
+
+  const handleModalImageLoadState = (): void => {
+    setModalImageLoading(false);
   };
 
   const handleModalOpenChange = (open: boolean): void => {
@@ -77,7 +107,8 @@ export const ImagePreviewGallery = ({
                 key={image.id}
                 type='button'
                 className='wf-card-muted group p-2 text-left transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                onClick={() => openImageModal(image)}
+                data-image-id={image.id}
+                onClick={handleGalleryItemClick}
               >
                 <div className='relative'>
                   {!loadedImageMap[toImageKey(image.id)] ? (
@@ -98,8 +129,9 @@ export const ImagePreviewGallery = ({
                     src={image.url}
                     alt={image.label}
                     loading='lazy'
-                    onLoad={() => markImageLoaded(image.id)}
-                    onError={() => markImageLoaded(image.id)}
+                    data-image-id={image.id}
+                    onLoad={handleGalleryImageLoadState}
+                    onError={handleGalleryImageLoadState}
                   />
                   <span className='pointer-events-none absolute inset-x-2 bottom-2 rounded bg-black/55 px-2 py-1 text-xs font-medium text-white opacity-100 sm:opacity-0 sm:transition sm:group-hover:opacity-100'>
                     Open image
@@ -131,8 +163,8 @@ export const ImagePreviewGallery = ({
                 src={activeImage.url}
                 alt={activeImage.label}
                 loading='eager'
-                onLoad={() => setModalImageLoading(false)}
-                onError={() => setModalImageLoading(false)}
+                onLoad={handleModalImageLoadState}
+                onError={handleModalImageLoadState}
               />
             </div>
           ) : null}

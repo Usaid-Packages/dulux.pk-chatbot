@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { ChangeEvent, JSX } from 'react';
 import { useRef } from 'react';
 
 import { Controller } from 'react-hook-form';
@@ -32,6 +32,9 @@ export const CsrResubmissionEntryField = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const responseTextError = errors.entries?.[index]?.responseText?.message;
   const imageFileError = errors.entries?.[index]?.imageFile?.message;
+  const handleFileButtonClick = (): void => {
+    inputRef.current?.click();
+  };
 
   return (
     <article className='space-y-2 rounded-xl border border-primary/15 bg-white/90 p-3'>
@@ -62,6 +65,10 @@ export const CsrResubmissionEntryField = ({
           control={control}
           render={({ field }) => {
             const selectedFileName = field.value?.name;
+            const handleImageChange = (event: ChangeEvent<HTMLInputElement>): void => {
+              const selectedFile = event.target.files?.[0];
+              field.onChange(selectedFile);
+            };
 
             return (
               <div className='space-y-1'>
@@ -71,16 +78,13 @@ export const CsrResubmissionEntryField = ({
                   className='sr-only'
                   accept='.jpg,.jpeg,.png,.webp'
                   onBlur={field.onBlur}
-                  onChange={event => {
-                    const selectedFile = event.target.files?.[0];
-                    field.onChange(selectedFile);
-                  }}
+                  onChange={handleImageChange}
                 />
                 <Button
                   type='button'
                   variant='outline'
                   className='w-full justify-start rounded-xl border-primary/20 bg-white'
-                  onClick={() => inputRef.current?.click()}
+                  onClick={handleFileButtonClick}
                 >
                   {selectedFileName ? 'Change image' : 'Upload image'}
                 </Button>

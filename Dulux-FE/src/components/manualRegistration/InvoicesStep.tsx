@@ -64,6 +64,16 @@ export const InvoicesStep = (): React.JSX.Element => {
     setValue('invoices', updatedInvoices, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
+  const handleRemoveInvoiceClick = (event: React.MouseEvent<HTMLButtonElement>): void => {
+    const invoiceIndexValue = event.currentTarget.dataset.invoiceIndex;
+    const invoiceIndex = Number(invoiceIndexValue);
+    if (!Number.isInteger(invoiceIndex) || invoiceIndex < 0) {
+      return;
+    }
+
+    handleRemoveInvoice(invoiceIndex);
+  };
+
   return (
     <section className='space-y-4 wf-card wf-card-p5'>
       <header>
@@ -129,7 +139,8 @@ export const InvoicesStep = (): React.JSX.Element => {
                   type='button'
                   variant='outline'
                   className='h-8 rounded-lg border-destructive/30 px-2.5 text-destructive hover:bg-destructive/10'
-                  onClick={() => handleRemoveInvoice(index)}
+                  data-invoice-index={index}
+                  onClick={handleRemoveInvoiceClick}
                 >
                   <Trash2 aria-hidden='true' className='h-3.5 w-3.5' />
                   Remove

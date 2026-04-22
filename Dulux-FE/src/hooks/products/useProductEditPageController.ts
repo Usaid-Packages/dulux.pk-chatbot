@@ -14,13 +14,14 @@ import {
 import { PRODUCT_TYPES } from '#/types/products';
 import type {
   LinkedBasecoat,
+  ProductFormValues,
   ProductFormSubmission,
   ProductImage,
-  ProductFormValues,
   SurfaceType,
 } from '#/types/products';
 import { getApiErrorMessage } from '#/utils';
 import { mapProductFormValuesToPayload, mapProductToFormValues } from './productHelpers';
+import { orchestrateProductImageMutations } from './productImageMutationOrchestrator';
 
 const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
 const EMPTY_BASECOAT_OPTIONS: LinkedBasecoat[] = [];
@@ -71,16 +72,6 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
     navigate(`${ROUTES.PRODUCTS}${location.search}`);
   };
 
-  const uploadAndAttachImage = async (imageFile: File): Promise<void> => {
-    const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
-    await attachProductImageMutation.mutateAsync({
-      productId,
-      payload: {
-        image_id: imageId,
-      },
-    });
-  };
-
   const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
     updateProductMutation.mutate(
       {
@@ -88,17 +79,25 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
         payload: mapProductFormValuesToPayload(values),
       },
       {
-        onSuccess: async () => {
-          try {
-            if (imageFile) {
-              await uploadAndAttachImage(imageFile);
-            }
-            toast.success('Product updated successfully.');
-          } catch (error) {
-            toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
-          } finally {
+        onSuccess: () => {
+          const navigateToProducts = (): void => {
             navigate(`${ROUTES.PRODUCTS}${location.search}`);
-          }
+          };
+
+          orchestrateProductImageMutations({
+            productId,
+            imageFile,
+            uploadProductImageMutation,
+            attachProductImageMutation,
+            onSuccess: () => {
+              toast.success('Product updated successfully.');
+              navigateToProducts();
+            },
+            onError: error => {
+              toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
+              navigateToProducts();
+            },
+          });
         },
         onError: error => {
           toast.error(getApiErrorMessage(error));

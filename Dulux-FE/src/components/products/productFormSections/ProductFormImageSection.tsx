@@ -1,4 +1,4 @@
-import type { ChangeEventHandler, JSX } from 'react';
+import type { ChangeEventHandler, JSX, MouseEvent } from 'react';
 
 import { Button, Input } from '#/components/ui';
 import type { ProductImage } from '#/types/products';
@@ -26,6 +26,19 @@ export const ProductFormImageSection = ({
   onImageFilesChange,
   onRemoveImage,
 }: ProductFormImageSectionProps): JSX.Element => {
+  const handleRemoveImageClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    if (!onRemoveImage) {
+      return;
+    }
+
+    const imageId = Number(event.currentTarget.dataset.imageId);
+    if (!Number.isInteger(imageId) || imageId <= 0) {
+      return;
+    }
+
+    onRemoveImage(imageId);
+  };
+
   return (
     <div className='space-y-3 rounded-xl border border-primary/20 bg-white/85 p-4'>
       <div>
@@ -64,7 +77,8 @@ export const ProductFormImageSection = ({
                       size='sm'
                       className='w-full'
                       disabled={isImageActionPending}
-                      onClick={() => onRemoveImage(productImage.id)}
+                      data-image-id={productImage.id}
+                      onClick={handleRemoveImageClick}
                     >
                       Remove
                     </Button>
