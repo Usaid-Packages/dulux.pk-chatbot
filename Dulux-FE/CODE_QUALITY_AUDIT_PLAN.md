@@ -60,6 +60,7 @@ Implication:
   - `src/components/errorFallback/ErrorFallback.tsx`
 - Plan:
   - convert default exports to named exports for app/service/hook/component modules (keep ambient/module declaration exceptions only).
+- Status: DONE (2026-04-22) for this ticket scope (`App`, `axiosInstance`, `useSentry`, `ErrorFallback`; declaration-file exceptions retained).
 
 ## P1 - Mistakes File Rule Drift
 
@@ -183,6 +184,7 @@ Implication:
   - `src/components/products/DeleteConfirmModal.tsx`
   - `src/components/auth/AuthCard.tsx`
 - Plan: add concise JSDoc purpose/props comments for all exported components; enforce via lint rule/convention check.
+- Status: DONE (2026-04-22) for this ticket scope (products/auth files listed above).
 
 19. Dead/unwired code paths violate clean-code expectations
 - Standards reference: `CLEAN CODE -> No dead code`
@@ -453,6 +455,7 @@ Implication:
 - Plan:
   - extract item-specific handlers to component-scope callbacks with `data-*` attributes where appropriate,
   - reduce inline closures in mapped/list contexts.
+- Status: DONE (2026-04-22) for this ticket scope.
 
 42. Date/time formatter and wrapper utilities are fragmented across domain components
 - Standards reference: `DRY`, `Utility reuse`
@@ -580,9 +583,9 @@ Deliverables:
 48. `ARCH-010` [✅ DONE 2026-04-20]: Split `useRegistrationDetail` into query/actions/payload-builder modules for single-responsibility compliance. (Covers Findings: #2, #38)
 49. `DRY-011`: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals. (Covers Findings: #21, #39)
 50. `DRY-012`: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
-51. `RULE-009`: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
+51. `RULE-009` [✅ DONE 2026-04-22]: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
 52. `DRY-013`: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
-53. `RULE-010`: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
+53. `RULE-010` [✅ DONE 2026-04-22]: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
 
 ## 5) Finding-to-Ticket Coverage (Detailed)
 

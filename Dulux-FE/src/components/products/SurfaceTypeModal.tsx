@@ -42,6 +42,12 @@ const DEFAULT_VALUES: SurfaceTypeFormValues = {
   status: 'ACTIVE',
 };
 
+/**
+ * SurfaceTypeModal captures create/edit input for a single surface type.
+ *
+ * @param props - Modal visibility, initial values, submit state, and close/submit handlers.
+ * @returns Surface-type form dialog.
+ */
 export const SurfaceTypeModal = ({
   isOpen,
   isSubmitting,

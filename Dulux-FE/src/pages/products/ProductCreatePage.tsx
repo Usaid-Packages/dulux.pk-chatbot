@@ -4,6 +4,11 @@ import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { useProductCreatePageController } from '#/hooks/products';
 
+/**
+ * ProductCreatePage renders the create-product flow with dependency loading and error fallback states.
+ *
+ * @returns Product creation page content.
+ */
 export const ProductCreatePage = (): JSX.Element => {
   const { isLoading, isError, errorMessage, isSubmitting, surfaceTypes, basecoatOptions, handleSubmit, handleCancel } =
     useProductCreatePageController();

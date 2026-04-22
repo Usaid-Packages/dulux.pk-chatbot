@@ -8,6 +8,12 @@ interface AuthCardProps {
   children: ReactNode;
 }
 
+/**
+ * AuthCard provides the branded authentication container for login and password flows.
+ *
+ * @param props - Heading content and nested auth form body.
+ * @returns Styled authentication card layout.
+ */
 export const AuthCard = ({ title, subtitle, children }: AuthCardProps): JSX.Element => (
   <section className='relative w-full max-w-md overflow-hidden rounded-[2rem] border border-blue-200/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(244,250,255,0.96)_100%)] p-7 shadow-[0_30px_70px_rgba(15,76,159,0.25)] backdrop-blur-xl md:p-8'>
     <div
