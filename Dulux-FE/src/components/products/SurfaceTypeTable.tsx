@@ -4,7 +4,7 @@ import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 import type { SurfaceType } from '#/types/products';
 
 interface SurfaceTypeTableProps {
-  canManage: boolean;
+  canManage?: boolean;
   surfaceTypes: SurfaceType[];
   linkedProductCountMap: Record<number, number>;
   onEdit: (surfaceType: SurfaceType) => void;
@@ -26,7 +26,7 @@ const getSurfaceTypeById = (surfaceTypes: SurfaceType[], surfaceTypeId: number):
 };
 
 export const SurfaceTypeTable = ({
-  canManage,
+  canManage = true,
   surfaceTypes,
   linkedProductCountMap,
   onEdit,

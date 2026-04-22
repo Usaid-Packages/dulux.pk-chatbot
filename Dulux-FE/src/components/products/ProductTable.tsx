@@ -8,7 +8,7 @@ import { PRODUCT_TYPES } from '#/types/products';
 import type { Product } from '#/types/products';
 
 interface ProductTableProps {
-  canEdit: boolean;
+  canEdit?: boolean;
   products: Product[];
 }
 
@@ -76,7 +76,7 @@ const renderLinkedBasecoats = (product: Product): JSX.Element => {
   );
 };
 
-export const ProductTable = ({ canEdit, products }: ProductTableProps): JSX.Element => {
+export const ProductTable = ({ canEdit = true, products }: ProductTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
