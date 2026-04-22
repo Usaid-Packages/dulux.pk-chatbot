@@ -3,14 +3,11 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
-import { PaginationFooter } from '#/components/shared';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Input, Skeleton } from '#/components/ui';
+import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
+import { Input } from '#/components/ui';
+import { LIST_PAGE_SIZE } from '#/constants';
 import { useDebouncedValue, useQualityQueue } from '#/hooks';
 import { cn } from '#/utils';
-
-const PAGE_SIZE = 10;
-
-const STAT_CARD_STYLES = ['', '', '', ''] as const;
 
 /**
  * QualityListPage renders the quality review queue with status tabs and summary stats.
@@ -40,7 +37,7 @@ export const QualityListPage = (): React.JSX.Element => {
     });
   }, [debouncedSearchValue, queueItems]);
   const totalItems = queueData?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / LIST_PAGE_SIZE));
 
   const handlePrevPage = (): void => {
     if (filters.page > 1) {
@@ -69,19 +66,14 @@ export const QualityListPage = (): React.JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <section className='wf-stat-grid-4'>
-        {[
+      <StatsCardGrid
+        items={[
           { label: 'Total In Queue', value: cardCountsQuery.data?.totalInQueue ?? 0 },
           { label: 'Awaiting Review', value: cardCountsQuery.data?.awaitingReview ?? 0 },
           { label: 'Info Requested', value: cardCountsQuery.data?.infoRequested ?? 0 },
           { label: 'Resolved Today', value: cardCountsQuery.data?.resolvedToday ?? 0 },
-        ].map((card, index) => (
-          <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
-            <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
-            <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
-          </article>
-        ))}
-      </section>
+        ]}
+      />
 
       <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='flex items-center gap-3 overflow-x-auto'>
@@ -116,35 +108,15 @@ export const QualityListPage = (): React.JSX.Element => {
         </div>
       </section>
 
-      {qualityQueueQuery.isLoading ? (
-        <section className='space-y-2 wf-card wf-card-p4'>
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-        </section>
-      ) : null}
-
-      {qualityQueueQuery.isError ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Failed to load quality queue</EmptyTitle>
-            <EmptyDescription>{qualityQueueQuery.error?.message ?? 'Unable to fetch quality queue.'}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : null}
-
-      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && filteredQueueItems.length === 0 ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>No claims in quality queue</EmptyTitle>
-              <EmptyDescription>There are no matching records for the selected status.</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!qualityQueueQuery.isLoading && !qualityQueueQuery.isError && filteredQueueItems.length > 0 ? (
+      <ListStateBlock
+        isLoading={qualityQueueQuery.isLoading}
+        isError={qualityQueueQuery.isError}
+        isEmpty={filteredQueueItems.length === 0}
+        errorTitle='Failed to load quality queue'
+        errorDescription={qualityQueueQuery.error?.message ?? 'Unable to fetch quality queue.'}
+        emptyTitle='No claims in quality queue'
+        emptyDescription='There are no matching records for the selected status.'
+      >
         <>
           <QualityQueueTable items={filteredQueueItems} />
           <PaginationFooter
@@ -156,7 +128,7 @@ export const QualityListPage = (): React.JSX.Element => {
             onNextPage={handleNextPage}
           />
         </>
-      ) : null}
+      </ListStateBlock>
     </main>
   );
 };

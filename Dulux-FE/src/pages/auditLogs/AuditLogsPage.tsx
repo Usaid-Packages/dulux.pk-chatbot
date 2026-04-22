@@ -1,12 +1,10 @@
 import type { JSX } from 'react';
 
 import { AuditLogDetailDialog, AuditLogsFilters, AuditLogsTable } from '#/components/auditLogs';
-import { PaginationFooter } from '#/components/shared';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
+import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
+import { LIST_PAGE_SIZE } from '#/constants';
 import { useAuditLogs } from '#/hooks/auditLogs';
 import { getApiErrorMessage } from '#/utils';
-
-const PAGE_SIZE = 10;
 
 /**
  * AuditLogsPage renders admin audit logs list, filters, and on-demand detail inspection.
@@ -35,7 +33,7 @@ export const AuditLogsPage = (): JSX.Element => {
   const auditLogsData = auditLogsQuery.data;
   const auditLogsItems = auditLogsData?.items ?? [];
   const totalItems = auditLogsData?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / LIST_PAGE_SIZE));
 
   const totalCreate = auditLogsItems.filter(item => item.action === 'CREATE').length;
   const totalUpdate = auditLogsItems.filter(item => item.action === 'UPDATE').length;
@@ -55,24 +53,14 @@ export const AuditLogsPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <section className='wf-stat-grid-4'>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Logs</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalItems}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Create Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalCreate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Update Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalUpdate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Delete Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalDelete}</p>
-        </article>
-      </section>
+      <StatsCardGrid
+        items={[
+          { label: 'Total Logs', value: totalItems },
+          { label: 'Create Events', value: totalCreate },
+          { label: 'Update Events', value: totalUpdate },
+          { label: 'Delete Events', value: totalDelete },
+        ]}
+      />
 
       <AuditLogsFilters
         filters={filters}
@@ -86,37 +74,15 @@ export const AuditLogsPage = (): JSX.Element => {
         onSetSearch={setSearch}
       />
 
-      {auditLogsQuery.isLoading ? (
-        <section className='space-y-2 wf-card wf-card-p4'>
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-        </section>
-      ) : null}
-
-      {auditLogsQuery.isError ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>Failed to load audit logs</EmptyTitle>
-              <EmptyDescription>{getApiErrorMessage(auditLogsQuery.error)}</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!auditLogsQuery.isLoading && !auditLogsQuery.isError && auditLogsItems.length === 0 ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>No audit records found</EmptyTitle>
-              <EmptyDescription>Adjust filters to inspect matching audit entries.</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!auditLogsQuery.isLoading && !auditLogsQuery.isError && auditLogsItems.length > 0 ? (
+      <ListStateBlock
+        isLoading={auditLogsQuery.isLoading}
+        isError={auditLogsQuery.isError}
+        isEmpty={auditLogsItems.length === 0}
+        errorTitle='Failed to load audit logs'
+        errorDescription={getApiErrorMessage(auditLogsQuery.error)}
+        emptyTitle='No audit records found'
+        emptyDescription='Adjust filters to inspect matching audit entries.'
+      >
         <>
           <AuditLogsTable items={auditLogsItems} onOpenDetail={openDetail} />
           <PaginationFooter
@@ -128,7 +94,7 @@ export const AuditLogsPage = (): JSX.Element => {
             onNextPage={handleNextPage}
           />
         </>
-      ) : null}
+      </ListStateBlock>
 
       <AuditLogDetailDialog isOpen={selectedAuditLogId.length > 0} detailQuery={detailQuery} onClose={closeDetail} />
     </main>
