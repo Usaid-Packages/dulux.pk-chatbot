@@ -76,6 +76,12 @@ const renderLinkedBasecoats = (product: Product): JSX.Element => {
   );
 };
 
+/**
+ * ProductTable renders catalog rows with product metadata and optional edit actions.
+ *
+ * @param props - Product rows and edit-access flag for action links.
+ * @returns Product list table content.
+ */
 export const ProductTable = ({ canEdit = true, products }: ProductTableProps): JSX.Element => {
   const location = useLocation();
 

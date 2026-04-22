@@ -25,6 +25,12 @@ const getSurfaceTypeById = (surfaceTypes: SurfaceType[], surfaceTypeId: number):
   return surfaceTypes.find(surfaceType => surfaceType.id === surfaceTypeId);
 };
 
+/**
+ * SurfaceTypeTable displays surface types and optional management actions for edit/delete.
+ *
+ * @param props - Surface-type rows, linked-product counts, and row action handlers.
+ * @returns Surface type table card content.
+ */
 export const SurfaceTypeTable = ({
   canManage = true,
   surfaceTypes,

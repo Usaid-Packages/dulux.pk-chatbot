@@ -1,4 +1,5 @@
-import type { JSX, UIEvent } from 'react';
+import { useMemo } from 'react';
+import type { ChangeEvent, JSX, MouseEvent, UIEvent } from 'react';
 
 import {
   Badge,
@@ -51,6 +52,10 @@ const formatConversationTime = (isoDateTime: string): string => {
   }).format(parsed);
 };
 
+const isConversationStatusFilter = (value: string): value is ConversationStatusFilter => {
+  return CONVERSATION_STATUS_TABS.some(tab => tab.value === value);
+};
+
 /**
  * ConversationListPanel renders chat queue filters and selectable thread list.
  *
@@ -71,6 +76,8 @@ export const ConversationListPanel = ({
   onSearchChange,
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
+  const openUnseenThreadIdSet = useMemo(() => new Set(openUnseenThreadIds), [openUnseenThreadIds]);
+
   const handleListScroll = (event: UIEvent<HTMLDivElement>): void => {
     if (!hasNextPage || isLoading || isFetchingNextPage) {
       return;
@@ -83,6 +90,27 @@ export const ConversationListPanel = ({
     }
   };
 
+  const handleSearchInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    onSearchChange(event.target.value);
+  };
+
+  const handleStatusValueChange = (value: string): void => {
+    if (!isConversationStatusFilter(value)) {
+      return;
+    }
+
+    onStatusChange(value);
+  };
+
+  const handleThreadSelectClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    const threadId = event.currentTarget.dataset.threadId;
+    if (!threadId) {
+      return;
+    }
+
+    onThreadSelect(threadId);
+  };
+
   return (
     <section className='flex h-[calc(100vh-16rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-white p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
       <div className='flex min-h-0 flex-1 flex-col gap-3'>
@@ -90,14 +118,14 @@ export const ConversationListPanel = ({
           <Input
             type='search'
             value={search}
-            onChange={event => onSearchChange(event.target.value)}
+            onChange={handleSearchInputChange}
             placeholder='Search by subject or phone'
             className='h-10 rounded-xl border-primary/25 bg-white'
             aria-label='Search conversations'
           />
 
           <div className='grid grid-cols-1 gap-2'>
-            <Select value={status} onValueChange={value => onStatusChange(value as ConversationStatusFilter)}>
+            <Select value={status} onValueChange={handleStatusValueChange}>
               <SelectTrigger>
                 <SelectValue placeholder='Status' />
               </SelectTrigger>
@@ -130,11 +158,7 @@ export const ConversationListPanel = ({
           {!isLoading
             ? items.map(item => {
                 const isSelected = item.id === selectedThreadId;
-                const hasOpenUnseenIndicator = openUnseenThreadIds.includes(item.id);
-
-                const handleItemClick = (): void => {
-                  onThreadSelect(item.id);
-                };
+                const hasOpenUnseenIndicator = openUnseenThreadIdSet.has(item.id);
 
                 return (
                   <Button
@@ -145,7 +169,8 @@ export const ConversationListPanel = ({
                       'h-auto w-full flex-col items-start gap-2 rounded-xl border border-primary/15 bg-white px-3 py-3 text-left transition-all hover:bg-primary/5',
                       isSelected ? 'border-primary/40 bg-primary/10 shadow-[0_10px_24px_rgba(19,87,167,0.12)]' : ''
                     )}
-                    onClick={handleItemClick}
+                    data-thread-id={item.id}
+                    onClick={handleThreadSelectClick}
                   >
                     <div className='flex w-full items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>

@@ -4,6 +4,11 @@ import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { useProductEditPageController } from '#/hooks/products';
 
+/**
+ * ProductEditPage renders the edit-product flow, including invalid-id, loading, and dependency error states.
+ *
+ * @returns Product edit page content.
+ */
 export const ProductEditPage = (): JSX.Element => {
   const {
     isInvalidProductId,
