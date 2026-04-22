@@ -8,7 +8,13 @@ import { useForgotPasswordMutation } from '#/data-layer/auth';
 import type { ForgotPasswordFormValues } from '#/schemas/authSchemas';
 import { getApiErrorMessage } from '#/utils';
 
-export const useForgotPassword = () => {
+interface UseForgotPasswordResult {
+  handleForgotPassword: (values: ForgotPasswordFormValues) => void;
+  isForgotPasswordPending: boolean;
+  forgotPasswordErrorMessage: string | null;
+}
+
+export const useForgotPassword = (): UseForgotPasswordResult => {
   const [forgotPasswordErrorMessage, setForgotPasswordErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { mutate: forgotPasswordMutate, isPending: isForgotPasswordPending } = useForgotPasswordMutation();

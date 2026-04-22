@@ -8,7 +8,13 @@ import { useResetPasswordMutation } from '#/data-layer/auth';
 import type { ResetPasswordFormValues } from '#/schemas/authSchemas';
 import { getApiErrorMessage } from '#/utils';
 
-export const useResetPassword = () => {
+interface UseResetPasswordResult {
+  handleResetPassword: (values: ResetPasswordFormValues) => void;
+  isResetPasswordPending: boolean;
+  resetPasswordErrorMessage: string | null;
+}
+
+export const useResetPassword = (): UseResetPasswordResult => {
   const [resetPasswordErrorMessage, setResetPasswordErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

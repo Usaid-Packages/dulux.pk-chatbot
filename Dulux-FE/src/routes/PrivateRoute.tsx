@@ -4,7 +4,7 @@ import { ROUTES } from '#/constants';
 import { useAuthContext } from '#/context';
 import type { PrivateRouteProps } from '#/types/routes.types';
 
-export function PrivateRoute({ children }: PrivateRouteProps) {
+export function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
   const { token } = useAuthContext();
 
   if (!token) {

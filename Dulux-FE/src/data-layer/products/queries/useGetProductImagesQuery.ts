@@ -1,4 +1,3 @@
-/* eslint import/order: off */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { apiEndpoints, GET, queryKeys } from '#/constants';
