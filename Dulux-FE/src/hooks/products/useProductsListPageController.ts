@@ -5,6 +5,7 @@ import {
   FIRST_PAGE,
   INVALID_PAGE_ERROR_MESSAGE,
   PRODUCT_ORDERING_VALUES,
+  PRODUCT_MESSAGES,
   PRODUCTS_LIST_FILTER_ALL,
   PRODUCTS_LIST_TABS,
   PRODUCT_PAGE_SIZE,
@@ -176,7 +177,7 @@ export const useProductsListPageController = () => {
           id: String(surfaceTypeEditTarget.id),
           payload: mapSurfaceTypeFormToPayload(values),
         },
-        successMessage: 'Surface type updated successfully.',
+        successMessage: PRODUCT_MESSAGES.SURFACE_TYPE_UPDATED_SUCCESS,
         onSuccess: () => {
           setSurfaceTypeModalOpen(false);
           setSurfaceTypeEditTarget(null);
@@ -188,7 +189,7 @@ export const useProductsListPageController = () => {
     executeMutationWithFeedback({
       mutate: createSurfaceTypeMutation.mutate,
       payload: mapSurfaceTypeFormToPayload(values),
-      successMessage: 'Surface type created successfully.',
+      successMessage: PRODUCT_MESSAGES.SURFACE_TYPE_CREATED_SUCCESS,
       onSuccess: () => {
         setSurfaceTypeModalOpen(false);
         setSurfaceTypeEditTarget(null);
@@ -202,7 +203,7 @@ export const useProductsListPageController = () => {
     executeMutationWithFeedback({
       mutate: deleteSurfaceTypeMutation.mutate,
       payload: String(surfaceTypeDeleteTarget.id),
-      successMessage: 'Surface type deleted successfully.',
+      successMessage: PRODUCT_MESSAGES.SURFACE_TYPE_DELETED_SUCCESS,
       onSuccess: () => {
         if (surfacePage > FIRST_PAGE && surfaceTypes.length === 1) {
           setSurfacePage(previousPage => Math.max(FIRST_PAGE, previousPage - 1));

@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
+import { UI_TEXT } from '#/constants';
 import type { AddClaimSectionFormProps, ClaimBasecoatOptions, ClaimSelectOption } from '#/types/claims.form.types';
 
 interface AddClaimProductsSectionProps extends AddClaimSectionFormProps {
@@ -107,7 +108,7 @@ export const AddClaimProductsSection = ({
                         ? isRegistrationDetailLoading
                           ? 'Loading basecoats...'
                           : 'Select basecoat'
-                        : 'Select topcoat first'
+                        : UI_TEXT.SELECT_TOPCOAT_FIRST
                     }
                   />
                 </SelectTrigger>
@@ -128,7 +129,7 @@ export const AddClaimProductsSection = ({
             <p className='text-xs text-destructive'>{errors.basecoatProductId.message}</p>
           ) : null}
           {!hasTopcoatSelection ? (
-            <p className='text-xs text-text-muted'>Select topcoat first to enable basecoat.</p>
+            <p className='text-xs text-text-muted'>{UI_TEXT.SELECT_TOPCOAT_FIRST_TO_ENABLE_BASECOAT}</p>
           ) : null}
           {isNoBasecoatFlow ? (
             <p className='text-xs text-text-muted'>No related basecoat found for the selected topcoat.</p>

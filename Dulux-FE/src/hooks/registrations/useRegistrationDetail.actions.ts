@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 
-import { REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE } from '#/constants';
+import { REGISTRATION_DETAIL_UNAVAILABLE_MESSAGE, REGISTRATION_MESSAGES } from '#/constants';
 import { executeGuardedDetailMutation, executeMutationWithFeedback } from '#/hooks/common/detailActionController';
 import type {
   ApproveFormValues,
@@ -65,7 +65,7 @@ export const createRegistrationDetailActions = ({
       payload: values,
       buildPayload: (detail, formValues) => buildApproveRegistrationMutationPayload(registrationId, detail, formValues),
       mutate: approveMutate,
-      successMessage: 'Registration approved successfully.',
+      successMessage: REGISTRATION_MESSAGES.APPROVED_SUCCESS,
       onSuccess,
     });
   };
@@ -77,7 +77,7 @@ export const createRegistrationDetailActions = ({
       payload: values,
       buildPayload: (detail, formValues) => buildRejectRegistrationMutationPayload(registrationId, detail, formValues),
       mutate: rejectMutate,
-      successMessage: 'Registration rejected successfully.',
+      successMessage: REGISTRATION_MESSAGES.REJECTED_SUCCESS,
       onSuccess,
     });
   };
@@ -86,7 +86,7 @@ export const createRegistrationDetailActions = ({
     executeMutationWithFeedback({
       mutate: resubmitMutate,
       payload: buildResubmitRegistrationMutationPayload(registrationId, values),
-      successMessage: 'Resubmission request sent successfully.',
+      successMessage: REGISTRATION_MESSAGES.RESUBMISSION_REQUEST_SENT,
       onSuccess,
     });
   };
@@ -98,7 +98,7 @@ export const createRegistrationDetailActions = ({
     }
 
     if (registration.state !== 'RESUBMIT') {
-      toast.error('Registration fields can only be updated in RESUBMIT state.');
+      toast.error(REGISTRATION_MESSAGES.RESUBMISSION_STATE_REQUIRED);
       return;
     }
 
@@ -117,7 +117,7 @@ export const createRegistrationDetailActions = ({
         payload,
         invoiceFiles: values.invoiceFiles,
       },
-      successMessage: 'Resubmission fields updated successfully.',
+      successMessage: REGISTRATION_MESSAGES.RESUBMISSION_FIELDS_UPDATED,
       onSuccess,
     });
   };

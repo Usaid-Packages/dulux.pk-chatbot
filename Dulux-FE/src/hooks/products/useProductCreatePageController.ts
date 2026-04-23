@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { ROUTES } from '#/constants';
+import { PRODUCT_MESSAGES, ROUTES } from '#/constants';
 import {
   useAttachProductImageMutation,
   useCreateProductMutation,
@@ -56,7 +56,7 @@ export const useProductCreatePageController = (): UseProductCreatePageController
     executeMutationWithFeedback({
       mutate: createProductMutation.mutate,
       payload: mapProductFormValuesToPayload(values),
-      successMessage: 'Product created successfully.',
+      successMessage: PRODUCT_MESSAGES.CREATED_SUCCESS,
       showSuccessToast: false,
       onSuccess: createdProduct => {
         const createdProductId = String(createdProduct.id);
@@ -70,7 +70,7 @@ export const useProductCreatePageController = (): UseProductCreatePageController
           uploadProductImageMutation,
           attachProductImageMutation,
           onSuccess: () => {
-            toast.success('Product created successfully.');
+            toast.success(PRODUCT_MESSAGES.CREATED_SUCCESS);
             navigateToProducts();
           },
           onError: error => {
