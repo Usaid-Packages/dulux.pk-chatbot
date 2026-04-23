@@ -68,7 +68,7 @@ export const ProductsTabContainer = ({
   };
 
   const filtersToolbar = (
-    <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+    <section className='wf-toolbar-panel border-primary/15 bg-white ui-shadow-panel'>
       <div className='grid items-center gap-3 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr]'>
         <Input
           type='search'

@@ -69,7 +69,7 @@ export const SurfaceTypesTabContainer = ({
 
   return (
     <>
-      <section className='wf-toolbar-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+      <section className='wf-toolbar-panel border-primary/15 bg-white ui-shadow-panel'>
         <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-[2fr_1fr_auto]'>
           <Input
             type='search'

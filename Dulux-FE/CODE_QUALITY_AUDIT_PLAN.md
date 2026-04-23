@@ -290,6 +290,7 @@ Implication:
 - Plan:
   - move repeated gradients/shadows/button treatments to `index.css` component classes via `@apply`,
   - reference CSS vars/tokens from those classes instead of inline literals.
+- Status: DONE (2026-04-23) under STYLE-001 by extracting repeated gradient/shadow/hero-surface styles into semantic classes in `src/index.css` and replacing repeated inline usages in touched modules.
 
 27. Large inline className strings create readability and maintenance overhead
 - Standards reference: `Cleaner component code`, `Reusability`
@@ -304,6 +305,7 @@ Implication:
 - Plan:
   - extract repeated style groups into semantic utility classes (`.btn-primary-gradient`, `.panel-elevated`, `.hero-bg-*`) in `index.css`,
   - keep `className` short and composable.
+- Status: DONE (2026-04-23) under STYLE-001 by introducing semantic `index.css` classes (button gradients, panel/table shadows, auth hero/card surfaces) and migrating repeated inline class blocks.
 
 28. Re-render/performance hotspots in large forms and list pages
 - Standards reference: `Performance`, `Avoid unnecessary rerenders`
@@ -322,6 +324,7 @@ Implication:
   - repeated primary gradient button classes in claims/quality/registrations/auth/complaints/components.
 - Plan:
   - add shared `Button` variant (`variant='primaryGradient'`) in UI layer and replace repeated inline classes.
+- Status: DONE (2026-04-23) under STYLE-002 by adding `primaryGradient`, `primaryGradientElevated`, and `primaryGradientStrong` variants in `src/components/ui/Button.tsx` and migrating repeated inline gradient button classes across affected modules.
 
 30. Data-flow complexity from duplicated query-param mutation logic
 - Standards reference: `Single source of truth`, `Avoid extra checks`
@@ -573,8 +576,8 @@ Deliverables:
 32. `DRY-006` [✅ DONE 2026-04-22]: Remove duplicate `formatDate`/`formatDateTime` wrappers from claims/quality helpers. (Covers Findings: #23)
 33. `ARCH-009` [✅ DONE 2026-04-20]: Split `ResubmitUpdateModal`, `AddClaimModal`, and `ProductForm` into hook + section component architecture. (Covers Findings: #2, #24)
 34. `UI-001`: Standardize UI imports to barrel usage and disallow mixed deep imports outside UI package. (Covers Findings: #25)
-35. `STYLE-001`: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`. (Covers Findings: #26, #27)
-36. `STYLE-002`: Introduce token-driven `Button` visual variants (e.g., `primaryGradient`) and migrate repeated inline classes. (Covers Findings: #26, #29)
+35. `STYLE-001` [✅ DONE 2026-04-23]: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`. (Covers Findings: #26, #27)
+36. `STYLE-002` [✅ DONE 2026-04-23]: Introduce token-driven `Button` visual variants (e.g., `primaryGradient`) and migrate repeated inline classes. (Covers Findings: #26, #29)
 37. `PERF-003`: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook. (Covers Findings: #28, #30)
 38. `PERF-004`: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering. (Covers Findings: #28)
 39. `PERF-005`: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility. (Covers Findings: #28)

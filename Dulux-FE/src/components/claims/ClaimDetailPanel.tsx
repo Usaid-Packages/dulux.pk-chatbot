@@ -105,7 +105,8 @@ export const ClaimDetailPanel = ({
         <div className='mt-4 space-y-2'>
           {canFinalApprove ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenApproveModal}
               disabled={isActionPending}
             >
@@ -114,7 +115,8 @@ export const ClaimDetailPanel = ({
           ) : null}
           {canSendToQuality ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenForwardModal}
               disabled={isActionPending}
             >
@@ -123,7 +125,8 @@ export const ClaimDetailPanel = ({
           ) : null}
           {canCsrResubmit ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenCsrResubmissionModal}
               disabled={isActionPending}
             >

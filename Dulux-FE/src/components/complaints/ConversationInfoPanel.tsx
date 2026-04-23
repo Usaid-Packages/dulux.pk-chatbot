@@ -158,7 +158,8 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
         <section className='space-y-2'>
           <Button
             type='button'
-            className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+            variant='primaryGradientElevated'
+            className='h-10 w-full rounded-xl'
             onClick={onResolve}
             disabled={thread.apiStatus === 'RESOLVED' || thread.apiStatus === 'CLOSED'}
           >
