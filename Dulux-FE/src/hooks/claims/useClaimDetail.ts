@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 
-import { queryKeys } from '#/constants';
+import { CLAIM_MESSAGES, queryKeys } from '#/constants';
 import {
   getClaimById,
   useApproveClaimMutation,
@@ -76,7 +76,7 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
     executeMutationWithFeedback({
       mutate: sendToQualityMutation.mutate,
       payload,
-      successMessage: 'Claim forwarded to quality.',
+      successMessage: CLAIM_MESSAGES.FORWARDED_TO_QUALITY,
     });
   };
 
@@ -92,34 +92,34 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
     handleApprove: payload => {
       executeGuardedDetailMutation({
         detail: claimQuery.data,
-        missingDetailMessage: 'Claim detail is not available.',
+        missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
         payload,
         buildPayload: (claim, actionPayload) => ({
           ...actionPayload,
           notificationTemplate: createClaimApprovedTemplate(claim, actionPayload.notes?.trim() || 'Claim approved.'),
         }),
         mutate: approveMutation.mutate,
-        successMessage: 'Claim finalized as approved.',
+        successMessage: CLAIM_MESSAGES.FINALIZED_APPROVED,
       });
     },
     handleReject: payload => {
       executeGuardedDetailMutation({
         detail: claimQuery.data,
-        missingDetailMessage: 'Claim detail is not available.',
+        missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
         payload,
         buildPayload: (claim, actionPayload) => ({
           ...actionPayload,
           notificationTemplate: createClaimRejectedTemplate(claim, actionPayload.notes),
         }),
         mutate: rejectMutation.mutate,
-        successMessage: 'Claim finalized as rejected.',
+        successMessage: CLAIM_MESSAGES.FINALIZED_REJECTED,
       });
     },
     handleClaimCsrResubmissionSubmit: payload => {
       executeMutationWithFeedback({
         mutate: submitClaimCsrResubmissionMutation.mutate,
         payload,
-        successMessage: 'Resubmission submitted and claim moved to QA review.',
+        successMessage: CLAIM_MESSAGES.RESUBMISSION_SUBMITTED,
       });
     },
     handleSendToQuality,

@@ -1,5 +1,6 @@
 import type { RegistrationRejectionField } from '#/types/registrations';
 import type { ResubmissionFieldName } from '#/types/registrations';
+import { UI_TEXT } from '../uiText';
 
 export const RESUBMIT_FIELD_LABELS: Record<RegistrationRejectionField['fieldName'], string> = {
   customer_name: 'Full Name',
@@ -36,9 +37,9 @@ export const DEALER_NAME_MAX_LENGTH = 120;
 export const DEALER_CITY_MAX_LENGTH = 80;
 export const DEALER_ADDRESS_MAX_LENGTH = 180;
 
-export const SELECT_TOPCOAT_FIRST_TEXT = 'Select a topcoat first';
-export const NO_BASECOAT_AVAILABLE_TEXT = 'No basecoat available for selected topcoat';
-export const PHONE_PLACEHOLDER = '92XXXXXXXXXX';
+export const SELECT_TOPCOAT_FIRST_TEXT = UI_TEXT.SELECT_A_TOPCOAT_FIRST;
+export const NO_BASECOAT_AVAILABLE_TEXT = UI_TEXT.NO_BASECOAT_AVAILABLE_FOR_SELECTED_TOPCOAT;
+export const PHONE_PLACEHOLDER = UI_TEXT.PHONE_PLACEHOLDER_PK;
 
 export const APPROVAL_TEMPLATE_FALLBACK_NOTE = 'Approval confirmed.';
 export const REJECTION_TEMPLATE_FALLBACK_NOTE = 'Rejected after review.';

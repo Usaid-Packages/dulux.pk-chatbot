@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import { queryKeys } from '#/constants';
+import { CLAIM_MESSAGES, QUALITY_MESSAGES, queryKeys } from '#/constants';
 import {
   getQualityClaimById,
   useApproveQualityClaimMutation,
@@ -43,22 +43,22 @@ export const useQualityDetail = (id: string): UseQualityDetailResult => {
   const handleApprove = (payload: QualityApprovePayload): void => {
     executeGuardedDetailMutation({
       detail: qualityDetailQuery.data,
-      missingDetailMessage: 'Claim detail is not available.',
+      missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
       payload,
       buildPayload: (_detail, actionPayload) => actionPayload,
       mutate: approveMutation.mutate,
-      successMessage: 'Technical approval submitted.',
+      successMessage: QUALITY_MESSAGES.TECHNICAL_APPROVAL_SUBMITTED,
     });
   };
 
   const handleReject = (payload: QualityRejectPayload): void => {
     executeGuardedDetailMutation({
       detail: qualityDetailQuery.data,
-      missingDetailMessage: 'Claim detail is not available.',
+      missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
       payload,
       buildPayload: (_detail, actionPayload) => actionPayload,
       mutate: rejectMutation.mutate,
-      successMessage: 'Technical rejection submitted.',
+      successMessage: QUALITY_MESSAGES.TECHNICAL_REJECTION_SUBMITTED,
     });
   };
 
@@ -66,7 +66,7 @@ export const useQualityDetail = (id: string): UseQualityDetailResult => {
     executeMutationWithFeedback({
       mutate: requestInfoMutation.mutate,
       payload,
-      successMessage: 'Information request sent.',
+      successMessage: QUALITY_MESSAGES.INFORMATION_REQUEST_SENT,
     });
   };
 

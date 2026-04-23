@@ -5,6 +5,7 @@ import { Controller } from 'react-hook-form';
 
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
+import { UI_TEXT } from '#/constants';
 import {
   NO_BASECOAT_AVAILABLE_TEXT,
   RESUBMIT_FIELD_LABELS,
@@ -81,7 +82,7 @@ export const ResubmitUpdatePaintPairsSection = ({
                     disabled={isPaintProductsLoading}
                   >
                     <SelectTrigger aria-label='Select topcoat product'>
-                      <SelectValue placeholder='Select topcoat product' />
+                      <SelectValue placeholder={UI_TEXT.SELECT_TOPCOAT_PRODUCT_PLACEHOLDER} />
                     </SelectTrigger>
                     <SelectContent>
                       {topcoatProducts.map(product => (
@@ -121,7 +122,7 @@ export const ResubmitUpdatePaintPairsSection = ({
                     disabled={isPaintProductsLoading || !selectedTopcoatId}
                   >
                     <SelectTrigger aria-label='Select basecoat product'>
-                      <SelectValue placeholder='Select basecoat product' />
+                      <SelectValue placeholder={UI_TEXT.SELECT_BASECOAT_PRODUCT_PLACEHOLDER} />
                     </SelectTrigger>
                     <SelectContent>
                       {!selectedTopcoatId ? (

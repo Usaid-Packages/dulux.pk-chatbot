@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
-import { REGISTRATION_PRODUCT_TYPES } from '#/constants';
+import { REGISTRATION_PRODUCT_TYPES, UI_TEXT } from '#/constants';
 import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues, ManualRegistrationProductOption } from '#/types/manualRegistration';
 
@@ -106,7 +106,7 @@ const AdditionalPaintPairFields = ({
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange} disabled={isTopcoatLoading}>
                 <SelectTrigger aria-label='Select topcoat product'>
-                  <SelectValue placeholder='Select topcoat product' />
+                  <SelectValue placeholder={UI_TEXT.SELECT_TOPCOAT_PRODUCT_PLACEHOLDER} />
                 </SelectTrigger>
                 <SelectContent onScroll={onTopcoatScroll}>
                   {topcoatProducts.map(product => (
@@ -155,12 +155,12 @@ const AdditionalPaintPairFields = ({
                 disabled={isTopcoatLoading || !selectedTopcoat || basecoatQuery.isLoading}
               >
                 <SelectTrigger aria-label='Select basecoat product'>
-                  <SelectValue placeholder='Select basecoat product' />
+                  <SelectValue placeholder={UI_TEXT.SELECT_BASECOAT_PRODUCT_PLACEHOLDER} />
                 </SelectTrigger>
                 <SelectContent onScroll={handleBasecoatScroll}>
                   {!selectedTopcoat ? (
                     <SelectItem value={`__select_topcoat_first__${index}`} disabled>
-                      Select a topcoat first
+                      {UI_TEXT.SELECT_A_TOPCOAT_FIRST}
                     </SelectItem>
                   ) : basecoatQuery.isLoading ? (
                     <SelectItem value={`__loading_basecoats_${index}`} disabled>
@@ -174,7 +174,7 @@ const AdditionalPaintPairFields = ({
                     ))
                   ) : selectedTopcoat ? (
                     <SelectItem value={`__no_basecoat_available__${index}`} disabled>
-                      No basecoat available for selected topcoat
+                      {UI_TEXT.NO_BASECOAT_AVAILABLE_FOR_SELECTED_TOPCOAT}
                     </SelectItem>
                   ) : null}
                   {basecoatQuery.isFetchingNextPage ? (
@@ -327,7 +327,7 @@ export const ProductsStep = (): JSX.Element => {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange} disabled={topcoatQuery.isLoading}>
                     <SelectTrigger aria-label='Select topcoat product'>
-                      <SelectValue placeholder='Select topcoat product' />
+                      <SelectValue placeholder={UI_TEXT.SELECT_TOPCOAT_PRODUCT_PLACEHOLDER} />
                     </SelectTrigger>
                     <SelectContent onScroll={handleTopcoatScroll}>
                       {topcoatProducts.map(product => (
@@ -378,12 +378,12 @@ export const ProductsStep = (): JSX.Element => {
                     disabled={topcoatQuery.isLoading || !selectedTopcoat || basecoatQuery.isLoading}
                   >
                     <SelectTrigger aria-label='Select basecoat product'>
-                      <SelectValue placeholder='Select basecoat product' />
+                      <SelectValue placeholder={UI_TEXT.SELECT_BASECOAT_PRODUCT_PLACEHOLDER} />
                     </SelectTrigger>
                     <SelectContent onScroll={handleBasecoatScroll}>
                       {!selectedTopcoat ? (
                         <SelectItem value='__select_topcoat_first__' disabled>
-                          Select a topcoat first
+                          {UI_TEXT.SELECT_A_TOPCOAT_FIRST}
                         </SelectItem>
                       ) : basecoatQuery.isLoading ? (
                         <SelectItem value='__loading_basecoats' disabled>
@@ -397,7 +397,7 @@ export const ProductsStep = (): JSX.Element => {
                         ))
                       ) : selectedTopcoat ? (
                         <SelectItem value='__no_basecoat_available__' disabled>
-                          No basecoat available for selected topcoat
+                          {UI_TEXT.NO_BASECOAT_AVAILABLE_FOR_SELECTED_TOPCOAT}
                         </SelectItem>
                       ) : null}
                       {basecoatQuery.isFetchingNextPage ? (

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import { ROUTES } from '#/constants';
+import { PRODUCT_MESSAGES, ROUTES } from '#/constants';
 import {
   useAttachProductImageMutation,
   useGetProductByIdQuery,
@@ -80,7 +80,7 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
         id: productId,
         payload: mapProductFormValuesToPayload(values),
       },
-      successMessage: 'Product updated successfully.',
+      successMessage: PRODUCT_MESSAGES.UPDATED_SUCCESS,
       showSuccessToast: false,
       onSuccess: () => {
         const navigateToProducts = (): void => {
@@ -93,7 +93,7 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
           uploadProductImageMutation,
           attachProductImageMutation,
           onSuccess: () => {
-            toast.success('Product updated successfully.');
+            toast.success(PRODUCT_MESSAGES.UPDATED_SUCCESS);
             navigateToProducts();
           },
           onError: error => {
@@ -112,7 +112,7 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
         productId,
         imageId,
       },
-      successMessage: 'Product image removed.',
+      successMessage: PRODUCT_MESSAGES.IMAGE_REMOVED_SUCCESS,
     });
   };
 

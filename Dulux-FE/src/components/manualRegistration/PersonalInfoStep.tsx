@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Input } from '#/components/ui';
+import { UI_TEXT } from '#/constants';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
 import { normalizePkPhoneWithPrefix, sanitizeLettersOnly } from '#/utils';
 
@@ -72,7 +73,7 @@ export const PersonalInfoStep = (): JSX.Element => {
             Phone Number <span className='text-destructive'>*</span>
           </span>
           <Input
-            placeholder='92XXXXXXXXXX'
+            placeholder={UI_TEXT.PHONE_PLACEHOLDER_PK}
             {...phoneNumberField}
             onChange={handlePhoneNumberChange}
             onFocus={handlePhoneNumberFocus}

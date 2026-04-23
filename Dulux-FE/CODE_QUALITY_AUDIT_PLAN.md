@@ -587,8 +587,8 @@ Deliverables:
 46. `DRY-009` [✅ DONE 2026-04-23]: Create shared dialog lifecycle helper (`useDialogLifecycle`) and migrate modal open/close/reset patterns. (Covers Findings: #36)
 47. `DRY-010`: Implement shared guarded detail-action orchestration helper for claims/quality/registration hooks. (Covers Findings: #22, #37)
 48. `ARCH-010` [✅ DONE 2026-04-20]: Split `useRegistrationDetail` into query/actions/payload-builder modules for single-responsibility compliance. (Covers Findings: #2, #38)
-49. `DRY-011`: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals. (Covers Findings: #21, #39)
-50. `DRY-012`: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
+49. `DRY-011` [✅ DONE 2026-04-23]: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals. (Covers Findings: #21, #39)
+50. `DRY-012` [✅ DONE 2026-04-23]: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
 51. `RULE-009` [✅ DONE 2026-04-22]: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
 52. `DRY-013`: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
 53. `RULE-010` [✅ DONE 2026-04-22]: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
@@ -689,6 +689,7 @@ Deliverables:
 - Scope: central mutation feedback/toast behavior.
 - Done when: success/error mapping is standardized and message literals reduced.
 - Status: `DRY-005` ✅ Done (2026-04-22).
+- Status: `DRY-011` ✅ Done (2026-04-23) via centralized domain toast/message constants in `src/constants/messages.ts` and migration of repeated literals in claims, quality, registrations, and products action flows.
 
 22. Finding #22 -> `ARCH-008`, `DRY-010`:
 - Scope: shared guarded detail-action orchestration helpers.
@@ -765,11 +766,12 @@ Deliverables:
 39. Finding #39 -> `DRY-005`, `DRY-011`:
 - Scope: centralized toast/message constants.
 - Done when: repeated domain message literals are replaced with constants.
-- Status: `DRY-005` ✅ Done (2026-04-22) for shared feedback wrapper; `DRY-011` remains for message-constant centralization.
+- Status: `DRY-005` ✅ Done (2026-04-22) for shared feedback wrapper; `DRY-011` ✅ Done (2026-04-23) for message-constant centralization.
 
 40. Finding #40 -> `DRY-012`:
 - Scope: centralized UI text placeholders/hints.
 - Done when: repeated text strings use `uiText` constants.
+- Status: `DRY-012` ✅ Done (2026-04-23) by introducing `src/constants/uiText.ts` and migrating repeated phone placeholder/select-hint/basecoat guidance copy in claims, manual registration, and registration resubmit paint-pair flows.
 
 41. Finding #41 -> `RULE-005`, `RULE-009`:
 - Scope: remove inline closures in hot list/render paths.
