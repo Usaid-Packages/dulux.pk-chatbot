@@ -827,6 +827,25 @@
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
 
+<<<<<<< test/test-auth-quality-page
+### 2026-04-16 - New test file import shape triggered `import/order` crash path
+
+- Issue: In the newly added `QualityListPage` test, I initially placed an internal type import before external library imports, which retriggered this repo's known `eslint-plugin-import` crash path (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered imports to stable external-first grouping and reran lint; no rule disable comments were added.
+- Rule: For every newly created test file, enforce external imports first, then internal aliases, then relative imports before first lint run to avoid re-triggering the plugin crash path.
+
+### 2026-04-16 - Live chat test import order retriggered plugin crash
+
+- Issue: While adding `LiveChatPage.test.tsx`, initial import ordering (`import type` before internal value imports) retriggered the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`) on `import/order`.
+- Fix: Reordered imports to stable shape (external libs -> internal value imports -> internal type imports -> relative imports) and removed an unused `ReactNode` type import; lint then passed without rule disables.
+- Rule: For new test files in this repo, always apply crash-safe import shape before first lint run and avoid unused top-level type imports.
+
+### 2026-04-16 - Complaint-thread hook test missed automatic open->in-progress side effect
+
+- Issue: In `useComplaintThread` integration test for open-thread resolve flow, I initially assumed the first `markConversationInProgress` mutation call would include `onSuccess`; however, the hook's auto-transition effect can trigger an earlier mark call with only error handling.
+- Fix: Updated the test to locate the mutation call that actually contains an `onSuccess` callback before simulating chain progression.
+- Rule: For hooks with mount-time side effects plus user-triggered actions, assert against callback-bearing mutation calls (not fixed call indexes) to keep tests deterministic.
+=======
 ### 2026-04-16 - Parallel file creation race caused transient missing-path write failure
 
 - Issue: I attempted `mkdir -p` and multi-file `cat > ...` writes in parallel, and one write executed before the target directory creation completed, causing `no such file or directory`.
@@ -861,3 +880,4 @@
 - Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
 - Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
 - Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.
+>>>>>>> test/all-test-cases
