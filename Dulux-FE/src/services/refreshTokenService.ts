@@ -11,8 +11,27 @@ interface RefreshTokenResponse {
   refresh?: string;
 }
 
+type UnauthorizedListener = () => void;
+
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+const notifyUnauthorizedListeners = (): void => {
+  unauthorizedListeners.forEach(listener => {
+    listener();
+  });
+};
+
+export const subscribeUnauthorized = (listener: UnauthorizedListener): (() => void) => {
+  unauthorizedListeners.add(listener);
+
+  return () => {
+    unauthorizedListeners.delete(listener);
+  };
+};
+
 const handleLogout = (error: unknown) => {
   clearAuthSession();
+  notifyUnauthorizedListeners();
   return Promise.reject(error);
 };
 

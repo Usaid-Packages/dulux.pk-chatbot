@@ -1,4 +1,7 @@
+from functools import partial
+
 from dulux_chatbot.chatbot.flows.base import BaseFlow
+from dulux_chatbot.chatbot.services.dispatch_side_effects import defer_dispatch_side_effect
 from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import RegistrationState
 from dulux_chatbot.warranty.models import WarrantyRegistration
@@ -108,4 +111,10 @@ class ReissuanceFlow(BaseFlow):
             "Your warranty certificate",
         )
         self._reset()
-        send_whatsapp_main_menu.apply_async(args=[self.session.phone_number, self.MAIN_MENU_TEXT], countdown=2)
+        defer_dispatch_side_effect(
+            partial(
+                send_whatsapp_main_menu.apply_async,
+                args=[self.session.phone_number, self.MAIN_MENU_TEXT],
+                countdown=2,
+            )
+        )

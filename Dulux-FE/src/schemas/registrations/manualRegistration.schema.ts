@@ -10,7 +10,6 @@ const quantityPattern = /^\d+(\.\d{1,2})?$/;
 const pakistanPhoneInputPattern = /^923\d{9}$/;
 const noDigitsPattern = /^[^\d]*$/;
 const CITY_MAX_LENGTH = 80;
-const PROVINCE_MAX_LENGTH = 80;
 const DEALER_NAME_MAX_LENGTH = 120;
 const DEALER_CITY_MAX_LENGTH = 80;
 const DEALER_ADDRESS_MAX_LENGTH = 180;
@@ -69,12 +68,6 @@ const manualRegistrationBaseSchema = z.object({
     .min(2, 'City is required.')
     .max(CITY_MAX_LENGTH, `City must be ${CITY_MAX_LENGTH} characters or less.`)
     .regex(noDigitsPattern, 'City must not contain numbers.'),
-  province: z
-    .string()
-    .trim()
-    .min(2, 'Province is required.')
-    .max(PROVINCE_MAX_LENGTH, `Province must be ${PROVINCE_MAX_LENGTH} characters or less.`)
-    .regex(noDigitsPattern, 'Province must not contain numbers.'),
   siteAddress: z.string().trim().min(5, 'Site address is required.'),
   postalCode: z
     .string()
@@ -164,7 +157,6 @@ export const manualRegistrationStep1Schema = manualRegistrationBaseSchema.pick({
   phoneNumber: true,
   email: true,
   city: true,
-  province: true,
   siteAddress: true,
 });
 

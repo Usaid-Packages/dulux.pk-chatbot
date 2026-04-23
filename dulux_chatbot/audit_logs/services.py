@@ -10,15 +10,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
 
 from dulux_chatbot.audit_logs.choices import AuditAction
+from dulux_chatbot.audit_logs.constants import (
+    AUDIT_DEFAULT_ACTION_LABELS,
+    AUDIT_EXCLUDED_SNAPSHOT_FIELDS,
+    AUDIT_RELATED_DISPLAY_FIELDS,
+)
 from dulux_chatbot.audit_logs.models import AuditLog
-
-
-EXCLUDED_SNAPSHOT_FIELDS = {"password", "last_login", "created", "modified"}
-DEFAULT_ACTION_LABELS = {
-    AuditAction.CREATE: "created",
-    AuditAction.UPDATE: "updated",
-    AuditAction.DELETE: "deleted",
-}
 
 
 def _serialize_value(value: Any) -> Any:
@@ -48,12 +45,12 @@ def _serialize_related_instance(value: Model | None) -> dict[str, Any] | None:
         "display": str(value),
         "model_label": f"{value._meta.app_label}.{value.__class__.__name__}",
     }
-    for attr_name in ("registration_code", "email", "name", "subject", "phone_number", "customer_name", "role"):
+    for attr_name in AUDIT_RELATED_DISPLAY_FIELDS:
         attr_value = getattr(value, attr_name, None)
         if attr_value not in (None, ""):
             related_data[attr_name] = _serialize_value(attr_value)
 
-    registration = getattr(value, "registration", None)
+    registration = value._state.fields_cache.get("registration")
     registration_code = getattr(registration, "registration_code", None)
     if registration_code:
         related_data["registration_code"] = registration_code
@@ -62,7 +59,7 @@ def _serialize_related_instance(value: Model | None) -> dict[str, Any] | None:
 
 
 def _build_default_event_label(*, instance: Model, action: str) -> str:
-    action_label = DEFAULT_ACTION_LABELS.get(action, action.lower())
+    action_label = AUDIT_DEFAULT_ACTION_LABELS.get(action, action.lower())
     verbose_name = instance._meta.verbose_name.title()
     return f"{verbose_name} {action_label}"
 
@@ -70,7 +67,7 @@ def _build_default_event_label(*, instance: Model, action: str) -> str:
 def build_instance_snapshot(instance: Model, *, extra_data: dict[str, Any] | None = None) -> dict[str, Any]:
     snapshot: dict[str, Any] = {}
     for field in instance._meta.concrete_fields:
-        if field.name in EXCLUDED_SNAPSHOT_FIELDS:
+        if field.name in AUDIT_EXCLUDED_SNAPSHOT_FIELDS:
             continue
         if field.is_relation:
             value = _serialize_related_instance(getattr(instance, field.name, None))

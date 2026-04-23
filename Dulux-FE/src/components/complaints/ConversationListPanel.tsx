@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { JSX, UIEvent } from 'react';
 
 import {
   Badge,
@@ -20,13 +20,18 @@ import {
   CONVERSATION_STATUS_TABS,
 } from './constants';
 
+const LOAD_MORE_THRESHOLD_PX = 48;
+
 interface ConversationListPanelProps {
   items: ConversationListItem[];
   openUnseenThreadIds: string[];
   isLoading: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
   status: ConversationStatusFilter;
   search: string;
   selectedThreadId?: string;
+  onLoadNextPage: () => void;
   onStatusChange: (status: ConversationStatusFilter) => void;
   onSearchChange: (search: string) => void;
   onThreadSelect: (threadId: string) => void;
@@ -56,13 +61,28 @@ export const ConversationListPanel = ({
   items,
   openUnseenThreadIds,
   isLoading,
+  hasNextPage,
+  isFetchingNextPage,
   status,
   search,
   selectedThreadId,
+  onLoadNextPage,
   onStatusChange,
   onSearchChange,
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
+  const handleListScroll = (event: UIEvent<HTMLDivElement>): void => {
+    if (!hasNextPage || isLoading || isFetchingNextPage) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+    if (distanceToBottom <= LOAD_MORE_THRESHOLD_PX) {
+      onLoadNextPage();
+    }
+  };
+
   return (
     <section className='flex h-[calc(100vh-16rem)] min-h-0 flex-col overflow-hidden rounded-2xl border border-primary/15 bg-white p-4 shadow-[0_12px_28px_rgba(19,87,167,0.08)]'>
       <div className='flex min-h-0 flex-1 flex-col gap-3'>
@@ -92,7 +112,7 @@ export const ConversationListPanel = ({
           </div>
         </div>
 
-        <div className='min-h-0 flex-1 space-y-2 overflow-y-auto pr-1'>
+        <div className='min-h-0 flex-1 space-y-2 overflow-y-auto pr-1' onScroll={handleListScroll}>
           {isLoading ? (
             <>
               <Skeleton className='h-20 w-full rounded-lg' />
@@ -130,16 +150,13 @@ export const ConversationListPanel = ({
                     <div className='flex w-full items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
                         <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
-                        <p className='truncate text-xs text-text-muted'>
-                          {item.issueType} · {item.customerPhone}
-                        </p>
                       </div>
                       <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>
                         {formatConversationTime(item.lastMessageAt)}
                       </p>
                     </div>
 
-                    <p className='line-clamp-2 w-full text-xs text-text-secondary'>{item.lastMessagePreview}</p>
+                    <p className='line-clamp-2 w-full text-xs text-text-muted'>{item.lastMessagePreview}</p>
 
                     <div className='flex w-full flex-wrap items-center gap-2'>
                       <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.apiStatus])}>
@@ -164,6 +181,8 @@ export const ConversationListPanel = ({
                 );
               })
             : null}
+
+          {isFetchingNextPage ? <Skeleton className='h-20 w-full rounded-lg' /> : null}
         </div>
       </div>
     </section>

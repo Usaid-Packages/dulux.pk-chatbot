@@ -1,0 +1,129 @@
+from pathlib import Path
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+
+from dulux_chatbot.warranty.choices import ClaimState, QualityRequiredItem, RegistrationState
+
+
+REGISTRATION_CODE_LENGTH = 10
+
+REGISTRATION_ACTION_APPROVE = "APPROVE"
+REGISTRATION_ACTION_REJECT = "REJECT"
+REGISTRATION_ACTION_RESUBMIT = "RESUBMIT"
+REGISTRATION_ACTION_IN_PROGRESS = "IN_PROGRESS"
+
+REGISTRATION_ACTION_CHOICES = (
+    REGISTRATION_ACTION_APPROVE,
+    REGISTRATION_ACTION_REJECT,
+    REGISTRATION_ACTION_RESUBMIT,
+    REGISTRATION_ACTION_IN_PROGRESS,
+)
+
+REGISTRATION_FIELD_UPDATE_FIELDS = {
+    "channel",
+    "customer_name",
+    "phone_number",
+    "email",
+    "city",
+    "province",
+    "site_address",
+    "purchase_date",
+    "purchase_dealer",
+    "purchase_dealer_city",
+    "purchase_dealer_address",
+    "postal_code",
+    "paint_pairs",
+    "paint_pair_invoices",
+}
+REGISTRATION_CONTROL_UPDATE_FIELDS = {"action", "notes", "notification_template", "rejection_fields"}
+REGISTRATION_DETAIL_EDITABLE_STATES = {
+    RegistrationState.SUBMITTED,
+    RegistrationState.IN_PROGRESS,
+    RegistrationState.RESUBMIT,
+}
+
+REGISTRATION_ACTION_ALLOWED_TRANSITIONS = {
+    REGISTRATION_ACTION_IN_PROGRESS: {RegistrationState.SUBMITTED},
+    REGISTRATION_ACTION_APPROVE: {
+        RegistrationState.SUBMITTED,
+        RegistrationState.IN_PROGRESS,
+        RegistrationState.RESUBMIT,
+    },
+    REGISTRATION_ACTION_REJECT: {
+        RegistrationState.SUBMITTED,
+        RegistrationState.IN_PROGRESS,
+        RegistrationState.RESUBMIT,
+    },
+    REGISTRATION_ACTION_RESUBMIT: {RegistrationState.SUBMITTED, RegistrationState.IN_PROGRESS},
+}
+
+REGISTRATION_ACTION_STATE_MAP = {
+    REGISTRATION_ACTION_IN_PROGRESS: RegistrationState.IN_PROGRESS,
+    REGISTRATION_ACTION_APPROVE: RegistrationState.APPROVED,
+    REGISTRATION_ACTION_REJECT: RegistrationState.REJECTED,
+    REGISTRATION_ACTION_RESUBMIT: RegistrationState.RESUBMIT,
+}
+
+CLAIM_ACTION_APPROVE = "APPROVE"
+CLAIM_ACTION_REJECT = "REJECT"
+CLAIM_ACTION_IN_REVIEW = "IN_REVIEW"
+CLAIM_ACTION_QA_REVIEW = "QA_REVIEW"
+
+CLAIM_ACTION_CHOICES = (
+    CLAIM_ACTION_APPROVE,
+    CLAIM_ACTION_REJECT,
+    CLAIM_ACTION_IN_REVIEW,
+    CLAIM_ACTION_QA_REVIEW,
+)
+
+CLAIM_ACTION_ALLOWED_TRANSITIONS = {
+    CLAIM_ACTION_IN_REVIEW: {ClaimState.SUBMITTED},
+    CLAIM_ACTION_QA_REVIEW: {ClaimState.IN_REVIEW},
+    CLAIM_ACTION_APPROVE: {ClaimState.QA_APPROVED},
+    CLAIM_ACTION_REJECT: {ClaimState.QA_REJECTED},
+}
+
+CLAIM_ACTION_STATE_MAP = {
+    CLAIM_ACTION_IN_REVIEW: ClaimState.IN_REVIEW,
+    CLAIM_ACTION_QA_REVIEW: ClaimState.QA_REVIEW,
+    CLAIM_ACTION_APPROVE: ClaimState.APPROVED,
+    CLAIM_ACTION_REJECT: ClaimState.REJECTED,
+}
+
+CLAIM_BLOCKING_STATES = (
+    ClaimState.SUBMITTED,
+    ClaimState.IN_REVIEW,
+    ClaimState.QA_REVIEW,
+    ClaimState.QA_APPROVED,
+    ClaimState.QA_REJECTED,
+    ClaimState.RESUBMIT,
+    ClaimState.APPROVED,
+)
+
+QUALITY_IMAGE_INPUT_TYPE = "IMAGE"
+QUALITY_TEXT_INPUT_TYPE = "TEXT"
+QUALITY_REQUESTED_ITEM_INPUT_TYPE_CHOICES = (QUALITY_IMAGE_INPUT_TYPE, QUALITY_TEXT_INPUT_TYPE)
+
+QUALITY_IMAGE_REQUIRED_ITEMS = {
+    QualityRequiredItem.ADDITIONAL_PHOTOS_DIFFERENT_ANGLES,
+    QualityRequiredItem.CLOSE_UP_DAMAGE_PHOTOS,
+    QualityRequiredItem.PROOF_OF_PURCHASE_INVOICE,
+}
+LEGACY_QUALITY_IMAGE_REQUIRED_ITEMS = {"PRODUCT_BATCH_NUMBER_PHOTO"}
+
+QUALITY_TEXT_REQUIRED_ITEMS = set()
+
+CERTIFICATE_HEADER_COLOR = colors.HexColor("#153A7A")
+CERTIFICATE_BORDER_COLOR = colors.HexColor("#C7D2E5")
+CERTIFICATE_TEXT_COLOR = colors.HexColor("#222222")
+CERTIFICATE_MUTED_TEXT_COLOR = colors.HexColor("#4B5563")
+CERTIFICATE_PAGE_ONE_HEADER_IMAGE = Path(__file__).resolve().parent / "assets" / "warranty_certificate_page1_header.jpg"
+CERTIFICATE_PAGE_TWO_FOOTER_IMAGE = Path(__file__).resolve().parent / "assets" / "warranty_certificate_page2_footer.jpg"
+CERTIFICATE_PAGE_HORIZONTAL_MARGIN = 15 * mm
+CERTIFICATE_CONTENT_WIDTH = A4[0] - (2 * CERTIFICATE_PAGE_HORIZONTAL_MARGIN)
+CERTIFICATE_HEADER_HEIGHT = 128 * mm
+CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT = 69 * mm
+CERTIFICATE_FIRST_PAGE_TOP_MARGIN = 120 * mm
+CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN = 22 * mm

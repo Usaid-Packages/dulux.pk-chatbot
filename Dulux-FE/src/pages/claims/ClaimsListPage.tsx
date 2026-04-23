@@ -94,9 +94,9 @@ export const ClaimsListPage = (): React.JSX.Element => {
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total Claims', value: cardCountsQuery.data?.totalClaims ?? 0 },
-          { label: 'Pending CS Review', value: cardCountsQuery.data?.pendingCsReview ?? 0 },
-          { label: 'Forwarded to Quality', value: cardCountsQuery.data?.forwardedToQuality ?? 0 },
-          { label: 'Resolved', value: cardCountsQuery.data?.resolved ?? 0 },
+          { label: 'Pending', value: cardCountsQuery.data?.submitted ?? 0 },
+          { label: 'Approved', value: cardCountsQuery.data?.approved ?? 0 },
+          { label: 'Rejected', value: cardCountsQuery.data?.rejected ?? 0 },
         ].map((card, index) => (
           <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
             <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
