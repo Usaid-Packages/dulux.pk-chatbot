@@ -312,18 +312,22 @@ export const RegistrationsListPage = (): React.JSX.Element => {
 
   return (
     <section className='wf-list-shell'>
-      <div className='wf-stat-grid-3'>
+      <div className='wf-stat-grid-4'>
         <article className='wf-stat-card border-primary/15 bg-white'>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Registrations</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.total}</p>
         </article>
         <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Pending Review</p>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Pending</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.pending}</p>
         </article>
         <article className='wf-stat-card border-primary/15 bg-white'>
           <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Approved</p>
           <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.approved}</p>
+        </article>
+        <article className='wf-stat-card border-primary/15 bg-white'>
+          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Rejected</p>
+          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{stats.rejected}</p>
         </article>
       </div>
 

@@ -80,9 +80,9 @@ export const QualityListPage = (): React.JSX.Element => {
       <section className='wf-stat-grid-4'>
         {[
           { label: 'Total In Queue', value: cardCountsQuery.data?.totalInQueue ?? 0 },
-          { label: 'Awaiting Review', value: cardCountsQuery.data?.awaitingReview ?? 0 },
-          { label: 'Info Requested', value: cardCountsQuery.data?.infoRequested ?? 0 },
-          { label: 'Resolved Today', value: cardCountsQuery.data?.resolvedToday ?? 0 },
+          { label: 'QA Review', value: cardCountsQuery.data?.qaReview ?? 0 },
+          { label: 'QA Approved', value: cardCountsQuery.data?.qaApproved ?? 0 },
+          { label: 'QA Rejected', value: cardCountsQuery.data?.qaRejected ?? 0 },
         ].map((card, index) => (
           <article key={card.label} className={`wf-stat-card border-primary/15 bg-white ${STAT_CARD_STYLES[index]}`}>
             <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
