@@ -20,12 +20,12 @@ describe('schema unit validations', () => {
     }
   });
 
-  it('requires otherText when quality request includes OTHER item', () => {
+  it('rejects unknown required item when quality request payload is invalid', () => {
     const result = qualityRequestInfoSchema.safeParse({ requiredItems: ['OTHER'], notes: 'Need more detail' });
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.some(issue => issue.path.join('.') === 'otherText')).toBe(true);
+      expect(result.error.issues.some(issue => issue.path.join('.') === 'requiredItems.0')).toBe(true);
     }
   });
 

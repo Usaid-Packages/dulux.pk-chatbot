@@ -884,3 +884,21 @@
 - Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
 - Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
 - Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.
+
+### 2026-04-23 - Incomplete component module mock caused registration list tests to fail
+
+- Issue: `RegistrationsListPage` tests mocked `#/components/registrations` with `RegistrationTable` only, but the page also imports `RegistrationEditModal`, causing Vitest export-missing failures.
+- Fix: Added `RegistrationEditModal` to the module mock (`() => null`) so the mock shape matches all consumed exports.
+- Rule: When mocking a module in tests, include every export used by the target component (or use a partial mock with `importOriginal` and override only required members).
+
+### 2026-04-23 - Quality schema test drifted after required-items contract update
+
+- Issue: Unit test expected `otherText` validation for `qualityRequestInfoSchema`, but the current schema no longer supports `OTHER` and validates only the allowed `QUALITY_REQUIRED_ITEMS`.
+- Fix: Updated the test to assert invalid enum rejection on `requiredItems[0]` for unknown item payloads.
+- Rule: When schema contracts change, update unit tests to match current allowed enums/fields and assert the new validation path, not legacy fields.
+
+### 2026-04-23 - Import alias order drift retriggered `import/order` crash in products test
+
+- Issue: `ProductsListPage.test.tsx` kept `#/data-layer/products` above `#/context`, violating configured internal alphabetical ordering and triggering the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered internal imports to match `eslint.config.ts` (`#/context` before `#/data-layer/products`) and reran ESLint successfully.
+- Rule: In test files, enforce strict alphabetical order within internal alias imports before running ESLint; even small ordering drift can re-trigger the plugin crash path.

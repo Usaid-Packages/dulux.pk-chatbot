@@ -6,17 +6,11 @@ import { QualityDetailPage } from '../QualityDetailPage';
 
 const mockNavigate = vi.fn();
 const mockHandleApprove = vi.fn();
-<<<<<<< test/test-auth-quality-page
 const mockHandleReject = vi.fn();
 const mockHandleRequestInfo = vi.fn();
 
 const mockParams = { id: '55' };
 const mockLocation = { search: '?status=forwarded' };
-=======
-
-let routeId = '88';
-let routeSearch = '?status=forwarded';
->>>>>>> test/all-test-cases
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -24,13 +18,8 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-<<<<<<< test/test-auth-quality-page
     useParams: () => mockParams,
     useLocation: () => mockLocation,
-=======
-    useParams: () => ({ id: routeId }),
-    useLocation: () => ({ search: routeSearch }),
->>>>>>> test/all-test-cases
   };
 });
 
@@ -39,16 +28,11 @@ vi.mock('#/components/auditLogs', () => ({
 }));
 
 vi.mock('#/components/claims', () => ({
-<<<<<<< test/test-auth-quality-page
   ClaimWorkflowCard: ({ workflowState }: { workflowState: string }) => <div>Workflow: {workflowState}</div>,
-=======
-  ClaimWorkflowCard: () => <div>Workflow Card</div>,
->>>>>>> test/all-test-cases
   LinkedRegistrationCard: () => <div>Linked Registration</div>,
 }));
 
 vi.mock('#/components/quality', () => ({
-<<<<<<< test/test-auth-quality-page
   QualityDecisionPanel: ({
     canTakeDecision,
     onOpenApproveModal,
@@ -73,23 +57,11 @@ vi.mock('#/components/quality', () => ({
       </button>
     </section>
   ),
-=======
-  QualityAgentNotesCard: () => <div>Agent Notes</div>,
-  QualityDecisionPanel: ({ onOpenApproveModal }: { onOpenApproveModal: () => void }) => (
-    <button type='button' onClick={onOpenApproveModal}>
-      Open QA Approve
-    </button>
-  ),
-  QualityEvidencePhotos: () => <div>Evidence Photos</div>,
-  QualityQuickInfoCard: () => <div>Quick Info</div>,
-  QualityResubmissionCard: () => <div>Resubmission</div>,
->>>>>>> test/all-test-cases
   ApproveClaimModal: ({
     isOpen,
     onSubmit,
   }: {
     isOpen: boolean;
-<<<<<<< test/test-auth-quality-page
     onSubmit: (values: { technicalNotes: string }) => void;
   }) => {
     if (!isOpen) {
@@ -136,14 +108,14 @@ vi.mock('#/components/quality', () => ({
     onSubmit,
   }: {
     isOpen: boolean;
-    onSubmit: (values: { requiredItems: ['OTHER']; otherText: string; notes: string }) => void;
+    onSubmit: (values: { requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES']; notes: string }) => void;
   }) => {
     if (!isOpen) {
       return null;
     }
 
     const handleSubmit = (): void => {
-      onSubmit({ requiredItems: ['OTHER'], otherText: 'Need closer photos', notes: 'Please resubmit.' });
+      onSubmit({ requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES'], notes: 'Please resubmit.' });
     };
 
     return (
@@ -158,17 +130,6 @@ vi.mock('#/components/quality', () => ({
   QualityEvidencePhotos: () => <div>Evidence Photos</div>,
   QualityQuickInfoCard: () => <div>Quick Info</div>,
   QualityResubmissionCard: () => <div>Resubmission Card</div>,
-=======
-    onSubmit: (values: { approvedAmount: number }) => void;
-  }) =>
-    isOpen ? (
-      <button type='button' onClick={() => onSubmit({ approvedAmount: 10 })}>
-        Submit QA Approve
-      </button>
-    ) : null,
-  RejectClaimQAModal: () => null,
-  RequestInfoQAModal: () => null,
->>>>>>> test/all-test-cases
 }));
 
 vi.mock('#/hooks/quality', () => ({
@@ -179,7 +140,6 @@ const mockedUseQualityDetail = vi.mocked(useQualityDetail);
 
 describe('QualityDetailPage', () => {
   beforeEach(() => {
-<<<<<<< test/test-auth-quality-page
     mockNavigate.mockReset();
     mockHandleApprove.mockReset();
     mockHandleReject.mockReset();
@@ -187,18 +147,11 @@ describe('QualityDetailPage', () => {
 
     mockParams.id = '55';
     mockLocation.search = '?status=forwarded';
-=======
-    routeId = '88';
-    routeSearch = '?status=forwarded';
-    mockNavigate.mockReset();
-    mockHandleApprove.mockReset();
->>>>>>> test/all-test-cases
 
     mockedUseQualityDetail.mockReturnValue({
       qualityDetailQuery: {
         isLoading: false,
         isError: false,
-<<<<<<< test/test-auth-quality-page
         error: null,
         data: {
           id: '55',
@@ -227,57 +180,21 @@ describe('QualityDetailPage', () => {
       handleApprove: mockHandleApprove,
       handleReject: mockHandleReject,
       handleRequestInfo: mockHandleRequestInfo,
-=======
-        data: {
-          workflowState: 'QA_REVIEW',
-          description: 'Cracking issue',
-          csNotes: 'Need QA',
-          customerName: 'Ali',
-          phone: '0300',
-          claimNumber: 'CLM-88',
-          issueType: 'PAINT_PEELING',
-          areaSqFt: 100,
-          topcoat: 'Dulux X',
-          evidencePhotos: [],
-          latestResubmission: null,
-          linkedRegistration: null,
-          status: 'FORWARDED_TO_QA',
-          forwardedBy: 'CS Agent',
-          forwardedAt: '2026-04-10T00:00:00Z',
-        },
-      },
-      handleApprove: mockHandleApprove,
-      handleReject: vi.fn(),
-      handleRequestInfo: vi.fn(),
->>>>>>> test/all-test-cases
       isActionPending: false,
     } as unknown as ReturnType<typeof useQualityDetail>);
   });
 
-<<<<<<< test/test-auth-quality-page
   it('renders error state and navigates back to quality queue', () => {
-=======
-  it('renders error state and supports back navigation', () => {
->>>>>>> test/all-test-cases
     mockedUseQualityDetail.mockReturnValue({
       qualityDetailQuery: {
         isLoading: false,
         isError: true,
-<<<<<<< test/test-auth-quality-page
         error: new Error('Detail failed'),
         data: undefined,
       },
       handleApprove: mockHandleApprove,
       handleReject: mockHandleReject,
       handleRequestInfo: mockHandleRequestInfo,
-=======
-        data: null,
-        error: new Error('Detail failed'),
-      },
-      handleApprove: mockHandleApprove,
-      handleReject: vi.fn(),
-      handleRequestInfo: vi.fn(),
->>>>>>> test/all-test-cases
       isActionPending: false,
     } as unknown as ReturnType<typeof useQualityDetail>);
 
@@ -290,7 +207,6 @@ describe('QualityDetailPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/quality?status=forwarded');
   });
 
-<<<<<<< test/test-auth-quality-page
   it('opens and submits all quality action modals with claim id', () => {
     render(<QualityDetailPage />);
 
@@ -311,8 +227,7 @@ describe('QualityDetailPage', () => {
     });
     expect(mockHandleRequestInfo).toHaveBeenCalledWith({
       id: '55',
-      requiredItems: ['OTHER'],
-      otherText: 'Need closer photos',
+      requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES'],
       notes: 'Please resubmit.',
     });
   });
@@ -357,14 +272,5 @@ describe('QualityDetailPage', () => {
 
     expect(screen.getByText('Can Take Decision: No')).toBeInTheDocument();
     expect(screen.queryByText('Wall peeling issue in drawing room.')).not.toBeInTheDocument();
-=======
-  it('opens approve modal and submits quality decision', () => {
-    render(<QualityDetailPage />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open QA Approve' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Submit QA Approve' }));
-
-    expect(mockHandleApprove).toHaveBeenCalledWith({ id: '88', approvedAmount: 10 });
->>>>>>> test/all-test-cases
   });
 });

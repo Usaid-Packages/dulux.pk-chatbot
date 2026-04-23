@@ -1,4 +1,3 @@
-<<<<<<< test/test-auth-quality-page
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -83,17 +82,6 @@ const THREAD_DATA: ConversationThread = {
   complaintImages: [],
   messages: [],
 };
-=======
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { useComplaintThread, useComplaints } from '#/hooks/complaints';
-import { LiveChatPage } from '../LiveChatPage';
-
-const mockNavigate = vi.fn();
-
-let selectedThreadId: string | undefined;
->>>>>>> test/all-test-cases
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -101,16 +89,11 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-<<<<<<< test/test-auth-quality-page
     useParams: () => mockParams,
-=======
-    useParams: () => ({ id: selectedThreadId }),
->>>>>>> test/all-test-cases
   };
 });
 
 vi.mock('#/components/auditLogs', () => ({
-<<<<<<< test/test-auth-quality-page
   AuditTimelinePanel: ({ objectId }: { objectId: string }) => <div>Audit for {objectId}</div>,
 }));
 
@@ -233,17 +216,6 @@ vi.mock('#/components/complaints', () => ({
       </div>
     );
   },
-=======
-  AuditTimelinePanel: () => <div>Audit Timeline</div>,
-}));
-
-vi.mock('#/components/complaints', () => ({
-  ConversationStats: () => <div>Conversation Stats</div>,
-  ConversationListPanel: () => <div>Conversation List</div>,
-  ChatThreadPanel: () => <div>Chat Thread</div>,
-  ConversationInfoPanel: () => <div>Conversation Info</div>,
-  ResolveConversationModal: () => null,
->>>>>>> test/all-test-cases
 }));
 
 vi.mock('#/hooks/complaints', () => ({
@@ -254,7 +226,6 @@ vi.mock('#/hooks/complaints', () => ({
 const mockedUseComplaints = vi.mocked(useComplaints);
 const mockedUseComplaintThread = vi.mocked(useComplaintThread);
 
-<<<<<<< test/test-auth-quality-page
 const createConversationsResponse = (items: ConversationListItem[]): ConversationListResponse => ({
   items,
   total: items.length,
@@ -280,6 +251,7 @@ describe('LiveChatPage', () => {
         isError: false,
         error: null,
       },
+      conversations: createConversationsResponse(CONVERSATION_ITEMS),
       cardCountsQuery: {
         data: CARD_COUNTS,
       },
@@ -289,45 +261,16 @@ describe('LiveChatPage', () => {
         page: 1,
         pageSize: 10,
       },
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      loadNextPage: vi.fn(),
       setStatusFilter: mockSetStatusFilter,
       setSearch: mockSetSearch,
       setPage: vi.fn(),
-=======
-describe('LiveChatPage', () => {
-  beforeEach(() => {
-    selectedThreadId = undefined;
-    mockNavigate.mockReset();
-
-    mockedUseComplaints.mockReturnValue({
-      conversationsQuery: {
-        isLoading: false,
-        isError: false,
-        data: {
-          items: [{ id: 'thread-1', apiStatus: 'OPEN' }],
-          stats: {
-            resolved: 1,
-          },
-        },
-      },
-      cardCountsQuery: {
-        data: {
-          open: 2,
-          inProgress: 1,
-          closed: 0,
-        },
-      },
-      filters: {
-        status: 'all',
-        search: '',
-      },
-      setStatusFilter: vi.fn(),
-      setSearch: vi.fn(),
->>>>>>> test/all-test-cases
     } as unknown as ReturnType<typeof useComplaints>);
 
     mockedUseComplaintThread.mockReturnValue({
       threadQuery: {
-<<<<<<< test/test-auth-quality-page
         data: THREAD_DATA,
         isLoading: false,
         isError: false,
@@ -335,20 +278,11 @@ describe('LiveChatPage', () => {
       },
       sendMessage: mockSendMessage,
       resolveConversation: mockResolveConversation,
-=======
-        isLoading: false,
-        isError: false,
-        data: null,
-      },
-      sendMessage: vi.fn(),
-      resolveConversation: vi.fn(),
->>>>>>> test/all-test-cases
       isMessageSending: false,
       isActionPending: false,
     } as unknown as ReturnType<typeof useComplaintThread>);
   });
 
-<<<<<<< test/test-auth-quality-page
   it('redirects to first thread when no thread id is selected', () => {
     render(<LiveChatPage />);
 
@@ -394,6 +328,7 @@ describe('LiveChatPage', () => {
         isError: true,
         error: new Error('Queue offline'),
       },
+      conversations: createConversationsResponse([]),
       cardCountsQuery: {
         data: CARD_COUNTS,
       },
@@ -403,44 +338,17 @@ describe('LiveChatPage', () => {
         page: 1,
         pageSize: 10,
       },
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      loadNextPage: vi.fn(),
       setStatusFilter: mockSetStatusFilter,
       setSearch: mockSetSearch,
       setPage: vi.fn(),
-=======
-  it('navigates to first thread when no thread is selected', () => {
-    render(<LiveChatPage />);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/complaints/thread-1', { replace: true });
-  });
-
-  it('renders queue error state', () => {
-    mockedUseComplaints.mockReturnValue({
-      conversationsQuery: {
-        isLoading: false,
-        isError: true,
-        error: new Error('Queue down'),
-        data: null,
-      },
-      cardCountsQuery: {
-        data: {
-          open: 0,
-          inProgress: 0,
-          closed: 0,
-        },
-      },
-      filters: {
-        status: 'all',
-        search: '',
-      },
-      setStatusFilter: vi.fn(),
-      setSearch: vi.fn(),
->>>>>>> test/all-test-cases
     } as unknown as ReturnType<typeof useComplaints>);
 
     render(<LiveChatPage />);
 
     expect(screen.getByText('Failed to load live chat')).toBeInTheDocument();
-<<<<<<< test/test-auth-quality-page
     expect(screen.getByText('Queue offline')).toBeInTheDocument();
   });
 
@@ -453,8 +361,5 @@ describe('LiveChatPage', () => {
 
     expect(screen.getByText('Thread Id: thread-1')).toBeInTheDocument();
     expect(mockSendMessage).toHaveBeenCalledWith('hello customer');
-=======
-    expect(screen.getByText('Queue down')).toBeInTheDocument();
->>>>>>> test/all-test-cases
   });
 });

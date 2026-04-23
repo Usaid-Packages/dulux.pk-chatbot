@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useAuthContext } from '#/context';
 import {
   useCreateSurfaceTypeMutation,
   useDeleteSurfaceTypeMutation,
@@ -33,6 +34,10 @@ vi.mock('#/hooks', () => ({
 
 vi.mock('#/hooks/products', () => ({
   mapSurfaceTypeFormToPayload: vi.fn(),
+}));
+
+vi.mock('#/context', () => ({
+  useAuthContext: vi.fn(),
 }));
 
 vi.mock('#/components/products', () => ({
@@ -117,6 +122,7 @@ const mockedUseGetSurfaceTypesQuery = vi.mocked(useGetSurfaceTypesQuery);
 const mockedUseCreateSurfaceTypeMutation = vi.mocked(useCreateSurfaceTypeMutation);
 const mockedUseDeleteSurfaceTypeMutation = vi.mocked(useDeleteSurfaceTypeMutation);
 const mockedUseUpdateSurfaceTypeMutation = vi.mocked(useUpdateSurfaceTypeMutation);
+const mockedUseAuthContext = vi.mocked(useAuthContext);
 const mockedMapSurfaceTypeFormToPayload = vi.mocked(mapSurfaceTypeFormToPayload);
 
 describe('ProductsListPage', () => {
@@ -126,6 +132,10 @@ describe('ProductsListPage', () => {
     mockUpdateSurfaceType.mockReset();
     mockDeleteSurfaceType.mockReset();
     currentSearchParams = new URLSearchParams('tab=products');
+
+    mockedUseAuthContext.mockReturnValue({
+      user: { role: 'admin' },
+    } as unknown as ReturnType<typeof useAuthContext>);
 
     mockedMapSurfaceTypeFormToPayload.mockReturnValue({
       name: 'Mapped Surface',
