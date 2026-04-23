@@ -929,3 +929,9 @@
 - Issue: `ProductsListPage.test.tsx` kept `#/data-layer/products` above `#/context`, violating configured internal alphabetical ordering and triggering the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`).
 - Fix: Reordered internal imports to match `eslint.config.ts` (`#/context` before `#/data-layer/products`) and reran ESLint successfully.
 - Rule: In test files, enforce strict alphabetical order within internal alias imports before running ESLint; even small ordering drift can re-trigger the plugin crash path.
+
+### 2026-04-23 - Test standards drift: no MSW/a11y harness and missing route-guard coverage
+
+- Issue: Existing tests passed but drifted from project testing standards by relying on direct hook/component mocks without MSW-based API contract tests, lacking automated accessibility assertions, and missing focused tests for route guards/router redirects.
+- Fix: Logged this as a mandatory review gate before future test changes; add MSW integration coverage for critical API flows, add `axe` a11y checks for key pages/components, and introduce tests for `PrivateRoute`/`RoleRoute` and router redirect behavior.
+- Rule: A green test run is not enough. For every critical module, keep three layers covered: API-contract behavior (MSW), accessibility baseline (axe), and access-control/routing rules.
