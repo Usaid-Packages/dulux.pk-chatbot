@@ -827,6 +827,11 @@
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
 
+### 2026-04-16 - Parallel file creation race caused transient missing-path write failure
+
+- Issue: I attempted `mkdir -p` and multi-file `cat > ...` writes in parallel, and one write executed before the target directory creation completed, causing `no such file or directory`.
+- Fix: Re-ran directory creation first, then switched to sequential file writes for deterministic test-file generation.
+- Rule: Do not parallelize directory creation with dependent file-write commands; create folders first, then write files sequentially.
 ### 2026-04-21 - Forgot command-level `import/order` override on first lint pass
 
 - Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
