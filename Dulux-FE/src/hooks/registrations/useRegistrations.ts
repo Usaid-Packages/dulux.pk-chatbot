@@ -34,6 +34,7 @@ export interface RegistrationStats {
   total: number;
   pending: number;
   approved: number;
+  rejected: number;
 }
 
 export interface UseRegistrationsResult {
@@ -95,8 +96,9 @@ export const useRegistrations = (): UseRegistrationsResult => {
   const totalPages = Math.max(1, Math.ceil(totalItems / REGISTRATIONS_PAGE_SIZE));
   const stats: RegistrationStats = {
     total: cardCountsQuery.data?.totalRegistrations ?? 0,
-    pending: cardCountsQuery.data?.pendingReview ?? 0,
+    pending: cardCountsQuery.data?.submitted ?? 0,
     approved: cardCountsQuery.data?.approved ?? 0,
+    rejected: cardCountsQuery.data?.rejected ?? 0,
   };
 
   const handleSearchChange = (value: string): void => {

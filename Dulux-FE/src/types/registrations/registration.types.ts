@@ -81,8 +81,9 @@ export interface RegistrationsListResponse {
 
 export interface RegistrationCardCounts {
   totalRegistrations: number;
-  pendingReview: number;
+  submitted: number;
   approved: number;
+  rejected: number;
 }
 
 export interface RegistrationsQueryParams extends Record<string, unknown> {

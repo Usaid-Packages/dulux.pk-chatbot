@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { QUALITY_STATUS_TABS, QualityQueueTable } from '#/components/quality';
-import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
+import { ListStateBlock, PaginationFooter } from '#/components/shared';
 import { Input } from '#/components/ui';
 import { LIST_PAGE_SIZE } from '#/constants';
 import { useDebouncedValue, useQualityQueue } from '#/hooks';
@@ -54,14 +54,19 @@ export const QualityListPage = (): React.JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <StatsCardGrid
-        items={[
+      <section className='wf-stat-grid-4'>
+        {[
           { label: 'Total In Queue', value: cardCountsQuery.data?.totalInQueue ?? 0 },
-          { label: 'Awaiting Review', value: cardCountsQuery.data?.awaitingReview ?? 0 },
-          { label: 'Info Requested', value: cardCountsQuery.data?.infoRequested ?? 0 },
-          { label: 'Resolved Today', value: cardCountsQuery.data?.resolvedToday ?? 0 },
-        ]}
-      />
+          { label: 'QA Review', value: cardCountsQuery.data?.qaReview ?? 0 },
+          { label: 'QA Approved', value: cardCountsQuery.data?.qaApproved ?? 0 },
+          { label: 'QA Rejected', value: cardCountsQuery.data?.qaRejected ?? 0 },
+        ].map(card => (
+          <article key={card.label} className='wf-stat-card border-primary/15 bg-white'>
+            <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
+            <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
+          </article>
+        ))}
+      </section>
 
       <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='flex items-center gap-3 overflow-x-auto'>

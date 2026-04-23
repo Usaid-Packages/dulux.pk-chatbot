@@ -76,8 +76,11 @@ class RegistrationCardCountsAPIView(CardCountBaseAPIView):
         queryset = self._filter_registrations(serializer.validated_data)
         counts = queryset.aggregate(
             total_registrations=Count("id"),
-            pending_review=Count("id", filter=Q(state__in=(RegistrationState.SUBMITTED, RegistrationState.RESUBMIT))),
+            submitted=Count("id", filter=Q(state=RegistrationState.SUBMITTED)),
+            in_progress=Count("id", filter=Q(state=RegistrationState.IN_PROGRESS)),
+            resubmit=Count("id", filter=Q(state=RegistrationState.RESUBMIT)),
             approved=Count("id", filter=Q(state=RegistrationState.APPROVED)),
+            rejected=Count("id", filter=Q(state=RegistrationState.REJECTED)),
         )
         return Response({key: int(value or 0) for key, value in counts.items()}, status=status.HTTP_200_OK)
 
@@ -92,18 +95,14 @@ class ClaimCardCountsAPIView(CardCountBaseAPIView):
         queryset = self._filter_claims(serializer.validated_data)
         counts = queryset.aggregate(
             total_claims=Count("id"),
-            pending_cs_review=Count("id", filter=Q(state__in=(ClaimState.SUBMITTED, ClaimState.RESUBMIT))),
-            forwarded_to_quality=Count(
-                "id",
-                filter=Q(
-                    state__in=(
-                        ClaimState.QA_REVIEW,
-                        ClaimState.QA_APPROVED,
-                        ClaimState.QA_REJECTED,
-                    )
-                ),
-            ),
-            resolved=Count("id", filter=Q(state__in=(ClaimState.APPROVED, ClaimState.REJECTED))),
+            submitted=Count("id", filter=Q(state=ClaimState.SUBMITTED)),
+            in_review=Count("id", filter=Q(state=ClaimState.IN_REVIEW)),
+            qa_review=Count("id", filter=Q(state=ClaimState.QA_REVIEW)),
+            resubmit=Count("id", filter=Q(state=ClaimState.RESUBMIT)),
+            qa_approved=Count("id", filter=Q(state=ClaimState.QA_APPROVED)),
+            qa_rejected=Count("id", filter=Q(state=ClaimState.QA_REJECTED)),
+            approved=Count("id", filter=Q(state=ClaimState.APPROVED)),
+            rejected=Count("id", filter=Q(state=ClaimState.REJECTED)),
         )
         return Response({key: int(value or 0) for key, value in counts.items()}, status=status.HTTP_200_OK)
 
@@ -128,8 +127,10 @@ class QualityCardCountsAPIView(CardCountBaseAPIView):
                     )
                 ),
             ),
-            awaiting_review=Count("id", filter=Q(state=ClaimState.QA_REVIEW)),
-            info_requested=Count("id", filter=Q(state=ClaimState.RESUBMIT)),
+            qa_review=Count("id", filter=Q(state=ClaimState.QA_REVIEW)),
+            resubmit=Count("id", filter=Q(state=ClaimState.RESUBMIT)),
+            qa_approved=Count("id", filter=Q(state=ClaimState.QA_APPROVED)),
+            qa_rejected=Count("id", filter=Q(state=ClaimState.QA_REJECTED)),
         )
         payload = {key: int(value or 0) for key, value in counts.items()}
         payload["resolved_today"] = queryset.filter(

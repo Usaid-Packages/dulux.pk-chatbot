@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { AddClaimModal, CLAIM_STATUS_TABS, ClaimsTable } from '#/components/claims';
-import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
+import { ListStateBlock, PaginationFooter } from '#/components/shared';
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { LIST_PAGE_SIZE, getClaimIssueTypeLabel } from '#/constants';
 import { useClaims } from '#/hooks/claims';
@@ -74,14 +74,19 @@ export const ClaimsListPage = (): React.JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <StatsCardGrid
-        items={[
+      <section className='wf-stat-grid-4'>
+        {[
           { label: 'Total Claims', value: cardCountsQuery.data?.totalClaims ?? 0 },
-          { label: 'Pending CS Review', value: cardCountsQuery.data?.pendingCsReview ?? 0 },
-          { label: 'Forwarded to Quality', value: cardCountsQuery.data?.forwardedToQuality ?? 0 },
-          { label: 'Resolved', value: cardCountsQuery.data?.resolved ?? 0 },
-        ]}
-      />
+          { label: 'Pending', value: cardCountsQuery.data?.submitted ?? 0 },
+          { label: 'Approved', value: cardCountsQuery.data?.approved ?? 0 },
+          { label: 'Rejected', value: cardCountsQuery.data?.rejected ?? 0 },
+        ].map(card => (
+          <article key={card.label} className='wf-stat-card border-primary/15 bg-white'>
+            <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>{card.label}</p>
+            <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{card.value}</p>
+          </article>
+        ))}
+      </section>
 
       <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
         <div className='space-y-3'>
