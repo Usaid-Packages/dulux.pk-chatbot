@@ -5,9 +5,7 @@ import { useDebouncedValue, useQualityQueue } from '#/hooks';
 import type { QualityQueueItem } from '#/types/quality.types';
 import { QualityListPage } from '../QualityListPage';
 
-let searchParamsState = new URLSearchParams('search=ali&page=2&status=all');
-
-const mockSetSearchParams = vi.fn();
+const mockSetSearch = vi.fn();
 const mockSetStatusFilter = vi.fn();
 const mockSetPage = vi.fn();
 
@@ -40,15 +38,6 @@ const QUALITY_ITEMS: QualityQueueItem[] = [
   },
 ];
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-
-  return {
-    ...actual,
-    useSearchParams: () => [searchParamsState, mockSetSearchParams] as const,
-  };
-});
-
 vi.mock('#/components/quality', () => ({
   QUALITY_STATUS_TABS: [
     { value: 'all', label: 'All' },
@@ -69,8 +58,7 @@ const mockedUseDebouncedValue = vi.mocked(useDebouncedValue);
 
 describe('QualityListPage', () => {
   beforeEach(() => {
-    searchParamsState = new URLSearchParams('search=ali&page=2&status=all');
-    mockSetSearchParams.mockReset();
+    mockSetSearch.mockReset();
     mockSetStatusFilter.mockReset();
     mockSetPage.mockReset();
 
@@ -103,7 +91,9 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 2, pageSize: 10 },
+      searchValue: 'ali',
       setStatusFilter: mockSetStatusFilter,
+      setSearch: mockSetSearch,
       setPage: mockSetPage,
     } as unknown as ReturnType<typeof useQualityQueue>);
   });
@@ -125,18 +115,14 @@ describe('QualityListPage', () => {
     expect(mockSetStatusFilter).toHaveBeenCalledWith('forwarded');
   });
 
-  it('updates search params when search input changes', () => {
+  it('calls search setter when search input changes', () => {
     render(<QualityListPage />);
 
     fireEvent.change(screen.getByLabelText('Search quality queue'), {
       target: { value: 'karachi' },
     });
 
-    const updateFn = mockSetSearchParams.mock.calls[0]?.[0] as (previous: URLSearchParams) => URLSearchParams;
-    const nextParams = updateFn(new URLSearchParams('status=all&page=9'));
-
-    expect(nextParams.get('search')).toBe('karachi');
-    expect(nextParams.get('page')).toBe('1');
+    expect(mockSetSearch).toHaveBeenCalledWith('karachi');
   });
 
   it('triggers previous and next page handlers from pagination controls', () => {
@@ -166,7 +152,9 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 1, pageSize: 10 },
+      searchValue: '',
       setStatusFilter: mockSetStatusFilter,
+      setSearch: mockSetSearch,
       setPage: mockSetPage,
     } as unknown as ReturnType<typeof useQualityQueue>);
 
@@ -202,7 +190,9 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 1, pageSize: 10 },
+      searchValue: '',
       setStatusFilter: mockSetStatusFilter,
+      setSearch: mockSetSearch,
       setPage: mockSetPage,
     } as unknown as ReturnType<typeof useQualityQueue>);
 
