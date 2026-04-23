@@ -622,10 +622,11 @@ Dashboard chart data source rules:
 
 ```tsx
 <RegistrationsListPage>
-  <StatsRow>                          {/* 3 stat cards */}
+  <StatsRow>                          {/* 4 stat cards */}
     <StatCard label="Total Registrations" />
-    <StatCard label="Pending Review" highlight />    {/* amber left border */}
+    <StatCard label="Pending" highlight />    {/* value comes from backend submitted */}
     <StatCard label="Approved" />
+    <StatCard label="Rejected" />
   </StatsRow>
   <StatusTabs>                        {/* All | Pending | Approved | Rejected | Resubmission */}
     <StatusTab label="All" />
@@ -693,9 +694,9 @@ Important:
 <ClaimsListPage>
   <StatsRow>                          {/* 4 stat cards */}
     <StatCard label="Total Claims" />
-    <StatCard label="Pending CS Review" highlight />   {/* amber left border */}
-    <StatCard label="Forwarded to Quality" />
-    <StatCard label="Resolved" />
+    <StatCard label="Pending" highlight />   {/* value comes from backend submitted */}
+    <StatCard label="Approved" />
+    <StatCard label="Rejected" />
   </StatsRow>
   <StatusTabs>                        {/* All | Pending | Forwarded | Approved | Rejected | Info Requested */}
     <StatusTab label="All" />
@@ -740,10 +741,11 @@ Important:
 
 ```tsx
 <QualityPage>
-  <StatsRow>                              {/* 3 stat cards — NO Avg Review Time card */}
-    <StatCard label="Awaiting Review" highlight />   {/* amber left border */}
-    <StatCard label="Approved" />
-    <StatCard label="Rejected" />
+  <StatsRow>                              {/* 4 stat cards — NO Avg Review Time card */}
+    <StatCard label="Total In Queue" />
+    <StatCard label="QA Review" highlight />
+    <StatCard label="QA Approved" />
+    <StatCard label="QA Rejected" />
   </StatsRow>
   <StatusTabs>                            {/* Awaiting Review | Approved | Rejected | More Info Needed */}
     <StatusTab label="Awaiting Review" active />
@@ -1517,6 +1519,41 @@ Page/Container
 - Cache invalidation strategy is defined for mutation flows.
 
 ### 5.12 Hardening Updates
+Warranty card-count endpoints feed list-page summary cards only. Do not render every field returned by these endpoints; keep schemas/types aligned to the displayed subset.
+
+Registration card counts:
+```ts
+// GET /api/v1/warranty/card-counts/registrations/
+type RegistrationCardCounts = {
+  totalRegistrations: number; // API: total_registrations
+  submitted: number;          // display label: Pending
+  approved: number;
+  rejected: number;
+};
+```
+
+Claims card counts:
+```ts
+// GET /api/v1/warranty/card-counts/claims/
+type ClaimsCardCounts = {
+  totalClaims: number; // API: total_claims
+  submitted: number;   // display label: Pending
+  approved: number;
+  rejected: number;
+};
+```
+
+Quality card counts:
+```ts
+// GET /api/v1/warranty/card-counts/quality/
+type QualityCardCounts = {
+  totalInQueue: number; // API: total_in_queue
+  qaReview: number;     // API: qa_review
+  qaApproved: number;   // API: qa_approved
+  qaRejected: number;   // API: qa_rejected
+};
+```
+
 Expanded endpoints must include auth/quality/import + sub-actions:
 ```ts
 export const API_ENDPOINTS = {
@@ -4090,6 +4127,13 @@ Audit checks executed:
 
 ### 15.2 Explicit "Done" Items Marked from Recent Updates
 
+- [x] Registration list `Edit` flow now waits for detail fetch completion before opening the edit modal (avoids large in-modal loading experience).
+- [x] Registration edit modal close/open lifecycle stabilized to remove transition jitter (no close-time content collapse/reset).
+- [x] Shared dialog motion updated to remove zoom-in/zoom-out scale effect that caused perceived shrink on modal close.
+- [x] Registration/claim timeline paint-pair rendering now resolves product names from payload (topcoat/basecoat objects) with backward-safe fallbacks.
+- [x] Paint-pair timeline details keep consistent inline `Before -> After` presentation (no alternate per-field layout pattern).
+- [x] Paint-pair timeline labels now hide product IDs and show names + quantities only, matching requested UX.
+- [x] Paint-pair timeline detail text contrast increased for readability.
 - [x] Live chat thread header reduced to a single heading line.
 - [x] Live chat heading format set to `Ticket #<ticketId>` with fallback to conversation id.
 - [x] Complaint timeline change rendering improved for complaint-specific fields (`status`, `images`, `image_ids`, `assigned_to`) via shared `AuditTimelinePanel`.
@@ -4106,6 +4150,7 @@ Audit checks executed:
 - [x] CSR resubmission modal flow is implemented on claim detail: fetch requested fields via `GET /claims/:id/csr-resubmission`, allow edit/upload per `input_type`, and submit all fields via `POST /claims/:id/csr-resubmission`.
 - [x] Claims data-layer now includes CSR resubmission query/mutation wiring with query-key and endpoint constants for cache-safe integration.
 - [x] Warranty-options over-fetching reduced: manual-products query now supports lazy enablement and selected-topcoat scoping so registration resubmission/detail flows do not prefetch basecoats for every topcoat on page open.
+- [x] Warranty card-count summary cards now render only the requested backend subset: registrations (`total_registrations`, `submitted` as `Pending`, `approved`, `rejected`), claims (`total_claims`, `submitted` as `Pending`, `approved`, `rejected`), and quality (`total_in_queue`, `qa_review`, `qa_approved`, `qa_rejected`).
 
 ### 15.3 Remaining Action Items (Not Done Yet)
 
@@ -4113,7 +4158,6 @@ Audit checks executed:
 - [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
 - [ ] Add `.env.example` with required env keys.
 - [ ] Add automated tests for critical paths (currently no test files discovered).
-- [ ] Add `.github/pull_request_template.md` to satisfy required project-file standard.
 
 ### 15.4 Evidence References
 

@@ -1,25 +1,13 @@
-from datetime import datetime
-from typing import TypedDict
-
 from dulux_chatbot.complaints.choices import MessageSender
+from dulux_chatbot.complaints.constants import COMPLAINT_CHAT_ITEM_TYPE_IMAGE, COMPLAINT_CHAT_ITEM_TYPE_MESSAGE
 from dulux_chatbot.complaints.models import ChatMessage, ComplaintImage
-from dulux_chatbot.core.models import Image
 
 
-class ComplaintChatItem(TypedDict):
-    id: int
-    type: str
-    sender: str
-    text: str
-    image: Image | None
-    created: datetime
-
-
-def build_complaint_chat_items(*, complaint_id: int) -> list[ComplaintChatItem]:
+def build_complaint_chat_items(*, complaint_id: int):
     messages = [
         {
             "id": message.id,
-            "type": "MESSAGE",
+            "type": COMPLAINT_CHAT_ITEM_TYPE_MESSAGE,
             "sender": message.sender,
             "text": message.text,
             "image": None,
@@ -30,7 +18,7 @@ def build_complaint_chat_items(*, complaint_id: int) -> list[ComplaintChatItem]:
     images = [
         {
             "id": complaint_image.id,
-            "type": "IMAGE",
+            "type": COMPLAINT_CHAT_ITEM_TYPE_IMAGE,
             "sender": MessageSender.CUSTOMER,
             "text": "",
             "image": complaint_image.image,

@@ -12,14 +12,14 @@ from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
 from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
 from dulux_chatbot.warranty.choices import ClaimState, QualityDecisionType, QualityRequiredItem, RegistrationState
 from dulux_chatbot.warranty.models import WarrantyClaim, WarrantyRegistration
-from dulux_chatbot.warranty.resubmission import (
+from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
+from dulux_chatbot.warranty.utils.resubmission import (
     build_resubmit_steps,
     fallback_resubmit_message,
     get_resubmission_field_label,
     initial_resubmit_session_data,
     resubmit_flow_type,
 )
-from dulux_chatbot.warranty.services.certificate import generate_warranty_certificate
 
 
 logger = logging.getLogger("dulux_chatbot")
@@ -31,20 +31,39 @@ def generate_and_send_certificate(registration_id: int) -> None:
     registration = WarrantyRegistration.objects.prefetch_related("paint_pairs__topcoat", "paint_pairs__basecoat").get(
         pk=registration_id
     )
-    content = generate_warranty_certificate(registration)
+    try:
+        content = generate_warranty_certificate(registration)
+    except Exception:
+        logger.exception(
+            "Warranty certificate generation failed.",
+            extra={"registration_id": registration.id},
+        )
+        return
     registration.warranty_certificate.save(content.name, content, save=True)
 
 
 @shared_task
 def send_whatsapp_status_notification(phone: str, message: str) -> None:
-    WhatsAppClient().send_text(phone, message)
+    _send_whatsapp_text_safely(
+        WhatsAppClient(),
+        phone_number=phone,
+        message=message,
+        context={"notification_type": "whatsapp_status"},
+    )
 
 
 def _ensure_registration_certificate(registration: WarrantyRegistration) -> WarrantyRegistration:
     if registration.warranty_certificate:
         return registration
 
-    content = generate_warranty_certificate(registration)
+    try:
+        content = generate_warranty_certificate(registration)
+    except Exception:
+        logger.exception(
+            "Warranty certificate generation failed.",
+            extra={"registration_id": registration.id},
+        )
+        return registration
     registration.warranty_certificate.save(content.name, content, save=True)
     registration.refresh_from_db(fields=["warranty_certificate"])
     return registration
@@ -75,6 +94,48 @@ def _build_registration_status_whatsapp_message(*, registration: WarrantyRegistr
 def _build_claim_status_whatsapp_message(*, claim: WarrantyClaim) -> str:
     status_label = "approved" if claim.state == ClaimState.APPROVED else "rejected"
     return f"Your claim for registration: {claim.registration.registration_code} is {status_label}."
+
+
+def _send_email_safely(email: EmailMultiAlternatives, *, context: dict) -> None:
+    try:
+        email.send(fail_silently=False)
+    except Exception as exc:
+        logger.exception("Email notification failed.", extra={**context, "error": str(exc)})
+
+
+def _reset_whatsapp_session_safely(*, phone_number: str, context: dict) -> None:
+    try:
+        reset_whatsapp_session_to_main_menu(phone_number=phone_number)
+    except Exception as exc:
+        logger.exception("WhatsApp session reset failed.", extra={**context, "error": str(exc)})
+
+
+def _send_whatsapp_text_safely(client: WhatsAppClient, *, phone_number: str, message: str, context: dict) -> None:
+    try:
+        client.send_text(phone_number, message)
+    except Exception as exc:
+        logger.exception("WhatsApp text notification failed.", extra={**context, "error": str(exc)})
+
+
+def _send_whatsapp_document_safely(
+    client: WhatsAppClient,
+    *,
+    phone_number: str,
+    document_url: str,
+    filename: str,
+    context: dict,
+) -> None:
+    try:
+        client.send_document(phone_number, document_url, filename, caption=filename)
+    except Exception as exc:
+        logger.exception("WhatsApp document notification failed.", extra={**context, "error": str(exc)})
+
+
+def _schedule_whatsapp_main_menu_safely(*, phone_number: str, context: dict) -> None:
+    try:
+        send_whatsapp_main_menu.apply_async(args=[phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
+    except Exception as exc:
+        logger.exception("WhatsApp main menu scheduling failed.", extra={**context, "error": str(exc)})
 
 
 @shared_task
@@ -113,20 +174,27 @@ def send_registration_status_notification(registration_id: int, notification_tem
             email.attach("warranty_certificate.pdf", registration.warranty_certificate.read(), "application/pdf")
         finally:
             registration.warranty_certificate.close()
-    email.send(fail_silently=False)
+    notification_context = {"registration_id": registration.id}
+    _send_email_safely(email, context=notification_context)
 
     whatsapp_message = notification_content["whatsapp_message"]
     client = WhatsAppClient()
-    reset_whatsapp_session_to_main_menu(phone_number=registration.phone_number)
-    client.send_text(registration.phone_number, whatsapp_message)
+    _reset_whatsapp_session_safely(phone_number=registration.phone_number, context=notification_context)
+    _send_whatsapp_text_safely(
+        client,
+        phone_number=registration.phone_number,
+        message=whatsapp_message,
+        context=notification_context,
+    )
     if should_send_certificate and registration.warranty_certificate:
-        client.send_document(
-            registration.phone_number,
-            registration.warranty_certificate.url,
-            "warranty_certificate.pdf",
-            caption="warranty_certificate.pdf",
+        _send_whatsapp_document_safely(
+            client,
+            phone_number=registration.phone_number,
+            document_url=registration.warranty_certificate.url,
+            filename="warranty_certificate.pdf",
+            context=notification_context,
         )
-    send_whatsapp_main_menu.apply_async(args=[registration.phone_number, BaseFlow.MAIN_MENU_TEXT], countdown=2)
+    _schedule_whatsapp_main_menu_safely(phone_number=registration.phone_number, context=notification_context)
 
 
 @shared_task
@@ -165,23 +233,27 @@ def send_claim_status_notification(claim_id: int, notification_template: str | N
         finally:
             claim.voucher.close()
 
-    email.send(fail_silently=False)
+    notification_context = {"claim_id": claim.id}
+    _send_email_safely(email, context=notification_context)
 
     whatsapp_message = _build_claim_status_whatsapp_message(claim=claim)
     client = WhatsAppClient()
-    reset_whatsapp_session_to_main_menu(phone_number=claim.registration.phone_number)
-    client.send_text(claim.registration.phone_number, whatsapp_message)
-    if claim.state == ClaimState.APPROVED and claim.voucher:
-        client.send_document(
-            claim.registration.phone_number,
-            claim.voucher.url,
-            "claim_voucher.pdf",
-            caption="claim_voucher.pdf",
-        )
-    send_whatsapp_main_menu.apply_async(
-        args=[claim.registration.phone_number, BaseFlow.MAIN_MENU_TEXT],
-        countdown=2,
+    _reset_whatsapp_session_safely(phone_number=claim.registration.phone_number, context=notification_context)
+    _send_whatsapp_text_safely(
+        client,
+        phone_number=claim.registration.phone_number,
+        message=whatsapp_message,
+        context=notification_context,
     )
+    if claim.state == ClaimState.APPROVED and claim.voucher:
+        _send_whatsapp_document_safely(
+            client,
+            phone_number=claim.registration.phone_number,
+            document_url=claim.voucher.url,
+            filename="claim_voucher.pdf",
+            context=notification_context,
+        )
+    _schedule_whatsapp_main_menu_safely(phone_number=claim.registration.phone_number, context=notification_context)
 
 
 @shared_task
@@ -220,13 +292,24 @@ def send_registration_resubmit_notification(registration_id: int) -> None:
         to=[registration.email],
     )
     email.attach_alternative(email_html, "text/html")
-    email.send(fail_silently=False)
+    notification_context = {"registration_id": registration.id}
+    _send_email_safely(email, context=notification_context)
 
     client = WhatsAppClient()
-    client.send_text(registration.phone_number, whatsapp_message)
+    _send_whatsapp_text_safely(
+        client,
+        phone_number=registration.phone_number,
+        message=whatsapp_message,
+        context=notification_context,
+    )
 
     if not resubmit_steps:
-        client.send_text(registration.phone_number, fallback_message)
+        _send_whatsapp_text_safely(
+            client,
+            phone_number=registration.phone_number,
+            message=fallback_message,
+            context=notification_context,
+        )
         return
 
     session, _ = WhatsAppSession.objects.get_or_create(phone_number=registration.phone_number)
@@ -250,7 +333,13 @@ def send_registration_resubmit_notification(registration_id: int) -> None:
     session.session_data = session_data
     session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])
 
-    RegistrationFlow(session=session, client=client).send_prompt()
+    try:
+        RegistrationFlow(session=session, client=client).send_prompt()
+    except Exception as exc:
+        logger.exception(
+            "Registration resubmission WhatsApp prompt failed.",
+            extra={**notification_context, "error": str(exc)},
+        )
 
 
 @shared_task
@@ -286,7 +375,13 @@ def send_claim_resubmit_notification(claim_id: int) -> None:
     message_lines.append("You may also share these details with CSR through a complaint conversation if needed.")
 
     client = WhatsAppClient()
-    client.send_text(claim.registration.phone_number, "\n".join(message_lines))
+    notification_context = {"claim_id": claim.id}
+    _send_whatsapp_text_safely(
+        client,
+        phone_number=claim.registration.phone_number,
+        message="\n".join(message_lines),
+        context=notification_context,
+    )
 
     session, _ = WhatsAppSession.objects.get_or_create(phone_number=claim.registration.phone_number)
     session.flow = FlowType.CLAIM_RESUBMISSION
@@ -301,7 +396,13 @@ def send_claim_resubmit_notification(claim_id: int) -> None:
         "claim_resubmission_other_text": latest_quality_review.other_text,
     }
     session.save(update_fields=["flow", "current_step", "session_data", "last_activity", "modified"])
-    ClaimResubmissionFlow(session=session, client=client).send_prompt()
+    try:
+        ClaimResubmissionFlow(session=session, client=client).send_prompt()
+    except Exception as exc:
+        logger.exception(
+            "Claim resubmission WhatsApp prompt failed.",
+            extra={**notification_context, "error": str(exc)},
+        )
 
 
 def _get_quality_required_item_label(required_item: str) -> str:

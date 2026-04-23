@@ -10,9 +10,11 @@ from rest_framework_simplejwt.tokens import AccessToken
 from config.asgi import application
 from dulux_chatbot.chatbot.choices import FlowType
 from dulux_chatbot.chatbot.models import WhatsAppSession
+from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppAPIError
 from dulux_chatbot.complaints.choices import MessageSender
 from dulux_chatbot.complaints.models import ChatMessage
 from dulux_chatbot.complaints.tests.factories import create_complaint, create_user
+from dulux_chatbot.users.choices import UserRole
 
 
 class ComplaintConsumerTests(TransactionTestCase):
@@ -25,7 +27,14 @@ class ComplaintConsumerTests(TransactionTestCase):
 
         self.assertFalse(connected)
 
-    async def test_queue_consumer_accepts_authenticated_user(self):
+    async def test_queue_consumer_rejects_invalid_token(self):
+        communicator = WebsocketCommunicator(application, "/ws/complaints/queue/?token=invalid-token")
+
+        connected, _ = await communicator.connect()
+
+        self.assertFalse(connected)
+
+    async def test_queue_consumer_accepts_cs_user(self):
         user = await sync_to_async(create_user)()
         token = str(AccessToken.for_user(user))
         query = urlencode({"token": token})
@@ -35,6 +44,27 @@ class ComplaintConsumerTests(TransactionTestCase):
 
         self.assertTrue(connected)
         await communicator.disconnect()
+
+    async def test_queue_consumer_accepts_admin_user(self):
+        user = await sync_to_async(create_user)(email="queue-admin@example.com", role=UserRole.ADMIN)
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/queue/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertTrue(connected)
+        await communicator.disconnect()
+
+    async def test_queue_consumer_rejects_non_cs_admin_user(self):
+        user = await sync_to_async(create_user)(email="queue-quality@example.com", role=UserRole.QUALITY_REVIEWER)
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/queue/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertFalse(connected)
 
     async def test_queue_consumer_receives_created_complaint_event(self):
         user = await sync_to_async(create_user)()
@@ -78,7 +108,7 @@ class ComplaintConsumerTests(TransactionTestCase):
 
         self.assertFalse(connected)
 
-    async def test_consumer_accepts_authenticated_user(self):
+    async def test_consumer_accepts_cs_user(self):
         complaint = await sync_to_async(create_complaint)()
         user = await sync_to_async(create_user)()
         token = str(AccessToken.for_user(user))
@@ -89,6 +119,29 @@ class ComplaintConsumerTests(TransactionTestCase):
 
         self.assertTrue(connected)
         await communicator.disconnect()
+
+    async def test_consumer_accepts_admin_user(self):
+        complaint = await sync_to_async(create_complaint)()
+        user = await sync_to_async(create_user)(email="chat-admin@example.com", role=UserRole.ADMIN)
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/{complaint.id}/chat/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertTrue(connected)
+        await communicator.disconnect()
+
+    async def test_consumer_rejects_non_cs_admin_user(self):
+        complaint = await sync_to_async(create_complaint)()
+        user = await sync_to_async(create_user)(email="chat-quality@example.com", role=UserRole.QUALITY_REVIEWER)
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/{complaint.id}/chat/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertFalse(connected)
 
     async def test_consumer_rejects_missing_complaint(self):
         user = await sync_to_async(create_user)()
@@ -118,6 +171,33 @@ class ComplaintConsumerTests(TransactionTestCase):
         self.assertEqual(response["text"], "Hello from CS")
         send_text_mock.assert_called_once_with("923214840043", "Hello from CS")
         self.assertTrue(
+            await sync_to_async(
+                ChatMessage.objects.filter(
+                    complaint_id=complaint.id,
+                    sender=MessageSender.CS_AGENT,
+                    text="Hello from CS",
+                ).exists
+            )()
+        )
+        await communicator.disconnect()
+
+    @patch("dulux_chatbot.complaints.consumers.WhatsAppClient.send_text")
+    async def test_consumer_does_not_save_agent_message_when_whatsapp_send_fails(self, send_text_mock):
+        send_text_mock.side_effect = WhatsAppAPIError("WhatsApp send failed.")
+        complaint = await sync_to_async(create_complaint)(phone_number="923214840050")
+        user = await sync_to_async(create_user)()
+        token = str(AccessToken.for_user(user))
+        query = urlencode({"token": token})
+        communicator = WebsocketCommunicator(application, f"/ws/complaints/{complaint.id}/chat/?{query}")
+
+        connected, _ = await communicator.connect()
+
+        self.assertTrue(connected)
+        await communicator.send_json_to({"text": "Hello from CS"})
+        response = await communicator.receive_json_from()
+
+        self.assertEqual(response["error"], "Message could not be sent to WhatsApp.")
+        self.assertFalse(
             await sync_to_async(
                 ChatMessage.objects.filter(
                     complaint_id=complaint.id,

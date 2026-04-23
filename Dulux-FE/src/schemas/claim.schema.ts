@@ -73,9 +73,9 @@ export const claimsStatsSchema = z.object({
 
 export const claimsCardCountsSchema = z.object({
   totalClaims: z.number().int().nonnegative(),
-  pendingCsReview: z.number().int().nonnegative(),
-  forwardedToQuality: z.number().int().nonnegative(),
-  resolved: z.number().int().nonnegative(),
+  submitted: z.number().int().nonnegative(),
+  approved: z.number().int().nonnegative(),
+  rejected: z.number().int().nonnegative(),
 });
 
 export const claimsListResponseSchema = z.object({
@@ -122,24 +122,10 @@ export const rejectClaimFinalSchema = z.object({
   notes: z.string().trim().min(10, 'Final rejection notes are required.').max(NOTES_MAX_LENGTH),
 });
 
-const OTHER_REQUEST_INFO_ITEM = 'Other';
-
-export const requestMoreInfoSchema = z
-  .object({
-    items: z.array(z.string().min(1)).min(1, 'Select at least one item.'),
-    otherDetails: z.string().trim().max(200, 'Other details must be 200 characters or fewer.').optional(),
-    note: z.string().trim().max(NOTES_MAX_LENGTH, `Note must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
-  })
-  .superRefine((values, ctx) => {
-    const isOtherSelected = values.items.includes(OTHER_REQUEST_INFO_ITEM);
-    if (isOtherSelected && !values.otherDetails) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['otherDetails'],
-        message: 'Please provide details for Other.',
-      });
-    }
-  });
+export const requestMoreInfoSchema = z.object({
+  items: z.array(z.string().min(1)).min(1, 'Select at least one item.'),
+  note: z.string().trim().max(NOTES_MAX_LENGTH, `Note must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
+});
 
 const csrResubmissionRequestedItemSchema = z.object({
   requiredItem: z.string().min(1),

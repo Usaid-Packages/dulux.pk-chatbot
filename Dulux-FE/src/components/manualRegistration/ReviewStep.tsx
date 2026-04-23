@@ -92,7 +92,6 @@ export const ReviewStep = (): JSX.Element => {
           {renderReviewRow('Phone Number', values.phoneNumber)}
           {renderReviewRow('Email', values.email)}
           {renderReviewRow('City', values.city)}
-          {renderReviewRow('Province', values.province)}
           {renderReviewRow('Site Address', values.siteAddress)}
         </div>
       </div>

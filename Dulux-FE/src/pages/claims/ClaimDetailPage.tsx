@@ -142,7 +142,6 @@ export const ClaimDetailPage = (): JSX.Element => {
             objectId={claimId}
             title='Latest Timeline Changes'
             subtitle='Detailed admin activity log'
-            maxItems={6}
           />
         </div>
 

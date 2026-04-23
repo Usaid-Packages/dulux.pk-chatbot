@@ -26,7 +26,6 @@ export interface ManualRegistrationFormValues {
   phoneNumber: string;
   email: string;
   city: string;
-  province: string;
   siteAddress: string;
   postalCode: string;
   purchaseDate: string;

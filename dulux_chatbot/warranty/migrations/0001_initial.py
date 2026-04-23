@@ -45,7 +45,6 @@ class Migration(migrations.Migration):
                 ('phone_number', models.CharField(max_length=20)),
                 ('email', models.EmailField(max_length=254)),
                 ('city', models.CharField(max_length=100)),
-                ('province', models.CharField(blank=True, max_length=100)),
                 ('site_address', models.TextField()),
                 ('purchase_date', models.DateField()),
                 ('purchase_dealer', models.CharField(max_length=255)),

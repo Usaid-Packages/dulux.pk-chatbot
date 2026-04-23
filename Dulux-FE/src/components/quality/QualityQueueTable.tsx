@@ -27,6 +27,7 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
           <TableRow>
             <TableHead>Claim ID</TableHead>
             <TableHead>Customer</TableHead>
+            <TableHead>Reg. ID</TableHead>
             <TableHead>Issue</TableHead>
             <TableHead>Forwarded By</TableHead>
             <TableHead>Submitted</TableHead>
@@ -38,12 +39,15 @@ export const QualityQueueTable = ({ items }: QualityQueueTableProps): JSX.Elemen
           {items.map(item => (
             <TableRow key={item.id}>
               <TableCell>
-                <span className='chip-claim'>{item.id}</span>
+                <span className='chip-claim'>{item.claimNumber || item.id}</span>
               </TableCell>
               <TableCell>
                 <span className='block max-w-[220px] truncate' title={item.customerName}>
                   {item.customerName}
                 </span>
+              </TableCell>
+              <TableCell>
+                <span className='chip-reg'>{item.registrationNumber}</span>
               </TableCell>
               <TableCell>{getClaimIssueTypeLabel(item.issueType)}</TableCell>
               <TableCell>{item.forwardedBy}</TableCell>

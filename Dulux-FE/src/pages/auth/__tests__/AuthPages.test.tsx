@@ -1,15 +1,24 @@
+<<<<<<< test/test-auth-quality-page
 import type { ReactNode } from 'react';
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ROUTES, getHomeRouteByRole } from '#/constants';
+=======
+import type React from 'react';
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+>>>>>>> test/all-test-cases
 import { useAuthContext } from '#/context';
 import { useForgotPassword, useLogin, useResetPassword } from '#/hooks';
 import { ForgotPasswordPage } from '../ForgotPasswordPage';
 import { LoginPage } from '../LoginPage';
 import { ResetPasswordPage } from '../ResetPasswordPage';
 
+<<<<<<< test/test-auth-quality-page
 const mockHandleLogin = vi.fn();
 const mockHandleForgotPassword = vi.fn();
 const mockHandleResetPassword = vi.fn();
@@ -52,6 +61,22 @@ vi.mock('#/components/auth', () => ({
       </div>
     );
   },
+=======
+vi.mock('#/components/auth', () => ({
+  AuthShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AuthCard: ({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) => (
+    <section>
+      <h1>{title}</h1>
+      <p>{subtitle}</p>
+      {children}
+    </section>
+  ),
+  LoginForm: ({ isSubmitting, onSubmit }: { isSubmitting: boolean; onSubmit: () => void }) => (
+    <button type='button' onClick={onSubmit}>
+      {isSubmitting ? 'Login Pending' : 'Login Submit'}
+    </button>
+  ),
+>>>>>>> test/all-test-cases
   ForgotPasswordForm: ({
     isSubmitting,
     errorMessage,
@@ -59,6 +84,7 @@ vi.mock('#/components/auth', () => ({
   }: {
     isSubmitting: boolean;
     errorMessage: string;
+<<<<<<< test/test-auth-quality-page
     onSubmit: (values: Record<string, string>) => void;
   }) => {
     const handleSubmit = (): void => {
@@ -75,6 +101,17 @@ vi.mock('#/components/auth', () => ({
       </div>
     );
   },
+=======
+    onSubmit: () => void;
+  }) => (
+    <div>
+      <p>{errorMessage}</p>
+      <button type='button' onClick={onSubmit}>
+        {isSubmitting ? 'Forgot Pending' : 'Forgot Submit'}
+      </button>
+    </div>
+  ),
+>>>>>>> test/all-test-cases
   ResetPasswordForm: ({
     isSubmitting,
     errorMessage,
@@ -82,6 +119,7 @@ vi.mock('#/components/auth', () => ({
   }: {
     isSubmitting: boolean;
     errorMessage: string;
+<<<<<<< test/test-auth-quality-page
     onSubmit: (values: Record<string, string>) => void;
   }) => {
     const handleSubmit = (): void => {
@@ -98,6 +136,17 @@ vi.mock('#/components/auth', () => ({
       </div>
     );
   },
+=======
+    onSubmit: () => void;
+  }) => (
+    <div>
+      <p>{errorMessage}</p>
+      <button type='button' onClick={onSubmit}>
+        {isSubmitting ? 'Reset Pending' : 'Reset Submit'}
+      </button>
+    </div>
+  ),
+>>>>>>> test/all-test-cases
 }));
 
 vi.mock('#/context', () => ({
@@ -116,6 +165,7 @@ const mockedUseForgotPassword = vi.mocked(useForgotPassword);
 const mockedUseResetPassword = vi.mocked(useResetPassword);
 
 describe('Auth pages', () => {
+<<<<<<< test/test-auth-quality-page
   beforeEach(() => {
     mockHandleLogin.mockReset();
     mockHandleForgotPassword.mockReset();
@@ -142,10 +192,22 @@ describe('Auth pages', () => {
   });
 
   it('renders login form and submits credentials', () => {
+=======
+  it('renders login page and submits login', () => {
+    const handleLogin = vi.fn();
+
+    mockedUseAuthContext.mockReturnValue({ token: null, user: null } as unknown as ReturnType<typeof useAuthContext>);
+    mockedUseLogin.mockReturnValue({
+      handleLogin,
+      isLoginPending: false,
+    } as unknown as ReturnType<typeof useLogin>);
+
+>>>>>>> test/all-test-cases
     render(<LoginPage />);
 
     expect(screen.getByRole('heading', { name: 'Welcome Back' })).toBeInTheDocument();
 
+<<<<<<< test/test-auth-quality-page
     fireEvent.click(screen.getByRole('button', { name: 'Submit Login' }));
 
     expect(mockHandleLogin).toHaveBeenCalledWith({ email: 'agent@dulux.pk', password: 'password123' });
@@ -166,6 +228,20 @@ describe('Auth pages', () => {
     mockedUseForgotPassword.mockReturnValue({
       handleForgotPassword: mockHandleForgotPassword,
       isForgotPasswordPending: true,
+=======
+    fireEvent.click(screen.getByRole('button', { name: 'Login Submit' }));
+
+    expect(handleLogin).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders forgot-password page with error and submits', () => {
+    const handleForgotPassword = vi.fn();
+
+    mockedUseAuthContext.mockReturnValue({ token: null, user: null } as unknown as ReturnType<typeof useAuthContext>);
+    mockedUseForgotPassword.mockReturnValue({
+      handleForgotPassword,
+      isForgotPasswordPending: false,
+>>>>>>> test/all-test-cases
       forgotPasswordErrorMessage: 'Email not found',
     } as unknown as ReturnType<typeof useForgotPassword>);
 
@@ -174,6 +250,7 @@ describe('Auth pages', () => {
     expect(screen.getByRole('heading', { name: 'Forgot Password' })).toBeInTheDocument();
     expect(screen.getByText('Email not found')).toBeInTheDocument();
 
+<<<<<<< test/test-auth-quality-page
     fireEvent.click(screen.getByRole('button', { name: 'Submit Forgot' }));
 
     expect(mockHandleForgotPassword).toHaveBeenCalledWith({ email: 'agent@dulux.pk' });
@@ -195,11 +272,27 @@ describe('Auth pages', () => {
       handleResetPassword: mockHandleResetPassword,
       isResetPasswordPending: false,
       resetPasswordErrorMessage: 'Token expired',
+=======
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot Submit' }));
+
+    expect(handleForgotPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders reset-password page and submits', () => {
+    const handleResetPassword = vi.fn();
+
+    mockedUseAuthContext.mockReturnValue({ token: null, user: null } as unknown as ReturnType<typeof useAuthContext>);
+    mockedUseResetPassword.mockReturnValue({
+      handleResetPassword,
+      isResetPasswordPending: false,
+      resetPasswordErrorMessage: '',
+>>>>>>> test/all-test-cases
     } as unknown as ReturnType<typeof useResetPassword>);
 
     render(<ResetPasswordPage />);
 
     expect(screen.getByRole('heading', { name: 'Reset Password' })).toBeInTheDocument();
+<<<<<<< test/test-auth-quality-page
     expect(screen.getByText('Token expired')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit Reset' }));
@@ -219,5 +312,11 @@ describe('Auth pages', () => {
     render(<ResetPasswordPage />);
 
     expect(screen.getByTestId('navigate-target')).toHaveTextContent(ROUTES.HOME);
+=======
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset Submit' }));
+
+    expect(handleResetPassword).toHaveBeenCalledTimes(1);
+>>>>>>> test/all-test-cases
   });
 });

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 
-from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
+from dulux_chatbot.complaints.choices import ComplaintStatus, ComplaintSubject, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
 from dulux_chatbot.core.models import Image
 from dulux_chatbot.users.choices import UserRole
@@ -28,7 +28,7 @@ def create_complaint(
         registration=registration,
         phone_number=phone_number,
         customer_name="Complaint Customer",
-        subject="Damaged paint",
+        subject=ComplaintSubject.PRODUCT_COMPLAINT,
         description="Description",
         status=status,
         assigned_to=assigned_to,

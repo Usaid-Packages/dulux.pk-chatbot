@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import STEP_MENU
 from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.models import WhatsAppSession
 from dulux_chatbot.warranty.choices import ClaimResubmissionSource, ClaimState, QualityRequiredItem
@@ -16,7 +17,7 @@ class ClaimResubmissionFlow(BaseFlow):
         QualityRequiredItem.ADDITIONAL_PHOTOS_DIFFERENT_ANGLES,
         QualityRequiredItem.CLOSE_UP_DAMAGE_PHOTOS,
         QualityRequiredItem.PROOF_OF_PURCHASE_INVOICE,
-        QualityRequiredItem.PRODUCT_BATCH_NUMBER_PHOTO,
+        "PRODUCT_BATCH_NUMBER_PHOTO",
     }
 
     def prompt_claim_resubmission_item(self) -> None:
@@ -144,12 +145,10 @@ class ClaimResubmissionFlow(BaseFlow):
 
         data["claim_resubmission_completed"] = True
         locked_session.flow = None
-        locked_session.current_step = "menu"
+        locked_session.current_step = STEP_MENU
         locked_session.session_data = {}
         locked_session.save(update_fields=["flow", "current_step", "session_data", "modified"])
-        self.session.flow = None
-        self.session.current_step = "menu"
-        self.session.session_data = {}
+        self.session.refresh_from_db(fields=["flow", "current_step", "session_data"])
         self.client.send_text(
             self.session.phone_number,
             "Thank you. Your additional claim details have been received and sent back to the Quality team.",

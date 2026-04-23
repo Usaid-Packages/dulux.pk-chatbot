@@ -9,7 +9,7 @@ from dulux_chatbot.warranty.tests.factories import (
     create_paint_pair_invoice,
     create_registration,
 )
-from dulux_chatbot.warranty.utils import generate_registration_code
+from dulux_chatbot.warranty.utils.helpers import generate_registration_code
 
 
 class WarrantyUtilsTests(TestCase):

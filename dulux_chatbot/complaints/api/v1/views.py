@@ -2,6 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from django.utils.functional import cached_property
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -21,22 +22,17 @@ from dulux_chatbot.complaints.api.v1.serializers import (
 )
 from dulux_chatbot.complaints.choices import ComplaintStatus
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
-from dulux_chatbot.complaints.realtime import broadcast_complaint_created
-from dulux_chatbot.complaints.services import build_complaint_chat_items
+from dulux_chatbot.complaints.utils.helpers import build_complaint_chat_items
+from dulux_chatbot.complaints.utils.realtime import broadcast_complaint_created
 from dulux_chatbot.core.permissions import IsCSAgentOrAdmin
 
 
 class LiveChatCardCountsAPIView(APIView):
     permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
 
-    def _validation_error_response(self, serializer) -> Response:
-        message = next(iter(serializer.errors.values()))[0]
-        return Response({"detail": str(message)}, status=status.HTTP_400_BAD_REQUEST)
-
     def get(self, request, *args, **kwargs):
         serializer = CardCountQuerySerializer(data=request.query_params)
-        if not serializer.is_valid():
-            return self._validation_error_response(serializer)
+        serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
         queryset = Complaint.objects.all()
@@ -71,13 +67,9 @@ class ComplaintListCreateAPIView(generics.ListCreateAPIView):
             return ComplaintCreateSerializer
         return ComplaintListSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def perform_create(self, serializer):
         complaint = serializer.save()
         broadcast_complaint_created(complaint=complaint)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ComplaintRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
@@ -96,9 +88,12 @@ class ComplaintRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
 class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCSAgentOrAdmin]
 
+    @cached_property
+    def complaint(self):
+        return get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
+
     def get_queryset(self):
-        complaint = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
-        return ChatMessage.objects.filter(complaint=complaint).order_by("created")
+        return ChatMessage.objects.filter(complaint=self.complaint).order_by("created")
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -107,21 +102,28 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["complaint"] = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
+        context["complaint"] = self.complaint
         return context
 
     def list(self, request, *args, **kwargs):
-        complaint = get_object_or_404(Complaint, pk=self.kwargs["complaint_id"])
-        items = build_complaint_chat_items(complaint_id=complaint.id)
+        items = build_complaint_chat_items(complaint_id=self.complaint.id)
         serializer = ComplaintChatItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        message = serializer.save()
         complaint = serializer.context["complaint"]
 
+        try:
+            WhatsAppClient().send_text(complaint.phone_number, serializer.validated_data["text"])
+        except WhatsAppAPIError:
+            return Response(
+                {"detail": "Message could not be sent to WhatsApp."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        message = serializer.save()
         payload = ChatMessageSerializer(message).data
         async_to_sync(get_channel_layer().group_send)(
             f"complaint_{self.kwargs['complaint_id']}",
@@ -130,17 +132,6 @@ class ComplaintMessageListCreateAPIView(generics.ListCreateAPIView):
                 "message": payload,
             },
         )
-
-        try:
-            WhatsAppClient().send_text(complaint.phone_number, message.text)
-        except WhatsAppAPIError:
-            return Response(
-                {
-                    "detail": "Message saved but could not be sent to WhatsApp.",
-                    "message": payload,
-                },
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
 
         activate_complaint_chat_session(phone_number=complaint.phone_number, complaint_id=complaint.id)
         return Response(payload, status=status.HTTP_201_CREATED)

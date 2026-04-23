@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.core import mail
@@ -7,23 +8,38 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.test import APIClient
 
+from dulux_chatbot.audit_logs.models import AuditLog
 from dulux_chatbot.products.tests.factories import create_product, create_product_basecoat
-from dulux_chatbot.warranty.api.v1.serializers import WarrantyClaimListSerializer
+from dulux_chatbot.warranty.api.v1.serializers import (
+    WarrantyClaimListSerializer,
+    WarrantyClaimUpdateSerializer,
+    WarrantyRegistrationUpdateSerializer,
+)
 from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, PhotoType, RegistrationChannel, RegistrationState
-from dulux_chatbot.warranty.models import ClaimQualityReview, ClaimQualityReviewItem, ClaimResubmission, WarrantyClaim
+from dulux_chatbot.warranty.constants import CLAIM_BLOCKING_STATES
+from dulux_chatbot.warranty.models import (
+    ClaimQualityReview,
+    ClaimQualityReviewItem,
+    ClaimResubmission,
+    ClaimResubmissionEntry,
+    WarrantyClaim,
+    WarrantyRegistration,
+)
 from dulux_chatbot.warranty.tasks import send_claim_status_notification, send_registration_status_notification
 from dulux_chatbot.warranty.tests.factories import (
     create_admin_user,
     create_claim,
+    create_claim_image,
     create_cs_user,
     create_image,
     create_paint_pair,
     create_quality_user,
     create_registration,
 )
+from dulux_chatbot.warranty.utils.audit import build_claim_snapshot, build_registration_snapshot
 
 
 def build_notification_template(*, title: str = "Warranty Update") -> str:
@@ -49,6 +65,28 @@ class WarrantyRegistrationAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
+
+    def test_registration_list_query_count_stays_constant(self):
+        for index in range(3):
+            registration = create_registration(phone_number=f"92300444000{index}")
+            create_paint_pair(
+                registration=registration,
+                topcoat=create_product(name=f"Registration List Topcoat {index}", warranty_years=5),
+                basecoat=create_product(
+                    name=f"Registration List Basecoat {index}",
+                    product_type="BASECOAT",
+                    warranty_years=3,
+                ),
+            )
+            registration.invoices.create(image=create_image(), invoice_type=InvoiceType.TOPCOAT)
+            registration.rejection_fields.create(field_name="email", note="Please update email.")
+        self.client.force_authenticate(user=self.cs_user)
+
+        with self.assertNumQueries(2):
+            response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 3)
 
     def test_registration_filter_by_state_and_channel(self):
         create_registration(state=RegistrationState.SUBMITTED, channel=RegistrationChannel.WHATSAPP)
@@ -111,7 +149,6 @@ class WarrantyRegistrationAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "customer@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -146,7 +183,6 @@ class WarrantyRegistrationAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "customer@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -179,7 +215,6 @@ class WarrantyRegistrationAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "customer@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -217,7 +252,6 @@ class WarrantyRegistrationAPITests(TestCase):
                 "phone_number": "923007777777",
                 "email": "customer@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() + timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -252,7 +286,6 @@ class WarrantyRegistrationAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "customer@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -294,6 +327,77 @@ class WarrantyRegistrationAPITests(TestCase):
             registration.id,
             notification_template=build_notification_template(title="Approved"),
         )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(registration.id),
+                event_label="Registration approved",
+                changes__state__after=RegistrationState.APPROVED,
+            ).exists()
+        )
+
+    def test_registration_invalid_terminal_transitions_return_400(self):
+        self.client.force_authenticate(user=self.cs_user)
+        for registration_state in (RegistrationState.APPROVED, RegistrationState.REJECTED):
+            registration = create_registration(state=registration_state, phone_number=f"92300{registration_state}1")
+
+            response = self.client.patch(
+                reverse("registration_detail", kwargs={"pk": registration.pk}),
+                {"action": "APPROVE", "notification_template": build_notification_template(title="Approved")},
+                format="json",
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["action"][0],
+                f"Cannot transition registration from {registration_state} using APPROVE.",
+            )
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
+    def test_registration_double_approval_second_attempt_is_rejected(self, delay_mock):
+        registration = create_registration()
+        self.client.force_authenticate(user=self.cs_user)
+
+        first_response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"action": "APPROVE", "notification_template": build_notification_template(title="Approved")},
+            format="json",
+        )
+        second_response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"action": "APPROVE", "notification_template": build_notification_template(title="Approved Again")},
+            format="json",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
+        delay_mock.assert_called_once()
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
+    def test_stale_registration_approval_is_revalidated_at_save_time(self, delay_mock):
+        registration = create_registration()
+        first_instance = WarrantyRegistration.objects.get(pk=registration.pk)
+        stale_instance = WarrantyRegistration.objects.get(pk=registration.pk)
+        request = SimpleNamespace(user=self.cs_user)
+
+        first_serializer = WarrantyRegistrationUpdateSerializer(
+            first_instance,
+            data={"action": "APPROVE", "notification_template": build_notification_template(title="Approved")},
+            partial=True,
+            context={"request": request},
+        )
+        stale_serializer = WarrantyRegistrationUpdateSerializer(
+            stale_instance,
+            data={"action": "APPROVE", "notification_template": build_notification_template(title="Approved Again")},
+            partial=True,
+            context={"request": request},
+        )
+
+        self.assertTrue(first_serializer.is_valid())
+        self.assertTrue(stale_serializer.is_valid())
+        first_serializer.save()
+        with self.assertRaises(serializers.ValidationError):
+            stale_serializer.save()
+        delay_mock.assert_called_once()
 
     @patch("dulux_chatbot.warranty.api.v1.serializers.send_registration_status_notification.delay")
     def test_registration_transition_reject_triggers_status_notification(self, delay_mock):
@@ -434,7 +538,7 @@ class WarrantyRegistrationAPITests(TestCase):
             "Basecoat must be linked to the selected topcoat product.",
         )
 
-    def test_registration_update_rejects_fields_not_in_rejection_fields(self):
+    def test_registration_update_allows_any_detail_field_in_resubmit(self):
         registration = create_registration(state=RegistrationState.RESUBMIT)
         registration.rejection_fields.create(field_name="email")
         self.client.force_authenticate(user=self.cs_user)
@@ -445,15 +549,67 @@ class WarrantyRegistrationAPITests(TestCase):
             format="json",
         )
 
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.RESUBMIT)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(registration.id),
+                event_label="Registration updated",
+                changes__city__after="Lahore",
+            ).exists()
+        )
+
+    def test_registration_update_submits_when_all_rejection_fields_are_updated(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="email")
+        registration.rejection_fields.create(field_name="city")
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "email": "updated@example.com",
+                "city": "Lahore",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], "updated@example.com")
+        self.assertEqual(response.data["city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.SUBMITTED)
+        registration.refresh_from_db()
+        self.assertEqual(registration.rejection_fields.count(), 0)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(registration.id),
+                event_label="Registration updated",
+                changes__state__after=RegistrationState.SUBMITTED,
+                changes__email__after="updated@example.com",
+                changes__city__after="Lahore",
+            ).exists()
+        )
+
+    def test_registration_field_update_terminal_state_returns_400(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"email": "updated@example.com"},
+            format="json",
+        )
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data["detail"][0],
-            "Only fields requested for resubmission can be updated. Invalid fields: city.",
+            "Registration fields can only be updated when the registration is in "
+            "SUBMITTED, IN_PROGRESS, or RESUBMIT state.",
         )
 
-    def test_registration_update_allows_fields_in_rejection_fields(self):
-        registration = create_registration(state=RegistrationState.RESUBMIT)
-        registration.rejection_fields.create(field_name="email")
+    def test_registration_field_update_submitted_state_is_allowed(self):
+        registration = create_registration(state=RegistrationState.SUBMITTED)
         self.client.force_authenticate(user=self.cs_user)
 
         response = self.client.patch(
@@ -465,6 +621,20 @@ class WarrantyRegistrationAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "updated@example.com")
         self.assertEqual(response.data["state"], RegistrationState.SUBMITTED)
+
+    def test_registration_field_update_in_progress_state_is_allowed(self):
+        registration = create_registration(state=RegistrationState.IN_PROGRESS)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {"purchase_dealer_city": "Lahore"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["purchase_dealer_city"], "Lahore")
+        self.assertEqual(response.data["state"], RegistrationState.IN_PROGRESS)
 
     def test_registration_update_rejects_mixing_rejected_fields_with_notes(self):
         registration = create_registration(state=RegistrationState.RESUBMIT)
@@ -503,6 +673,23 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"][0]["customer_name"], registration.customer_name)
 
+    def test_claim_list_query_count_stays_constant(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        for index in range(3):
+            topcoat = create_product(name=f"Claim List Topcoat {index}", warranty_years=5)
+            basecoat = create_product(name=f"Claim List Basecoat {index}", product_type="BASECOAT", warranty_years=3)
+            paint_pair = create_paint_pair(registration=registration, topcoat=topcoat, basecoat=basecoat)
+            claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REVIEW)
+            create_claim_image(claim=claim)
+            ClaimQualityReview.objects.create(claim=claim, decision_type="QA_APPROVED", notes="")
+        self.client.force_authenticate(user=self.cs_user)
+
+        with self.assertNumQueries(5):
+            response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 3)
+
     def test_claim_list_serializer_uses_prefetched_quality_reviews(self):
         registration = create_registration(state=RegistrationState.APPROVED)
         claims = []
@@ -529,6 +716,74 @@ class WarrantyClaimAPITests(TestCase):
             data = WarrantyClaimListSerializer(prefetched_claims, many=True).data
 
         self.assertEqual([item["latest_quality_decision"] for item in data], ["QA_APPROVED"] * 3)
+
+    def test_registration_snapshot_uses_prefetched_relations(self):
+        registration = create_registration(state=RegistrationState.RESUBMIT)
+        create_paint_pair(registration=registration)
+        registration.invoices.create(image=create_image(), invoice_type=InvoiceType.TOPCOAT)
+        registration.rejection_fields.create(field_name="postal_code", note="Please provide postal code.")
+
+        prefetched_registration = (
+            WarrantyRegistration.objects.prefetch_related(
+                "paint_pairs__topcoat",
+                "paint_pairs__basecoat",
+                "invoices__image",
+                "rejection_fields",
+            )
+            .select_related("approved_by")
+            .get(pk=registration.pk)
+        )
+
+        with self.assertNumQueries(0):
+            snapshot = build_registration_snapshot(prefetched_registration)
+
+        self.assertEqual(snapshot["paint_pairs"][0]["topcoat_quantity"], "10.00")
+        self.assertEqual(snapshot["paint_pairs"][0]["topcoat"]["name"], "Warranty Topcoat")
+        self.assertEqual(snapshot["paint_pairs"][0]["basecoat"]["name"], "Warranty Basecoat")
+        self.assertEqual(snapshot["invoice_ids"], [registration.invoices.get().image_id])
+        self.assertEqual(snapshot["invoices"][0]["image_id"], registration.invoices.get().image_id)
+        self.assertTrue(snapshot["invoices"][0]["image_url"].endswith("/warranty/test.jpg"))
+        self.assertEqual(snapshot["rejection_fields"][0]["field_name"], "postal_code")
+
+    def test_claim_snapshot_uses_prefetched_relations(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        create_claim_image(claim=claim)
+        quality_review = ClaimQualityReview.objects.create(claim=claim, decision_type="REQUEST_INFO", notes="")
+        ClaimQualityReviewItem.objects.create(quality_review=quality_review, required_item="OTHER")
+        resubmission = ClaimResubmission.objects.create(claim=claim, source="WHATSAPP", notes="More details")
+        entry_image = create_image(image_name="warranty/resubmit.jpg")
+        ClaimResubmissionEntry.objects.create(
+            resubmission=resubmission,
+            required_item="OTHER",
+            response_text="Additional details",
+            image=entry_image,
+        )
+
+        prefetched_claim = (
+            WarrantyClaim.objects.select_related(
+                "registration",
+                "paint_pair",
+                "paint_pair__topcoat",
+                "paint_pair__basecoat",
+                "paint_pair__registration",
+                "approved_by",
+            )
+            .prefetch_related(
+                "images",
+                "quality_reviews",
+                "resubmissions__entries",
+            )
+            .get(pk=claim.pk)
+        )
+
+        with self.assertNumQueries(0):
+            snapshot = build_claim_snapshot(prefetched_claim)
+
+        self.assertEqual(snapshot["images"][0]["photo_type"], PhotoType.LONG_SHOT)
+        self.assertEqual(snapshot["quality_review_ids"], [quality_review.id])
+        self.assertEqual(snapshot["resubmissions"][0]["entries"][0]["image_id"], entry_image.id)
 
     def test_claim_list_for_quality_user_only_returns_qa_pipeline_states(self):
         topcoat = create_product(name="Quality List Topcoat", warranty_years=5)
@@ -572,6 +827,31 @@ class WarrantyClaimAPITests(TestCase):
             set(visible_states),
         )
 
+    def test_quality_user_cannot_create_claim(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        images = [create_image(image_name=f"quality-claim/{index}.jpg") for index in range(3)]
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_cannot_create_claim_for_non_approved_registration(self):
         registration = create_registration(state=RegistrationState.SUBMITTED)
         paint_pair = create_paint_pair(registration=registration)
@@ -613,6 +893,33 @@ class WarrantyClaimAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_claim_with_more_than_required_photo_types_returns_400(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        images = [create_image(image_name=f"too-many-claim-photos/{index}.jpg") for index in range(4)]
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                "registration": registration.id,
+                "paint_pair": paint_pair.id,
+                "issue_type": "PEELING_CRACKING",
+                "affected_area_sqft": "100.00",
+                "notes": "",
+                "images": [
+                    {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                    {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                    {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                    {"image_id": images[3].id, "photo_type": PhotoType.LONG_SHOT},
+                ],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["images"][0], "Photo types must be unique.")
 
     def test_create_claim_with_valid_images(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -680,6 +987,34 @@ class WarrantyClaimAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_claim_invalid_terminal_transitions_return_400(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        self.client.force_authenticate(user=self.cs_user)
+        for index, claim_state in enumerate((ClaimState.APPROVED, ClaimState.REJECTED), start=1):
+            paint_pair = create_paint_pair(
+                registration=registration,
+                topcoat=create_product(name=f"Terminal Topcoat {index}", warranty_years=5),
+                basecoat=create_product(
+                    name=f"Terminal Basecoat {index}",
+                    product_type="BASECOAT",
+                    warranty_years=3,
+                ),
+            )
+            claim = create_claim(registration=registration, paint_pair=paint_pair, state=claim_state)
+
+            response = self.client.patch(
+                reverse("claim_detail", kwargs={"pk": claim.pk}),
+                {
+                    "action": "APPROVE",
+                    "notification_template": build_notification_template(title="Claim Approved"),
+                    "voucher": SimpleUploadedFile("claim-voucher.pdf", b"voucher-pdf", content_type="application/pdf"),
+                },
+                format="multipart",
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data["action"][0], f"Cannot transition claim from {claim_state} using APPROVE.")
+
     def test_claim_transition_send_to_qa(self):
         registration = create_registration(state=RegistrationState.APPROVED)
         paint_pair = create_paint_pair(registration=registration)
@@ -705,7 +1040,7 @@ class WarrantyClaimAPITests(TestCase):
         response = self.client.post(
             reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
             {
-                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PRODUCT_BATCH_NUMBER_PHOTO"],
+                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PROOF_OF_PURCHASE_INVOICE"],
                 "notes": "Need clearer technical evidence from the site.",
             },
             format="json",
@@ -730,6 +1065,24 @@ class WarrantyClaimAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_quality_request_info_rejects_removed_required_items(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_REVIEW)
+        self.client.force_authenticate(user=self.quality_user)
+
+        response = self.client.post(
+            reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
+            {
+                "required_items": ["PRODUCT_BATCH_NUMBER_PHOTO"],
+                "notes": "Need clearer technical evidence from the site.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("required_items", response.data)
 
     def test_quality_reject_moves_claim_to_qa_rejected(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -799,6 +1152,80 @@ class WarrantyClaimAPITests(TestCase):
         delay_mock.assert_called_once_with(
             claim.id, notification_template=build_notification_template(title="Claim Approved")
         )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                object_id=str(claim.id),
+                event_label="Claim approved",
+                changes__state__after=ClaimState.APPROVED,
+            ).exists()
+        )
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_claim_status_notification.delay")
+    def test_claim_double_final_approval_second_attempt_is_rejected(self, delay_mock):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_APPROVED)
+        self.client.force_authenticate(user=self.cs_user)
+
+        first_response = self.client.patch(
+            reverse("claim_detail", kwargs={"pk": claim.pk}),
+            {
+                "action": "APPROVE",
+                "notification_template": build_notification_template(title="Claim Approved"),
+                "voucher": SimpleUploadedFile("claim-voucher.pdf", b"voucher-pdf", content_type="application/pdf"),
+            },
+            format="multipart",
+        )
+        second_response = self.client.patch(
+            reverse("claim_detail", kwargs={"pk": claim.pk}),
+            {
+                "action": "APPROVE",
+                "notification_template": build_notification_template(title="Claim Approved Again"),
+                "voucher": SimpleUploadedFile("claim-voucher-2.pdf", b"voucher-pdf", content_type="application/pdf"),
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
+        delay_mock.assert_called_once()
+
+    @patch("dulux_chatbot.warranty.api.v1.serializers.send_claim_status_notification.delay")
+    def test_stale_claim_approval_is_revalidated_at_save_time(self, delay_mock):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.QA_APPROVED)
+        first_instance = WarrantyClaim.objects.get(pk=claim.pk)
+        stale_instance = WarrantyClaim.objects.get(pk=claim.pk)
+        request = SimpleNamespace(user=self.cs_user)
+
+        first_serializer = WarrantyClaimUpdateSerializer(
+            first_instance,
+            data={
+                "action": "APPROVE",
+                "notification_template": build_notification_template(title="Claim Approved"),
+                "voucher": SimpleUploadedFile("claim-voucher.pdf", b"voucher-pdf", content_type="application/pdf"),
+            },
+            partial=True,
+            context={"request": request},
+        )
+        stale_serializer = WarrantyClaimUpdateSerializer(
+            stale_instance,
+            data={
+                "action": "APPROVE",
+                "notification_template": build_notification_template(title="Claim Approved Again"),
+                "voucher": SimpleUploadedFile("claim-voucher-2.pdf", b"voucher-pdf", content_type="application/pdf"),
+            },
+            partial=True,
+            context={"request": request},
+        )
+
+        self.assertTrue(first_serializer.is_valid())
+        self.assertTrue(stale_serializer.is_valid())
+        first_serializer.save()
+        with self.assertRaises(serializers.ValidationError):
+            stale_serializer.save()
+        delay_mock.assert_called_once()
 
     @patch("dulux_chatbot.warranty.api.v1.serializers.send_claim_status_notification.delay")
     def test_final_reject_uses_claim_patch_from_qa_rejected_state(self, delay_mock):
@@ -892,27 +1319,44 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("voucher", response.data)
 
-    def test_claim_list_blocks_duplicate_when_claim_is_in_resubmit(self):
-        registration = create_registration(state=RegistrationState.APPROVED)
-        paint_pair = create_paint_pair(registration=registration)
-        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
-        image = create_image()
+    def test_claim_list_blocks_duplicate_across_all_blocking_states(self):
         self.client.force_authenticate(user=self.cs_user)
 
-        response = self.client.post(
-            self.list_url,
-            {
-                "registration": registration.id,
-                "paint_pair": paint_pair.id,
-                "issue_type": claim.issue_type,
-                "affected_area_sqft": "100.00",
-                "notes": "",
-                "images": [{"image_id": image.id, "photo_type": PhotoType.LONG_SHOT}],
-            },
-            format="json",
-        )
+        for index, claim_state in enumerate(CLAIM_BLOCKING_STATES, start=1):
+            registration = create_registration(
+                state=RegistrationState.APPROVED,
+                phone_number=f"92300988{index:04d}",
+            )
+            paint_pair = create_paint_pair(
+                registration=registration,
+                topcoat=create_product(name=f"Blocking Topcoat {index}", warranty_years=5),
+                basecoat=create_product(
+                    name=f"Blocking Basecoat {index}",
+                    product_type="BASECOAT",
+                    warranty_years=3,
+                ),
+            )
+            claim = create_claim(registration=registration, paint_pair=paint_pair, state=claim_state)
+            images = [create_image(image_name=f"duplicate-block/{index}-{photo_type}.jpg") for photo_type in range(3)]
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            response = self.client.post(
+                self.list_url,
+                {
+                    "registration": registration.id,
+                    "paint_pair": paint_pair.id,
+                    "issue_type": claim.issue_type,
+                    "affected_area_sqft": "100.00",
+                    "notes": "",
+                    "images": [
+                        {"image_id": images[0].id, "photo_type": PhotoType.LONG_SHOT},
+                        {"image_id": images[1].id, "photo_type": PhotoType.CLOSE_SHOT},
+                        {"image_id": images[2].id, "photo_type": PhotoType.ALTERNATE_ANGLE},
+                    ],
+                },
+                format="json",
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, claim_state)
 
     def test_cs_can_get_requested_claim_resubmission_fields(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -927,11 +1371,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         self.client.force_authenticate(user=self.cs_user)
 
@@ -942,10 +1386,10 @@ class WarrantyClaimAPITests(TestCase):
         self.assertEqual(response.data["claim_state"], ClaimState.RESUBMIT)
         self.assertEqual(response.data["quality_review_id"], quality_review.id)
         self.assertEqual(len(response.data["requested_items"]), 2)
-        self.assertEqual(response.data["requested_items"][0]["required_item"], "PRODUCT_BATCH_NUMBER_PHOTO")
+        self.assertEqual(response.data["requested_items"][0]["required_item"], "PROOF_OF_PURCHASE_INVOICE")
         self.assertEqual(response.data["requested_items"][0]["input_type"], "IMAGE")
-        self.assertEqual(response.data["requested_items"][1]["required_item"], "ISSUE_TIMELINE_DETAILS")
-        self.assertEqual(response.data["requested_items"][1]["input_type"], "TEXT")
+        self.assertEqual(response.data["requested_items"][1]["required_item"], "CLOSE_UP_DAMAGE_PHOTOS")
+        self.assertEqual(response.data["requested_items"][1]["input_type"], "IMAGE")
 
     def test_quality_user_cannot_get_csr_claim_resubmission_fields(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -956,6 +1400,29 @@ class WarrantyClaimAPITests(TestCase):
         response = self.client.get(reverse("claim_csr_resubmission", kwargs={"pk": claim.pk}))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cs_get_csr_claim_resubmission_fields_handles_legacy_removed_items(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type="REQUEST_INFO",
+            notes="Legacy request from before required-item cleanup.",
+            created_by=self.quality_user,
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+        )
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.get(reverse("claim_csr_resubmission", kwargs={"pk": claim.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["requested_items"][0]["required_item"], "PRODUCT_BATCH_NUMBER_PHOTO")
+        self.assertEqual(response.data["requested_items"][0]["label"], "Product Batch Number Photo")
+        self.assertEqual(response.data["requested_items"][0]["input_type"], "IMAGE")
 
     def test_cs_get_csr_claim_resubmission_fields_requires_resubmit_state(self):
         registration = create_registration(state=RegistrationState.APPROVED)
@@ -991,11 +1458,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1006,12 +1473,12 @@ class WarrantyClaimAPITests(TestCase):
                 "notes": "CSR collected all missing information from the customer.",
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     },
                     {
-                        "required_item": "ISSUE_TIMELINE_DETAILS",
-                        "response_text": "The issue first appeared after heavy rain last week.",
+                        "required_item": "CLOSE_UP_DAMAGE_PHOTOS",
+                        "image_id": image.id,
                     },
                 ],
             },
@@ -1038,11 +1505,11 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="ISSUE_TIMELINE_DETAILS",
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1052,7 +1519,7 @@ class WarrantyClaimAPITests(TestCase):
             {
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     }
                 ]
@@ -1075,7 +1542,7 @@ class WarrantyClaimAPITests(TestCase):
         )
         ClaimQualityReviewItem.objects.create(
             quality_review=quality_review,
-            required_item="PRODUCT_BATCH_NUMBER_PHOTO",
+            required_item="PROOF_OF_PURCHASE_INVOICE",
         )
         image = create_image()
         self.client.force_authenticate(user=self.cs_user)
@@ -1085,12 +1552,12 @@ class WarrantyClaimAPITests(TestCase):
             {
                 "entries": [
                     {
-                        "required_item": "PRODUCT_BATCH_NUMBER_PHOTO",
+                        "required_item": "PROOF_OF_PURCHASE_INVOICE",
                         "image_id": image.id,
                     },
                     {
-                        "required_item": "SITE_CONDITIONS_INFO",
-                        "response_text": "Sunny weather.",
+                        "required_item": "ADDITIONAL_PHOTOS_DIFFERENT_ANGLES",
+                        "image_id": image.id,
                     },
                 ]
             },
@@ -1124,7 +1591,17 @@ class WarrantyCardCountAPITests(TestCase):
         response = self.client.get(self.registration_counts_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"total_registrations": 0, "pending_review": 0, "approved": 0})
+        self.assertEqual(
+            response.data,
+            {
+                "total_registrations": 0,
+                "submitted": 0,
+                "in_progress": 0,
+                "resubmit": 0,
+                "approved": 0,
+                "rejected": 0,
+            },
+        )
 
     def test_registration_card_counts_support_date_and_agent_filters(self):
         registration_for_user = create_registration(state=RegistrationState.APPROVED)
@@ -1146,7 +1623,17 @@ class WarrantyCardCountAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"total_registrations": 1, "pending_review": 0, "approved": 1})
+        self.assertEqual(
+            response.data,
+            {
+                "total_registrations": 1,
+                "submitted": 0,
+                "in_progress": 0,
+                "resubmit": 0,
+                "approved": 1,
+                "rejected": 0,
+            },
+        )
 
     def test_claim_card_counts_return_expected_summary(self):
         topcoat = create_product(name="Counts Claim Topcoat", warranty_years=5)
@@ -1188,9 +1675,14 @@ class WarrantyCardCountAPITests(TestCase):
             response.data,
             {
                 "total_claims": 5,
-                "pending_cs_review": 2,
-                "forwarded_to_quality": 2,
-                "resolved": 1,
+                "submitted": 1,
+                "in_review": 0,
+                "qa_review": 1,
+                "resubmit": 1,
+                "qa_approved": 1,
+                "qa_rejected": 0,
+                "approved": 1,
+                "rejected": 0,
             },
         )
 
@@ -1239,8 +1731,10 @@ class WarrantyCardCountAPITests(TestCase):
             response.data,
             {
                 "total_in_queue": 3,
-                "awaiting_review": 1,
-                "info_requested": 1,
+                "qa_review": 1,
+                "resubmit": 1,
+                "qa_approved": 0,
+                "qa_rejected": 1,
                 "resolved_today": 1,
             },
         )
@@ -1254,7 +1748,7 @@ class WarrantyCardCountAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "date_from must be less than or equal to date_to.")
+        self.assertEqual(response.data["non_field_errors"][0], "date_from must be less than or equal to date_to.")
 
 
 class ClaimResubmissionSerializerTests(TestCase):
@@ -1314,6 +1808,30 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
     @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
     @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
     @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
+    def test_send_registration_status_notification_logs_certificate_generation_failure(
+        self,
+        certificate_mock,
+        client_mock,
+        delayed_menu_mock,
+    ):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        certificate_mock.side_effect = Exception("pdf failed")
+        notification_template = build_notification_template(title="Approved From UI")
+
+        send_registration_status_notification(registration.id, notification_template=notification_template)
+
+        registration.refresh_from_db()
+        self.assertFalse(bool(registration.warranty_certificate))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox[0].attachments), 0)
+        whatsapp_client = client_mock.return_value
+        whatsapp_client.send_text.assert_called_once()
+        whatsapp_client.send_document.assert_not_called()
+        delayed_menu_mock.assert_called_once()
+
+    @patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async")
+    @patch("dulux_chatbot.warranty.tasks.WhatsAppClient")
+    @patch("dulux_chatbot.warranty.tasks.generate_warranty_certificate")
     def test_send_registration_status_notification_for_rejected_registration(
         self,
         certificate_mock,
@@ -1347,6 +1865,22 @@ class WarrantyRegistrationNotificationTaskTests(TestCase):
         delayed_menu_mock.assert_called_once()
         self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
         self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
+
+    def test_send_registration_status_notification_email_failure_still_sends_whatsapp(self):
+        registration = create_registration(state=RegistrationState.REJECTED)
+        notification_template = build_notification_template(title="Rejected From UI")
+
+        with (
+            patch("dulux_chatbot.warranty.tasks.EmailMultiAlternatives.send", side_effect=Exception("smtp down")),
+            patch("dulux_chatbot.warranty.tasks.WhatsAppClient") as client_mock,
+            patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async") as delayed_menu_mock,
+        ):
+            send_registration_status_notification(registration.id, notification_template=notification_template)
+
+        whatsapp_client = client_mock.return_value
+        whatsapp_client.send_text.assert_called_once()
+        whatsapp_client.send_document.assert_not_called()
+        delayed_menu_mock.assert_called_once()
 
 
 class WarrantyClaimNotificationTaskTests(TestCase):
@@ -1399,3 +1933,21 @@ class WarrantyClaimNotificationTaskTests(TestCase):
         delayed_menu_mock.assert_called_once()
         self.assertEqual(delayed_menu_mock.call_args.kwargs["countdown"], 2)
         self.assertEqual(delayed_menu_mock.call_args.kwargs["args"][0], registration.phone_number)
+
+    def test_send_claim_status_notification_email_failure_still_sends_whatsapp(self):
+        registration = create_registration(state=RegistrationState.APPROVED)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.REJECTED)
+        notification_template = build_notification_template(title="Claim Rejected")
+
+        with (
+            patch("dulux_chatbot.warranty.tasks.EmailMultiAlternatives.send", side_effect=Exception("smtp down")),
+            patch("dulux_chatbot.warranty.tasks.WhatsAppClient") as client_mock,
+            patch("dulux_chatbot.warranty.tasks.send_whatsapp_main_menu.apply_async") as delayed_menu_mock,
+        ):
+            send_claim_status_notification(claim.id, notification_template=notification_template)
+
+        whatsapp_client = client_mock.return_value
+        whatsapp_client.send_text.assert_called_once()
+        whatsapp_client.send_document.assert_not_called()
+        delayed_menu_mock.assert_called_once()

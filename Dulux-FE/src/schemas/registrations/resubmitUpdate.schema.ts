@@ -49,7 +49,6 @@ export const resubmitUpdateSchema = z.object({
     .refine(value => (value ? phonePattern.test(value) : true), 'Phone number must be in 923XXXXXXXXX format.'),
   email: z.string().trim().optional(),
   city: z.string().trim().optional(),
-  province: z.string().trim().optional(),
   siteAddress: z.string().trim().optional(),
   purchaseDate: z.string().trim().optional(),
   purchaseDealer: z.string().trim().optional(),

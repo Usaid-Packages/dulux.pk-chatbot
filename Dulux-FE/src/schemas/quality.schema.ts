@@ -7,6 +7,7 @@ import { QUALITY_REQUIRED_ITEMS, QUALITY_TECHNICAL_REASONS } from '#/types/quali
 export const qualityQueueItemSchema = z.object({
   id: z.string().min(1),
   claimNumber: z.string().min(1),
+  registrationNumber: z.string().min(1),
   customerName: z.string().min(1),
   issueType: z.string().min(1),
   city: z.string().min(1),
@@ -26,9 +27,9 @@ export const qualityQueueStatsSchema = z.object({
 
 export const qualityCardCountsSchema = z.object({
   totalInQueue: z.number().int().nonnegative(),
-  awaitingReview: z.number().int().nonnegative(),
-  infoRequested: z.number().int().nonnegative(),
-  resolvedToday: z.number().int().nonnegative(),
+  qaReview: z.number().int().nonnegative(),
+  qaApproved: z.number().int().nonnegative(),
+  qaRejected: z.number().int().nonnegative(),
 });
 
 export const qualityQueueResponseSchema = z.object({
@@ -80,22 +81,10 @@ export const qualityRejectSchema = z.object({
     .max(NOTES_MAX_LENGTH, `Technical notes must be ${NOTES_MAX_LENGTH} characters or fewer.`),
 });
 
-export const qualityRequestInfoSchema = z
-  .object({
-    requiredItems: z.array(z.enum(QUALITY_REQUIRED_ITEMS)).min(1, 'Select at least one required item.'),
-    otherText: z.string().trim().max(300, 'Other details must be 300 characters or fewer.').optional(),
-    notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
-  })
-  .superRefine((values, ctx) => {
-    const hasOtherItem = values.requiredItems.includes('OTHER');
-    if (hasOtherItem && !values.otherText) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['otherText'],
-        message: 'Other details are required when OTHER is selected.',
-      });
-    }
-  });
+export const qualityRequestInfoSchema = z.object({
+  requiredItems: z.array(z.enum(QUALITY_REQUIRED_ITEMS)).min(1, 'Select at least one required item.'),
+  notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
+});
 
 export type QualityApproveFormValues = z.infer<typeof qualityApproveSchema>;
 export type QualityRejectFormValues = z.infer<typeof qualityRejectSchema>;

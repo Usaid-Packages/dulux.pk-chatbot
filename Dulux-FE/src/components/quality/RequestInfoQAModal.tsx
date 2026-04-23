@@ -41,19 +41,14 @@ export const RequestInfoQAModal = ({
     register,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<QualityRequestInfoFormValues>({
     resolver: zodResolver(qualityRequestInfoSchema),
     defaultValues: {
       requiredItems: [],
       notes: '',
-      otherText: '',
     },
   });
-
-  const selectedRequiredItems = watch('requiredItems');
-  const isOtherSelected = selectedRequiredItems.includes('OTHER');
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -115,21 +110,6 @@ export const RequestInfoQAModal = ({
             />
             {errors.requiredItems ? <p className='text-xs text-destructive'>{errors.requiredItems.message}</p> : null}
           </div>
-
-          {isOtherSelected ? (
-            <div className='space-y-2'>
-              <label htmlFor='qa-request-other-text' className='text-sm font-medium text-text-primary'>
-                Other Details
-              </label>
-              <Textarea
-                id='qa-request-other-text'
-                className='rounded-xl border-primary/20 bg-white'
-                {...register('otherText')}
-                aria-invalid={Boolean(errors.otherText)}
-              />
-              {errors.otherText ? <p className='text-xs text-destructive'>{errors.otherText.message}</p> : null}
-            </div>
-          ) : null}
 
           <div className='space-y-2'>
             <label htmlFor='qa-request-notes' className='text-sm font-medium text-text-primary'>

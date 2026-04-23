@@ -6,12 +6,12 @@ from dulux_chatbot.products.choices import Environment, ProductType
 
 class Product(TimeStampedModel):
     name = models.CharField(max_length=255)
-    product_type = models.CharField(max_length=10, choices=ProductType.choices)
+    product_type = models.CharField(max_length=10, choices=ProductType.choices, db_index=True)
     warranty_years = models.PositiveSmallIntegerField()
     features = models.TextField()
     coverage_details = models.TextField()
     webpage_url = models.URLField()
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     basecoats = models.ManyToManyField(
         "self",
         through="ProductBasecoat",

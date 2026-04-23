@@ -19,6 +19,8 @@ import {
   SelectValue,
   Skeleton,
 } from '#/components/ui';
+import { APP_USER_ROLES, normalizeAppUserRole } from '#/constants';
+import { useAuthContext } from '#/context';
 import {
   useCreateSurfaceTypeMutation,
   useDeleteSurfaceTypeMutation,
@@ -88,7 +90,10 @@ const buildSurfaceLinkedCountMap = (products: Product[]): Record<number, number>
 };
 
 export const ProductsListPage = (): React.JSX.Element => {
+  const { user } = useAuthContext();
   const [searchParams, setSearchParams] = useSearchParams();
+  const normalizedRole = normalizeAppUserRole(user?.role);
+  const canManageProducts = normalizedRole === APP_USER_ROLES.ADMIN || normalizedRole === APP_USER_ROLES.CS;
 
   const tabParam = searchParams.get('tab');
   const activeTab: ProductTab = isProductTab(tabParam) ? tabParam : 'products';
@@ -460,7 +465,7 @@ export const ProductsListPage = (): React.JSX.Element => {
 
           {!productQuery.isLoading && !productQuery.isError && products.length > 0 ? (
             <>
-              <ProductTable products={products} />
+              <ProductTable canEdit={canManageProducts} products={products} />
 
               <section className='wf-pagination-panel'>
                 <p className='text-sm text-text-muted'>
@@ -510,13 +515,15 @@ export const ProductsListPage = (): React.JSX.Element => {
                   <SelectItem value='EXTERIOR'>Exterior</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                type='button'
-                className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
-                onClick={openCreateSurfaceTypeModal}
-              >
-                Add Surface Type
-              </Button>
+              {canManageProducts ? (
+                <Button
+                  type='button'
+                  className='h-10 rounded-xl border border-[#0b1f3a] bg-[#0b1f3a] text-white shadow-[0_12px_24px_rgba(8,24,46,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#08182e] hover:shadow-[0_16px_30px_rgba(8,24,46,0.45)]'
+                  onClick={openCreateSurfaceTypeModal}
+                >
+                  Add Surface Type
+                </Button>
+              ) : null}
             </div>
           </section>
 
@@ -555,6 +562,7 @@ export const ProductsListPage = (): React.JSX.Element => {
           {!surfaceTypesQuery.isLoading && !surfaceTypesQuery.isError && surfaceTypes.length > 0 ? (
             <>
               <SurfaceTypeTable
+                canManage={canManageProducts}
                 surfaceTypes={surfaceTypes}
                 linkedProductCountMap={linkedProductCountMap}
                 onEdit={openEditSurfaceTypeModal}
@@ -589,39 +597,43 @@ export const ProductsListPage = (): React.JSX.Element => {
         </>
       )}
 
-      <SurfaceTypeModal
-        isOpen={isSurfaceTypeModalOpen}
-        isSubmitting={createSurfaceTypeMutation.isPending || updateSurfaceTypeMutation.isPending}
-        title={surfaceTypeEditTarget ? 'Edit Surface Type' : 'Add Surface Type'}
-        description='Provide a name and category for this surface type.'
-        initialValues={
-          surfaceTypeEditTarget
-            ? {
-                name: surfaceTypeEditTarget.name,
-                environment: surfaceTypeEditTarget.environment,
-                description: '',
-                status: 'ACTIVE',
-              }
-            : undefined
-        }
-        submitLabel={surfaceTypeEditTarget ? 'Save Changes' : 'Add Surface Type'}
-        onClose={closeSurfaceTypeModal}
-        onSubmit={submitSurfaceType}
-      />
+      {canManageProducts ? (
+        <>
+          <SurfaceTypeModal
+            isOpen={isSurfaceTypeModalOpen}
+            isSubmitting={createSurfaceTypeMutation.isPending || updateSurfaceTypeMutation.isPending}
+            title={surfaceTypeEditTarget ? 'Edit Surface Type' : 'Add Surface Type'}
+            description='Provide a name and category for this surface type.'
+            initialValues={
+              surfaceTypeEditTarget
+                ? {
+                    name: surfaceTypeEditTarget.name,
+                    environment: surfaceTypeEditTarget.environment,
+                    description: '',
+                    status: 'ACTIVE',
+                  }
+                : undefined
+            }
+            submitLabel={surfaceTypeEditTarget ? 'Save Changes' : 'Add Surface Type'}
+            onClose={closeSurfaceTypeModal}
+            onSubmit={submitSurfaceType}
+          />
 
-      <DeleteConfirmModal
-        isOpen={Boolean(surfaceTypeDeleteTarget)}
-        isSubmitting={deleteSurfaceTypeMutation.isPending}
-        title='Delete Surface Type'
-        description={
-          surfaceTypeDeleteTarget
-            ? `Are you sure you want to delete "${surfaceTypeDeleteTarget.name}"? This action cannot be undone.`
-            : 'Are you sure you want to delete this surface type?'
-        }
-        confirmLabel='Delete Surface Type'
-        onClose={closeDeleteSurfaceTypeModal}
-        onConfirm={handleDeleteSurfaceType}
-      />
+          <DeleteConfirmModal
+            isOpen={Boolean(surfaceTypeDeleteTarget)}
+            isSubmitting={deleteSurfaceTypeMutation.isPending}
+            title='Delete Surface Type'
+            description={
+              surfaceTypeDeleteTarget
+                ? `Are you sure you want to delete "${surfaceTypeDeleteTarget.name}"? This action cannot be undone.`
+                : 'Are you sure you want to delete this surface type?'
+            }
+            confirmLabel='Delete Surface Type'
+            onClose={closeDeleteSurfaceTypeModal}
+            onConfirm={handleDeleteSurfaceType}
+          />
+        </>
+      ) : null}
     </section>
   );
 };

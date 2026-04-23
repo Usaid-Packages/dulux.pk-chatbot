@@ -2,14 +2,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useDebouncedValue, useQualityQueue } from '#/hooks';
+<<<<<<< test/test-auth-quality-page
 import type { QualityQueueItem } from '#/types/quality.types';
 import { QualityListPage } from '../QualityListPage';
 
 let searchParamsState = new URLSearchParams('search=ali&page=2&status=all');
+=======
+import { QualityListPage } from '../QualityListPage';
+
+>>>>>>> test/all-test-cases
 const mockSetSearchParams = vi.fn();
 const mockSetStatusFilter = vi.fn();
 const mockSetPage = vi.fn();
 
+<<<<<<< test/test-auth-quality-page
 const QUALITY_ITEMS: QualityQueueItem[] = [
   {
     id: 'claim-1',
@@ -36,12 +42,16 @@ const QUALITY_ITEMS: QualityQueueItem[] = [
     submittedAt: '2026-04-16T09:10:00Z',
   },
 ];
+=======
+let searchParams = new URLSearchParams();
+>>>>>>> test/all-test-cases
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
 
   return {
     ...actual,
+<<<<<<< test/test-auth-quality-page
     useSearchParams: () => [searchParamsState, mockSetSearchParams] as const,
   };
 });
@@ -67,10 +77,37 @@ const mockedUseDebouncedValue = vi.mocked(useDebouncedValue);
 describe('QualityListPage', () => {
   beforeEach(() => {
     searchParamsState = new URLSearchParams('search=ali&page=2&status=all');
+=======
+    useSearchParams: () => [searchParams, mockSetSearchParams],
+  };
+});
+
+vi.mock('#/components/quality', async () => {
+  const actual = await vi.importActual('#/components/quality');
+
+  return {
+    ...actual,
+    QualityQueueTable: ({ items }: { items: Array<{ id: string }> }) => <div>Quality Table {items.length}</div>,
+  };
+});
+
+vi.mock('#/hooks', () => ({
+  useDebouncedValue: vi.fn(),
+  useQualityQueue: vi.fn(),
+}));
+
+const mockedUseDebouncedValue = vi.mocked(useDebouncedValue);
+const mockedUseQualityQueue = vi.mocked(useQualityQueue);
+
+describe('QualityListPage', () => {
+  beforeEach(() => {
+    searchParams = new URLSearchParams();
+>>>>>>> test/all-test-cases
     mockSetSearchParams.mockReset();
     mockSetStatusFilter.mockReset();
     mockSetPage.mockReset();
 
+<<<<<<< test/test-auth-quality-page
     mockedUseDebouncedValue.mockImplementation((value: string) => value);
 
     mockedUseQualityQueue.mockReturnValue({
@@ -100,11 +137,43 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 2, pageSize: 10 },
+=======
+    mockedUseDebouncedValue.mockImplementation(value => value);
+    mockedUseQualityQueue.mockReturnValue({
+      qualityQueueQuery: {
+        data: {
+          items: [
+            {
+              id: 'Q-1',
+              claimNumber: 'CLM-1',
+              customerName: 'John',
+              city: 'Karachi',
+            },
+          ],
+          total: 12,
+        },
+        isLoading: false,
+        isError: false,
+      },
+      cardCountsQuery: {
+        data: {
+          totalInQueue: 9,
+          awaitingReview: 3,
+          infoRequested: 2,
+          resolvedToday: 4,
+        },
+      },
+      filters: {
+        status: 'all',
+        page: 1,
+      },
+>>>>>>> test/all-test-cases
       setStatusFilter: mockSetStatusFilter,
       setPage: mockSetPage,
     } as unknown as ReturnType<typeof useQualityQueue>);
   });
 
+<<<<<<< test/test-auth-quality-page
   it('renders summary cards and filtered table rows', () => {
     render(<QualityListPage />);
 
@@ -153,6 +222,34 @@ describe('QualityListPage', () => {
         isLoading: false,
         isError: true,
         error: new Error('Queue timeout'),
+=======
+  it('renders stats and table', () => {
+    render(<QualityListPage />);
+
+    expect(screen.getByText('Total In Queue')).toBeInTheDocument();
+    expect(screen.getByText('9')).toBeInTheDocument();
+    expect(screen.getByText('Quality Table 1')).toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+  });
+
+  it('changes status filter and next page', () => {
+    render(<QualityListPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'QA Review' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(mockSetStatusFilter).toHaveBeenCalledWith('forwarded');
+    expect(mockSetPage).toHaveBeenCalledWith(2);
+  });
+
+  it('renders error state', () => {
+    mockedUseQualityQueue.mockReturnValue({
+      qualityQueueQuery: {
+        data: null,
+        isLoading: false,
+        isError: true,
+        error: new Error('Queue API failed'),
+>>>>>>> test/all-test-cases
       },
       cardCountsQuery: {
         data: {
@@ -162,6 +259,7 @@ describe('QualityListPage', () => {
           resolvedToday: 0,
         },
       },
+<<<<<<< test/test-auth-quality-page
       filters: { status: 'all', page: 1, pageSize: 10 },
       setStatusFilter: mockSetStatusFilter,
       setPage: mockSetPage,
@@ -199,12 +297,23 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 1, pageSize: 10 },
+=======
+      filters: {
+        status: 'all',
+        page: 1,
+      },
+>>>>>>> test/all-test-cases
       setStatusFilter: mockSetStatusFilter,
       setPage: mockSetPage,
     } as unknown as ReturnType<typeof useQualityQueue>);
 
     render(<QualityListPage />);
 
+<<<<<<< test/test-auth-quality-page
     expect(screen.getByText('No claims in quality queue')).toBeInTheDocument();
+=======
+    expect(screen.getByText('Failed to load quality queue')).toBeInTheDocument();
+    expect(screen.getByText('Queue API failed')).toBeInTheDocument();
+>>>>>>> test/all-test-cases
   });
 });

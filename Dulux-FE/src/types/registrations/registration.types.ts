@@ -54,7 +54,6 @@ export interface RegistrationDetail {
   phoneNumber: string;
   email: string;
   city: string;
-  province: string;
   siteAddress: string;
   purchaseDate: string;
   purchaseDealer: string;
@@ -82,8 +81,9 @@ export interface RegistrationsListResponse {
 
 export interface RegistrationCardCounts {
   totalRegistrations: number;
-  pendingReview: number;
+  submitted: number;
   approved: number;
+  rejected: number;
 }
 
 export interface RegistrationsQueryParams extends Record<string, unknown> {
@@ -105,7 +105,6 @@ export type ResubmissionFieldName =
   | 'phone_number'
   | 'email'
   | 'city'
-  | 'province'
   | 'site_address'
   | 'purchase_date'
   | 'purchase_dealer'
@@ -174,7 +173,6 @@ export interface RegistrationDetailApiResponse {
   phoneNumber?: string;
   email?: string;
   city?: string;
-  province?: string;
   siteAddress?: string;
   purchaseDate?: string;
   purchaseDealer?: string;
@@ -213,7 +211,21 @@ export interface RegistrationResubmitUpdatePayload extends Record<string, unknow
   phoneNumber?: string;
   email?: string;
   city?: string;
-  province?: string;
+  siteAddress?: string;
+  purchaseDate?: string;
+  purchaseDealer?: string;
+  purchaseDealerCity?: string;
+  purchaseDealerAddress?: string;
+  postalCode?: string;
+  paintPairs?: RegistrationResubmitUpdatePaintPair[];
+  paintPairInvoices?: RegistrationResubmitUpdateInvoice[];
+}
+
+export interface RegistrationEditPayload extends Record<string, unknown> {
+  customerName?: string;
+  phoneNumber?: string;
+  email?: string;
+  city?: string;
   siteAddress?: string;
   purchaseDate?: string;
   purchaseDealer?: string;

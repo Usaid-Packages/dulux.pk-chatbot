@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
-import { MANUAL_REGISTRATION_PROVINCE_OPTIONS, REGISTRATION_INVOICE_TYPES } from '#/constants';
+import { REGISTRATION_INVOICE_TYPES } from '#/constants';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { resubmitUpdateSchema, type ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
@@ -38,8 +38,7 @@ const FIELD_LABELS: Record<RegistrationRejectionField['fieldName'], string> = {
   customer_name: 'Full Name',
   phone_number: 'Phone Number',
   email: 'Email',
-  city: 'City',
-  province: 'Province',
+  city: 'Customer City',
   site_address: 'Site Address',
   purchase_date: 'Purchase Date',
   purchase_dealer: 'Dealer Name',
@@ -55,7 +54,6 @@ const REQUESTED_FIELD_ORDER: RegistrationRejectionField['fieldName'][] = [
   'phone_number',
   'email',
   'city',
-  'province',
   'site_address',
   'purchase_date',
   'purchase_dealer',
@@ -209,7 +207,6 @@ export const ResubmitUpdateModal = ({
       phoneNumber: registration.phoneNumber,
       email: registration.email,
       city: registration.city,
-      province: registration.province,
       siteAddress: registration.siteAddress,
       purchaseDate: registration.purchaseDate,
       purchaseDealer: registration.purchaseDealer,
@@ -226,6 +223,7 @@ export const ResubmitUpdateModal = ({
     name: 'paintPairs',
   });
   const watchedPaintPairs = watch('paintPairs') ?? [];
+  const selectedInvoiceFiles = watch('invoiceFiles') ?? [];
   const selectedTopcoatIds = useMemo(() => {
     return watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0);
   }, [watchedPaintPairs]);
@@ -401,38 +399,13 @@ export const ResubmitUpdateModal = ({
 
             {requestedFieldNames.includes('city') ? (
               <div>
-                <label className='text-sm font-medium text-text-primary'>City</label>
+                <label className='text-sm font-medium text-text-primary'>Customer City</label>
                 <Input
                   placeholder='e.g. Lahore'
                   maxLength={CITY_MAX_LENGTH}
                   {...cityField}
                   onChange={handleCityChange}
                 />
-              </div>
-            ) : null}
-
-            {requestedFieldNames.includes('province') ? (
-              <div>
-                <label className='text-sm font-medium text-text-primary'>Province</label>
-                <Controller
-                  control={control}
-                  name='province'
-                  render={({ field: provinceField }) => (
-                    <Select value={provinceField.value ?? ''} onValueChange={provinceField.onChange}>
-                      <SelectTrigger aria-label='Select province'>
-                        <SelectValue placeholder='Select province' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MANUAL_REGISTRATION_PROVINCE_OPTIONS.map(province => (
-                          <SelectItem key={province} value={province}>
-                            {province}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.province ? <p className='mt-1 text-xs text-destructive'>{errors.province.message}</p> : null}
               </div>
             ) : null}
 
@@ -642,14 +615,29 @@ export const ResubmitUpdateModal = ({
                   render={({ field }) => (
                     <Input
                       type='file'
+                      className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
                       accept='image/png,image/jpeg,image/jpg'
                       multiple
+                      ref={field.ref}
+                      onBlur={field.onBlur}
                       onChange={event => {
                         handleInvoiceFilesChange(field.onChange, event);
                       }}
                     />
                   )}
                 />
+                {selectedInvoiceFiles.length > 0 ? (
+                  <div className='flex flex-col gap-1'>
+                    {selectedInvoiceFiles.map(file => (
+                      <span
+                        key={`${file.name}-${file.size}-${file.lastModified}`}
+                        className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'
+                      >
+                        {file.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 <p className='text-xs text-text-muted'>
                   Existing invoices: {registration.paintPairInvoices.length} ({REGISTRATION_INVOICE_TYPES.TOPCOAT}/
                   {REGISTRATION_INVOICE_TYPES.BASECOAT})

@@ -1,3 +1,4 @@
+import hashlib
 import hmac
 import logging
 
@@ -7,13 +8,25 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.handlers.message_parser import parse_incoming_message
 from dulux_chatbot.chatbot.models import ProcessedMessage, WhatsAppSession
-from dulux_chatbot.chatbot.services.whatsapp_client import WhatsAppClient
+from dulux_chatbot.chatbot.tasks import dispatch_whatsapp_message
 
 
 logger = logging.getLogger("dulux_chatbot")
+META_SIGNATURE_PREFIX = "sha256="
+
+
+def _webhook_signature_is_valid(*, raw_body: bytes, signature_header: str, app_secret: str) -> bool:
+    if not signature_header.startswith(META_SIGNATURE_PREFIX):
+        return False
+    expected_signature = hmac.new(
+        app_secret.encode("utf-8"),
+        msg=raw_body,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    received_signature = signature_header[len(META_SIGNATURE_PREFIX) :]
+    return hmac.compare_digest(received_signature, expected_signature)
 
 
 class WhatsAppWebhookView(APIView):
@@ -30,6 +43,17 @@ class WhatsAppWebhookView(APIView):
         return HttpResponse(status=403)
 
     def post(self, request, *_args, **_kwargs):
+        app_secret = settings.WHATSAPP_APP_SECRET
+        if app_secret:
+            signature_header = request.META.get("HTTP_X_HUB_SIGNATURE_256", "")
+            if not _webhook_signature_is_valid(
+                raw_body=request.body,
+                signature_header=signature_header,
+                app_secret=app_secret,
+            ):
+                logger.warning("WhatsApp webhook rejected due to invalid signature.")
+                return Response(status=403)
+
         message = parse_incoming_message(request.data)
         if message is None:
             return Response(status=200)
@@ -47,9 +71,5 @@ class WhatsAppWebhookView(APIView):
             return Response(status=200)
 
         session, _ = WhatsAppSession.objects.get_or_create(phone_number=phone_number)
-        try:
-            dispatch(session=session, message=message, client=WhatsAppClient())
-        except Exception:
-            logger.exception("WhatsApp webhook dispatch failed.")
-            WhatsAppClient().send_text(phone_number, "Something went wrong. Please try again later.")
+        dispatch_whatsapp_message.delay(session.id, message)
         return Response({"processed_message_id": processed_message.id}, status=200)
