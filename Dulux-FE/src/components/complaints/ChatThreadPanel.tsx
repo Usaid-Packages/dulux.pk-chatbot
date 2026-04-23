@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Badge, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
 import type { ChatAttachment, ConversationThread } from '#/types/complaints';
-import { cn } from '#/utils';
+import { cn, formatPkDateTime } from '#/utils';
 import { CONVERSATION_CHANNEL_LABELS, CONVERSATION_STATUS_CLASSNAMES, CONVERSATION_STATUS_LABELS } from './constants';
 import { MessageComposer } from './MessageComposer';
 
@@ -16,20 +16,6 @@ interface ChatThreadPanelProps {
   isSending: boolean;
   onSendMessage: (message: string) => void;
 }
-
-const formatTime = (isoDateTime: string): string => {
-  const parsed = new Date(isoDateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    return '--';
-  }
-
-  return new Intl.DateTimeFormat('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    day: 'numeric',
-    month: 'short',
-  }).format(parsed);
-};
 
 const getTicketHeading = (thread: ConversationThread): string => {
   const normalizedTicketId = thread.ticketId.trim();
@@ -201,7 +187,7 @@ export const ChatThreadPanel = ({
                 </div>
               ) : null}
               <p className={cn('mt-1 text-[11px]', isCustomerMessage ? 'text-text-hint' : 'text-chat-agentTimeColor')}>
-                {message.senderName} · {formatTime(message.createdAt)}
+                {message.senderName} · {formatPkDateTime(message.createdAt)}
               </p>
             </article>
           );

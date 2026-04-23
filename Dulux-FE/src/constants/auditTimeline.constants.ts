@@ -1,12 +1,3 @@
-const AUDIT_TIMELINE_LOCALE = 'en-PK';
-
-export const AUDIT_TIMELINE_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(AUDIT_TIMELINE_LOCALE, {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
 export const AUDIT_TIMELINE_LONG_TEXT_LIMIT = 180;
 export const AUDIT_TIMELINE_JSON_PREVIEW_LIMIT = 240;
 

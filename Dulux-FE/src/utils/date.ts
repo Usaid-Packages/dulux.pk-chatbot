@@ -12,9 +12,28 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-GB', {
   minute: '2-digit',
 });
 
-export const formatDisplayDate = (dateValue: string): string => {
+const PK_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const PK_AUDIT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-PK', {
+  day: '2-digit',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const parseTimestamp = (dateValue: string): number | null => {
   const timestamp = Date.parse(dateValue);
-  if (Number.isNaN(timestamp)) {
+  return Number.isNaN(timestamp) ? null : timestamp;
+};
+
+export const formatDisplayDate = (dateValue: string): string => {
+  const timestamp = parseTimestamp(dateValue);
+  if (timestamp === null) {
     return 'Unknown';
   }
 
@@ -22,10 +41,36 @@ export const formatDisplayDate = (dateValue: string): string => {
 };
 
 export const formatDisplayDateTime = (dateValue: string): string => {
-  const timestamp = Date.parse(dateValue);
-  if (Number.isNaN(timestamp)) {
+  const timestamp = parseTimestamp(dateValue);
+  if (timestamp === null) {
     return 'Unknown';
   }
 
   return DATE_TIME_FORMATTER.format(timestamp);
+};
+
+export const formatPkDateTime = (dateValue: string, fallback = '--'): string => {
+  const timestamp = parseTimestamp(dateValue);
+  if (timestamp === null) {
+    return fallback;
+  }
+
+  return PK_DATE_TIME_FORMATTER.format(timestamp);
+};
+
+export const formatPkDateTimeOptional = (dateValue?: string, fallback = '--'): string => {
+  if (!dateValue) {
+    return fallback;
+  }
+
+  return formatPkDateTime(dateValue, fallback);
+};
+
+export const formatPkAuditDateTime = (dateValue: string, fallback = 'Invalid timestamp'): string => {
+  const timestamp = parseTimestamp(dateValue);
+  if (timestamp === null) {
+    return fallback;
+  }
+
+  return PK_AUDIT_DATE_TIME_FORMATTER.format(timestamp);
 };

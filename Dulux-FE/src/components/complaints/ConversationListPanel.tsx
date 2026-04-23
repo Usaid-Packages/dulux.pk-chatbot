@@ -13,7 +13,7 @@ import {
   Skeleton,
 } from '#/components/ui';
 import type { ConversationListItem, ConversationStatusFilter } from '#/types/complaints';
-import { cn } from '#/utils';
+import { cn, formatPkDateTime } from '#/utils';
 import {
   CONVERSATION_CHANNEL_LABELS,
   CONVERSATION_STATUS_CLASSNAMES,
@@ -37,20 +37,6 @@ interface ConversationListPanelProps {
   onSearchChange: (search: string) => void;
   onThreadSelect: (threadId: string) => void;
 }
-
-const formatConversationTime = (isoDateTime: string): string => {
-  const parsed = new Date(isoDateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    return '--';
-  }
-
-  return new Intl.DateTimeFormat('en-PK', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed);
-};
 
 const isConversationStatusFilter = (value: string): value is ConversationStatusFilter => {
   return CONVERSATION_STATUS_TABS.some(tab => tab.value === value);
@@ -177,7 +163,7 @@ export const ConversationListPanel = ({
                         <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
                       </div>
                       <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>
-                        {formatConversationTime(item.lastMessageAt)}
+                        {formatPkDateTime(item.lastMessageAt)}
                       </p>
                     </div>
 

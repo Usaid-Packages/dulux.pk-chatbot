@@ -590,7 +590,7 @@ Deliverables:
 49. `DRY-011` [✅ DONE 2026-04-23]: Introduce centralized toast/message constants (`src/constants/messages.ts`) and migrate repeated literals. (Covers Findings: #21, #39)
 50. `DRY-012` [✅ DONE 2026-04-23]: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
 51. `RULE-009` [✅ DONE 2026-04-22]: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
-52. `DRY-013`: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
+52. `DRY-013` [✅ DONE 2026-04-23]: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
 53. `RULE-010` [✅ DONE 2026-04-22]: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
 
 ## 5) Finding-to-Ticket Coverage (Detailed)
@@ -699,6 +699,7 @@ Deliverables:
 - Scope: remove duplicated claims/quality date wrappers.
 - Done when: formatters resolve through shared date utility presets.
 - Status: `DRY-006` ✅ Done (2026-04-22).
+- Status: `DRY-013` ✅ Done (2026-04-23) by routing remaining domain wrappers (complaints, audit timeline, resubmit-note timestamp) through shared `src/utils/date.ts` presets.
 
 24. Finding #24 -> `ARCH-002`, `ARCH-003`, `ARCH-005`, `ARCH-009`:
 - Scope: split complex forms into controller hooks + section components.
@@ -736,6 +737,7 @@ Deliverables:
 32. Finding #32 -> `PERF-007`, `DRY-013`:
 - Scope: stop recreating formatter instances in complaints views.
 - Done when: formatter instances/presets are shared and reused.
+- Status: `DRY-013` ✅ Done (2026-04-23) by replacing component-local `Intl.DateTimeFormat` construction in complaints panels with shared `src/utils/date.ts` helpers.
 
 33. Finding #33 -> `PERF-008`:
 - Scope: precompute audit timeline row view-models.
@@ -781,6 +783,7 @@ Deliverables:
 42. Finding #42 -> `DRY-013`:
 - Scope: unify date/time wrappers via shared presets/utilities.
 - Done when: local duplicate wrappers are removed from domain components.
+- Status: `DRY-013` ✅ Done (2026-04-23).
 
 ## 6) Audit Commands (Repeatable)
 
