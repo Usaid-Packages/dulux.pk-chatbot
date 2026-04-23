@@ -2,6 +2,7 @@ import { REQUESTED_FIELD_ORDER } from '#/constants/registrations/resubmitUpdate.
 import type { ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail, RegistrationRejectionField, RequestedCorrectionNote } from '#/types/registrations';
+import { formatPkDateTime } from '#/utils/date';
 import { normalizePkPhoneWithPrefix, sanitizeLettersOnly } from '../formSanitizers';
 
 export const getRequestedFieldNames = (
@@ -16,17 +17,7 @@ const formatNoteTimestamp = (value: string): string => {
     return '';
   }
 
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat('en-PK', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsedDate);
+  return formatPkDateTime(value, '');
 };
 
 export const getRequestedCorrectionNotes = (

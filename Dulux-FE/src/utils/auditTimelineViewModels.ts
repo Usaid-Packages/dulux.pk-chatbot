@@ -1,6 +1,5 @@
 import {
   AUDIT_TIMELINE_ASSIGNEE_CHANGE_FIELDS,
-  AUDIT_TIMELINE_DATE_TIME_FORMATTER,
   AUDIT_TIMELINE_FIELD_LABEL_OVERRIDES,
   AUDIT_TIMELINE_ID_LIST_CHANGE_FIELDS,
   AUDIT_TIMELINE_IMAGE_CHANGE_FIELDS,
@@ -19,15 +18,10 @@ import type {
   StatusBadgeVariant,
   TimelineImagePreviewItem,
 } from '#/types/auditLogs';
+import { formatPkAuditDateTime } from '#/utils/date';
 
 const formatDateTime = (isoDateTime: string): string => {
-  const parsedDate = new Date(isoDateTime);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return 'Invalid timestamp';
-  }
-
-  return AUDIT_TIMELINE_DATE_TIME_FORMATTER.format(parsedDate);
+  return formatPkAuditDateTime(isoDateTime);
 };
 
 const formatFieldLabel = (fieldName: string): string => {
