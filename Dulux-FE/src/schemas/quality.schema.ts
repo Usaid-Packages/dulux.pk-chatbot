@@ -27,9 +27,9 @@ export const qualityQueueStatsSchema = z.object({
 
 export const qualityCardCountsSchema = z.object({
   totalInQueue: z.number().int().nonnegative(),
-  awaitingReview: z.number().int().nonnegative(),
-  infoRequested: z.number().int().nonnegative(),
-  resolvedToday: z.number().int().nonnegative(),
+  qaReview: z.number().int().nonnegative(),
+  qaApproved: z.number().int().nonnegative(),
+  qaRejected: z.number().int().nonnegative(),
 });
 
 export const qualityQueueResponseSchema = z.object({

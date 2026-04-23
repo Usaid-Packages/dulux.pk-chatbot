@@ -104,9 +104,9 @@ export interface ClaimsListResponse {
 
 export interface ClaimsCardCounts {
   totalClaims: number;
-  pendingCsReview: number;
-  forwardedToQuality: number;
-  resolved: number;
+  submitted: number;
+  approved: number;
+  rejected: number;
 }
 
 export interface CreateClaimPayload extends Record<string, unknown> {

@@ -75,9 +75,9 @@ export interface QualityQueueResponse {
 
 export interface QualityCardCounts {
   totalInQueue: number;
-  awaitingReview: number;
-  infoRequested: number;
-  resolvedToday: number;
+  qaReview: number;
+  qaApproved: number;
+  qaRejected: number;
 }
 
 export interface QualityApprovePayload extends Record<string, unknown> {
