@@ -7,6 +7,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 
 import { REQUESTED_FIELD_ORDER } from '#/constants/registrations';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { resubmitUpdateSchema, type ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail, RegistrationRejectionField, RequestedCorrectionNote } from '#/types/registrations';
@@ -16,8 +17,8 @@ import {
   getRegistrationTopcoatFallbackOptions,
   getRequestedCorrectionNotes,
   mergeUniqueProductOptions,
-  removeDigits,
-  toPkPhoneWithPrefix,
+  normalizePkPhoneWithPrefix,
+  sanitizeLettersOnly,
 } from '#/utils';
 
 interface UseResubmitUpdateFormParams {
@@ -50,6 +51,7 @@ export interface UseResubmitUpdateFormResult {
   handlePhoneNumberChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handlePhoneNumberFocus: (event: FocusEvent<HTMLInputElement>) => void;
   handleModalClose: () => void;
+  handleModalOpenChange: (open: boolean) => void;
   handleAddPaintPair: () => void;
   handleRemovePaintPair: (event: MouseEvent<HTMLButtonElement>) => void;
   buildInvoiceFilesChangeHandler: (onChange: (value: File[]) => void) => (event: ChangeEvent<HTMLInputElement>) => void;
@@ -185,22 +187,22 @@ export const useResubmitUpdateForm = ({
   const purchaseDealerCityField = register('purchaseDealerCity');
 
   const handleCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     cityField.onChange(event);
   };
 
   const handlePurchaseDealerChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerField.onChange(event);
   };
 
   const handlePurchaseDealerCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = removeDigits(event.currentTarget.value);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     purchaseDealerCityField.onChange(event);
   };
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = toPkPhoneWithPrefix(event.currentTarget.value);
+    event.currentTarget.value = normalizePkPhoneWithPrefix(event.currentTarget.value);
     phoneNumberField.onChange(event);
   };
 
@@ -211,10 +213,14 @@ export const useResubmitUpdateForm = ({
     }
   };
 
-  const handleModalClose = (): void => {
+  const handleResubmitUpdateModalReset = (): void => {
     reset(defaultValues);
-    onClose();
   };
+
+  const { handleDialogClose, handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: handleResubmitUpdateModalReset,
+  });
 
   const handleAddPaintPair = (): void => {
     append({
@@ -260,7 +266,8 @@ export const useResubmitUpdateForm = ({
     handlePurchaseDealerCityChange,
     handlePhoneNumberChange,
     handlePhoneNumberFocus,
-    handleModalClose,
+    handleModalClose: handleDialogClose,
+    handleModalOpenChange: handleDialogOpenChange,
     handleAddPaintPair,
     handleRemovePaintPair,
     buildInvoiceFilesChangeHandler,

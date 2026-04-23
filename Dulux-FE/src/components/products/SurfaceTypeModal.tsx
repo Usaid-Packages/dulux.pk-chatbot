@@ -21,6 +21,7 @@ import {
   Textarea,
 } from '#/components/ui';
 import { SURFACE_TYPE_FORM_MAX_LENGTHS } from '#/constants';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { surfaceTypeFormSchema, type SurfaceTypeFormSchemaValues } from '#/schemas/products';
 import { productEnvironments, type SurfaceTypeFormValues } from '#/types/products';
 
@@ -75,19 +76,21 @@ export const SurfaceTypeModal = ({
     }
   }, [initialValues, isOpen, reset]);
 
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset(initialValues ?? DEFAULT_VALUES);
-      onClose();
-    }
+  const handleSurfaceTypeModalReset = (): void => {
+    reset(initialValues ?? DEFAULT_VALUES);
   };
+
+  const { handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: handleSurfaceTypeModalReset,
+  });
 
   const handleFormSubmit = (values: SurfaceTypeFormSchemaValues): void => {
     onSubmit(values);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

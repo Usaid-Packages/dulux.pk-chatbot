@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { Input } from '#/components/ui';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
+import { normalizePkPhoneWithPrefix, sanitizeLettersOnly } from '#/utils';
 
 const CITY_MAX_LENGTH = 80;
 
@@ -33,16 +34,8 @@ export const PersonalInfoStep = (): JSX.Element => {
     }
   }, [getValues, setValue]);
 
-  const handleLettersOnlyChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    event.currentTarget.value = event.currentTarget.value.replace(/\d/g, '');
-  };
-
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const digitsOnly = event.currentTarget.value.replace(/\D/g, '');
-    const withoutPrefix = digitsOnly.startsWith('92') ? digitsOnly.slice(2) : digitsOnly;
-    const normalizedLocalPart = withoutPrefix.startsWith('3') ? withoutPrefix : `3${withoutPrefix}`;
-    const limitedLocalPart = normalizedLocalPart.slice(0, 10);
-    event.currentTarget.value = `92${limitedLocalPart}`;
+    event.currentTarget.value = normalizePkPhoneWithPrefix(event.currentTarget.value);
     phoneNumberField.onChange(event);
   };
 
@@ -54,7 +47,7 @@ export const PersonalInfoStep = (): JSX.Element => {
   };
 
   const handleCityChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    handleLettersOnlyChange(event);
+    event.currentTarget.value = sanitizeLettersOnly(event.currentTarget.value);
     cityField.onChange(event);
   };
 
