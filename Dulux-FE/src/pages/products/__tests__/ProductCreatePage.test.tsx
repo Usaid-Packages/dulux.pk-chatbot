@@ -1,35 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  useAttachProductImageMutation,
-  useCreateProductMutation,
-  useGetProductsQuery,
-  useGetSurfaceTypesQuery,
-  useUploadProductImageMutation,
-} from '#/data-layer/products';
-import { mapProductFormValuesToPayload } from '#/hooks/products';
+import { useProductCreatePageController } from '#/hooks/products';
 import { ProductCreatePage } from '../ProductCreatePage';
 
-const mockNavigate = vi.fn();
-const mockCreateProduct = vi.fn();
-
-const mockLocation = {
-  search: '?tab=products',
-};
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-    useLocation: () => mockLocation,
-  };
-});
+const mockHandleCancel = vi.fn();
+const mockHandleSubmit = vi.fn();
 
 vi.mock('#/hooks/products', () => ({
-  mapProductFormValuesToPayload: vi.fn(),
+  useProductCreatePageController: vi.fn(),
 }));
 
 vi.mock('#/components/products', () => ({
@@ -37,16 +16,16 @@ vi.mock('#/components/products', () => ({
     onCancel,
     onSubmit,
   }: {
-    title: string;
-    description: string;
-    submitLabel: string;
-    defaultBasecoatWarrantyYears: number;
-    isSubmitting: boolean;
-    useSplitLongFieldLayout: boolean;
-    surfaceTypes: unknown[];
     basecoatOptions: unknown[];
+    defaultBasecoatWarrantyYears: number;
+    description: string;
+    isSubmitting: boolean;
     onCancel: () => void;
     onSubmit: (values: unknown) => void;
+    submitLabel: string;
+    surfaceTypes: unknown[];
+    title: string;
+    useSplitLongFieldLayout: boolean;
   }) => (
     <div>
       <button type='button' onClick={onCancel}>
@@ -56,11 +35,8 @@ vi.mock('#/components/products', () => ({
         type='button'
         onClick={() =>
           onSubmit({
-            values: {
-              name: 'Dulux Shield',
-              productType: 'TOPCOAT',
-            },
             imageFile: null,
+            values: { name: 'Dulux Shield', productType: 'TOPCOAT' },
           })
         }
       >
@@ -70,71 +46,38 @@ vi.mock('#/components/products', () => ({
   ),
 }));
 
-vi.mock('#/data-layer/products', () => ({
-  useGetSurfaceTypesQuery: vi.fn(),
-  useGetProductsQuery: vi.fn(),
-  useCreateProductMutation: vi.fn(),
-  useUploadProductImageMutation: vi.fn(),
-  useAttachProductImageMutation: vi.fn(),
-}));
+const mockedUseProductCreatePageController = vi.mocked(useProductCreatePageController);
 
-const mockedUseGetSurfaceTypesQuery = vi.mocked(useGetSurfaceTypesQuery);
-const mockedUseGetProductsQuery = vi.mocked(useGetProductsQuery);
-const mockedUseCreateProductMutation = vi.mocked(useCreateProductMutation);
-const mockedUseUploadProductImageMutation = vi.mocked(useUploadProductImageMutation);
-const mockedUseAttachProductImageMutation = vi.mocked(useAttachProductImageMutation);
-const mockedMapProductFormValuesToPayload = vi.mocked(mapProductFormValuesToPayload);
+const buildControllerState = (
+  overrides: Partial<ReturnType<typeof useProductCreatePageController>> = {}
+): ReturnType<typeof useProductCreatePageController> => {
+  return {
+    isLoading: false,
+    isError: false,
+    errorMessage: '',
+    isSubmitting: false,
+    surfaceTypes: [{ id: 1, name: 'Wood', environment: 'INTERIOR' }],
+    basecoatOptions: [{ id: 10, name: 'Basecoat X' }],
+    handleCancel: mockHandleCancel,
+    handleSubmit: mockHandleSubmit,
+    ...overrides,
+  } as ReturnType<typeof useProductCreatePageController>;
+};
 
 describe('ProductCreatePage', () => {
   beforeEach(() => {
-    mockNavigate.mockReset();
-    mockCreateProduct.mockReset();
-
-    mockedMapProductFormValuesToPayload.mockReturnValue({
-      name: 'Mapped Product',
-    });
-
-    mockedUseGetSurfaceTypesQuery.mockReturnValue({
-      data: {
-        results: [{ id: 1, name: 'Wood' }],
-      },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as unknown as ReturnType<typeof useGetSurfaceTypesQuery>);
-
-    mockedUseGetProductsQuery.mockReturnValue({
-      data: {
-        results: [{ id: 99, name: 'Basecoat X' }],
-      },
-      isLoading: false,
-      isError: false,
-      error: null,
-    } as unknown as ReturnType<typeof useGetProductsQuery>);
-
-    mockedUseCreateProductMutation.mockReturnValue({
-      mutate: mockCreateProduct,
-      isPending: false,
-    } as unknown as ReturnType<typeof useCreateProductMutation>);
-
-    mockedUseUploadProductImageMutation.mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    } as unknown as ReturnType<typeof useUploadProductImageMutation>);
-
-    mockedUseAttachProductImageMutation.mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    } as unknown as ReturnType<typeof useAttachProductImageMutation>);
+    mockHandleCancel.mockReset();
+    mockHandleSubmit.mockReset();
+    mockedUseProductCreatePageController.mockReturnValue(buildControllerState());
   });
 
-  it('renders dependency error state when reference queries fail', () => {
-    mockedUseGetSurfaceTypesQuery.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: true,
-      error: new Error('Surface types failed'),
-    } as unknown as ReturnType<typeof useGetSurfaceTypesQuery>);
+  it('renders dependency error state when dependencies fail', () => {
+    mockedUseProductCreatePageController.mockReturnValue(
+      buildControllerState({
+        isError: true,
+        errorMessage: 'Surface types failed',
+      })
+    );
 
     render(<ProductCreatePage />);
 
@@ -142,27 +85,22 @@ describe('ProductCreatePage', () => {
     expect(screen.getByText('Surface types failed')).toBeInTheDocument();
   });
 
-  it('navigates to products list on cancel', () => {
+  it('calls cancel handler', () => {
     render(<ProductCreatePage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel Product Create' }));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/products?tab=products');
+    expect(mockHandleCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('submits create mutation and navigates on success', () => {
-    mockCreateProduct.mockImplementation((_: unknown, options?: { onSuccess?: (value: { id: number }) => void }) => {
-      options?.onSuccess?.({ id: 321 });
-    });
-
+  it('calls submit handler with form payload', () => {
     render(<ProductCreatePage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit Product Create' }));
 
-    expect(mockCreateProduct).toHaveBeenCalledWith(
-      { name: 'Mapped Product' },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/products?tab=products');
+    expect(mockHandleSubmit).toHaveBeenCalledWith({
+      imageFile: null,
+      values: { name: 'Dulux Shield', productType: 'TOPCOAT' },
+    });
   });
 });
