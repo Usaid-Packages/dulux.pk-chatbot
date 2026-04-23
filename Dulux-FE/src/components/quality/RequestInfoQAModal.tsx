@@ -129,11 +129,7 @@ export const RequestInfoQAModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-              disabled={isSubmitting}
-            >
+            <Button type='submit' variant='primaryGradient' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Sending...' : 'Request Info'}
             </Button>
           </DialogFooter>

@@ -120,7 +120,8 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             </Button>
             <Button
               type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              variant='primaryGradient'
+              className='rounded-xl'
               disabled={isSubmitting || !selectedPaintPairId}
             >
               {isSubmitting ? 'Creating...' : 'Create Claim'}

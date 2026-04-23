@@ -61,7 +61,7 @@ export const ProductsListPage = (): JSX.Element => {
 
   return (
     <section className='wf-list-shell gap-4'>
-      <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+      <section className='wf-tabs-panel border-primary/15 bg-white ui-shadow-panel'>
         <div className='flex flex-wrap gap-2'>
           <button
             type='button'

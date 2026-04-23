@@ -64,11 +64,7 @@ export const ResetPasswordForm = ({ isSubmitting, errorMessage, onSubmit }: Rese
           {errorMessage}
         </p>
       )}
-      <Button
-        className='h-11 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_28px_rgba(24,102,198,0.35)] hover:brightness-105'
-        type='submit'
-        disabled={isSubmitting}
-      >
+      <Button variant='primaryGradientStrong' className='h-11 w-full rounded-xl' type='submit' disabled={isSubmitting}>
         {isSubmitting ? 'Updating...' : 'Reset password'}
       </Button>
       <div className='text-center'>

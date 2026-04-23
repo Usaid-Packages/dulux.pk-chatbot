@@ -290,6 +290,7 @@ Implication:
 - Plan:
   - move repeated gradients/shadows/button treatments to `index.css` component classes via `@apply`,
   - reference CSS vars/tokens from those classes instead of inline literals.
+- Status: DONE (2026-04-23) under STYLE-001 by extracting repeated gradient/shadow/hero-surface styles into semantic classes in `src/index.css` and replacing repeated inline usages in touched modules.
 
 27. Large inline className strings create readability and maintenance overhead
 - Standards reference: `Cleaner component code`, `Reusability`
@@ -304,6 +305,7 @@ Implication:
 - Plan:
   - extract repeated style groups into semantic utility classes (`.btn-primary-gradient`, `.panel-elevated`, `.hero-bg-*`) in `index.css`,
   - keep `className` short and composable.
+- Status: DONE (2026-04-23) under STYLE-001 by introducing semantic `index.css` classes (button gradients, panel/table shadows, auth hero/card surfaces) and migrating repeated inline class blocks.
 
 28. Re-render/performance hotspots in large forms and list pages
 - Standards reference: `Performance`, `Avoid unnecessary rerenders`
@@ -322,6 +324,7 @@ Implication:
   - repeated primary gradient button classes in claims/quality/registrations/auth/complaints/components.
 - Plan:
   - add shared `Button` variant (`variant='primaryGradient'`) in UI layer and replace repeated inline classes.
+- Status: DONE (2026-04-23) under STYLE-002 by adding `primaryGradient`, `primaryGradientElevated`, and `primaryGradientStrong` variants in `src/components/ui/Button.tsx` and migrating repeated inline gradient button classes across affected modules.
 
 30. Data-flow complexity from duplicated query-param mutation logic
 - Standards reference: `Single source of truth`, `Avoid extra checks`

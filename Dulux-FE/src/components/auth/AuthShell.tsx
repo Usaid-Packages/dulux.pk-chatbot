@@ -28,12 +28,12 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
       <div className='pointer-events-none absolute left-[18%] top-[-3rem] h-64 w-64 rotate-12 rounded-[40px] border border-white/55 bg-white/30 backdrop-blur-xl' />
 
       <section className='relative grid w-full max-w-[1200px] items-center gap-7 lg:grid-cols-[1.15fr_0.85fr]'>
-        <div className='relative hidden overflow-hidden rounded-[2rem] border border-blue-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(230,242,255,0.94)_48%,rgba(213,233,255,0.95)_100%)] p-9 text-slate-800 shadow-[0_28px_72px_rgba(18,78,163,0.22)] backdrop-blur xl:block'>
+        <div className='relative hidden overflow-hidden rounded-[2rem] border border-blue-200/80 auth-hero-surface p-9 text-slate-800 backdrop-blur xl:block'>
           <div className='pointer-events-none absolute -left-10 top-14 h-20 w-56 -rotate-12 rounded-full bg-[#0d57b8]/15 blur-lg' />
           <div className='pointer-events-none absolute right-8 top-3 h-24 w-64 rotate-12 rounded-full bg-[#2f8deb]/20 blur-lg' />
           <div className='pointer-events-none absolute -bottom-8 right-14 h-24 w-56 -rotate-12 rounded-full bg-[#0e4fa8]/15 blur-lg' />
 
-          <div className='relative inline-flex rounded-[2.2rem] border border-blue-200/75 bg-white/90 p-6 shadow-[0_20px_55px_rgba(13,77,167,0.2)]'>
+          <div className='relative inline-flex rounded-[2.2rem] auth-hero-logo-surface p-6'>
             <img
               src={duluxLogo}
               alt='Dulux logo'
@@ -57,7 +57,7 @@ export const AuthShell = ({ children }: AuthShellProps): JSX.Element => {
 
         <div className='mx-auto w-full max-w-md'>
           <div className='mb-5 flex items-center justify-center xl:hidden'>
-            <div className='rounded-[1.7rem] border border-blue-200/80 bg-white/85 p-5 shadow-[0_18px_45px_rgba(19,79,164,0.2)] backdrop-blur'>
+            <div className='auth-mobile-logo-surface p-5'>
               <img
                 src={duluxLogo}
                 alt='Dulux logo'

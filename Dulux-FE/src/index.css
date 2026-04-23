@@ -272,6 +272,17 @@
   --primary-hover: #165bb2;
   --primary-light: #ebf4ff;
   --primary-border: #b4d0f4;
+  --gradient-primary-start: #1966c8;
+  --gradient-primary-end: #2f8deb;
+  --shadow-panel-elevated: 0 10px 24px rgba(19, 87, 167, 0.08);
+  --shadow-table-elevated: 0 14px 28px rgba(19, 87, 167, 0.09);
+  --shadow-btn-primary-elevated: 0 12px 24px rgba(24, 102, 198, 0.25);
+  --shadow-btn-primary-strong: 0 12px 28px rgba(24, 102, 198, 0.35);
+  --shadow-auth-card: 0 30px 70px rgba(15, 76, 159, 0.25);
+  --shadow-auth-logo: 0 14px 35px rgba(18, 78, 163, 0.16);
+  --shadow-auth-hero: 0 28px 72px rgba(18, 78, 163, 0.22);
+  --shadow-auth-hero-logo: 0 20px 55px rgba(13, 77, 167, 0.2);
+  --shadow-auth-mobile-logo: 0 18px 45px rgba(19, 79, 164, 0.2);
 
   --primary-foreground: #ffffff;
 
@@ -735,6 +746,58 @@
 
   .wf-card {
     @apply rounded-2xl border border-border bg-white shadow-[0_12px_34px_rgba(19,87,168,0.08)];
+  }
+
+  .ui-shadow-panel {
+    box-shadow: var(--shadow-panel-elevated);
+  }
+
+  .ui-shadow-table {
+    box-shadow: var(--shadow-table-elevated);
+  }
+
+  .btn-primary-gradient {
+    @apply hover:brightness-105;
+    background-image: linear-gradient(135deg, var(--gradient-primary-start) 0%, var(--gradient-primary-end) 100%);
+  }
+
+  .btn-primary-gradient-elevated {
+    @apply hover:brightness-105;
+    background-image: linear-gradient(135deg, var(--gradient-primary-start) 0%, var(--gradient-primary-end) 100%);
+    box-shadow: var(--shadow-btn-primary-elevated);
+  }
+
+  .btn-primary-gradient-strong {
+    @apply hover:brightness-105;
+    background-image: linear-gradient(135deg, var(--gradient-primary-start) 0%, var(--gradient-primary-end) 100%);
+    box-shadow: var(--shadow-btn-primary-strong);
+  }
+
+  .auth-card-surface {
+    @apply bg-white/95;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 250, 255, 0.96) 100%);
+    box-shadow: var(--shadow-auth-card);
+  }
+
+  .auth-logo-surface {
+    @apply border border-blue-200/80 bg-white;
+    box-shadow: var(--shadow-auth-logo);
+  }
+
+  .auth-hero-surface {
+    @apply bg-white/95;
+    background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(230, 242, 255, 0.94) 48%, rgba(213, 233, 255, 0.95) 100%);
+    box-shadow: var(--shadow-auth-hero);
+  }
+
+  .auth-hero-logo-surface {
+    @apply border border-blue-200/75 bg-white/90;
+    box-shadow: var(--shadow-auth-hero-logo);
+  }
+
+  .auth-mobile-logo-surface {
+    @apply rounded-[1.7rem] border border-blue-200/80 bg-white/85 backdrop-blur;
+    box-shadow: var(--shadow-auth-mobile-logo);
   }
 
   .wf-card-p2 {

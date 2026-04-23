@@ -68,7 +68,7 @@ export const QualityListPage = (): React.JSX.Element => {
         ))}
       </section>
 
-      <section className='wf-tabs-panel border-primary/15 bg-white shadow-[0_10px_24px_rgba(19,87,167,0.08)]'>
+      <section className='wf-tabs-panel border-primary/15 bg-white ui-shadow-panel'>
         <div className='flex items-center gap-3 overflow-x-auto'>
           <div className='flex min-w-0 flex-1 items-center gap-2 overflow-x-auto'>
             {QUALITY_STATUS_TABS.map(tab => {

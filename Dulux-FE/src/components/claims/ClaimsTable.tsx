@@ -22,7 +22,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
-    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 ui-shadow-table'>
       <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
