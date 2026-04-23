@@ -1591,7 +1591,17 @@ class WarrantyCardCountAPITests(TestCase):
         response = self.client.get(self.registration_counts_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"total_registrations": 0, "pending_review": 0, "approved": 0})
+        self.assertEqual(
+            response.data,
+            {
+                "total_registrations": 0,
+                "submitted": 0,
+                "in_progress": 0,
+                "resubmit": 0,
+                "approved": 0,
+                "rejected": 0,
+            },
+        )
 
     def test_registration_card_counts_support_date_and_agent_filters(self):
         registration_for_user = create_registration(state=RegistrationState.APPROVED)
@@ -1613,7 +1623,17 @@ class WarrantyCardCountAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"total_registrations": 1, "pending_review": 0, "approved": 1})
+        self.assertEqual(
+            response.data,
+            {
+                "total_registrations": 1,
+                "submitted": 0,
+                "in_progress": 0,
+                "resubmit": 0,
+                "approved": 1,
+                "rejected": 0,
+            },
+        )
 
     def test_claim_card_counts_return_expected_summary(self):
         topcoat = create_product(name="Counts Claim Topcoat", warranty_years=5)
@@ -1655,9 +1675,14 @@ class WarrantyCardCountAPITests(TestCase):
             response.data,
             {
                 "total_claims": 5,
-                "pending_cs_review": 2,
-                "forwarded_to_quality": 2,
-                "resolved": 1,
+                "submitted": 1,
+                "in_review": 0,
+                "qa_review": 1,
+                "resubmit": 1,
+                "qa_approved": 1,
+                "qa_rejected": 0,
+                "approved": 1,
+                "rejected": 0,
             },
         )
 
@@ -1706,8 +1731,10 @@ class WarrantyCardCountAPITests(TestCase):
             response.data,
             {
                 "total_in_queue": 3,
-                "awaiting_review": 1,
-                "info_requested": 1,
+                "qa_review": 1,
+                "resubmit": 1,
+                "qa_approved": 0,
+                "qa_rejected": 1,
                 "resolved_today": 1,
             },
         )
