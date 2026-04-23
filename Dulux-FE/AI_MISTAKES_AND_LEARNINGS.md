@@ -849,6 +849,34 @@
   presentation).
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
 
+### 2026-04-16 - Claims list test used label query for unlabeled search input
+
+- Issue: New `ClaimsListPage` test used `getByLabelText('claim-search')`, but the search control has an `id` and placeholder without an associated label, causing a failing spec.
+- Fix: Switched the assertion to query by placeholder text (`Search by registration or phone number`) to match the rendered accessibility surface.
+- Rule: In page tests, align RTL selectors with actual accessible output (label text, role/name, or placeholder) and avoid assuming `id` implies an associated label.
+
+### 2026-04-16 - New test file import shape triggered `import/order` crash path
+
+- Issue: In the newly added `QualityListPage` test, I initially placed an internal type import before external library imports, which retriggered this repo's known `eslint-plugin-import` crash path (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered imports to stable external-first grouping and reran lint; no rule disable comments were added.
+- Rule: For every newly created test file, enforce external imports first, then internal aliases, then relative imports before first lint run to avoid re-triggering the plugin crash path.
+
+### 2026-04-16 - Live chat test import order retriggered plugin crash
+
+- Issue: While adding `LiveChatPage.test.tsx`, initial import ordering (`import type` before internal value imports) retriggered the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`) on `import/order`.
+- Fix: Reordered imports to stable shape (external libs -> internal value imports -> internal type imports -> relative imports) and removed an unused `ReactNode` type import; lint then passed without rule disables.
+- Rule: For new test files in this repo, always apply crash-safe import shape before first lint run and avoid unused top-level type imports.
+
+### 2026-04-16 - Complaint-thread hook test missed automatic open->in-progress side effect
+
+- Issue: In `useComplaintThread` integration test for open-thread resolve flow, I initially assumed the first `markConversationInProgress` mutation call would include `onSuccess`; however, the hook's auto-transition effect can trigger an earlier mark call with only error handling.
+- Fix: Updated the test to locate the mutation call that actually contains an `onSuccess` callback before simulating chain progression.
+- Rule: For hooks with mount-time side effects plus user-triggered actions, assert against callback-bearing mutation calls (not fixed call indexes) to keep tests deterministic.
+### 2026-04-16 - Parallel file creation race caused transient missing-path write failure
+
+- Issue: I attempted `mkdir -p` and multi-file `cat > ...` writes in parallel, and one write executed before the target directory creation completed, causing `no such file or directory`.
+- Fix: Re-ran directory creation first, then switched to sequential file writes for deterministic test-file generation.
+- Rule: Do not parallelize directory creation with dependent file-write commands; create folders first, then write files sequentially.
 ### 2026-04-21 - Forgot command-level `import/order` override on first lint pass
 
 - Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
@@ -884,3 +912,20 @@
 - Issue: After removing `province` from registration flows, residual references remained in resubmission constants/form defaults and fixture data; timeline UI also still exposed `View full payload` raw JSON blocks.
 - Fix: Removed remaining `province` references from the affected FE files and simplified timeline rendering to keep concise field-level output only (no expandable raw payload view), while preserving full API event listing.
 - Rule: When a cross-cutting field removal or timeline UX directive is requested, run a final project-wide symbol search and verify all related constants/forms/tests/renderers are aligned before handoff.
+### 2026-04-23 - Incomplete component module mock caused registration list tests to fail
+
+- Issue: `RegistrationsListPage` tests mocked `#/components/registrations` with `RegistrationTable` only, but the page also imports `RegistrationEditModal`, causing Vitest export-missing failures.
+- Fix: Added `RegistrationEditModal` to the module mock (`() => null`) so the mock shape matches all consumed exports.
+- Rule: When mocking a module in tests, include every export used by the target component (or use a partial mock with `importOriginal` and override only required members).
+
+### 2026-04-23 - Quality schema test drifted after required-items contract update
+
+- Issue: Unit test expected `otherText` validation for `qualityRequestInfoSchema`, but the current schema no longer supports `OTHER` and validates only the allowed `QUALITY_REQUIRED_ITEMS`.
+- Fix: Updated the test to assert invalid enum rejection on `requiredItems[0]` for unknown item payloads.
+- Rule: When schema contracts change, update unit tests to match current allowed enums/fields and assert the new validation path, not legacy fields.
+
+### 2026-04-23 - Import alias order drift retriggered `import/order` crash in products test
+
+- Issue: `ProductsListPage.test.tsx` kept `#/data-layer/products` above `#/context`, violating configured internal alphabetical ordering and triggering the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered internal imports to match `eslint.config.ts` (`#/context` before `#/data-layer/products`) and reran ESLint successfully.
+- Rule: In test files, enforce strict alphabetical order within internal alias imports before running ESLint; even small ordering drift can re-trigger the plugin crash path.

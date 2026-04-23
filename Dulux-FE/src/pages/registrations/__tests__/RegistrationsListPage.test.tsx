@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { REGISTRATION_FILTER_TAB_LABELS, ROUTES } from '#/constants';
+import { useEditRegistrationMutation, useGetRegistrationByIdQuery } from '#/data-layer/registrations';
 import { useRegistrations } from '#/hooks/registrations';
 import { registrationFilterTabs } from '#/types/registrations';
 import { RegistrationsListPage } from '../RegistrationsListPage';
@@ -39,13 +40,21 @@ vi.mock('#/components/registrations', () => ({
       </div>
     );
   },
+  RegistrationEditModal: () => null,
 }));
 
 vi.mock('#/hooks/registrations', () => ({
   useRegistrations: vi.fn(),
 }));
 
+vi.mock('#/data-layer/registrations', () => ({
+  useGetRegistrationByIdQuery: vi.fn(),
+  useEditRegistrationMutation: vi.fn(),
+}));
+
 const mockedUseRegistrations = vi.mocked(useRegistrations);
+const mockedUseGetRegistrationByIdQuery = vi.mocked(useGetRegistrationByIdQuery);
+const mockedUseEditRegistrationMutation = vi.mocked(useEditRegistrationMutation);
 
 describe('RegistrationsListPage', () => {
   beforeEach(() => {
@@ -77,6 +86,19 @@ describe('RegistrationsListPage', () => {
       goToNextPage: mockGoToNextPage,
       goToPreviousPage: mockGoToPreviousPage,
     });
+
+    mockedUseGetRegistrationByIdQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useGetRegistrationByIdQuery>);
+
+    mockedUseEditRegistrationMutation.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useEditRegistrationMutation>);
   });
 
   it('renders registration stats and pagination details', () => {
