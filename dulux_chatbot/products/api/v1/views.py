@@ -14,9 +14,9 @@ from dulux_chatbot.products.api.v1.serializers import (
     ProductWarrantyOptionSerializer,
     SurfaceTypeSerializer,
 )
-from dulux_chatbot.products.audit import build_product_snapshot
 from dulux_chatbot.products.choices import ProductType
 from dulux_chatbot.products.models import Product, ProductImage, SurfaceType
+from dulux_chatbot.products.utils.audit import build_product_snapshot
 
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):

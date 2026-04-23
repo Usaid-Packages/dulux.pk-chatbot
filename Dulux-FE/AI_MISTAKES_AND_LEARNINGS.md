@@ -67,8 +67,16 @@
   component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
 - For complaint threads, always fetch `/api/v1/complaints/{id}/messages/` for message timeline rendering; never infer
   per-message image ownership from complaint detail-level `images`.
+- Use direct React hook imports (`import { useState } from 'react'`) and call hooks directly (`useState(...)`), not
+  `React.useState(...)`.
 
 ## Mistake Log (Short)
+
+### 2026-04-21 12:45 - Request-info options not fully aligned with latest UX instruction
+
+- Issue: Request-more-info flows still exposed legacy items (batch number/application details/timeline/site conditions/other) after UX direction changed.
+- Fix: Removed these options from claims and quality request-info sources and removed stale "Other details" schema/UI/payload branches.
+- Rule: When option sets are changed by product request, update constants + form schema + modal UI + mutation payload together in one pass.
 
 ### 2026-04-02 12:40 - Import order + ImportMeta typing
 
@@ -261,14 +269,6 @@
 - Fix: Restored the missing closing brace for `.chip-reg` before `.card` in `src/index.css`.
 - Rule: When build errors mention CSS syntax in shared styles, verify surrounding selector blocks for unmatched braces
   before assuming feature code regressions.
-
-### 2026-04-13 - RHF controller wiring miss during input-to-select refactor
-
-- Issue: While converting manual registration `province` from `<Input>` to `Controller` + `Select`, `control` was not
-  initially destructured from `useFormContext`, causing a compile-time reference error.
-- Fix: Added `control` to form-context destructuring before finalizing and verified with targeted ESLint run.
-- Rule: Every `Controller` refactor must include a quick checklist: `control` is in scope, `name` matches schema, and
-  `onValueChange` is wired to `field.onChange`.
 
 ### 2026-04-13 - Nullish + ternary expression formatting caused syntax churn
 
@@ -563,10 +563,10 @@
 
 ### 2026-04-10 19:25 - Registration detail runtime break after expandable-text refactor
 
-- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage
+- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one city usage
   was left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
   `/app/registrations/:id`.
-- Fix: Replaced the stale province call site with `<ExpandableDetailText value={registration.province} />` and reran
+- Fix: Replaced the stale city call site with `<ExpandableDetailText value={registration.city} />` and reran
   targeted lint.
 - Rule: After helper/component renames in a page, run a symbol-level search for old identifiers and verify no stale
   references remain before handoff.
@@ -832,3 +832,55 @@
 - Issue: New `ClaimsListPage` test used `getByLabelText('claim-search')`, but the search control has an `id` and placeholder without an associated label, causing a failing spec.
 - Fix: Switched the assertion to query by placeholder text (`Search by registration or phone number`) to match the rendered accessibility surface.
 - Rule: In page tests, align RTL selectors with actual accessible output (label text, role/name, or placeholder) and avoid assuming `id` implies an associated label.
+
+### 2026-04-16 - New test file import shape triggered `import/order` crash path
+
+- Issue: In the newly added `QualityListPage` test, I initially placed an internal type import before external library imports, which retriggered this repo's known `eslint-plugin-import` crash path (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered imports to stable external-first grouping and reran lint; no rule disable comments were added.
+- Rule: For every newly created test file, enforce external imports first, then internal aliases, then relative imports before first lint run to avoid re-triggering the plugin crash path.
+
+### 2026-04-16 - Live chat test import order retriggered plugin crash
+
+- Issue: While adding `LiveChatPage.test.tsx`, initial import ordering (`import type` before internal value imports) retriggered the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`) on `import/order`.
+- Fix: Reordered imports to stable shape (external libs -> internal value imports -> internal type imports -> relative imports) and removed an unused `ReactNode` type import; lint then passed without rule disables.
+- Rule: For new test files in this repo, always apply crash-safe import shape before first lint run and avoid unused top-level type imports.
+
+### 2026-04-16 - Complaint-thread hook test missed automatic open->in-progress side effect
+
+- Issue: In `useComplaintThread` integration test for open-thread resolve flow, I initially assumed the first `markConversationInProgress` mutation call would include `onSuccess`; however, the hook's auto-transition effect can trigger an earlier mark call with only error handling.
+- Fix: Updated the test to locate the mutation call that actually contains an `onSuccess` callback before simulating chain progression.
+- Rule: For hooks with mount-time side effects plus user-triggered actions, assert against callback-bearing mutation calls (not fixed call indexes) to keep tests deterministic.
+### 2026-04-16 - Parallel file creation race caused transient missing-path write failure
+
+- Issue: I attempted `mkdir -p` and multi-file `cat > ...` writes in parallel, and one write executed before the target directory creation completed, causing `no such file or directory`.
+- Fix: Re-ran directory creation first, then switched to sequential file writes for deterministic test-file generation.
+- Rule: Do not parallelize directory creation with dependent file-write commands; create folders first, then write files sequentially.
+### 2026-04-21 - Forgot command-level `import/order` override on first lint pass
+
+- Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
+- Fix: Re-ran lint with command-level override, kept source/config unchanged, and completed lint verification successfully.
+- Rule: For touched frontend files in this repo, start with command-level `import/order` override when needed by the known tooling instability and keep import structure clean.
+
+### 2026-04-21 - Missed immediate formatter pass after import cleanup
+
+- Issue: After removing an import block during refactor, one touched file failed `prettier/prettier` on the first ESLint run.
+- Fix: Applied formatter-compatible import layout and reran lint before continuing.
+- Rule: After removing or regrouping imports in touched files, run a quick formatting check immediately before full lint.
+
+### 2026-04-21 16:07 - Product-role update needed a second pass due formatting lint
+
+- Issue: While expanding CS permissions for product management, a wrapped boolean assignment in `ProductsListPage.tsx` failed Prettier during lint.
+- Fix: Simplified the assignment formatting and reran full lint to green.
+- Rule: After role-access edits, run lint immediately and resolve formatting issues in the same pass before final handoff.
+
+### 2026-04-21 16:12 - Extra blank line after field removal caused Prettier lint failure
+
+- Issue: While removing Postal Code from `RegistrationEditModal.tsx`, an extra blank line remained and failed `prettier/prettier` in lint.
+- Fix: Removed the stray blank line and reran full lint to green.
+- Rule: After removing JSX blocks from form layouts, run a quick local formatting check around the edited section before full lint.
+
+### 2026-04-21 - Timeline paint-pair UI changed pattern instead of preserving established before/after consistency
+
+- Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
+- Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
+- Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.

@@ -1,5 +1,4 @@
 from io import BytesIO
-from pathlib import Path
 
 from django.core.files.base import ContentFile
 from django.utils import timezone
@@ -10,19 +9,20 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas as reportlab_canvas
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-
-HEADER_COLOR = colors.HexColor("#153A7A")
-BORDER_COLOR = colors.HexColor("#C7D2E5")
-TEXT_COLOR = colors.HexColor("#222222")
-MUTED_TEXT_COLOR = colors.HexColor("#4B5563")
-PAGE_ONE_HEADER_IMAGE = Path(__file__).resolve().parent.parent / "assets" / "warranty_certificate_page1_header.jpg"
-PAGE_TWO_FOOTER_IMAGE = Path(__file__).resolve().parent.parent / "assets" / "warranty_certificate_page2_footer.jpg"
-PAGE_HORIZONTAL_MARGIN = 15 * mm
-CONTENT_WIDTH = A4[0] - (2 * PAGE_HORIZONTAL_MARGIN)
-HEADER_HEIGHT = 128 * mm
-PAGE_TWO_FOOTER_HEIGHT = 69 * mm
-FIRST_PAGE_TOP_MARGIN = 120 * mm
-FIRST_PAGE_BOTTOM_MARGIN = 22 * mm
+from dulux_chatbot.warranty.constants import (
+    CERTIFICATE_BORDER_COLOR,
+    CERTIFICATE_CONTENT_WIDTH,
+    CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN,
+    CERTIFICATE_FIRST_PAGE_TOP_MARGIN,
+    CERTIFICATE_HEADER_COLOR,
+    CERTIFICATE_HEADER_HEIGHT,
+    CERTIFICATE_MUTED_TEXT_COLOR,
+    CERTIFICATE_PAGE_HORIZONTAL_MARGIN,
+    CERTIFICATE_PAGE_ONE_HEADER_IMAGE,
+    CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT,
+    CERTIFICATE_PAGE_TWO_FOOTER_IMAGE,
+    CERTIFICATE_TEXT_COLOR,
+)
 
 
 def _build_story_styles() -> dict[str, ParagraphStyle]:
@@ -34,7 +34,7 @@ def _build_story_styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica",
             fontSize=11,
             leading=15,
-            textColor=TEXT_COLOR,
+            textColor=CERTIFICATE_TEXT_COLOR,
             spaceAfter=3,
         ),
         "section_heading": ParagraphStyle(
@@ -43,7 +43,7 @@ def _build_story_styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica-Bold",
             fontSize=15,
             leading=18,
-            textColor=TEXT_COLOR,
+            textColor=CERTIFICATE_TEXT_COLOR,
             spaceAfter=2,
         ),
         "table_header": ParagraphStyle(
@@ -61,7 +61,7 @@ def _build_story_styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica",
             fontSize=9.5,
             leading=12,
-            textColor=MUTED_TEXT_COLOR,
+            textColor=CERTIFICATE_MUTED_TEXT_COLOR,
             alignment=1,
         ),
         "table_cell_left": ParagraphStyle(
@@ -70,7 +70,7 @@ def _build_story_styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica",
             fontSize=9.5,
             leading=12,
-            textColor=MUTED_TEXT_COLOR,
+            textColor=CERTIFICATE_MUTED_TEXT_COLOR,
             alignment=0,
         ),
         "registration_label": ParagraphStyle(
@@ -87,30 +87,30 @@ def _build_story_styles() -> dict[str, ParagraphStyle]:
             fontName="Helvetica-Bold",
             fontSize=12,
             leading=14,
-            textColor=TEXT_COLOR,
+            textColor=CERTIFICATE_TEXT_COLOR,
             alignment=1,
         ),
     }
 
 
 def _draw_footer(canvas) -> None:
-    if not PAGE_TWO_FOOTER_IMAGE.exists():
+    if not CERTIFICATE_PAGE_TWO_FOOTER_IMAGE.exists():
         return
 
     page_width, _page_height = A4
     canvas.drawImage(
-        str(PAGE_TWO_FOOTER_IMAGE),
+        str(CERTIFICATE_PAGE_TWO_FOOTER_IMAGE),
         0,
         0,
         width=page_width,
-        height=PAGE_TWO_FOOTER_HEIGHT,
+        height=CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT,
         preserveAspectRatio=True,
         mask="auto",
     )
 
 
 def _draw_first_page(canvas, _doc, *, include_footer: bool = False) -> None:
-    if not PAGE_ONE_HEADER_IMAGE.exists():
+    if not CERTIFICATE_PAGE_ONE_HEADER_IMAGE.exists():
         if include_footer:
             canvas.saveState()
             _draw_footer(canvas)
@@ -118,13 +118,13 @@ def _draw_first_page(canvas, _doc, *, include_footer: bool = False) -> None:
         return
 
     page_width, page_height = A4
-    draw_height = HEADER_HEIGHT
+    draw_height = CERTIFICATE_HEADER_HEIGHT
     canvas.saveState()
     clip_path = canvas.beginPath()
     clip_path.rect(0, page_height - draw_height, page_width, draw_height)
     canvas.clipPath(clip_path, stroke=0, fill=0)
     canvas.drawImage(
-        str(PAGE_ONE_HEADER_IMAGE),
+        str(CERTIFICATE_PAGE_ONE_HEADER_IMAGE),
         0,
         page_height - draw_height,
         width=page_width,
@@ -137,24 +137,27 @@ def _draw_first_page(canvas, _doc, *, include_footer: bool = False) -> None:
     canvas.restoreState()
 
 
-def _draw_later_pages(canvas, _doc) -> None:
-    canvas.saveState()
-    _draw_footer(canvas)
-    canvas.restoreState()
-
-
 class WarrantyCertificateCanvas(reportlab_canvas.Canvas):
-    def __init__(self, *args, include_footer_on_first_page: bool = False, **kwargs):
-        self.include_footer_on_first_page = include_footer_on_first_page
+    def __init__(self, *args, **kwargs):
+        self._saved_page_states = []
         super().__init__(*args, **kwargs)
 
     def showPage(self):
-        self._draw_page_footer()
-        super().showPage()
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        total_pages = len(self._saved_page_states)
+
+        for page_state in self._saved_page_states:
+            self.__dict__.update(page_state)
+            if self._pageNumber == total_pages:
+                self._draw_page_footer()
+            super().showPage()
+
+        super().save()
 
     def _draw_page_footer(self) -> None:
-        if self._pageNumber == 1 and not self.include_footer_on_first_page:
-            return
         self.saveState()
         _draw_footer(self)
         self.restoreState()
@@ -192,18 +195,18 @@ def _build_product_table(title: str, rows: list[dict[str, str]], styles: dict[st
 
     table = Table(
         table_rows,
-        colWidths=[18 * mm, CONTENT_WIDTH - (98 * mm), 38 * mm, 42 * mm],
+        colWidths=[18 * mm, CERTIFICATE_CONTENT_WIDTH - (98 * mm), 38 * mm, 42 * mm],
         repeatRows=1,
         hAlign="LEFT",
     )
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), HEADER_COLOR),
+                ("BACKGROUND", (0, 0), (-1, 0), CERTIFICATE_HEADER_COLOR),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("BOX", (0, 0), (-1, -1), 0.75, BORDER_COLOR),
-                ("INNERGRID", (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+                ("BOX", (0, 0), (-1, -1), 0.75, CERTIFICATE_BORDER_COLOR),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, CERTIFICATE_BORDER_COLOR),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 6),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
@@ -235,10 +238,10 @@ def _build_registration_box(registration, styles: dict[str, ParagraphStyle]) -> 
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, 0), HEADER_COLOR),
+                ("BACKGROUND", (0, 0), (0, 0), CERTIFICATE_HEADER_COLOR),
                 ("BACKGROUND", (1, 0), (1, 0), colors.white),
-                ("BOX", (0, 0), (-1, -1), 1, HEADER_COLOR),
-                ("INNERGRID", (0, 0), (-1, -1), 1, HEADER_COLOR),
+                ("BOX", (0, 0), (-1, -1), 1, CERTIFICATE_HEADER_COLOR),
+                ("INNERGRID", (0, 0), (-1, -1), 1, CERTIFICATE_HEADER_COLOR),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("TOPPADDING", (0, 0), (-1, -1), 8),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
@@ -251,13 +254,31 @@ def _build_registration_box(registration, styles: dict[str, ParagraphStyle]) -> 
 
 
 def _estimate_story_height(flowables: list) -> float:
-    available_width = CONTENT_WIDTH
-    available_height = A4[1] - FIRST_PAGE_TOP_MARGIN - FIRST_PAGE_BOTTOM_MARGIN
+    available_width = CERTIFICATE_CONTENT_WIDTH
+    available_height = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN
     total_height = 0.0
     for flowable in flowables:
         _, flowable_height = flowable.wrap(available_width, available_height)
         total_height += flowable_height
     return total_height
+
+
+def _needs_footer_page(*, content_height: float, footer_fits_first_page: bool) -> bool:
+    if footer_fits_first_page:
+        return False
+
+    page_height_without_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN
+    page_height_with_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT
+
+    if content_height <= page_height_without_footer:
+        return True
+
+    remaining_height = content_height - page_height_without_footer
+    last_page_used_height = remaining_height % page_height_without_footer
+    if last_page_used_height == 0:
+        last_page_used_height = page_height_without_footer
+
+    return last_page_used_height > page_height_with_footer
 
 
 def _build_product_rows(registration) -> list[dict[str, str]]:
@@ -294,20 +315,26 @@ def generate_warranty_certificate(registration):
 
     story.extend(_build_registration_box(registration, styles))
     first_page_content_height = _estimate_story_height(story)
-    first_page_height_with_footer = A4[1] - FIRST_PAGE_TOP_MARGIN - PAGE_TWO_FOOTER_HEIGHT
+    first_page_height_with_footer = A4[1] - CERTIFICATE_FIRST_PAGE_TOP_MARGIN - CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT
     include_footer_on_first_page = len(topcoat_rows) <= 1 and first_page_content_height <= first_page_height_with_footer
+    add_footer_page = _needs_footer_page(
+        content_height=first_page_content_height,
+        footer_fits_first_page=include_footer_on_first_page,
+    )
 
     document = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        topMargin=FIRST_PAGE_TOP_MARGIN,
-        bottomMargin=PAGE_TWO_FOOTER_HEIGHT if include_footer_on_first_page else FIRST_PAGE_BOTTOM_MARGIN,
-        leftMargin=PAGE_HORIZONTAL_MARGIN,
-        rightMargin=PAGE_HORIZONTAL_MARGIN,
+        topMargin=CERTIFICATE_FIRST_PAGE_TOP_MARGIN,
+        bottomMargin=(
+            CERTIFICATE_PAGE_TWO_FOOTER_HEIGHT if include_footer_on_first_page else CERTIFICATE_FIRST_PAGE_BOTTOM_MARGIN
+        ),
+        leftMargin=CERTIFICATE_PAGE_HORIZONTAL_MARGIN,
+        rightMargin=CERTIFICATE_PAGE_HORIZONTAL_MARGIN,
         pageCompression=0,
     )
 
-    if not include_footer_on_first_page:
+    if add_footer_page:
         story.extend([PageBreak(), Spacer(1, 1 * mm)])
 
     def _draw_first_page_callback(canvas, doc) -> None:
@@ -316,12 +343,7 @@ def generate_warranty_certificate(registration):
     document.build(
         story,
         onFirstPage=_draw_first_page_callback,
-        onLaterPages=_draw_later_pages,
-        canvasmaker=lambda *args, **kwargs: WarrantyCertificateCanvas(
-            *args,
-            include_footer_on_first_page=include_footer_on_first_page,
-            **kwargs,
-        ),
+        canvasmaker=WarrantyCertificateCanvas,
     )
     content = buffer.getvalue()
     buffer.close()

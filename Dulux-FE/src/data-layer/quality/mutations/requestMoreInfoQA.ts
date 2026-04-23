@@ -13,7 +13,6 @@ export const requestMoreInfoQuality = async (payload: QualityRequestInfoPayload)
     {
       required_items: string[];
       notes?: string;
-      other_text?: string;
     }
   >({
     method: POST,
@@ -21,7 +20,6 @@ export const requestMoreInfoQuality = async (payload: QualityRequestInfoPayload)
     payload: {
       required_items: payload.requiredItems,
       notes: payload.notes,
-      other_text: payload.otherText,
     },
   });
 

@@ -1,5 +1,4 @@
 import type { JSX } from 'react';
-import { useState } from 'react';
 
 import { Badge, Button } from '#/components/ui';
 import { REGISTRATION_STATUS_LABELS } from '#/constants';
@@ -19,8 +18,6 @@ interface RegistrationDetailPanelProps {
   onOpenRejectModal: () => void;
 }
 
-const PROVINCE_TEXT_TRUNCATE_LENGTH = 24;
-
 const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | 'rejected' | 'info' => {
   if (status === 'APPROVED') {
     return 'approved';
@@ -35,31 +32,6 @@ const getBadgeVariant = (status: RegistrationStatus): 'pending' | 'approved' | '
   }
 
   return 'pending';
-};
-
-const ExpandableProvinceValue = ({ value }: { value: string }): JSX.Element => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
-  if (value.length <= PROVINCE_TEXT_TRUNCATE_LENGTH) {
-    return <span>{value}</span>;
-  }
-
-  const truncatedValue = `${value.slice(0, PROVINCE_TEXT_TRUNCATE_LENGTH)}...`;
-  const displayedValue = isExpanded ? value : truncatedValue;
-  const toggleLabel = isExpanded ? 'Show less' : 'Show more';
-
-  const handleToggle = (): void => {
-    setIsExpanded(previous => !previous);
-  };
-
-  return (
-    <div className='max-w-[220px] text-right'>
-      <p className='wrap-break-word text-right font-medium text-text-primary'>{displayedValue}</p>
-      <button type='button' className='mt-1 text-xs font-semibold text-primary' onClick={handleToggle}>
-        {toggleLabel}
-      </button>
-    </div>
-  );
 };
 
 /**
@@ -121,12 +93,6 @@ export const RegistrationDetailPanel = ({
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>City</dt>
             <dd className='font-medium text-text-primary'>{registration.city}</dd>
-          </div>
-          <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
-            <dt className='text-text-muted'>Province</dt>
-            <dd>
-              <ExpandableProvinceValue value={registration.province} />
-            </dd>
           </div>
           <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
             <dt className='text-text-muted'>Site Address</dt>

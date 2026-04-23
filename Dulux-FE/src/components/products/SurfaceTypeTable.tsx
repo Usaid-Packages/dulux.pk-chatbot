@@ -4,6 +4,7 @@ import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 import type { SurfaceType } from '#/types/products';
 
 interface SurfaceTypeTableProps {
+  canManage: boolean;
   surfaceTypes: SurfaceType[];
   linkedProductCountMap: Record<number, number>;
   onEdit: (surfaceType: SurfaceType) => void;
@@ -25,6 +26,7 @@ const getSurfaceTypeById = (surfaceTypes: SurfaceType[], surfaceTypeId: number):
 };
 
 export const SurfaceTypeTable = ({
+  canManage,
   surfaceTypes,
   linkedProductCountMap,
   onEdit,
@@ -76,28 +78,32 @@ export const SurfaceTypeTable = ({
                 <TableCell>{linkedCount}</TableCell>
                 <TableCell>{linkedCount > 0 ? 'In Use' : 'Available'}</TableCell>
                 <TableCell className='align-middle'>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      type='button'
-                      variant='link'
-                      className='h-auto p-0'
-                      data-surface-type-action={SURFACE_TYPE_ACTIONS.EDIT}
-                      data-surface-type-id={surfaceType.id}
-                      onClick={handleSurfaceTypeActionClick}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='link'
-                      className='h-auto p-0 text-destructive hover:text-destructive/80'
-                      data-surface-type-action={SURFACE_TYPE_ACTIONS.DELETE}
-                      data-surface-type-id={surfaceType.id}
-                      onClick={handleSurfaceTypeActionClick}
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                  {canManage ? (
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        type='button'
+                        variant='link'
+                        className='h-auto p-0'
+                        data-surface-type-action={SURFACE_TYPE_ACTIONS.EDIT}
+                        data-surface-type-id={surfaceType.id}
+                        onClick={handleSurfaceTypeActionClick}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='link'
+                        className='h-auto p-0 text-destructive hover:text-destructive/80'
+                        data-surface-type-action={SURFACE_TYPE_ACTIONS.DELETE}
+                        data-surface-type-id={surfaceType.id}
+                        onClick={handleSurfaceTypeActionClick}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className='text-xs font-medium text-text-muted'>View only</span>
+                  )}
                 </TableCell>
               </TableRow>
             );

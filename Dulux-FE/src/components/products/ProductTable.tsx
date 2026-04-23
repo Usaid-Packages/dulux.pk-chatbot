@@ -7,6 +7,7 @@ import { ROUTES } from '#/constants';
 import type { Product } from '#/types/products';
 
 interface ProductTableProps {
+  canEdit: boolean;
   products: Product[];
 }
 
@@ -74,7 +75,7 @@ const renderLinkedBasecoats = (product: Product): JSX.Element => {
   );
 };
 
-export const ProductTable = ({ products }: ProductTableProps): JSX.Element => {
+export const ProductTable = ({ canEdit, products }: ProductTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
@@ -135,9 +136,13 @@ export const ProductTable = ({ products }: ProductTableProps): JSX.Element => {
                   </Badge>
                 </TableCell>
                 <TableCell className='align-middle'>
-                  <Link className='wf-table-link' to={`${ROUTES.PRODUCT_EDIT(String(product.id))}${location.search}`}>
-                    Edit
-                  </Link>
+                  {canEdit ? (
+                    <Link className='wf-table-link' to={`${ROUTES.PRODUCT_EDIT(String(product.id))}${location.search}`}>
+                      Edit
+                    </Link>
+                  ) : (
+                    <span className='text-xs font-medium text-text-muted'>View only</span>
+                  )}
                 </TableCell>
               </TableRow>
             );

@@ -5,12 +5,15 @@ from uuid import uuid4
 from django.core.files.base import ContentFile
 from django.test import TestCase
 from django.utils import timezone
+from rest_framework import serializers
 
+from dulux_chatbot.chatbot.flows.base import BaseFlow
 from dulux_chatbot.chatbot.flows.claim import ClaimFlow
 from dulux_chatbot.chatbot.flows.claim_resubmission import ClaimResubmissionFlow
 from dulux_chatbot.chatbot.handlers.dispatcher import dispatch
 from dulux_chatbot.chatbot.models import WhatsAppSession
-from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
+from dulux_chatbot.chatbot.tasks import send_find_product_results, send_whatsapp_main_menu
+from dulux_chatbot.complaints.choices import ComplaintSubject
 from dulux_chatbot.complaints.models import ChatMessage, Complaint
 from dulux_chatbot.products.tests.factories import (
     attach_product_image,
@@ -42,6 +45,8 @@ class DummyClient:
         self.documents = []
         self.images = []
         self.downloaded_media_ids = []
+        self.media_content = {}
+        self.media_metadata = {}
 
     def send_text(self, to: str, text: str) -> None:
         self.text_messages.append({"to": to, "text": text})
@@ -67,7 +72,14 @@ class DummyClient:
 
     def download_media(self, media_id: str) -> bytes:
         self.downloaded_media_ids.append(media_id)
-        return b"fake-image-bytes"
+        return self.media_content.get(media_id, b"fake-image-bytes")
+
+    def download_media_with_metadata(self, media_id: str) -> tuple[bytes, dict]:
+        self.downloaded_media_ids.append(media_id)
+        return self.media_content.get(media_id, b"fake-image-bytes"), self.media_metadata.get(
+            media_id,
+            {"mime_type": "image/jpeg"},
+        )
 
 
 class FlowTests(TestCase):
@@ -108,6 +120,35 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "menu")
         self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
 
+    def test_save_media_image_uses_whatsapp_mime_type_extension(self):
+        self.client.media_metadata["png-media"] = {"mime_type": "image/png"}
+
+        image = BaseFlow(session=self.session, client=self.client)._save_media_image(
+            "png-media",
+            filename_prefix="test_upload",
+        )
+
+        self.assertTrue(image.image.name.endswith(".png"))
+
+    def test_save_media_image_rejects_unsupported_mime_type(self):
+        self.client.media_metadata["pdf-media"] = {"mime_type": "application/pdf"}
+
+        with self.assertRaises(serializers.ValidationError):
+            BaseFlow(session=self.session, client=self.client)._save_media_image(
+                "pdf-media",
+                filename_prefix="test_upload",
+            )
+
+    def test_save_media_image_rejects_oversized_media(self):
+        self.client.media_metadata["large-media"] = {"mime_type": "image/jpeg"}
+        self.client.media_content["large-media"] = b"x" * ((50 * 1024 * 1024) + 1)
+
+        with self.assertRaises(serializers.ValidationError):
+            BaseFlow(session=self.session, client=self.client)._save_media_image(
+                "large-media",
+                filename_prefix="test_upload",
+            )
+
     def test_registration_flow_end_to_end(self):
         topcoat = create_product(name="Flow Topcoat")
         basecoat = create_product(name="Flow Basecoat", product_type="BASECOAT", warranty_years=3)
@@ -121,7 +162,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -174,7 +214,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -198,7 +237,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text("not-a-date")
 
@@ -213,7 +251,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -239,7 +276,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -264,7 +300,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -348,6 +383,45 @@ class FlowTests(TestCase):
         self.assertEqual(claim.resubmissions.count(), 1)
         self.assertEqual(claim.resubmissions.first().entries.count(), 1)
 
+    def test_expired_claim_resubmission_session_does_not_save_customer_evidence(self):
+        registration = create_registration(state=RegistrationState.APPROVED, phone_number=self.phone_number)
+        paint_pair = create_paint_pair(registration=registration)
+        claim = create_claim(registration=registration, paint_pair=paint_pair, state=ClaimState.RESUBMIT)
+        quality_review = ClaimQualityReview.objects.create(
+            claim=claim,
+            decision_type=QualityDecisionType.REQUEST_INFO,
+            notes="Need more photos.",
+            created_by=create_quality_user(email="expired-resubmit-qa@example.com"),
+        )
+        ClaimQualityReviewItem.objects.create(
+            quality_review=quality_review,
+            required_item="CLOSE_UP_DAMAGE_PHOTOS",
+        )
+        self.session.flow = "CLAIM_RESUBMISSION"
+        self.session.current_step = "claim_resubmission_item"
+        self.session.session_data = {
+            "claim_resubmission_claim_id": claim.id,
+            "claim_resubmission_review_id": quality_review.id,
+            "claim_resubmission_items": ["CLOSE_UP_DAMAGE_PHOTOS"],
+            "claim_resubmission_item_index": 0,
+            "claim_resubmission_entries": [],
+            "claim_resubmission_current_images": [],
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+        WhatsAppSession.objects.filter(pk=self.session.pk).update(last_activity=timezone.now() - timedelta(minutes=6))
+        self.session.refresh_from_db()
+
+        self.dispatch_image("expired-claim-resubmit-media")
+
+        claim.refresh_from_db()
+        self.assertEqual(claim.state, ClaimState.RESUBMIT)
+        self.assertEqual(claim.resubmissions.count(), 0)
+        self.assertIsNone(self.session.flow)
+        self.assertEqual(self.session.current_step, "menu")
+        self.assertEqual(self.session.session_data, {})
+        self.assertIn("claim resubmission session expired", self.client.text_messages[-2]["text"].lower())
+        self.assertIn("Warranty Registration", self.client.text_messages[-1]["text"])
+
     def test_claim_resubmission_prompt_includes_image_note(self):
         self.session.flow = "CLAIM_RESUBMISSION"
         self.session.current_step = "claim_resubmission_item"
@@ -367,7 +441,7 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.flow, "COMPLAINT")
         self.assertEqual(self.session.current_step, "subject")
 
-        self.dispatch_text("Wall damage")
+        self.dispatch_text("1")
         self.assertEqual(self.session.current_step, "description")
 
         self.dispatch_text("Paint is peeling after recent rain.")
@@ -389,7 +463,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
         self.dispatch_text(str(date.today() - timedelta(days=1)))
         self.dispatch_text("Dealer")
@@ -464,7 +537,6 @@ class FlowTests(TestCase):
             "customer_name": registration.customer_name,
             "email": registration.email,
             "city": registration.city,
-            "province": registration.province,
             "site_address": registration.site_address,
             "purchase_date": registration.purchase_date.isoformat(),
             "purchase_dealer": registration.purchase_dealer,
@@ -513,6 +585,30 @@ class FlowTests(TestCase):
         self.assertEqual(registration.state, RegistrationState.SUBMITTED)
         self.assertIsNone(self.session.flow)
 
+    def test_registration_resubmit_flow_rejects_too_long_postal_code(self):
+        registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
+        registration.rejection_fields.create(field_name="postal_code", note="Please provide the postal code.")
+        self.session.flow = "REGISTRATION"
+        self.session.current_step = "postal_code"
+        self.session.session_data = {
+            "postal_code": registration.postal_code,
+            "paint_pairs": [],
+            "paint_pair_invoices": [],
+            "resubmit_registration_id": registration.id,
+            "resubmit_steps": ["postal_code"],
+            "resubmit_step_index": 0,
+        }
+        self.session.save(update_fields=["flow", "current_step", "session_data", "modified"])
+
+        self.dispatch_text("1" * 21)
+
+        registration.refresh_from_db()
+        self.session.refresh_from_db()
+        self.assertNotEqual(registration.postal_code, "1" * 21)
+        self.assertEqual(registration.state, RegistrationState.RESUBMIT)
+        self.assertEqual(self.session.current_step, "postal_code")
+        self.assertIn("under 20 characters", self.client.text_messages[-1]["text"])
+
     def test_expired_resubmit_session_shows_fallback_message(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.RESUBMIT)
         self.session.flow = "REGISTRATION"
@@ -525,7 +621,11 @@ class FlowTests(TestCase):
 
         self.dispatch_text("updated@example.com")
 
-        self.assertIn("raise a complaint and live chat", self.client.text_messages[-2]["text"].lower())
+        self.assertEqual(
+            self.client.text_messages[-2]["text"],
+            "Your warranty resubmission session expired. "
+            "Please raise a complaint and live chat with a Customer Service Representative.",
+        )
 
     def test_registration_consent_no_returns_to_main_menu(self):
         self.dispatch_text("1")
@@ -563,7 +663,6 @@ class FlowTests(TestCase):
         self.dispatch_text("Customer Name")
         self.dispatch_text("customer@example.com")
         self.dispatch_text("Karachi")
-        self.dispatch_text("Sindh")
         self.dispatch_text("123 Street")
 
         self.assertEqual(self.session.current_step, "purchase_date")
@@ -708,8 +807,8 @@ class FlowTests(TestCase):
         self.assertEqual(self.session.current_step, "affected_area")
         self.assertIn("valid positive area", self.client.text_messages[-1]["text"])
 
-    @patch.object(send_whatsapp_main_menu, "apply_async")
-    def test_find_product_flow_end_to_end(self, mocked_send_main_menu):
+    @patch.object(send_find_product_results, "apply_async")
+    def test_find_product_flow_end_to_end(self, mocked_send_find_product_results):
         product = create_product(name="Flow Product")
         surface_type = create_surface_type(environment="EXTERIOR")
         create_product_surface_mapping(product=product, surface_type=surface_type)
@@ -723,28 +822,42 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
 
         self.assertIsNone(self.session.flow)
-        self.assertEqual(len(self.client.images), 1)
-        self.assertIn("*Name:* Flow Product", self.client.images[0]["caption"])
-        self.assertIn("*Features:* Durable finish", self.client.images[0]["caption"])
-        self.assertIn("*Coverage details:* 100 sqft per liter", self.client.images[0]["caption"])
-        self.assertIn("*URL:* https://example.com/products/test", self.client.images[0]["caption"])
+        self.assertEqual(len(self.client.images), 0)
         self.assertNotIn("How can I assist you?", self.client.text_messages[-1]["text"])
-        mocked_send_main_menu.assert_called_once()
-        self.assertEqual(mocked_send_main_menu.call_args.kwargs["countdown"], 2)
-        self.assertEqual(mocked_send_main_menu.call_args.kwargs["args"][0], self.phone_number)
-        self.assertIn("How can I assist you?", mocked_send_main_menu.call_args.kwargs["args"][1])
+        mocked_send_find_product_results.assert_called_once()
+        self.assertEqual(mocked_send_find_product_results.call_args.kwargs["args"][0], self.phone_number)
+        self.assertEqual(mocked_send_find_product_results.call_args.kwargs["args"][1], [product.id])
+        self.assertIn("How can I assist you?", mocked_send_find_product_results.call_args.kwargs["args"][2])
+
+    @patch.object(send_whatsapp_main_menu, "apply_async")
+    @patch("dulux_chatbot.chatbot.tasks.WhatsAppClient")
+    def test_find_product_results_task_sends_products_and_queues_main_menu(self, client_mock, mocked_send_main_menu):
+        product = create_product(name="Flow Product")
+        attach_product_image(product=product)
+
+        send_find_product_results(self.phone_number, [product.id], "Main menu")
+
+        client_mock.return_value.send_image.assert_called_once()
+        self.assertEqual(client_mock.return_value.send_image.call_args.args[0], self.phone_number)
+        self.assertIn("*Name:* Flow Product", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*Features:* Durable finish", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*Coverage details:* 100 sqft per liter", client_mock.return_value.send_image.call_args.args[2])
+        self.assertIn("*URL:* https://example.com/products/test", client_mock.return_value.send_image.call_args.args[2])
+        mocked_send_main_menu.assert_called_once_with(args=[self.phone_number, "Main menu"], countdown=2)
 
     def test_complaint_flow_end_to_end(self):
         self.dispatch_text("4")
         self.assertEqual(self.session.current_step, "subject")
+        self.assertIn("1. Product Complaint", self.client.text_messages[-1]["text"])
+        self.assertIn("7. Other", self.client.text_messages[-1]["text"])
 
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_image("complaint-media-1")
         self.dispatch_text("DONE")
 
         complaint = Complaint.objects.get(phone_number=self.phone_number)
-        self.assertEqual(complaint.subject, "Paint damaged")
+        self.assertEqual(complaint.subject, ComplaintSubject.PRODUCT_COMPLAINT)
         self.assertEqual(complaint.images.count(), 1)
         self.assertEqual(complaint.messages.count(), 1)
         self.assertEqual(self.session.current_step, "chat")
@@ -760,7 +873,7 @@ class FlowTests(TestCase):
 
     def test_complaint_chat_session_expires_after_24_hours(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -789,7 +902,7 @@ class FlowTests(TestCase):
 
     def test_complaint_chat_reminds_user_after_one_hour_gap(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -801,12 +914,12 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.flow, "COMPLAINT")
         self.assertEqual(ChatMessage.objects.filter(complaint=complaint).count(), 2)
-        self.assertIn("subject: Paint damaged", self.client.text_messages[-1]["text"])
+        self.assertIn("subject: Product Complaint", self.client.text_messages[-1]["text"])
         self.assertIn("press 00 or type MAIN MENU", self.client.text_messages[-1]["text"])
 
     def test_main_menu_command_takes_priority_over_complaint_chat(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
         self.dispatch_text("The wall finish is damaged.")
         self.dispatch_text("DONE")
 
@@ -997,7 +1110,7 @@ class FlowTests(TestCase):
 
     def test_main_menu_command_resets_active_flow(self):
         self.dispatch_text("4")
-        self.dispatch_text("Paint damaged")
+        self.dispatch_text("1")
 
         self.dispatch_text("00")
 

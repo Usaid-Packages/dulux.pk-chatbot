@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
 
-from dulux_chatbot.complaints.choices import ComplaintStatus, MessageSender
+from dulux_chatbot.complaints.choices import ComplaintStatus, ComplaintSubject, MessageSender
 
 
 User = get_user_model()
@@ -16,11 +16,13 @@ class Complaint(TimeStampedModel):
         blank=True,
         related_name="complaints",
     )
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, db_index=True)
     customer_name = models.CharField(max_length=255)
-    subject = models.CharField(max_length=255)
+    subject = models.CharField(max_length=255, choices=ComplaintSubject.choices)
     description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN)
+    status = models.CharField(
+        max_length=20, choices=ComplaintStatus.choices, default=ComplaintStatus.OPEN, db_index=True
+    )
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

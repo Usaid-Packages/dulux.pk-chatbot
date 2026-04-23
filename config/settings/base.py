@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 from decouple import Csv, config
 
@@ -200,10 +201,14 @@ LOGGING = {
 }
 
 REDIS_URL = config("REDIS_URL")
+REDIS_PARSED_URL = urlparse(REDIS_URL)
+REDIS_HOST = REDIS_PARSED_URL.hostname
+REDIS_PORT = REDIS_PARSED_URL.port or 6379
 
 WHATSAPP_ACCESS_TOKEN = config("WHATSAPP_ACCESS_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = config("WHATSAPP_PHONE_NUMBER_ID")
 WHATSAPP_VERIFY_TOKEN = config("WHATSAPP_VERIFY_TOKEN")
+WHATSAPP_APP_SECRET = config("WHATSAPP_APP_SECRET", default="")
 WHATSAPP_BUSINESS_ACCOUNT_ID = config("WHATSAPP_BUSINESS_ACCOUNT_ID")
 
 CELERY_BROKER_URL = REDIS_URL
@@ -227,11 +232,9 @@ CACHES = {
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("redis", 6379)]},
+        "CONFIG": {"hosts": [(REDIS_HOST, REDIS_PORT)]},
     }
 }
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 CONSTANCE_BACKEND = "constance.backends.redisd.RedisBackend"
 CONSTANCE_REDIS_CONNECTION = f"{REDIS_URL}/0"
@@ -267,7 +270,7 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "dulux_chatbot.users.api.v1.serializers.UserDetailsSerializer",
     "TOKEN_MODEL": None,
     "USE_JWT": True,
-    "JWT_AUTH_HTTPONLY": False,
+    "JWT_AUTH_HTTPONLY": True,
 }
 
 ACCOUNT_AUTHENTICATION_METHOD = "email"

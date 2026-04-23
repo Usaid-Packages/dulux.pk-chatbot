@@ -2,10 +2,11 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import transaction
 
+from dulux_chatbot.chatbot.constants import STEP_CHAT
 from dulux_chatbot.chatbot.flows.base import BaseFlow
-from dulux_chatbot.complaints.choices import MessageSender
+from dulux_chatbot.complaints.choices import ComplaintSubject, MessageSender
 from dulux_chatbot.complaints.models import ChatMessage, Complaint, ComplaintImage
-from dulux_chatbot.complaints.realtime import broadcast_complaint_created
+from dulux_chatbot.complaints.utils.realtime import broadcast_complaint_created
 from dulux_chatbot.warranty.models import WarrantyRegistration
 
 
@@ -13,7 +14,7 @@ class ComplaintFlow(BaseFlow):
     initial_step = "subject"
 
     def prompt_subject(self) -> None:
-        self._send_step_prompt("Please share the complaint subject.")
+        self._send_step_prompt(f"Please select the complaint subject.\n\n{self._build_subject_options_text()}")
 
     def prompt_description(self) -> None:
         self._send_step_prompt("Please describe the complaint.")
@@ -27,15 +28,11 @@ class ComplaintFlow(BaseFlow):
         )
 
     def handle_subject(self, message: dict) -> None:
-        subject = self._get_text(message)
+        subject = self._resolve_subject(self._get_text(message))
         if not subject:
-            self._send_validation_error("Please share the complaint subject.")
-            return
-        if len(subject) > 255:
-            self._send_validation_error("Please provide a short complaint subject under 255 characters.")
-            return
-        if not self._is_plain_text_value(subject) or not self._is_not_all_digits(subject):
-            self._send_validation_error("Please provide a valid complaint subject.")
+            self._send_validation_error(
+                f"Please select a valid complaint subject.\n\n{self._build_subject_options_text()}"
+            )
             return
         self._save_data("subject", subject)
         self.prompt_description()
@@ -104,7 +101,7 @@ class ComplaintFlow(BaseFlow):
                 "to customer support. Write MAIN MENU if you want to return to the main menu."
             ),
         )
-        self._advance_to("chat")
+        self._advance_to(STEP_CHAT)
 
     def handle_chat(self, message: dict) -> None:
         complaint_id = (self.session.session_data or {}).get("complaint_id")
@@ -155,3 +152,21 @@ class ComplaintFlow(BaseFlow):
                 },
             },
         )
+
+    def _build_subject_options_text(self) -> str:
+        return "\n".join(f"{index}. {label}" for index, (_value, label) in enumerate(ComplaintSubject.choices, start=1))
+
+    def _resolve_subject(self, value: str) -> str:
+        normalized_value = value.strip()
+        if normalized_value.isdigit():
+            index = int(normalized_value) - 1
+            if 0 <= index < len(ComplaintSubject.choices):
+                return ComplaintSubject.choices[index][0]
+
+        normalized_lookup = normalized_value.upper().replace("&", "AND").replace(" ", "_")
+        for subject_value, subject_label in ComplaintSubject.choices:
+            normalized_label = subject_label.upper().replace("&", "AND").replace(" ", "_")
+            if normalized_lookup in {subject_value, normalized_label}:
+                return subject_value
+
+        return ""

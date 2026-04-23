@@ -20,12 +20,17 @@ from dulux_chatbot.warranty.choices import (
 class WarrantyRegistration(TimeStampedModel):
     registration_code = models.CharField(max_length=10, unique=True, editable=False)
     channel = models.CharField(max_length=10, choices=RegistrationChannel.choices, default=RegistrationChannel.WHATSAPP)
-    state = models.CharField(max_length=20, choices=RegistrationState.choices, default=RegistrationState.SUBMITTED)
+    state = models.CharField(
+        max_length=20,
+        choices=RegistrationState.choices,
+        default=RegistrationState.SUBMITTED,
+        db_index=True,
+    )
     customer_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, db_index=True)
     email = models.EmailField()
     city = models.CharField(max_length=100)
-    province = models.CharField(max_length=100, blank=True)
+    province = models.CharField(max_length=100, blank=True, default="")
     site_address = models.TextField()
     purchase_date = models.DateField()
     purchase_dealer = models.CharField(max_length=255, blank=True)
@@ -46,6 +51,10 @@ class WarrantyRegistration(TimeStampedModel):
     def __str__(self) -> str:
         return self.registration_code
 
+    @property
+    def approved_by_email(self) -> str | None:
+        return self.approved_by.email if self.approved_by else None
+
 
 class RegistrationPaintPair(TimeStampedModel):
     registration = models.ForeignKey(WarrantyRegistration, on_delete=models.CASCADE, related_name="paint_pairs")
@@ -63,6 +72,14 @@ class RegistrationPaintPair(TimeStampedModel):
     def __str__(self) -> str:
         return f"{self.registration.registration_code} - {self.topcoat.name}"
 
+    @property
+    def topcoat_name(self) -> str:
+        return self.topcoat.name
+
+    @property
+    def basecoat_name(self) -> str | None:
+        return self.basecoat.name if self.basecoat else None
+
 
 class PaintPairInvoice(TimeStampedModel):
     registration = models.ForeignKey(WarrantyRegistration, on_delete=models.CASCADE, related_name="invoices")
@@ -79,7 +96,7 @@ class WarrantyClaim(TimeStampedModel):
     issue_type = models.CharField(max_length=25, choices=IssueType.choices)
     affected_area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
     claim_date = models.DateField(auto_now_add=True)
-    state = models.CharField(max_length=20, choices=ClaimState.choices, default=ClaimState.SUBMITTED)
+    state = models.CharField(max_length=20, choices=ClaimState.choices, default=ClaimState.SUBMITTED, db_index=True)
     notes = models.TextField(blank=True)
     voucher = models.FileField(upload_to="claim-vouchers/%Y/%m/", null=True, blank=True)
     approved_by = models.ForeignKey(
@@ -93,6 +110,10 @@ class WarrantyClaim(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Claim {self.id}"
+
+    @property
+    def topcoat_name(self) -> str:
+        return self.paint_pair.topcoat.name
 
 
 class ClaimQualityReview(TimeStampedModel):

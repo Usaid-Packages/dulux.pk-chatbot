@@ -1,19 +1,13 @@
+from functools import partial
+
 from dulux_chatbot.chatbot.flows.base import BaseFlow
-from dulux_chatbot.chatbot.tasks import send_whatsapp_main_menu
+from dulux_chatbot.chatbot.services.dispatch_side_effects import defer_dispatch_side_effect
+from dulux_chatbot.chatbot.tasks import send_find_product_results
 from dulux_chatbot.products.models import Product, SurfaceType
 
 
 class FindProductFlow(BaseFlow):
     initial_step = "interior_exterior_select"
-
-    @staticmethod
-    def _format_product_message(*, product: Product) -> str:
-        return (
-            f"*Name:* {product.name}\n"
-            f"*Features:* {product.features}\n"
-            f"*Coverage details:* {product.coverage_details}\n"
-            f"*URL:* {product.webpage_url}"
-        )
 
     def prompt_interior_exterior_select(self) -> None:
         self._send_step_prompt("Please reply with 1 for INTERIOR or 2 for EXTERIOR.")
@@ -89,16 +83,14 @@ class FindProductFlow(BaseFlow):
             self._reset()
             self._send_main_menu_message()
             return
-        for product in products:
-            product_message = self._format_product_message(product=product)
-            product_image = next(iter(product.images.all()), None)
-            if product_image is not None:
-                self.client.send_image(
-                    self.session.phone_number,
-                    product_image.image.image.url,
-                    product_message,
-                )
-            else:
-                self.client.send_text(self.session.phone_number, product_message)
         self._reset()
-        send_whatsapp_main_menu.apply_async(args=[self.session.phone_number, self.MAIN_MENU_TEXT], countdown=2)
+        defer_dispatch_side_effect(
+            partial(
+                send_find_product_results.apply_async,
+                args=[
+                    self.session.phone_number,
+                    [product.id for product in products],
+                    self.MAIN_MENU_TEXT,
+                ],
+            )
+        )

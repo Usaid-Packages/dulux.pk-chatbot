@@ -24,8 +24,6 @@ interface RequestMoreInfoModalProps {
   onSubmit: (values: RequestMoreInfoFormValues) => void;
 }
 
-const OTHER_ITEM = 'Other';
-
 /**
  * RequestMoreInfoModal captures requested evidence and follow-up context.
  *
@@ -43,19 +41,14 @@ export const RequestMoreInfoModal = ({
     register,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<RequestMoreInfoFormValues>({
     resolver: zodResolver(requestMoreInfoSchema),
     defaultValues: {
       items: [],
       note: '',
-      otherDetails: '',
     },
   });
-
-  const selectedItems = watch('items');
-  const isOtherSelected = selectedItems.includes(OTHER_ITEM);
 
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
@@ -117,21 +110,6 @@ export const RequestMoreInfoModal = ({
             />
             {errors.items ? <p className='text-xs text-destructive'>{errors.items.message}</p> : null}
           </div>
-
-          {isOtherSelected ? (
-            <div className='space-y-2'>
-              <label htmlFor='request-other-details' className='text-sm font-medium text-text-primary'>
-                Other details
-              </label>
-              <Textarea
-                id='request-other-details'
-                className='rounded-xl border-primary/20 bg-white'
-                {...register('otherDetails')}
-                aria-invalid={Boolean(errors.otherDetails)}
-              />
-              {errors.otherDetails ? <p className='text-xs text-destructive'>{errors.otherDetails.message}</p> : null}
-            </div>
-          ) : null}
 
           <div className='space-y-2'>
             <label htmlFor='request-note' className='text-sm font-medium text-text-primary'>

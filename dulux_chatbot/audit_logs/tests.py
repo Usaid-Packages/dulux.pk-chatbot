@@ -11,7 +11,7 @@ from dulux_chatbot.audit_logs.choices import AuditAction
 from dulux_chatbot.audit_logs.models import AuditLog
 from dulux_chatbot.complaints.tests.factories import create_complaint
 from dulux_chatbot.products.tests.factories import create_admin_user, create_product, create_product_basecoat
-from dulux_chatbot.warranty.choices import ClaimState, RegistrationChannel, RegistrationState
+from dulux_chatbot.warranty.choices import ClaimState, InvoiceType, RegistrationChannel, RegistrationState
 from dulux_chatbot.warranty.tests.factories import (
     create_claim,
     create_cs_user,
@@ -44,7 +44,6 @@ class AuditLogAPITests(TestCase):
                 "phone_number": "923001010101",
                 "email": "audit@example.com",
                 "city": "Karachi",
-                "province": "Sindh",
                 "site_address": "123 Street",
                 "purchase_date": str(date.today() - timedelta(days=1)),
                 "purchase_dealer": "Dealer",
@@ -90,6 +89,51 @@ class AuditLogAPITests(TestCase):
         ).latest("id")
         self.assertEqual(audit_log.changes["notes"]["after"], "Updated note from CS.")
 
+    def test_registration_timeline_includes_product_names_and_invoice_image_urls(self):
+        registration = create_registration()
+        old_topcoat = create_product(name="Old Audit Topcoat")
+        old_basecoat = create_product(name="Old Audit Basecoat", product_type="BASECOAT", warranty_years=3)
+        new_topcoat = create_product(name="New Audit Topcoat")
+        new_basecoat = create_product(name="New Audit Basecoat", product_type="BASECOAT", warranty_years=3)
+        create_product_basecoat(topcoat=old_topcoat, basecoat=old_basecoat)
+        create_product_basecoat(topcoat=new_topcoat, basecoat=new_basecoat)
+        create_paint_pair(registration=registration, topcoat=old_topcoat, basecoat=old_basecoat)
+        old_invoice = create_warranty_image(image_name="audit/old-invoice.jpg")
+        new_invoice = create_warranty_image(image_name="audit/new-invoice.jpg")
+        registration.invoices.create(image=old_invoice, invoice_type=InvoiceType.TOPCOAT)
+        self.client.force_authenticate(user=self.cs_user)
+
+        response = self.client.patch(
+            reverse("registration_detail", kwargs={"pk": registration.pk}),
+            {
+                "paint_pairs": [
+                    {
+                        "topcoat": new_topcoat.id,
+                        "topcoat_quantity": "15.00",
+                        "basecoat": new_basecoat.id,
+                        "basecoat_quantity": "7.00",
+                    }
+                ],
+                "paint_pair_invoices": [{"image_id": new_invoice.id, "invoice_type": InvoiceType.TOPCOAT}],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.client.force_authenticate(user=self.admin_user)
+        timeline_response = self.client.get(
+            reverse("audit_log_timeline"),
+            {"type": "registration", "object_id": registration.pk},
+        )
+
+        self.assertEqual(timeline_response.status_code, status.HTTP_200_OK)
+        changes = timeline_response.data["results"][0]["changes"]
+        self.assertEqual(changes["paint_pairs"]["before"][0]["topcoat"]["name"], "Old Audit Topcoat")
+        self.assertEqual(changes["paint_pairs"]["after"][0]["topcoat"]["name"], "New Audit Topcoat")
+        self.assertEqual(changes["paint_pairs"]["after"][0]["topcoat"]["id"], new_topcoat.id)
+        self.assertEqual(changes["invoices"]["after"][0]["image_id"], new_invoice.id)
+        self.assertTrue(changes["invoices"]["after"][0]["image_url"].endswith("/audit/new-invoice.jpg"))
+
     def test_registration_resubmit_logs_only_top_level_registration_event(self):
         registration = create_registration(state=RegistrationState.SUBMITTED)
         self.client.force_authenticate(user=self.cs_user)
@@ -128,7 +172,7 @@ class AuditLogAPITests(TestCase):
         response = self.client.post(
             reverse("claim_quality_request_info", kwargs={"pk": claim.pk}),
             {
-                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PRODUCT_BATCH_NUMBER_PHOTO"],
+                "required_items": ["ADDITIONAL_PHOTOS_DIFFERENT_ANGLES", "PROOF_OF_PURCHASE_INVOICE"],
                 "notes": "Need clearer technical evidence from the site.",
             },
             format="json",

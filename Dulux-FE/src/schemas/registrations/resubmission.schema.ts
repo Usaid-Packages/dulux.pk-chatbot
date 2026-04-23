@@ -7,7 +7,6 @@ export const resubmissionFieldSchema = z.enum([
   'phone_number',
   'email',
   'city',
-  'province',
   'site_address',
   'purchase_date',
   'purchase_dealer',

@@ -182,4 +182,4 @@ class DashboardAPITests(TestCase):
         response = self.client.get(self.analytics_url, {"window_days": 5})
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["code"], "INVALID_QUERY_PARAMS")
+        self.assertEqual(response.data["window_days"][0], "window_days must be one of 7, 14, or 30.")
