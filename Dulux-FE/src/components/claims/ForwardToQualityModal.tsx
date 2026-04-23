@@ -14,6 +14,7 @@ import {
   Textarea,
 } from '#/components/ui';
 import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { forwardToQualitySchema, type ForwardToQualityFormValues } from '#/schemas/claim.schema';
 
 interface ForwardToQualityModalProps {
@@ -47,19 +48,17 @@ export const ForwardToQualityModal = ({
     },
   });
 
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset();
-      onClose();
-    }
-  };
+  const { handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: reset,
+  });
 
   const handleFormSubmit = (values: ForwardToQualityFormValues): void => {
     onSubmit(values);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>Forward Claim To Quality</DialogTitle>

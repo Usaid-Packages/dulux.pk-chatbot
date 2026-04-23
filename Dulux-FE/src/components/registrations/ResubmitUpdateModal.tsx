@@ -60,6 +60,7 @@ export const ResubmitUpdateModal = ({
     handlePhoneNumberChange,
     handlePhoneNumberFocus,
     handleModalClose,
+    handleModalOpenChange,
     handleAddPaintPair,
     handleRemovePaintPair,
     buildInvoiceFilesChangeHandler,
@@ -70,7 +71,7 @@ export const ResubmitUpdateModal = ({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleModalClose}>
+    <Dialog open={isOpen} onOpenChange={handleModalOpenChange}>
       <DialogContent className='flex max-h-[85vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[760px]'>
         <DialogHeader>
           <DialogTitle>Submit Resubmission Changes</DialogTitle>
