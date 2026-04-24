@@ -258,6 +258,26 @@
 
 ### 2026-04-03 15:40 - Maximum update depth loop from unstable fallback arrays
 
+### 2026-04-24 16:35 - Playwright route registration order caused mock fallback to hijack all API calls
+
+- Issue: The catch-all `/api/v1/*` fallback was registered after specific handlers, and in Playwright the most recently
+  registered route wins, so valid mocked endpoints returned `501`.
+- Fix: Register fallback first, then register explicit endpoint handlers so specific mocks take precedence.
+- Rule: In Playwright mocked mode, install broad fallback routes before specific API handlers.
+
+### 2026-04-24 16:40 - Multi-action workflow tests became invalid after first mutation changed state
+
+- Issue: A single test attempted approve/reject/request-info (or approve/reject/resubmit) on the same record; after the
+  first successful action, UI correctly disabled subsequent actions.
+- Fix: Use separate deterministic records/IDs per action path in the same case so each action starts from a valid state.
+- Rule: For workflow-stateful UIs, isolate each action assertion on a fresh entity state.
+
+### 2026-04-24 16:45 - Assertions used outdated copy or overly broad text selectors
+
+- Issue: Several tests failed due strict-mode collisions (`Pending`, `QA Review`) and stale text expectations.
+- Fix: Scope assertions to semantic containers and align expected copy with current rendered labels from page snapshots.
+- Rule: Prefer container-scoped semantic assertions over global `getByText` when labels repeat across tabs/cards/tables.
+
 - Issue: In `ProductsListPage`, `products` used `query.data?.results ?? []`, creating a new array each render when data
   was empty/loading. A `useEffect([products])` then called `setSelectedProductIds`, causing repeated updates and React's
   "Maximum update depth exceeded".
