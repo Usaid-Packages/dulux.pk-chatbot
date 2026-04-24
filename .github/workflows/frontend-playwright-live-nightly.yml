@@ -1,0 +1,76 @@
+name: Frontend Playwright Live Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  playwright-live-critical:
+    name: Playwright Live Critical
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      E2E_MODE: live
+      E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+      E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+      VITE_ENCRYPTED_KEY: ${{ secrets.VITE_ENCRYPTED_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_CS_EMAIL: ${{ secrets.E2E_CS_EMAIL }}
+      E2E_CS_PASSWORD: ${{ secrets.E2E_CS_PASSWORD }}
+      E2E_QUALITY_EMAIL: ${{ secrets.E2E_QUALITY_EMAIL }}
+      E2E_QUALITY_PASSWORD: ${{ secrets.E2E_QUALITY_PASSWORD }}
+      E2E_LIVE_REG_APPROVE_ID: ${{ secrets.E2E_LIVE_REG_APPROVE_ID }}
+      E2E_LIVE_REG_RESUBMIT_ID: ${{ secrets.E2E_LIVE_REG_RESUBMIT_ID }}
+      E2E_LIVE_REG_REJECT_ID: ${{ secrets.E2E_LIVE_REG_REJECT_ID }}
+      E2E_LIVE_CLAIM_FORWARD_ID: ${{ secrets.E2E_LIVE_CLAIM_FORWARD_ID }}
+      E2E_LIVE_CLAIM_CSR_RESUBMIT_ID: ${{ secrets.E2E_LIVE_CLAIM_CSR_RESUBMIT_ID }}
+      E2E_LIVE_QUALITY_APPROVE_ID: ${{ secrets.E2E_LIVE_QUALITY_APPROVE_ID }}
+      E2E_LIVE_QUALITY_REQUEST_INFO_ID: ${{ secrets.E2E_LIVE_QUALITY_REQUEST_INFO_ID }}
+      E2E_LIVE_QUALITY_REJECT_ID: ${{ secrets.E2E_LIVE_QUALITY_REJECT_ID }}
+      E2E_LIVE_COMPLAINT_THREAD_ID: ${{ secrets.E2E_LIVE_COMPLAINT_THREAD_ID }}
+    defaults:
+      run:
+        working-directory: Dulux-FE
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: Dulux-FE/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: yarn playwright install --with-deps chromium firefox
+
+      - name: Run live critical suite (chromium + firefox)
+        run: yarn e2e:live:critical:all
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-report
+          path: Dulux-FE/playwright-report
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-live-test-results
+          path: Dulux-FE/test-results
+          retention-days: 14
+
+      - name: Failure notification summary
+        if: failure()
+        run: |
+          echo "Live critical suite failed. Inspect artifacts (report + test-results)." >> "$GITHUB_STEP_SUMMARY"

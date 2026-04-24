@@ -14,6 +14,8 @@
     "e2e:smoke:live": "E2E_MODE=live playwright test --project=chromium-smoke",
     "e2e:full": "playwright test --project=chromium-full --project=firefox-full",
     "e2e:full:live": "E2E_MODE=live playwright test --project=chromium-full --project=firefox-full",
+    "e2e:live:critical": "E2E_MODE=live playwright test --project=chromium-live-critical",
+    "e2e:live:critical:all": "E2E_MODE=live playwright test --project=chromium-live-critical --project=firefox-live-critical",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
     "serve": "serve dist",

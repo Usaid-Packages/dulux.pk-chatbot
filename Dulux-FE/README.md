@@ -62,6 +62,8 @@ Use these commands when debugging E2E failures:
 yarn e2e
 yarn e2e:smoke
 yarn e2e:full
+yarn e2e:live:critical
+yarn e2e:live:critical:all
 yarn e2e:ui
 yarn e2e:report
 ```
@@ -73,6 +75,9 @@ Failure artifacts:
 - Trace/video/screenshots: `test-results/artifacts/`
 
 To inspect a failed trace from the HTML report, open the failed test and click the trace attachment.
+
+Live-mode setup requirements are documented in
+[`e2e/LIVE_MODE_PREREQUISITES.md`](./e2e/LIVE_MODE_PREREQUISITES.md).
 
 
 ### Code Standards
