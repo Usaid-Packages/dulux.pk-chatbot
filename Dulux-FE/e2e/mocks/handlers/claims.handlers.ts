@@ -25,7 +25,7 @@ interface ClaimRecord {
   forwardedAt?: string;
 }
 
-const claimStore: ClaimRecord[] = [
+const createClaimSeed = (): ClaimRecord[] => [
   {
     id: 201,
     claimNumber: 'CLM-201',
@@ -107,6 +107,12 @@ const claimStore: ClaimRecord[] = [
     forwardedAt: '2026-04-22T12:20:00Z',
   },
 ];
+
+let claimStore: ClaimRecord[] = createClaimSeed();
+
+export const resetClaimsMockStore = (): void => {
+  claimStore = createClaimSeed();
+};
 
 const toClaimListItem = (claim: ClaimRecord) => ({
   id: claim.id,
