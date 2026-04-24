@@ -14,9 +14,9 @@ This plan is designed for incremental rollout: `smoke` (PR gate) + `full` (night
 
 ## 2) Current State (As-Is)
 
-- Current automated tests are Vitest/RTL only (unit + integration-style).
-- No E2E framework is currently configured in this repo.
-- E2E must be added with Playwright and CI-friendly deterministic test data strategy.
+- Playwright is configured with mocked/full/smoke coverage and role-based auth setup states.
+- Live mode is enabled via `E2E_MODE=live` with dedicated live critical projects and preflight checks.
+- CI includes PR smoke workflow and nightly live critical workflow.
 
 ## 3) Playwright Architecture
 
@@ -117,6 +117,11 @@ Status legend (as of April 24, 2026):
 - `⚠️ Partial` = partially covered; remaining scope blocked by current app behavior.
 - `⛔ Blocked` = intentionally skipped due current app/router gaps.
 - `⏳ Pending` = not implemented yet in this phase.
+
+Coverage status update policy:
+- Update case status only after executing related Playwright command(s) in this branch.
+- Mark `⛔ Blocked` only when constraint is reproducible and documented with skip reason in spec.
+- Keep case IDs in test names to preserve traceability between this plan and implementation.
 
 ## 5.1 Step 1: Routing + Access Control
 
@@ -301,6 +306,9 @@ Status legend (as of April 24, 2026):
 - `chromium-full`
 - `firefox-full`
 - `webkit-full` (optional if runtime budget allows)
+- `setup-live-preflight` (live mode fail-fast checks)
+- `chromium-live-critical`
+- `firefox-live-critical`
 
 ## 7.2 Tags
 
@@ -381,12 +389,26 @@ Status: `Completed` on `April 24, 2026`.
 
 ## Phase 4 (Live mode, optional)
 
-- Add execution toggle `E2E_MODE=mocked|live` and environment-safe base URL handling.
-- Build reduced live critical pack for nightly runs: `RTE-001`, `RTE-003`, `DASH-001`, `REG-DET-002`, `CLM-DET-003`, `QA-DET-001`, `CHAT-003`, `MAN-002`.
-- Add live-data prerequisites document: required users, minimum seed records, and environment health checks.
-- Add network/contract fail-fast checks at suite start for live mode.
-- Run nightly live suite with report artifacts and failure notifications.
-- Phase 4 exit criteria: nightly live pack runs reliably and catches environment-level regressions without blocking PR velocity.
+Status: `Completed (with MAN-002 still blocked by app behavior)` on `April 24, 2026`.
+
+- Added execution toggle `E2E_MODE=mocked|live` with environment-safe base URL handling:
+  - `E2E_BASE_URL` required in live mode.
+  - Local dev server boot is disabled for live mode runs.
+- Added live critical pack in `e2e/specs/live/live-critical.spec.ts` for:
+  - `RTE-001`, `RTE-003`, `DASH-001`, `REG-DET-002`, `CLM-DET-003`, `QA-DET-001`, `CHAT-003`
+  - `MAN-002` remains `⛔ Blocked` and is explicitly skipped with reason.
+- Added live-data prerequisites document:
+  - `e2e/LIVE_MODE_PREREQUISITES.md`
+- Added network/contract fail-fast checks at suite start for live mode:
+  - `e2e/fixtures/live.preflight.setup.ts`
+- Added nightly live suite workflow with artifacts and failure summary:
+  - `.github/workflows/frontend-playwright-live-nightly.yml`
+- Added scripts:
+  - `yarn e2e:live:critical`
+  - `yarn e2e:live:critical:all`
+- Phase 4 exit criteria status:
+  - Live critical pack, preflight checks, and nightly workflow implemented.
+  - `MAN-002` is still blocked pending app success-route behavior.
 
 ## 11) Risks and Mitigations
 
@@ -411,9 +433,6 @@ E2E rollout is complete when:
 
 ## 13) Immediate Next Action (Recommended)
 
-Implement Phase 1 first:
-
-1. Add Playwright config and scripts.
-2. Add auth fixtures + route mocks.
-3. Add `routing-rbac` + `dashboard` smoke tests.
-4. Wire into CI as non-blocking for first rollout week, then enforce.
+1. Keep nightly live credentials + live record IDs rotated and valid.
+2. Unblock `MAN-002` at app level, then convert skip to executable live critical case.
+3. Track live run stability metrics (pass-rate, flaky cases, median runtime) weekly.

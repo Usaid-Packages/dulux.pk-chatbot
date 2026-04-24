@@ -77,6 +77,12 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-24 19:05 - Live-mode E2E needs explicit fail-fast guards and dataset IDs
+
+- Issue: Live E2E runs can fail late (after expensive browser setup) when base URLs, API reachability, or mutable record IDs are missing/misconfigured.
+- Fix: Added live preflight setup checks for required env vars and API contract reachability, and required explicit Phase 4 dataset ID env vars for mutation paths.
+- Rule: For `E2E_MODE=live`, fail fast before critical specs by validating env + network contracts + deterministic data IDs.
+
 ### 2026-04-24 17:10 - Realtime E2E specs need deterministic socket control
 
 - Issue: Realtime chat tests can flake when browser WebSocket behavior depends on external network timing.
