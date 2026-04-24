@@ -69,8 +69,26 @@
   per-message image ownership from complaint detail-level `images`.
 - Use direct React hook imports (`import { useState } from 'react'`) and call hooks directly (`useState(...)`), not
   `React.useState(...)`.
+- For Playwright mocked-mode E2E, register explicit endpoint handlers first and then an `/api/v1/*` fallback so
+  unexpected network calls fail deterministically.
+- For Playwright endpoint regex matchers, allow optional trailing slash and query string (`/?(?:\\?.*)?$`) to avoid
+  accidental fallback hits on valid API requests.
+- Never commit real E2E login credentials in test fixtures; use env vars in live mode and mock identities in mocked mode.
 
 ## Mistake Log (Short)
+
+### 2026-04-24 11:20 - Mock endpoint regex too strict for analytics requests
+
+- Issue: Dashboard analytics requests with query params did not match `/analytics/$`-style handlers, causing fallback
+  501 responses and false-negative smoke failures.
+- Fix: Updated dashboard mock routes to accept optional trailing slash and query strings.
+- Rule: Write Playwright API route regex with optional query support for endpoints that may append filter params.
+
+### 2026-04-24 12:30 - Real credentials were placed in E2E fixture
+
+- Issue: Real login emails/passwords were hardcoded in Playwright auth fixture, creating secret exposure risk.
+- Fix: Switched to env-driven credentials for `E2E_MODE=live` and mock-only placeholder identities for `E2E_MODE=mocked`.
+- Rule: Keep real E2E credentials only in local/CI secret stores (never in git-tracked source files).
 
 ### 2026-04-21 12:45 - Request-info options not fully aligned with latest UX instruction
 
@@ -258,6 +276,12 @@
 ### 2026-04-03 20:05 - `import/order` crash on new quality module files
 
 - Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added quality module files.
+
+### 2026-04-24 11:30 - Playwright refresh-token mock payload mismatch
+
+- Issue: The refresh-token mock accidentally read `email/password` instead of `refresh`, which could mask auth-retry behavior in E2E.
+- Fix: Updated the mock payload type and handler to read `refresh` explicitly.
+- Rule: Keep mocked request payload contracts aligned with real endpoint contracts, especially auth/token flows.
 - Fix: Added narrow file-level `/* eslint import/order: off */` comments to impacted quality files only; kept import
   structure clean otherwise.
 - Rule: When this known toolchain crash appears in new modules, apply the smallest scoped file-level override and
