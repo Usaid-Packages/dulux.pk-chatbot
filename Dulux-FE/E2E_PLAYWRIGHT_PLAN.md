@@ -124,8 +124,9 @@ Dulux-FE/
 - When opening `/`
 - Then redirect to role home
 
-### RTE-003 Role guard (admin-only areas)
-- CS/Quality users cannot access product create/edit/import/settings admin-only behaviors
+### RTE-003 Role guard (privileged areas)
+- CS users cannot access import/settings privileged routes
+- Quality users cannot access product create/edit/import/settings privileged routes
 - Redirect to safe route
 
 ### RTE-004 Deep-linking detail routes
@@ -144,7 +145,7 @@ Dulux-FE/
 ### B1 Dashboard
 
 ### DASH-001 Cards + navigation
-- 6 module cards visible for permitted roles
+- Dashboard cards reflect role visibility rules for permitted roles (admin/cs: 5 cards in current implementation)
 - Card click navigates to matching route
 
 ### DASH-002 Analytics sections
@@ -274,8 +275,8 @@ Dulux-FE/
 
 ## 6.1 CS Agent
 
-- Allowed: dashboard, registrations, claims, complaints, manual registration
-- Blocked: quality decisions (if restricted by route), admin-only actions/routes
+- Allowed: dashboard, registrations, claims, complaints, manual registration, products (list/create/edit)
+- Blocked: quality decisions (if restricted by route), import/settings routes/actions
 
 ## 6.2 Quality User
 
@@ -333,6 +334,8 @@ Dulux-FE/
 ## 10) Implementation Phases
 
 ## Phase 1 (Foundation, 1-2 days)
+
+Status: `Completed` on `April 24, 2026`.
 
 - Add `playwright.config.ts` with projects: `chromium-smoke`, `chromium-full`, `firefox-full` (webkit optional).
 - Add npm scripts: `e2e`, `e2e:smoke`, `e2e:full`, `e2e:ui`, `e2e:report`.

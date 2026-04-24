@@ -72,7 +72,7 @@ After successful login, redirect to:
 ### 1.4 Screen-to-Route Mapping
 
 - `A1` Login -> `/login` ⚠️ **No Login wireframe provided in Phase 1** — implement as standard email+password form; layout pending design approval
-- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
+- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view with role-scoped clickable module cards (current admin/cs implementation: 5 cards) plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
 - `B2/B3` Registrations list/detail -> `/app/registrations`, `/app/registrations/:id`
 - `B4/B5` Claims list/detail -> `/app/claims`, `/app/claims/:id`
 - `B6` Quality module -> `/app/quality`, `/app/quality/:id`
@@ -101,6 +101,7 @@ After successful login, redirect to:
 - registrations
 - claims
 - complaints
+- products (list/create/edit)
 
 #### Admin
 
@@ -223,7 +224,7 @@ export const routes = [
             ],
           },
           {
-            element: <ProtectedRoute roles={[ROLES.ADMIN]} />,
+            element: <ProtectedRoute roles={[ROLES.ADMIN, ROLES.CS]} />,
             children: [
               {
                 path: "products",
@@ -233,10 +234,16 @@ export const routes = [
                   { path: ":id/edit", element: <ProductEditPage /> }, // B9
                 ],
               },
-              { path: "import", element: <ImportPage /> }, // B11
             ],
           },
-          { path: "settings", element: <SettingsPage /> }, // B12
+          {
+            element: <ProtectedRoute roles={[ROLES.ADMIN]} />,
+            children: [{ path: "import", element: <ImportPage /> }], // B11
+          },
+          {
+            element: <ProtectedRoute roles={[ROLES.ADMIN]} />,
+            children: [{ path: "settings", element: <SettingsPage /> }], // B12
+          },
         ],
       },
     ],
@@ -388,8 +395,8 @@ Use feature naming namespaces inside current folders:
 #### Dashboard
 
 - `src/components/dashboard/DashboardCard.tsx`         — clickable card per module (title, icon, screen count, module stats, description)
-- `src/components/dashboard/DashboardGrid.tsx`         — grid container for 6 module cards
-- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (6 module cards with navigation)
+- `src/components/dashboard/DashboardGrid.tsx`         — grid container for role-scoped module cards (current admin/cs: 5 cards)
+- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (role-scoped module cards with navigation)
 
 #### Registrations (B2/B3)
 
@@ -4170,7 +4177,7 @@ Audit checks executed for this refresh:
 - [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to satisfy Step 1 route map.
 - [ ] Route-wire `AuditLogsPage` (and corresponding nav/permissions decision) since page and hooks are already implemented.
 - [ ] Implement component-level RBAC helper (`usePermissions`) and apply it to action-level controls.
-- [ ] Align products module RBAC with policy (current implementation exposes Products to CS users via sidebar/route; plan policy defines admin-only).
+- [x] Align products module RBAC policy to current behavior: CS users can access Products list/create/edit; keep import/settings as privileged routes.
 - [ ] Fix manual registration success flow to navigate to `/manual-registration/success` on successful submit (currently success redirects to registrations list).
 - [ ] Add `Dulux-FE/.env.example` with required env keys from `env.mjs`.
 - [ ] Add automated tests for critical user/business flows (currently no test files found).

@@ -26,6 +26,6 @@
       "components/*": ["components/*"]
     }
   },
-  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "types/**/*.ts"],
+  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "types/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
