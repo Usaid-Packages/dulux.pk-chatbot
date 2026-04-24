@@ -4,7 +4,7 @@ export const complaintsHandlers: MockRouteDefinition[] = [
   {
     id: 'complaints-list',
     method: 'GET',
-    url: /.*\/api\/v1\/complaints\/$/,
+    url: /.*\/api\/v1\/complaints\/?(?:\?.*)?$/,
     handle: () => ({
       status: 200,
       body: {
@@ -33,7 +33,7 @@ export const complaintsHandlers: MockRouteDefinition[] = [
   {
     id: 'complaints-card-counts',
     method: 'GET',
-    url: /.*\/api\/v1\/complaints\/card-counts\/live-chat\/$/,
+    url: /.*\/api\/v1\/complaints\/card-counts\/live-chat\/?(?:\?.*)?$/,
     handle: () => ({
       status: 200,
       body: {

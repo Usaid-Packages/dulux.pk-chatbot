@@ -112,163 +112,169 @@ Dulux-FE/
 
 ## 5) Coverage Matrix Mapped to Implementation Plan
 
+Status legend (as of April 24, 2026):
+- `✅ Covered` = implemented and passing in current mocked full suite.
+- `⚠️ Partial` = partially covered; remaining scope blocked by current app behavior.
+- `⛔ Blocked` = intentionally skipped due current app/router gaps.
+- `⏳ Pending` = not implemented yet in this phase.
+
 ## 5.1 Step 1: Routing + Access Control
 
-### RTE-001 Unauthenticated redirect
+### RTE-001 Unauthenticated redirect `✅ Covered`
 - Given no token
 - When opening protected route (`/dashboard`, `/claims`, `/registrations`)
 - Then redirect to `/login`
 
-### RTE-002 Root redirect
+### RTE-002 Root redirect `✅ Covered`
 - Given authenticated role
 - When opening `/`
 - Then redirect to role home
 
-### RTE-003 Role guard (privileged areas)
+### RTE-003 Role guard (privileged areas) `✅ Covered`
 - CS users cannot access import/settings privileged routes
 - Quality users cannot access product create/edit/import/settings privileged routes
 - Redirect to safe route
 
-### RTE-004 Deep-linking detail routes
+### RTE-004 Deep-linking detail routes `⏳ Pending`
 - Direct open for `/registrations/:id`, `/claims/:id`, `/complaints/:id`, `/quality/:id`
 - Correct page loads and back-navigation works
 
-### RTE-005 Manual wizard step route behavior
+### RTE-005 Manual wizard step route behavior `⏳ Pending`
 - `/manual-registration` redirects to step 1
 - Invalid/non-sequential step access enforces guard behavior
 
-### RTE-006 Catch-all routing
+### RTE-006 Catch-all routing `⏳ Pending`
 - Unknown route under app returns defined fallback/redirect behavior
 
 ## 5.2 Step 3 Screens (B1-B12)
 
 ### B1 Dashboard
 
-### DASH-001 Cards + navigation
+### DASH-001 Cards + navigation `✅ Covered`
 - Dashboard cards reflect role visibility rules for permitted roles (admin/cs: 5 cards in current implementation)
 - Card click navigates to matching route
 
-### DASH-002 Analytics sections
+### DASH-002 Analytics sections `✅ Covered`
 - Trend + workload charts render
 - Fallback/mocked dataset displayed when analytics unavailable
 
 ### B2 Registrations List
 
-### REG-LIST-001 Stats + tabs + table + pagination
+### REG-LIST-001 Stats + tabs + table + pagination `✅ Covered`
 - Validate stat cards, tab filter transitions, pagination controls
 
-### REG-LIST-002 Add Manual Registration CTA
+### REG-LIST-002 Add Manual Registration CTA `✅ Covered`
 - CTA navigates to `/manual-registration/step/1`
 
-### REG-LIST-003 Loading/empty/error states
+### REG-LIST-003 Loading/empty/error states `✅ Covered`
 - Skeleton/empty/error messages shown appropriately
 
 ### B3 Registration Detail
 
-### REG-DET-001 Detail rendering + action center by role
+### REG-DET-001 Detail rendering + action center by role `✅ Covered`
 - CS/Admin can use actions
 - Quality role sees restricted behavior
 
-### REG-DET-002 Approve/Reject/Resubmit happy paths
+### REG-DET-002 Approve/Reject/Resubmit happy paths `✅ Covered`
 - Open modal, submit payload, observe success feedback and list refresh
 
-### REG-DET-003 Resubmission field mapping contract
+### REG-DET-003 Resubmission field mapping contract `✅ Covered`
 - Selected fields are correctly sent in payload
 
-### REG-DET-004 Invoice/image lightbox behavior
+### REG-DET-004 Invoice/image lightbox behavior `✅ Covered`
 - Open image preview, close lightbox
 
 ### B4 Claims List
 
-### CLM-LIST-001 Stats/tabs/filters/table/pagination
+### CLM-LIST-001 Stats/tabs/filters/table/pagination `✅ Covered`
 - Issue type + search + status filters affect result list
 
-### CLM-LIST-002 Create-claim modal flow
+### CLM-LIST-002 Create-claim modal flow `✅ Covered`
 - Query-param open behavior
 - Submit success closes modal and updates URL state
 
 ### B5 Claim Detail
 
-### CLM-DET-001 Detail sections + timeline + images
+### CLM-DET-001 Detail sections + timeline + images `✅ Covered`
 
-### CLM-DET-002 Required workflow transition
+### CLM-DET-002 Required workflow transition `✅ Covered`
 - On opening SUBMITTED claim detail, backend transition to IN_REVIEW is triggered once
 
-### CLM-DET-003 Approve/reject/send-to-quality/csr-resubmit flows
+### CLM-DET-003 Approve/reject/send-to-quality/csr-resubmit flows `✅ Covered`
 - Validate payload + success/error feedback
 
 ### B6 Quality Module
 
-### QA-LIST-001 Queue summary cards + tab filters + split/list behavior
+### QA-LIST-001 Queue summary cards + tab filters + split/list behavior `✅ Covered`
 
-### QA-DET-001 Approve/reject/request-info actions
+### QA-DET-001 Approve/reject/request-info actions `✅ Covered`
 
-### QA-DET-002 Gated decisions by workflow state
+### QA-DET-002 Gated decisions by workflow state `✅ Covered`
 - Actions unavailable outside `QA_REVIEW` state
 
 ### B7 Complaints Chat
 
-### CHAT-001 Conversation list + thread deep-link
+### CHAT-001 Conversation list + thread deep-link `⏳ Pending`
 - No thread selected -> auto-select first thread behavior
 - Direct thread URL loads target thread
 
-### CHAT-002 Socket/live updates behavior (mocked stream)
+### CHAT-002 Socket/live updates behavior (mocked stream) `⏳ Pending`
 - New incoming message appears without full page reload
 
-### CHAT-003 Resolve flow chain
+### CHAT-003 Resolve flow chain `⏳ Pending`
 - OPEN -> IN_PROGRESS -> RESOLVED/CLOSED chain with closure note
 
-### CHAT-004 Message send path
+### CHAT-004 Message send path `⏳ Pending`
 - Trim handling, disabled submit for empty message, transport error toast path
 
 ### B8/B9 Products
 
-### PROD-LIST-001 Products tab + Surface Types tab
+### PROD-LIST-001 Products tab + Surface Types tab `✅ Covered`
 - Tab switch, table render, pagination/filter checks
 
-### PROD-CRUD-001 Create/Edit/Delete product
+### PROD-CRUD-001 Create/Edit/Delete product `⚠️ Partial`
 - Form validations + submit + post-action list refresh
 
-### PROD-SURFACE-001 Create/Edit/Delete surface type
+### PROD-SURFACE-001 Create/Edit/Delete surface type `✅ Covered`
 
 ### B10 Manual Registration Wizard
 
-### MAN-001 Step navigation + per-step validation guard
+### MAN-001 Step navigation + per-step validation guard `✅ Covered`
 - Cannot advance with invalid step inputs
 
-### MAN-002 Full submit flow to success screen
+### MAN-002 Full submit flow to success screen `⛔ Blocked`
 - Submit at final step reaches success page
 
-### MAN-003 Success actions
+### MAN-003 Success actions `⛔ Blocked`
 - View registration, create another, back to list
 
-### MAN-004 Deep-link guard behavior
+### MAN-004 Deep-link guard behavior `✅ Covered`
 - Opening later step without prerequisites triggers expected guard/redirect
 
 ### B11 Import + B12 Settings
 
-### IMP-001 Placeholder shell behavior
+### IMP-001 Placeholder shell behavior `⛔ Blocked`
 - Route reachable by allowed role
 - Placeholder content shown (no upload business logic if intentionally pending)
 
-### SET-001 Settings placeholder/admin restrictions
+### SET-001 Settings placeholder/admin restrictions `⛔ Blocked`
 
 ## 5.3 Step 4/5/6/7 Hardening Coverage
 
-### HARD-001 Loading/empty/error contract on all list pages
+### HARD-001 Loading/empty/error contract on all list pages `✅ Covered`
 - Registrations, claims, quality, products, complaints list
 
-### HARD-002 Mutation error handling
+### HARD-002 Mutation error handling `✅ Covered`
 - Toast + stable UI after failed mutation
 
-### HARD-003 Form schema UX
+### HARD-003 Form schema UX `✅ Covered`
 - Required fields, min length, invalid format messaging
 - Disable submit while pending
 
-### HARD-004 Chat reliability
+### HARD-004 Chat reliability `⏳ Pending`
 - Socket disconnect/reconnect behavior surfaces user feedback
 
-### HARD-005 RBAC component-level protections
+### HARD-005 RBAC component-level protections `✅ Covered`
 - Hidden/disabled actions for unauthorized roles
 
 ## 6) RBAC Test Matrix

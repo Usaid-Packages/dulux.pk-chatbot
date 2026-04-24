@@ -1,8 +1,10 @@
 import type { Page, Request, Route } from '@playwright/test';
 
+import { auditLogsHandlers } from './handlers/auditLogs.handlers';
 import { authHandlers } from './handlers/auth.handlers';
 import { claimsHandlers } from './handlers/claims.handlers';
 import { complaintsHandlers } from './handlers/complaints.handlers';
+import { coreHandlers } from './handlers/core.handlers';
 import { dashboardHandlers } from './handlers/dashboard.handlers';
 import { importHandlers } from './handlers/import.handlers';
 import { productsHandlers } from './handlers/products.handlers';
@@ -74,6 +76,8 @@ const installFallback = async (page: Page): Promise<void> => {
 
 export const registerMockApiRoutes = async (page: Page): Promise<void> => {
   const definitions: MockRouteDefinition[] = [
+    ...coreHandlers,
+    ...auditLogsHandlers,
     ...authHandlers,
     ...dashboardHandlers,
     ...registrationsHandlers,
