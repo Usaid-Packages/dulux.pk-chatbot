@@ -135,15 +135,15 @@ Status legend (as of April 24, 2026):
 - Quality users cannot access product create/edit/import/settings privileged routes
 - Redirect to safe route
 
-### RTE-004 Deep-linking detail routes `⏳ Pending`
+### RTE-004 Deep-linking detail routes `✅ Covered`
 - Direct open for `/registrations/:id`, `/claims/:id`, `/complaints/:id`, `/quality/:id`
 - Correct page loads and back-navigation works
 
-### RTE-005 Manual wizard step route behavior `⏳ Pending`
+### RTE-005 Manual wizard step route behavior `✅ Covered`
 - `/manual-registration` redirects to step 1
 - Invalid/non-sequential step access enforces guard behavior
 
-### RTE-006 Catch-all routing `⏳ Pending`
+### RTE-006 Catch-all routing `✅ Covered`
 - Unknown route under app returns defined fallback/redirect behavior
 
 ## 5.2 Step 3 Screens (B1-B12)
@@ -214,17 +214,17 @@ Status legend (as of April 24, 2026):
 
 ### B7 Complaints Chat
 
-### CHAT-001 Conversation list + thread deep-link `⏳ Pending`
+### CHAT-001 Conversation list + thread deep-link `✅ Covered`
 - No thread selected -> auto-select first thread behavior
 - Direct thread URL loads target thread
 
-### CHAT-002 Socket/live updates behavior (mocked stream) `⏳ Pending`
+### CHAT-002 Socket/live updates behavior (mocked stream) `✅ Covered`
 - New incoming message appears without full page reload
 
-### CHAT-003 Resolve flow chain `⏳ Pending`
+### CHAT-003 Resolve flow chain `✅ Covered`
 - OPEN -> IN_PROGRESS -> RESOLVED/CLOSED chain with closure note
 
-### CHAT-004 Message send path `⏳ Pending`
+### CHAT-004 Message send path `✅ Covered`
 - Trim handling, disabled submit for empty message, transport error toast path
 
 ### B8/B9 Products
@@ -271,7 +271,7 @@ Status legend (as of April 24, 2026):
 - Required fields, min length, invalid format messaging
 - Disable submit while pending
 
-### HARD-004 Chat reliability `⏳ Pending`
+### HARD-004 Chat reliability `✅ Covered`
 - Socket disconnect/reconnect behavior surfaces user feedback
 
 ### HARD-005 RBAC component-level protections `✅ Covered`
@@ -368,6 +368,8 @@ Status: `Completed` on `April 24, 2026`.
 - Phase 2 exit criteria: B1-B12 core functional coverage complete in mocked mode with passing full chromium run.
 
 ## Phase 3 (Realtime + hardening, 2-3 days)
+
+Status: `Completed` on `April 24, 2026`.
 
 - Implement complaints realtime-focused specs for case IDs: `CHAT-001`, `CHAT-002`, `CHAT-003`, `CHAT-004`, `HARD-004`.
 - Add controlled websocket simulation hooks in mocks for inbound message and status updates.

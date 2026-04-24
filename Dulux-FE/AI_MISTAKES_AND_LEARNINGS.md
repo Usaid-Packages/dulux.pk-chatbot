@@ -77,6 +77,14 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-24 17:10 - Realtime E2E specs need deterministic socket control
+
+- Issue: Realtime chat tests can flake when browser WebSocket behavior depends on external network timing.
+- Fix: Added controlled Playwright socket hooks (thread + queue channels) and used them in E2E to simulate inbound
+  events, disconnect, and reconnect paths deterministically.
+- Rule: For realtime E2E, avoid live socket dependency in mocked mode; inject deterministic socket controls and assert
+  UI behavior on emitted events.
+
 ### 2026-04-24 11:20 - Mock endpoint regex too strict for analytics requests
 
 - Issue: Dashboard analytics requests with query params did not match `/analytics/$`-style handlers, causing fallback
