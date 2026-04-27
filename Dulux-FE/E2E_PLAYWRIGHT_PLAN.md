@@ -253,8 +253,10 @@ Coverage status update policy:
 
 ## 5.3 Step 4/5/6/7 Hardening Coverage
 
-### HARD-001 Loading/empty/error contract on all list pages `✅ Covered`
-- Registrations, claims, quality, products, complaints list
+### HARD-001 Loading/empty/error contract on all list pages `⚠️ Partial`
+- Currently covered in resilience specs: claims list and products list.
+- Remaining scope to reach full claim: registrations, quality, and complaints list resilience paths.
+- Coverage claim overstates resilience breadth: the plan marks `HARD-001` as covering all list pages, but current `resilience.spec.ts` assertions cover claims and products only.
 
 ### HARD-002 Mutation error handling `✅ Covered`
 - Toast + stable UI after failed mutation
@@ -314,11 +316,11 @@ Coverage status update policy:
 
 ## 8) CI Pipeline Plan
 
-## 8.1 PR Gate (fast)
+## 8.1 PR Checks (fast)
 
 - Lint
 - Unit/integration tests
-- Playwright `@smoke` + `@rbac` on mocked mode
+- Playwright `@smoke` + `@rbac` on mocked mode (non-blocking signal)
 
 ## 8.2 Nightly/Release Gate
 
@@ -383,17 +385,13 @@ Status: `Completed (MAN-002 covered in mocked full runs; live-critical execution
 - Added live critical pack in `e2e/specs/live/live-critical.spec.ts` for:
   - `RTE-001`, `RTE-003`, `DASH-001`, `REG-DET-002`, `CLM-DET-003`, `QA-DET-001`, `CHAT-003`
   - `MAN-002` remains skipped in live runs pending stable live data-entry automation.
-- Added live-data prerequisites document:
-  - `e2e/LIVE_MODE_PREREQUISITES.md`
 - Added network/contract fail-fast checks at suite start for live mode:
   - `e2e/fixtures/live.preflight.setup.ts`
-- Added nightly live suite workflow with artifacts and failure summary:
-  - `.github/workflows/frontend-playwright-live-nightly.yml`
 - Added scripts:
   - `yarn e2e:live:critical`
   - `yarn e2e:live:critical:all`
 - Phase 4 exit criteria status:
-  - Live critical pack, preflight checks, and nightly workflow implemented.
+  - Live critical pack and preflight checks implemented.
   - `MAN-002` behavior is validated in mocked full runs; live-critical coverage is still pending.
 
 ## 11) Risks and Mitigations
@@ -412,7 +410,7 @@ Status: `Completed (MAN-002 covered in mocked full runs; live-critical execution
 E2E rollout is complete when:
 
 - Playwright is configured and running in CI
-- `@smoke` passes on all PRs
+- `@smoke` results are published on all PRs with artifacts for triage
 - Full suite covers all implementation-plan modules (B1-B10) and routing/RBAC
 - Failing tests provide trace/screenshot artifacts
 - Test docs include maintenance guidelines and ownership

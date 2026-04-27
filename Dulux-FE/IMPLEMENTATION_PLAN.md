@@ -3286,7 +3286,7 @@ Audit checks executed for this refresh:
 - Route + module scan (`src/routes`, `src/pages`, `src/components`, `src/hooks`, `src/data-layer`)
 - Critical standards checks:
   - `usePermissions` lookup -> not found
-  - test/spec scan -> `23` unit/integration test files in `src` and `12` Playwright spec files in `e2e/specs`
+  - test/spec scan -> `23` unit/integration test files in `src` and `13` Playwright spec files in `e2e/specs`
   - PR template check -> present at repository root (`/.github/pull_request_template.md`)
 
 ### 15.1 Completion Matrix (Current State)
@@ -3363,3 +3363,34 @@ Audit checks executed for this refresh:
 - Complaints realtime: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`, `src/hooks/complaints/useComplaintThread.ts`
 - Products and surface types: `src/pages/products/ProductsListPage.tsx`, `src/pages/products/ProductCreatePage.tsx`, `src/pages/products/ProductEditPage.tsx`
 - Env and standards health: `env.mjs`, `package.json`, `/.github/pull_request_template.md`
+
+### 15.5 Testing Coverage Matrix (Code-Verified)
+
+Status legend: `✅ DONE` means implemented and present in repository.
+
+- ✅ DONE: Unit tests (utility/schema-level validation and pure logic)
+  - Examples:
+    - `src/schemas/__tests__/authQualityComplaintsSchemas.unit.test.ts`
+    - `src/hooks/dashboard/__tests__/dashboardHelpers.test.ts`
+- ✅ DONE: Hook integration tests (custom hooks with mocked data/API dependencies)
+  - Examples:
+    - `src/hooks/auth/__tests__/authHooks.integration.test.tsx`
+    - `src/hooks/complaints/__tests__/useComplaintThread.integration.test.tsx`
+    - `src/hooks/quality/__tests__/qualityHooks.integration.test.tsx`
+- ✅ DONE: UI/component tests (component rendering/interaction behavior)
+  - Examples:
+    - `src/components/dashboard/__tests__/DashboardGrid.test.tsx`
+- ✅ DONE: Page-level integration tests (route-page behavior, filters, modals, navigation, error states)
+  - Examples:
+    - `src/pages/claims/__tests__/ClaimsListPage.test.tsx`
+    - `src/pages/registrations/__tests__/RegistrationsListPage.test.tsx`
+    - `src/pages/complaints/__tests__/LiveChatPage.test.tsx`
+- ✅ DONE: End-to-end tests (Playwright smoke/full/live suites)
+  - Examples:
+    - `e2e/specs/full/auth.spec.ts`
+    - `e2e/specs/full/resilience.spec.ts`
+    - `e2e/specs/smoke/routing-rbac.smoke.spec.ts`
+    - `e2e/specs/live/live-critical.spec.ts`
+
+Latest non-E2E verification snapshot:
+- ✅ DONE: `vitest run` passed (`23` files, `83` tests).

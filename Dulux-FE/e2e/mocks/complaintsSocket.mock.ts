@@ -5,6 +5,9 @@ interface ComplaintSocketControl {
   emitThreadMessage: (threadId: string, payload: unknown) => void;
   forceThreadDisconnect: (threadId: string, code?: number, reason?: string) => void;
   getThreadSocketCount: (threadId: string) => number;
+  getThreadOpenSocketCount: (threadId: string) => number;
+  getThreadLastSentText: (threadId: string) => string | null;
+  setThreadConnectionBlocked: (threadId: string, blocked: boolean) => void;
   setSendFailureEnabled: (enabled: boolean) => void;
 }
 
@@ -30,6 +33,8 @@ const INSTALL_SCRIPT = () => {
 
   const NativeWebSocket = window.WebSocket;
   const threadSocketMap = new Map<string, Set<MockSocketRecord>>();
+  const blockedThreadConnections = new Set<string>();
+  const lastSentTextByThread = new Map<string, string>();
   const queueSockets = new Set<MockSocketRecord>();
   let sendFailureEnabled = false;
   let nextMessageId = 1;
@@ -96,8 +101,13 @@ const INSTALL_SCRIPT = () => {
         threadSocketMap.set(this.threadId, socketsForThread);
       }
 
-      window.setTimeout(() => {
+      const tryOpenSocket = (): void => {
         if (this.socketState === 'closed') {
+          return;
+        }
+
+        if (this.threadId && blockedThreadConnections.has(this.threadId)) {
+          window.setTimeout(tryOpenSocket, 50);
           return;
         }
 
@@ -105,7 +115,9 @@ const INSTALL_SCRIPT = () => {
         const openEvent = new Event('open');
         this.onopen?.(openEvent);
         this.eventTarget.dispatchEvent(openEvent);
-      }, 0);
+      };
+
+      window.setTimeout(tryOpenSocket, 0);
 
       this.addEventListener = this.eventTarget.addEventListener.bind(this.eventTarget);
       this.removeEventListener = this.eventTarget.removeEventListener.bind(this.eventTarget);
@@ -134,6 +146,9 @@ const INSTALL_SCRIPT = () => {
 
       const payloadRecord = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
       const textValue = typeof payloadRecord.text === 'string' ? payloadRecord.text.trim() : '';
+      if (this.threadId.length > 0 && textValue.length > 0) {
+        lastSentTextByThread.set(this.threadId, textValue);
+      }
 
       if (sendFailureEnabled) {
         this.emitMessage({
@@ -247,6 +262,32 @@ const INSTALL_SCRIPT = () => {
     getThreadSocketCount: (threadId: string): number => {
       return threadSocketMap.get(threadId)?.size ?? 0;
     },
+    getThreadOpenSocketCount: (threadId: string): number => {
+      const socketsForThread = threadSocketMap.get(threadId);
+      if (!socketsForThread) {
+        return 0;
+      }
+
+      let openCount = 0;
+      for (const socketRecord of socketsForThread) {
+        if (socketRecord.getReadyState() === ControlledComplaintsSocket.OPEN) {
+          openCount += 1;
+        }
+      }
+
+      return openCount;
+    },
+    getThreadLastSentText: (threadId: string): string | null => {
+      return lastSentTextByThread.get(threadId) ?? null;
+    },
+    setThreadConnectionBlocked: (threadId: string, blocked: boolean): void => {
+      if (blocked) {
+        blockedThreadConnections.add(threadId);
+        return;
+      }
+
+      blockedThreadConnections.delete(threadId);
+    },
     setSendFailureEnabled: (enabled: boolean): void => {
       sendFailureEnabled = enabled;
     },
@@ -300,5 +341,33 @@ export const getComplaintThreadSocketCount = async (page: Page, threadId: string
   return page.evaluate(currentThreadId => {
     const windowWithControl = window as Window & { __PW_COMPLAINT_SOCKET__?: ComplaintSocketControl };
     return windowWithControl.__PW_COMPLAINT_SOCKET__?.getThreadSocketCount(currentThreadId) ?? 0;
+  }, threadId);
+};
+
+export const getComplaintThreadOpenSocketCount = async (page: Page, threadId: string): Promise<number> => {
+  return page.evaluate(currentThreadId => {
+    const windowWithControl = window as Window & { __PW_COMPLAINT_SOCKET__?: ComplaintSocketControl };
+    return windowWithControl.__PW_COMPLAINT_SOCKET__?.getThreadOpenSocketCount(currentThreadId) ?? 0;
+  }, threadId);
+};
+
+export const setComplaintThreadConnectionBlocked = async (
+  page: Page,
+  threadId: string,
+  blocked: boolean
+): Promise<void> => {
+  await page.evaluate(
+    ({ currentThreadId, isBlocked }) => {
+      const windowWithControl = window as Window & { __PW_COMPLAINT_SOCKET__?: ComplaintSocketControl };
+      windowWithControl.__PW_COMPLAINT_SOCKET__?.setThreadConnectionBlocked(currentThreadId, isBlocked);
+    },
+    { currentThreadId: threadId, isBlocked: blocked }
+  );
+};
+
+export const getComplaintThreadLastSentText = async (page: Page, threadId: string): Promise<string | null> => {
+  return page.evaluate(currentThreadId => {
+    const windowWithControl = window as Window & { __PW_COMPLAINT_SOCKET__?: ComplaintSocketControl };
+    return windowWithControl.__PW_COMPLAINT_SOCKET__?.getThreadLastSentText(currentThreadId) ?? null;
   }, threadId);
 };
