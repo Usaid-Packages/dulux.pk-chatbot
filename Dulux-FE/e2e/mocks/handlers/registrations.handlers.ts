@@ -277,6 +277,47 @@ export const registrationsHandlers: MockRouteDefinition[] = [
     },
   },
   {
+    id: 'registrations-create-manual',
+    method: 'POST',
+    url: /.*\/api\/v1\/warranty\/registrations\/?(?:\?.*)?$/,
+    handle: ({ request }) => {
+      const payload = request.postDataJSON() as Record<string, unknown> | null;
+      const nextId = Math.max(...registrationStore.map(item => item.id)) + 1;
+      const nowIso = new Date().toISOString();
+
+      const createdRecord: RegistrationRecord = {
+        id: nextId,
+        registrationCode: `REG-${nextId}`,
+        channel: 'WEBFORM',
+        state: 'SUBMITTED',
+        customerName: typeof payload?.customerName === 'string' ? payload.customerName : 'Manual Customer',
+        phoneNumber: typeof payload?.phoneNumber === 'string' ? payload.phoneNumber : '923000000000',
+        email: typeof payload?.email === 'string' ? payload.email : 'manual@example.com',
+        city: typeof payload?.city === 'string' ? payload.city : 'Karachi',
+        siteAddress: typeof payload?.siteAddress === 'string' ? payload.siteAddress : 'N/A',
+        purchaseDate: typeof payload?.purchaseDate === 'string' ? payload.purchaseDate : '2026-04-20',
+        purchaseDealer: typeof payload?.purchaseDealer === 'string' ? payload.purchaseDealer : 'Color House',
+        purchaseDealerCity: typeof payload?.purchaseDealerCity === 'string' ? payload.purchaseDealerCity : 'Karachi',
+        purchaseDealerAddress:
+          typeof payload?.purchaseDealerAddress === 'string' ? payload.purchaseDealerAddress : 'Main Road',
+        postalCode: typeof payload?.postalCode === 'string' ? payload.postalCode : '',
+        notes: typeof payload?.notes === 'string' ? payload.notes : '',
+        created: nowIso,
+        modified: nowIso,
+      };
+
+      registrationStore.unshift(createdRecord);
+
+      return {
+        status: 201,
+        body: {
+          id: createdRecord.id,
+          registrationCode: createdRecord.registrationCode,
+        },
+      };
+    },
+  },
+  {
     id: 'registration-detail',
     method: 'GET',
     url: /.*\/api\/v1\/warranty\/registrations\/\d+\/?(?:\?.*)?$/,
