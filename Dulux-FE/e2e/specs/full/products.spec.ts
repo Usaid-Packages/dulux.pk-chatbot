@@ -43,10 +43,6 @@ test.describe('@critical products phase2', () => {
     await expect(page.getByText('Product updated successfully.')).toBeVisible();
   });
 
-  test.skip('PROD-CRUD-001 delete product (blocked: delete product action is not exposed in current UI)', async () => {
-    // Blocked by current app implementation.
-  });
-
   test('PROD-SURFACE-001 create/edit/delete surface type from tab', async ({ page }) => {
     await page.goto('products?tab=surface-types');
     await expect(page.getByRole('button', { name: 'Add Surface Type' })).toBeVisible();

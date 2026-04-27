@@ -354,25 +354,58 @@ export const productsHandlers: MockRouteDefinition[] = [
     id: 'products-warranty-options',
     method: 'GET',
     url: /.*\/api\/v1\/products\/warranty-options\/?(?:\?.*)?$/,
-    handle: () => ({
-      status: 200,
-      body: {
-        topcoat: productStore
-          .filter(item => item.productType === 'TOPCOAT')
-          .map(item => ({
-            value: String(item.id),
-            label: item.name,
-            warrantyYears: item.warrantyYears,
-          })),
-        basecoat: productStore
-          .filter(item => item.productType === 'BASECOAT')
-          .map(item => ({
-            value: String(item.id),
-            label: item.name,
-            warrantyYears: item.warrantyYears,
-          })),
-      },
-    }),
+    handle: ({ request }) => {
+      const url = new URL(request.url());
+      const productType = url.searchParams.get('product_type');
+      const topcoatIdParam = Number.parseInt(url.searchParams.get('topcoat_id') ?? '', 10);
+
+      if (productType === 'TOPCOAT') {
+        const topcoatResults = productStore.filter(item => item.productType === 'TOPCOAT').map(toProductApi);
+        return {
+          status: 200,
+          body: {
+            count: topcoatResults.length,
+            next: null,
+            previous: null,
+            results: topcoatResults,
+          },
+        };
+      }
+
+      if (productType === 'BASECOAT') {
+        const scopedBasecoatRecords = Number.isFinite(topcoatIdParam)
+          ? (productStore.find(item => item.id === topcoatIdParam)?.basecoats ?? []).map(basecoat => ({
+              id: basecoat.id,
+              name: basecoat.name,
+              productType: 'BASECOAT' as const,
+              warrantyYears: basecoat.warrantyYears,
+              coverageDetails: '',
+              webpageUrl: '',
+              features: '',
+              isActive: true,
+              surfaceTypes: [],
+              basecoats: [],
+              images: [],
+            }))
+          : productStore.filter(item => item.productType === 'BASECOAT');
+
+        const basecoatResults = scopedBasecoatRecords.map(toProductApi);
+        return {
+          status: 200,
+          body: {
+            count: basecoatResults.length,
+            next: null,
+            previous: null,
+            results: basecoatResults,
+          },
+        };
+      }
+
+      return {
+        status: 400,
+        body: { detail: 'Missing or invalid product_type query param.' },
+      };
+    },
   },
   {
     id: 'products-basecoats',

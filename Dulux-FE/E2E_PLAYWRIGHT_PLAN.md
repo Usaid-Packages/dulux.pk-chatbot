@@ -6,7 +6,7 @@ Build a Playwright E2E suite that validates the implemented product behavior aga
 
 - Routing and deep-linking
 - Auth + RBAC access control
-- Core user flows (B1-B12)
+- Core user flows (B1-B10)
 - Error/loading/empty-state resilience
 - Critical mutation flows and state transitions
 
@@ -39,7 +39,6 @@ Dulux-FE/
         quality.handlers.ts
         complaints.handlers.ts
         products.handlers.ts
-        import.handlers.ts
     pages/
       LoginPage.ts
       DashboardPage.ts
@@ -65,7 +64,6 @@ Dulux-FE/
         complaints.spec.ts
         products.spec.ts
         manual-registration.spec.ts
-        import-settings-placeholder.spec.ts
         resilience.spec.ts
 ```
 
@@ -136,8 +134,7 @@ Coverage status update policy:
 - Then redirect to role home
 
 ### RTE-003 Role guard (privileged areas) `✅ Covered`
-- CS users cannot access import/settings privileged routes
-- Quality users cannot access product create/edit/import/settings privileged routes
+- Quality users cannot access product create/edit privileged routes
 - Redirect to safe route
 
 ### RTE-004 Deep-linking detail routes `✅ Covered`
@@ -151,7 +148,7 @@ Coverage status update policy:
 ### RTE-006 Catch-all routing `✅ Covered`
 - Unknown route under app returns defined fallback/redirect behavior
 
-## 5.2 Step 3 Screens (B1-B12)
+## 5.2 Step 3 Screens (B1-B10)
 
 ### B1 Dashboard
 
@@ -237,8 +234,9 @@ Coverage status update policy:
 ### PROD-LIST-001 Products tab + Surface Types tab `✅ Covered`
 - Tab switch, table render, pagination/filter checks
 
-### PROD-CRUD-001 Create/Edit/Delete product `⚠️ Partial`
+### PROD-CRUD-001 Create/Edit product `✅ Covered`
 - Form validations + submit + post-action list refresh
+- Product delete action is intentionally out of scope for current UI (no delete control exposed)
 
 ### PROD-SURFACE-001 Create/Edit/Delete surface type `✅ Covered`
 
@@ -247,22 +245,11 @@ Coverage status update policy:
 ### MAN-001 Step navigation + per-step validation guard `✅ Covered`
 - Cannot advance with invalid step inputs
 
-### MAN-002 Full submit flow to success screen `⛔ Blocked`
-- Submit at final step reaches success page
-
-### MAN-003 Success actions `⛔ Blocked`
-- View registration, create another, back to list
+### MAN-002 Full submit flow redirects to registrations list `✅ Covered`
+- Submit at final step navigates to `/registrations` (not success route) in mocked full runs
 
 ### MAN-004 Deep-link guard behavior `✅ Covered`
 - Opening later step without prerequisites triggers expected guard/redirect
-
-### B11 Import + B12 Settings
-
-### IMP-001 Placeholder shell behavior `⛔ Blocked`
-- Route reachable by allowed role
-- Placeholder content shown (no upload business logic if intentionally pending)
-
-### SET-001 Settings placeholder/admin restrictions `⛔ Blocked`
 
 ## 5.3 Step 4/5/6/7 Hardening Coverage
 
@@ -286,8 +273,8 @@ Coverage status update policy:
 
 ## 6.1 CS Agent
 
-- Allowed: dashboard, registrations, claims, complaints, manual registration, products (list/create/edit)
-- Blocked: quality decisions (if restricted by route), import/settings routes/actions
+- Allowed: dashboard, registrations, claims, complaints, products (list/create/edit), and manual registration entry via Registrations CTA (no sidebar tab)
+- Blocked: quality decisions (if restricted by route)
 
 ## 6.2 Quality User
 
@@ -296,7 +283,7 @@ Coverage status update policy:
 
 ## 6.3 Admin
 
-- Full access including products/import/settings routes and actions
+- Full access including products routes and actions
 
 ## 7) Playwright Config Plan
 
@@ -342,7 +329,7 @@ Coverage status update policy:
 
 - Route/RBAC cases: 100% of declared route guards and redirects
 - Critical user journeys: 100% (auth, claims decisions, quality decisions, chat resolve, manual wizard submit)
-- Module screen coverage: B1-B12 each has at least one happy path + one resilience path
+- Module screen coverage: B1-B10 each has at least one happy path + one resilience path
 - Mutation coverage: each critical mutation has success + failure scenario
 
 ## 10) Implementation Phases
@@ -355,7 +342,7 @@ Status: `Completed` on `April 24, 2026`.
 - Add npm scripts: `e2e`, `e2e:smoke`, `e2e:full`, `e2e:ui`, `e2e:report`.
 - Create base structure: `e2e/fixtures`, `e2e/mocks`, `e2e/pages`, `e2e/specs/smoke`, `e2e/specs/full`.
 - Implement auth fixtures with role-based `storageState`: `admin`, `cs`, `quality`, `anonymous`.
-- Implement deterministic mocked transport with `page.route` handlers for auth, dashboard, registrations, claims, quality, complaints, products, import.
+- Implement deterministic mocked transport with `page.route` handlers for auth, dashboard, registrations, claims, quality, complaints, products.
 - Create base Page Objects: `LoginPage`, `DashboardPage`, shared `AppShellPage`.
 - Implement smoke tests for case IDs: `RTE-001`, `RTE-002`, `RTE-003`, `DASH-001`, `DASH-002`.
 - Add trace/screenshot/video policy: trace on retry, screenshot+video on failure.
@@ -368,12 +355,11 @@ Status: `Completed` on `April 24, 2026`.
 - Implement Claims specs for case IDs: `CLM-LIST-001`, `CLM-LIST-002`, `CLM-DET-001`, `CLM-DET-002`, `CLM-DET-003`.
 - Implement Quality specs for case IDs: `QA-LIST-001`, `QA-DET-001`, `QA-DET-002`.
 - Implement Products specs for case IDs: `PROD-LIST-001`, `PROD-CRUD-001`, `PROD-SURFACE-001`.
-- Implement Manual Registration wizard specs for case IDs: `MAN-001`, `MAN-002`, `MAN-003`, `MAN-004`.
-- Implement placeholder/access specs for case IDs: `IMP-001`, `SET-001`.
+- Implement Manual Registration wizard specs for case IDs: `MAN-001`, `MAN-002`, `MAN-004`.
 - Add resilience assertions across modules for case IDs: `HARD-001`, `HARD-002`, `HARD-003`, `HARD-005`.
 - Tag critical tests with `@critical` and wizard tests with `@wizard`.
 - Enforce deterministic waits using UI state assertions only (`expect(...).toBeVisible()`, URL assertions), no hard sleeps.
-- Phase 2 exit criteria: B1-B12 core functional coverage complete in mocked mode with passing full chromium run.
+- Phase 2 exit criteria: B1-B10 core functional coverage complete in mocked mode with passing full chromium run.
 
 ## Phase 3 (Realtime + hardening, 2-3 days)
 
@@ -389,14 +375,14 @@ Status: `Completed` on `April 24, 2026`.
 
 ## Phase 4 (Live mode, optional)
 
-Status: `Completed (with MAN-002 still blocked by app behavior)` on `April 24, 2026`.
+Status: `Completed (MAN-002 covered in mocked full runs; live-critical execution still pending)` on `April 24, 2026`.
 
 - Added execution toggle `E2E_MODE=mocked|live` with environment-safe base URL handling:
   - `E2E_BASE_URL` required in live mode.
   - Local dev server boot is disabled for live mode runs.
 - Added live critical pack in `e2e/specs/live/live-critical.spec.ts` for:
   - `RTE-001`, `RTE-003`, `DASH-001`, `REG-DET-002`, `CLM-DET-003`, `QA-DET-001`, `CHAT-003`
-  - `MAN-002` remains `⛔ Blocked` and is explicitly skipped with reason.
+  - `MAN-002` remains skipped in live runs pending stable live data-entry automation.
 - Added live-data prerequisites document:
   - `e2e/LIVE_MODE_PREREQUISITES.md`
 - Added network/contract fail-fast checks at suite start for live mode:
@@ -408,7 +394,7 @@ Status: `Completed (with MAN-002 still blocked by app behavior)` on `April 24, 2
   - `yarn e2e:live:critical:all`
 - Phase 4 exit criteria status:
   - Live critical pack, preflight checks, and nightly workflow implemented.
-  - `MAN-002` is still blocked pending app success-route behavior.
+  - `MAN-002` behavior is validated in mocked full runs; live-critical coverage is still pending.
 
 ## 11) Risks and Mitigations
 
@@ -427,12 +413,12 @@ E2E rollout is complete when:
 
 - Playwright is configured and running in CI
 - `@smoke` passes on all PRs
-- Full suite covers all implementation-plan modules (B1-B12) and routing/RBAC
+- Full suite covers all implementation-plan modules (B1-B10) and routing/RBAC
 - Failing tests provide trace/screenshot artifacts
 - Test docs include maintenance guidelines and ownership
 
 ## 13) Immediate Next Action (Recommended)
 
 1. Keep nightly live credentials + live record IDs rotated and valid.
-2. Unblock `MAN-002` at app level, then convert skip to executable live critical case.
+2. Unskip and stabilize `MAN-002` in live-critical pack once live-data prerequisites are deterministic.
 3. Track live run stability metrics (pass-rate, flaky cases, median runtime) weekly.

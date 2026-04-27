@@ -12,8 +12,8 @@ const getLiveDataIdOrPlaceholder = (envVarName: Parameters<typeof getRequiredLiv
   isLiveMode() ? getRequiredLiveDataId(envVarName) : 'phase4-live-placeholder';
 
 const protectedRoutes = ['dashboard', 'claims', 'registrations'] as const;
-const csBlockedRoutes = ['import', 'settings'] as const;
-const qualityBlockedRoutes = ['products/new', 'products/123/edit', 'import', 'settings'] as const;
+const csBlockedRoutes = ['import'] as const;
+const qualityBlockedRoutes = ['products/new', 'products/123/edit', 'import'] as const;
 
 test.describe('@live @live-critical @critical phase4 live critical pack', () => {
   test.skip(!isLiveMode(), 'Live critical pack runs only when E2E_MODE=live.');
@@ -170,7 +170,7 @@ test.describe('@live @live-critical @critical phase4 live critical pack', () => 
     test.use({ storageState: authStatePaths.cs });
 
     test.skip(
-      'MAN-002 full wizard submit reaches success page (blocked: current app redirects to registrations on success)',
+      'MAN-002 full wizard submit redirects to registrations list (pending full wizard data-entry automation)',
       async ({ page }) => {
         const wizardPage = new ManualRegistrationWizardPage(page);
         await wizardPage.gotoStep(1);

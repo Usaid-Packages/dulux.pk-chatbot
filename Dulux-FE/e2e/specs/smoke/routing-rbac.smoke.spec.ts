@@ -3,8 +3,8 @@ import { expect, test } from '../../fixtures/data.fixture';
 import { AppShellPage } from '../../pages/AppShellPage';
 
 const protectedRoutes = ['dashboard', 'claims', 'registrations'] as const;
-const csBlockedRoutes = ['import', 'settings'] as const;
-const qualityBlockedRoutes = ['products/new', 'products/123/edit', 'import', 'settings'] as const;
+const csBlockedRoutes = ['quality'] as const;
+const qualityBlockedRoutes = ['products/new', 'products/123/edit'] as const;
 
 test.describe('@smoke @rbac routing-rbac smoke coverage', () => {
   test('RTE-001 unauthenticated users are redirected to /login', async ({ page }) => {
