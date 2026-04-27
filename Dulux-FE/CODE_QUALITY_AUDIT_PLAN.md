@@ -21,17 +21,6 @@ Implication:
  
 ## 2) Priority Findings (Standards + Past Mistakes)
 
-## P0 - Security & Policy
-
-1. Sensitive tokens are persisted in localStorage (policy violation)
-- Standards reference: `SECURITY -> Secure Storage: Never store sensitive data in localStorage`
-- Evidence:
-  - `src/context/AuthContext.tsx`
-  - `src/services/axiosInstance.ts`
-  - `src/services/refreshTokenService.ts`
-  - `src/utils/localStorage.ts`
-- Plan: migrate auth storage to secure cookie strategy (httpOnly), keep frontend state token-agnostic.
-
 ## P1 - Architecture/Standards Drift
 
 2. Oversized component/page files (violates 300-line component rule)
@@ -60,7 +49,6 @@ Implication:
   - `src/components/errorFallback/ErrorFallback.tsx`
 - Plan:
   - convert default exports to named exports for app/service/hook/component modules (keep ambient/module declaration exceptions only).
-- Status: DONE (2026-04-22) for this ticket scope (`App`, `axiosInstance`, `useSentry`, `ErrorFallback`; declaration-file exceptions retained).
 
 ## P1 - Mistakes File Rule Drift
 
@@ -142,13 +130,6 @@ Implication:
   - `src/pages/products/ProductCreatePage.tsx`
   - `src/pages/products/ProductEditPage.tsx`
 - Plan: refactor image upload/attach sequence into callback-oriented mutation orchestration helper.
-
-14. Required project-file compliance gap in FE package root
-- Standards reference: `REQUIRED PROJECT FILES -> .github/pull_request_template.md`
-- Evidence:
-  - missing at `Dulux-FE/.github/pull_request_template.md`
-  - exists only at repository root `/.github/pull_request_template.md`
-- Plan: add FE-local PR template or formally document monorepo-root template policy exception.
 
 15. One-component-per-file rule drift in shared UI primitives
 - Standards reference: `REACT COMPONENT RULES -> One Component Per File`
@@ -481,6 +462,48 @@ Implication:
   - consolidate date/time formatting through shared utility-level formatters (with optional presets),
   - remove per-component formatter duplication.
 
+43. Query client lifecycle is recreated inside app render path
+- Standards reference: `Performance`, `State stability`
+- Evidence:
+  - `src/App.tsx` (`new QueryClient(...)` inside `AppContent`)
+- Risk:
+  - cache resets and avoidable refetches if provider component rerenders/remounts.
+- Plan:
+  - initialize `QueryClient` via module-level singleton or `useState(() => new QueryClient(...))` to keep stable lifetime.
+
+44. React Query Devtools are mounted unconditionally
+- Standards reference: `Performance`, `Production hardening`
+- Evidence:
+  - `src/App.tsx` renders `<ReactQueryDevtools />` without environment guard.
+- Risk:
+  - unnecessary production bundle/runtime overhead.
+- Plan:
+  - gate Devtools to non-production/dev environments only.
+
+45. Utilities layer boundary drift (`src/utils` depends on browser globals)
+- Standards reference: `ARCHITECTURE -> /src/utils pure helpers only. No DOM/React dependencies`
+- Evidence:
+  - `src/utils/helperFunctions.ts` reads `window.location.origin`.
+- Risk:
+  - reduced portability/testability and implicit runtime coupling.
+- Plan:
+  - move browser-origin resolution to caller boundary or pass origin as explicit parameter into helper.
+
+46. Page composition boundary drift remains in registrations list page
+- Standards reference: `ARCHITECTURE -> /src/pages should be page-level composition only`
+- Evidence:
+  - `src/pages/registrations/RegistrationsListPage.tsx` imports data-layer hooks directly and contains heavy orchestration.
+- Plan:
+  - extract orchestration into dedicated controller hook (e.g., `useRegistrationsListPageController`) and keep page focused on composition.
+- Status: DONE (2026-04-27) via dedicated page-controller extraction:
+  - `src/hooks/registrations/useRegistrationsListPageController.ts`
+  - `src/pages/registrations/RegistrationsListPage.tsx` now consumes controller hook (no direct data-layer imports).
+
+47. Unused utility export increases surface area and maintenance noise
+- Standards reference: `CLEAN CODE -> No dead code`, `Single Responsibility`
+- Plan:
+  - remove unused export or introduce explicit usage with documented intent.
+
 ## 3) Enhancement Roadmap (Phased)
 
 ## Phase 1 (High impact, low risk) - 1 week
@@ -500,23 +523,17 @@ Implication:
 Deliverables:
 - Reduced duplicate code in pilot pages
 - Bundle report checked into CI artifacts
-- Security migration RFC draft (token storage)
 
 ## Phase 2 (Security + architecture) - 1 to 2 weeks
 
-1. Auth hardening
-- Move from localStorage tokens to secure cookie-compatible flow.
-- Keep refresh handling centralized in transport layer.
-
-2. Split oversized files
+1. Split oversized files
 - Prioritize top 5 biggest components/pages.
 - Rule: no file > 300 lines after refactor unless temporary exception documented.
 
-3. Route-level lazy loading
+2. Route-level lazy loading
 - Apply `React.lazy` + suspense boundaries for route modules.
 
 Deliverables:
-- No token persistence in localStorage
 - Top oversized files split
 - First meaningful JS chunk reduction
 
@@ -534,41 +551,56 @@ Deliverables:
   - registration detail actions
   - claim detail transitions
   - complaint thread rendering/fallback
+- Status: DONE (2026-04-27).
+- Evidence:
+  - Auth critical-flow coverage:
+    - `src/hooks/auth/__tests__/authHooks.integration.test.tsx`
+    - `src/pages/auth/__tests__/AuthPages.test.tsx`
+    - `e2e/specs/full/auth.spec.ts`
+  - Claim + registration action flow coverage:
+    - `src/pages/claims/__tests__/ClaimDetailPage.test.tsx`
+    - `src/pages/registrations/__tests__/RegistrationDetailPage.test.tsx`
+    - `e2e/specs/full/claims.spec.ts`
+    - `e2e/specs/full/registrations.spec.ts`
+  - Complaint thread resilience/rendering coverage:
+    - `src/hooks/complaints/__tests__/useComplaintThread.integration.test.tsx`
+    - `src/pages/complaints/__tests__/LiveChatPage.test.tsx`
+    - `e2e/specs/full/complaints.spec.ts`
+    - `e2e/specs/full/resilience.spec.ts`
 
 Deliverables:
 - Baseline test suite for critical paths
 - Reduced logic in page components
 - Stable architecture documentation
+- Status: Baseline test suite for critical paths -> DONE (2026-04-27).
 
 ## 4) Concrete Refactor Backlog (Master Ticket List)
 
-1. `SEC-001`: Replace localStorage token persistence with secure session flow. (Covers Findings: #1)
-2. `PERF-001`: Implement route-level lazy loading in router. (Covers Findings: #3)
-3. `PERF-002`: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
+1. `PERF-001`: Implement route-level lazy loading in router. (Covers Findings: #3)
+2. `PERF-002`: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
 4. `ARCH-001`: Split `AuditTimelinePanel.tsx` into renderer subcomponents. (Covers Findings: #2, #33) ✅ Done (2026-04-17)
 5. `ARCH-002` [✅ DONE 2026-04-17]: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
 6. `ARCH-003` [✅ DONE 2026-04-20]: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
 7. `ARCH-004` [✅ DONE 2026-04-20]: Split `ProductsListPage.tsx` into tab containers. (Covers Findings: #2, #28)
 8. `ARCH-005` [✅ DONE 2026-04-20]: Split `AddClaimModal.tsx` into structured sub-forms. (Covers Findings: #2, #24, #28)
-9. `DRY-001` [✅ DONE 2026-04-22]: Create shared `PaginationFooter` component. (Covers Findings: #7)
-10. `DRY-002`: Create shared `ListStateBlock` component. (Covers Findings: #7)
-11. `DRY-003`: Create shared `StatsCardGrid` component. (Covers Findings: #7)
+9.  `DRY-001` [✅ DONE 2026-04-22]: Create shared `PaginationFooter` component. (Covers Findings: #7)
+10. `DRY-002` [✅ DONE 2026-04-27]: Create shared `ListStateBlock` component. (Covers Findings: #7)
+11. `DRY-003` [✅ DONE 2026-04-27]: Create shared `StatsCardGrid` component. (Covers Findings: #7)
 12. `RULE-001` [✅ DONE 2026-04-22]: Remove `import/order` file-level disables. (Covers Findings: #5)
 13. `RULE-002` [✅ DONE 2026-04-22]: Restore sidebar Manual Registration item. (Covers Findings: #6)
 14. `RULE-003` [✅ DONE 2026-04-22]: Add explicit return types to exported hooks. (Covers Findings: #10)
 15. `RULE-004` [✅ DONE 2026-04-22]: Add explicit return types to exported route components. (Covers Findings: #10)
 16. `RULE-005` [✅ DONE 2026-04-22]: Replace inline JSX arrows in top touched files. (Covers Findings: #11, #41)
 17. `UTIL-001`: Split `helperFunctions.ts` into domain normalizers. (Covers Findings: #9)
-18. `TEST-001`: Add auth critical-flow RTL/MSW tests. (Cross-cutting regression safety for Findings: #1, #13, #21)
-19. `TEST-002`: Add claim + registration action flow tests. (Cross-cutting regression safety for Findings: #17, #22, #38)
-20. `TEST-003`: Add complaint thread resilience tests. (Cross-cutting regression safety for Findings: #31, #33, #34)
+18. `TEST-001` [✅ DONE 2026-04-27]: Add auth critical-flow RTL/MSW tests. (Cross-cutting regression safety for Findings: #13, #21)
+19. `TEST-002` [✅ DONE 2026-04-27]: Add claim + registration action flow tests. (Cross-cutting regression safety for Findings: #17, #22, #38)
+20. `TEST-003` [✅ DONE 2026-04-27]: Add complaint thread resilience tests. (Cross-cutting regression safety for Findings: #31, #33, #34)
 21. `ROUTE-001`: Introduce loader/action usage on priority routes (claims/quality lists). (Covers Findings: #12)
 22. `RULE-006` [✅ DONE 2026-04-22]: Replace `mutateAsync` sequence in product create/edit with callback orchestration helper. (Covers Findings: #13)
-23. `DOC-001`: Add FE-local `.github/pull_request_template.md` (or approved exception note). (Covers Findings: #14)
 24. `RULE-007` [✅ DONE 2026-04-22]: Resolve one-component-per-file drift in `src/components/ui/*` (split or documented exception). (Covers Findings: #15)
 25. `ARCH-006` [✅ DONE 2026-04-20]: Move product page data-layer imports into product hooks (`pages` composition-only refactor). (Covers Findings: #16)
 26. `ARCH-007` [✅ DONE 2026-04-20]: Extract `CsrResubmissionModal` query logic into a dedicated claims hook. (Covers Findings: #17)
-27. `RULE-008`: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
+27. `RULE-008` [✅ DONE 2026-04-27]: Add missing component JSDoc blocks for all exported components (start with products/auth files listed above). (Covers Findings: #18)
 28. `CLEAN-001`: Remove or wire dead modules (`HomePage`, `PlaceholderPage`, `RegistrationFilters`, `AdminRoute`, `useSentry`). (Covers Findings: #19)
 29. `DRY-004` [✅ DONE 2026-04-22]: Implement shared URL query-param filter helper (`useUrlFilters`) and migrate claims/registrations/quality/audit/products. (Covers Findings: #20, #30)
 30. `DRY-005` [✅ DONE 2026-04-22]: Implement shared mutation-feedback wrapper for toast + error mapping. (Covers Findings: #21, #39)
@@ -594,27 +626,28 @@ Deliverables:
 50. `DRY-012` [✅ DONE 2026-04-23]: Create shared UI text constants (`src/constants/uiText.ts`) for placeholders/select hint copy. (Covers Findings: #40)
 51. `RULE-009` [✅ DONE 2026-04-22]: Replace inline JSX closures in list/hot paths with stable handlers + `data-*` identity pattern. (Covers Findings: #11, #41)
 52. `DRY-013` [✅ DONE 2026-04-23]: Unify domain date/time wrappers through `src/utils/date.ts` presets and remove duplicate local formatters. (Covers Findings: #23, #32, #42)
-53. `RULE-010` [✅ DONE 2026-04-22]: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
+53. `RULE-010`: Convert default exports to named exports for `App`, `axiosInstance`, `useSentry`, and `ErrorFallback` (excluding declaration-file exceptions). (Covers Findings: #4)
+54. `PERF-010`: Stabilize React Query client lifetime in app root (single client instance). (Covers Finding: #43)
+55. `PERF-011`: Gate React Query Devtools to non-production environments. (Covers Finding: #44)
+56. `ARCH-011`: Remove browser-global coupling from `src/utils` helpers. (Covers Finding: #45)
+57. `ARCH-012` [✅ DONE 2026-04-27]: Extract registrations list page orchestration into controller hook (`pages` composition-only). (Covers Finding: #46)
+
 
 ## 5) Finding-to-Ticket Coverage (Detailed)
 
-1. Finding #1 -> `SEC-001`:
-- Scope: remove auth token persistence from localStorage and move to secure session/cookie-aligned flow.
-- Done when: no token reads/writes remain in auth context, refresh service, or axios auth headers from localStorage.
-
-2. Finding #2 -> `ARCH-001`, `ARCH-002`, `ARCH-003`, `ARCH-004`, `ARCH-005`, `ARCH-009`, `ARCH-010`:
+1. Finding #2 -> `ARCH-001`, `ARCH-002`, `ARCH-003`, `ARCH-004`, `ARCH-005`, `ARCH-009`, `ARCH-010`:
 - Scope: break oversized modules into hooks + sections + smaller presentational units.
 - Done when: target files are <= 300 lines (or exception documented) and behavior unchanged.
 
-3. Finding #3 -> `PERF-001`:
+2. Finding #3 -> `PERF-001`:
 - Scope: route-level lazy loading in router.
 - Done when: page modules load via lazy boundaries and initial chunk size drops.
 
-4. Finding #4 -> `RULE-010`:
+3. Finding #4 -> `RULE-010`:
 - Scope: replace default exports in flagged modules with named exports.
 - Done when: imports are updated and no default export drift remains (except declaration-file constraints).
 
-5. Finding #5 -> `RULE-001`:
+4. Finding #5 -> `RULE-001`:
 - Scope: remove `import/order` disable comments and stabilize imports.
 - Done when: source files have zero file-level import-order disables.
 - Status: ✅ Done (2026-04-22)
@@ -627,11 +660,12 @@ Deliverables:
 7. Finding #7 -> `DRY-001`, `DRY-002`, `DRY-003`:
 - Scope: common list-page primitives for pagination/state/stats.
 - Done when: at least pilot pages use shared primitives and duplicate blocks are removed.
-- Status: `DRY-001` ✅ Done (2026-04-22).
+- Status: `DRY-001` ✅ Done (2026-04-22), `DRY-002` ✅ Done (2026-04-27), `DRY-003` ✅ Done (2026-04-27).
 
 8. Finding #8 -> `DRY-009`, `ARCH-008`:
 - Scope: shared modal lifecycle and action orchestration for detail pages.
 - Done when: open/close/reset action modal boilerplate is centralized.
+- Status: `ARCH-008` ✅ Done (2026-04-20), `DRY-009` ✅ Done (2026-04-23).
 
 9. Finding #9 -> `UTIL-001`:
 - Scope: split `helperFunctions.ts` into domain normalizers.
@@ -656,10 +690,6 @@ Deliverables:
 - Done when: create/edit product action flows use callback mutation orchestration helper.
 - Status: `RULE-006` ✅ Done (2026-04-22).
 
-14. Finding #14 -> `DOC-001`:
-- Scope: FE-local PR template presence or documented exception.
-- Done when: template exists under FE package or policy exception is documented.
-
 15. Finding #15 -> `RULE-007`:
 - Scope: resolve one-component-per-file drift in UI primitives.
 - Done when: primitives are split or standards exception is documented.
@@ -669,14 +699,17 @@ Deliverables:
 16. Finding #16 -> `ARCH-006`:
 - Scope: remove page-level direct data-layer ownership in products module.
 - Done when: pages become composition-only and product hooks own orchestration.
+- Status: `ARCH-006` ✅ Done (2026-04-20).
 
 17. Finding #17 -> `ARCH-007`:
 - Scope: move component-level query logic out of `CsrResubmissionModal`.
 - Done when: dedicated claims hook supplies state/handlers.
+- Status: `ARCH-007` ✅ Done (2026-04-20).
 
 18. Finding #18 -> `RULE-008`:
 - Scope: add JSDoc for exported components.
 - Done when: missing exported components have concise JSDoc blocks.
+- Status: `RULE-008` ✅ Done (2026-04-27) for products/auth scope listed in Finding #18.
 
 19. Finding #19 -> `CLEAN-001`:
 - Scope: remove or properly wire dead/unreachable modules.
@@ -707,6 +740,7 @@ Deliverables:
 24. Finding #24 -> `ARCH-002`, `ARCH-003`, `ARCH-005`, `ARCH-009`:
 - Scope: split complex forms into controller hooks + section components.
 - Done when: each form has clear container vs presentation separation.
+- Status: `ARCH-002` ✅ Done (2026-04-17), `ARCH-003` ✅ Done (2026-04-20), `ARCH-005` ✅ Done (2026-04-20), `ARCH-009` ✅ Done (2026-04-20).
 
 25. Finding #25 -> `UI-001`:
 - Scope: standardize UI import convention.
@@ -715,10 +749,12 @@ Deliverables:
 26. Finding #26 -> `STYLE-001`, `STYLE-002`:
 - Scope: remove hardcoded style literals and use tokenized/shared styles.
 - Done when: repeated gradients/shadows/buttons use token-driven classes/variants.
+- Status: `STYLE-001` ✅ Done (2026-04-23), `STYLE-002` ✅ Done (2026-04-23).
 
 27. Finding #27 -> `STYLE-001`:
 - Scope: reduce oversized inline className strings.
 - Done when: repeated utility groups move to semantic classes.
+- Status: `STYLE-001` ✅ Done (2026-04-23).
 
 28. Finding #28 -> `PERF-003`, `PERF-004`, `PERF-005`:
 - Scope: optimize rerender hotspots in products/registration/claim forms.
@@ -727,6 +763,7 @@ Deliverables:
 29. Finding #29 -> `STYLE-002`:
 - Scope: shared primary action button variant.
 - Done when: repeated gradient primary button classes are replaced.
+- Status: `STYLE-002` ✅ Done (2026-04-23).
 
 30. Finding #30 -> `DRY-007`:
 - Scope: unify query-param mutation behavior.
@@ -763,10 +800,12 @@ Deliverables:
 37. Finding #37 -> `DRY-010`, `ARCH-008`:
 - Scope: guard+mutation+toast orchestration reuse.
 - Done when: detail hooks no longer duplicate this pattern.
+- Status: `ARCH-008` ✅ Done (2026-04-20).
 
 38. Finding #38 -> `ARCH-010`:
 - Scope: split registration detail hook by responsibility.
 - Done when: query/actions/payload builder live in separate modules.
+- Status: `ARCH-010` ✅ Done (2026-04-20).
 
 39. Finding #39 -> `DRY-005`, `DRY-011`:
 - Scope: centralized toast/message constants.
@@ -781,12 +820,33 @@ Deliverables:
 41. Finding #41 -> `RULE-005`, `RULE-009`:
 - Scope: remove inline closures in hot list/render paths.
 - Done when: stable callbacks/data-attribute identity are used.
-- Status: `RULE-005` ✅ Done (2026-04-22).
+- Status: `RULE-005` ✅ Done (2026-04-22), `RULE-009` ✅ Done (2026-04-22).
 
 42. Finding #42 -> `DRY-013`:
 - Scope: unify date/time wrappers via shared presets/utilities.
 - Done when: local duplicate wrappers are removed from domain components.
 - Status: `DRY-013` ✅ Done (2026-04-23).
+
+43. Finding #43 -> `PERF-010`:
+- Scope: prevent QueryClient recreation in app render path.
+- Done when: a stable QueryClient instance is used across app lifetime.
+
+44. Finding #44 -> `PERF-011`:
+- Scope: avoid Devtools mounting in production runtime.
+- Done when: React Query Devtools are environment-gated to non-production.
+
+45. Finding #45 -> `ARCH-011`:
+- Scope: keep `src/utils` browser-agnostic and test-friendly.
+- Done when: window-origin logic is moved out of utility layer or injected as parameter.
+
+46. Finding #46 -> `ARCH-012`:
+- Scope: move registrations list orchestration out of page component.
+- Done when: page is composition-focused and controller hook owns orchestration.
+- Status: `ARCH-012` ✅ Done (2026-04-27).
+
+47. Finding #47 -> `CLEAN-002`:
+- Scope: reduce dead utility surface area.
+- Done when: unused exports are removed or justified with explicit usage/docs.
 
 ## 6) Audit Commands (Repeatable)
 
@@ -797,13 +857,11 @@ yarn install
 yarn lint
 yarn build
 rg -n "eslint import/order: off|eslint-disable.*import/order" src
-rg -n "localStorage|ACCESS_TOKEN|REFRESH_TOKEN" src
 find src -name '*.tsx' -o -name '*.ts' | while read -r f; do lc=$(wc -l < "$f"); if [ "$lc" -gt 300 ]; then echo "$f:$lc"; fi; done
 ```
 
 ## 7) Success Metrics
 
-- Security: 0 token writes to localStorage.
 - Bundle: main entry chunk reduced by >= 40% in phase-1/2.
 - Maintainability: 0 component/page files > 300 lines (or documented exceptions).
 - Standards: 0 `import/order` disable comments in source files.

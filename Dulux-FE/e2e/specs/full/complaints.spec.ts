@@ -3,9 +3,11 @@ import { expect, test } from '../../fixtures/data.fixture';
 import {
   emitComplaintThreadSocketMessage,
   forceComplaintThreadSocketDisconnect,
-  getComplaintThreadSocketCount,
+  getComplaintThreadLastSentText,
+  getComplaintThreadOpenSocketCount,
   installControlledComplaintsSocketMocks,
   setComplaintSocketSendFailureEnabled,
+  setComplaintThreadConnectionBlocked,
 } from '../../mocks/complaintsSocket.mock';
 import { LiveChatPage } from '../../pages/LiveChatPage';
 
@@ -82,6 +84,7 @@ test.describe('@critical @chat complaints realtime phase3', () => {
 
     const liveChatPage = new LiveChatPage(page);
     await liveChatPage.gotoThread('cmp-1');
+    await expect.poll(async () => getComplaintThreadOpenSocketCount(page, 'cmp-1'), { timeout: 8_000 }).toBeGreaterThan(0);
 
     await liveChatPage.submitEmptyMessage();
     await expect(page.getByText('Message is required.')).toBeVisible();
@@ -100,13 +103,19 @@ test.describe('@critical @chat complaints realtime phase3', () => {
     const liveChatPage = new LiveChatPage(page);
     await liveChatPage.gotoThread('cmp-1');
 
+    await setComplaintThreadConnectionBlocked(page, 'cmp-1', true);
     await forceComplaintThreadSocketDisconnect(page, 'cmp-1', 1006, 'phase3-disconnect-test');
+    await expect.poll(async () => getComplaintThreadOpenSocketCount(page, 'cmp-1'), { timeout: 8_000 }).toBe(0);
+
     await liveChatPage.sendMessage('Send while disconnected');
     await expect(page.getByText('Chat socket is disconnected. Please wait and try again.')).toBeVisible();
 
-    await expect.poll(async () => getComplaintThreadSocketCount(page, 'cmp-1'), { timeout: 8_000 }).toBeGreaterThan(0);
+    await setComplaintThreadConnectionBlocked(page, 'cmp-1', false);
+    await expect.poll(async () => getComplaintThreadOpenSocketCount(page, 'cmp-1'), { timeout: 8_000 }).toBeGreaterThan(0);
 
     await liveChatPage.sendMessage('Message after reconnect');
-    await expect(page.getByText('Message after reconnect')).toBeVisible();
+    await expect.poll(async () => getComplaintThreadLastSentText(page, 'cmp-1'), { timeout: 8_000 }).toBe(
+      'Message after reconnect'
+    );
   });
 });
