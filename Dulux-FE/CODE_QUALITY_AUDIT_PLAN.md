@@ -39,6 +39,7 @@ Implication:
 - Standards reference: `ROUTING -> Lazy Route Loading`
 - Evidence: router imports all pages eagerly in `src/routes/createBrowserRouter.tsx`.
 - Plan: convert route pages to `React.lazy` boundaries by module.
+- Status: DONE (2026-04-27) via `PERF-001` by converting router page modules to `React.lazy` with suspense boundaries in `src/routes/createBrowserRouter.tsx`.
 
 4. Named-export preference violated in multiple files
 - Standards reference: `CODE QUALITY -> Prefer named exports`
@@ -511,6 +512,7 @@ Implication:
 1. Add bundle control baselines
 - Set bundle budget checks in CI (`build + analyzer + fail threshold`).
 - Target first reduction: split router by module.
+- Status: DONE (2026-04-27) via `PERF-002` by adding bundle analysis + budget gate scripts (`bundle:analyze`, `bundle:check`) and wiring budget enforcement into `yarn build`.
 
 2. Clean policy drifts
 - Restore Manual Registration sidebar item.
@@ -576,8 +578,8 @@ Deliverables:
 
 ## 4) Concrete Refactor Backlog (Master Ticket List)
 
-1. `PERF-001`: Implement route-level lazy loading in router. (Covers Findings: #3)
-2. `PERF-002`: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
+1. `PERF-001` [✅ DONE 2026-04-27]: Implement route-level lazy loading in router. (Covers Findings: #3)
+2. `PERF-002` [✅ DONE 2026-04-27]: Add bundle analyzer and budget gates. (Related to Findings: #3, #28)
 4. `ARCH-001`: Split `AuditTimelinePanel.tsx` into renderer subcomponents. (Covers Findings: #2, #33) ✅ Done (2026-04-17)
 5. `ARCH-002` [✅ DONE 2026-04-17]: Split `ResubmitUpdateModal.tsx` by field groups + hooks. (Covers Findings: #2, #24, #28)
 6. `ARCH-003` [✅ DONE 2026-04-20]: Split `ProductForm.tsx` into sections + adapter hook. (Covers Findings: #2, #24)
@@ -610,14 +612,14 @@ Deliverables:
 34. `UI-001`: Standardize UI imports to barrel usage and disallow mixed deep imports outside UI package. (Covers Findings: #25)
 35. `STYLE-001` [✅ DONE 2026-04-23]: Extract repeated gradients/shadows/hero surfaces into `index.css` semantic classes with `@apply`. (Covers Findings: #26, #27)
 36. `STYLE-002` [✅ DONE 2026-04-23]: Introduce token-driven `Button` visual variants (e.g., `primaryGradient`) and migrate repeated inline classes. (Covers Findings: #26, #29)
-37. `PERF-003`: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook. (Covers Findings: #28, #30)
-38. `PERF-004`: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering. (Covers Findings: #28)
-39. `PERF-005`: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility. (Covers Findings: #28)
+37. `PERF-003` [✅ DONE 2026-04-27]: Refactor `ProductsListPage` query-param + pagination state into a dedicated controller hook. (Covers Findings: #28, #30)
+38. `PERF-004` [✅ DONE 2026-04-27]: Refactor `ResubmitUpdateModal` option derivation to precomputed maps and lighter row rendering. (Covers Findings: #28)
+39. `PERF-005` [✅ DONE 2026-04-27]: Consolidate dependent field-reset effects in `AddClaimModal` into reusable field-sync utility. (Covers Findings: #28)
 40. `DRY-007` [✅ DONE 2026-04-22]: Centralize query-param set/delete/reset-page behavior into shared adapter used by all list hooks. (Covers Findings: #20, #30)
-41. `PERF-006`: Optimize `ConversationListPanel` row rendering with `Set`-based unseen lookup and stable click handlers. (Covers Findings: #31)
-42. `PERF-007`: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls. (Covers Findings: #32, #42)
-43. `PERF-008`: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost. (Covers Findings: #33)
-44. `PERF-009`: Replace repeated action `.filter(...).length` counters in `AuditLogsPage` with a single memoized reducer. (Covers Findings: #34)
+41. `PERF-006` [✅ DONE 2026-04-27]: Optimize `ConversationListPanel` row rendering with `Set`-based unseen lookup and stable click handlers. (Covers Findings: #31)
+42. `PERF-007` [✅ DONE 2026-04-27]: Hoist and reuse complaints date-time formatters instead of creating `Intl.DateTimeFormat` in formatter calls. (Covers Findings: #32, #42)
+43. `PERF-008` [✅ DONE 2026-04-27]: Build memoized timeline row view-models for `AuditTimelinePanel` to reduce per-render transform cost. (Covers Findings: #33)
+44. `PERF-009` [✅ DONE 2026-04-27]: Replace repeated action `.filter(...).length` counters in `AuditLogsPage` with a single memoized reducer. (Covers Findings: #34)
 45. `DRY-008` [✅ DONE 2026-04-22]: Extract shared input sanitizers (letters-only + PK phone normalization) into `src/utils/*` and migrate manual/registration forms. (Covers Findings: #35)
 46. `DRY-009` [✅ DONE 2026-04-23]: Create shared dialog lifecycle helper (`useDialogLifecycle`) and migrate modal open/close/reset patterns. (Covers Findings: #36)
 47. `DRY-010`: Implement shared guarded detail-action orchestration helper for claims/quality/registration hooks. (Covers Findings: #22, #37)
@@ -642,6 +644,12 @@ Deliverables:
 2. Finding #3 -> `PERF-001`:
 - Scope: route-level lazy loading in router.
 - Done when: page modules load via lazy boundaries and initial chunk size drops.
+- Status: ✅ Done (2026-04-27)
+
+2b. Finding #3/#28 -> `PERF-002`:
+- Scope: add bundle analysis output and enforce size budgets during build.
+- Done when: build produces a bundle report and fails on budget violations.
+- Status: ✅ Done (2026-04-27)
 
 3. Finding #4 -> `RULE-010`:
 - Scope: replace default exports in flagged modules with named exports.
@@ -759,6 +767,7 @@ Deliverables:
 28. Finding #28 -> `PERF-003`, `PERF-004`, `PERF-005`:
 - Scope: optimize rerender hotspots in products/registration/claim forms.
 - Done when: derived state and reset logic are centralized/memoized with lower render churn.
+- Status: `PERF-003` ✅ Done (2026-04-27), `PERF-004` ✅ Done (2026-04-27), `PERF-005` ✅ Done (2026-04-27).
 
 29. Finding #29 -> `STYLE-002`:
 - Scope: shared primary action button variant.
@@ -773,19 +782,23 @@ Deliverables:
 31. Finding #31 -> `PERF-006`:
 - Scope: optimize conversation list row rendering.
 - Done when: unseen lookup uses Set and item handlers are stable.
+- Status: `PERF-006` ✅ Done (2026-04-27).
 
 32. Finding #32 -> `PERF-007`, `DRY-013`:
 - Scope: stop recreating formatter instances in complaints views.
 - Done when: formatter instances/presets are shared and reused.
 - Status: `DRY-013` ✅ Done (2026-04-23) by replacing component-local `Intl.DateTimeFormat` construction in complaints panels with shared `src/utils/date.ts` helpers.
+- Status: `PERF-007` ✅ Done (2026-04-27) by precomputing complaints date-time display values in memoized row/message view-models.
 
 33. Finding #33 -> `PERF-008`:
 - Scope: precompute audit timeline row view-models.
 - Done when: heavy transforms are outside render JSX mapping path.
+- Status: `PERF-008` ✅ Done (2026-04-27).
 
 34. Finding #34 -> `PERF-009`:
 - Scope: single-pass action counters in audit logs page.
 - Done when: one reducer replaces repeated filter passes.
+- Status: `PERF-009` ✅ Done (2026-04-27).
 
 35. Finding #35 -> `DRY-008`:
 - Scope: shared text/phone sanitizers for forms.

@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.s
 import type { ClaimBasecoatOptions, ClaimSelectOption } from '#/types/claims.form.types';
 import type { CreateClaimPayload } from '#/types/claims.types';
 import type { RegistrationPaintPair } from '#/types/registrations';
+import { useAddClaimFieldSync } from './useAddClaimFieldSync';
 
 interface UseAddClaimFormParams {
   onClose: () => void;
@@ -59,18 +60,6 @@ const toNumericId = (value: string): number | null => {
     return null;
   }
   return parsed;
-};
-
-const resetFieldValue = (
-  setValue: ReturnType<typeof useForm<CreateClaimFormValues>>['setValue'],
-  field: keyof CreateClaimFormValues,
-  value: CreateClaimFormValues[keyof CreateClaimFormValues]
-): void => {
-  setValue(field, value, {
-    shouldDirty: false,
-    shouldTouch: false,
-    shouldValidate: false,
-  });
 };
 
 /**
@@ -199,35 +188,14 @@ export const useAddClaimForm = ({ onClose, onSubmit }: UseAddClaimFormParams): U
     return matchingPaintPair ? String(matchingPaintPair.id) : '';
   }, [registrationPaintPairs, topcoatProductId, basecoatProductId]);
 
-  useEffect(() => {
-    setValue('paintPairId', selectedPaintPairId, {
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  }, [selectedPaintPairId, setValue]);
-
-  useEffect(() => {
-    resetFieldValue(setValue, 'topcoatProductId', '');
-    resetFieldValue(setValue, 'basecoatProductId', CLAIM_NO_BASECOAT_OPTION_VALUE);
-    resetFieldValue(setValue, 'paintPairId', '');
-    clearErrors(['topcoatProductId', 'basecoatProductId', 'paintPairId']);
-  }, [clearErrors, registrationId, setValue]);
-
-  useEffect(() => {
-    resetFieldValue(setValue, 'basecoatProductId', CLAIM_NO_BASECOAT_OPTION_VALUE);
-    resetFieldValue(setValue, 'paintPairId', '');
-    clearErrors(['basecoatProductId', 'paintPairId']);
-  }, [clearErrors, setValue, topcoatProductId]);
-
-  useEffect(() => {
-    if (!isNoBasecoatFlow) {
-      return;
-    }
-
-    resetFieldValue(setValue, 'basecoatProductId', CLAIM_NO_BASECOAT_OPTION_VALUE);
-    clearErrors('basecoatProductId');
-  }, [clearErrors, isNoBasecoatFlow, setValue]);
+  useAddClaimFieldSync({
+    setValue,
+    clearErrors,
+    registrationId,
+    topcoatProductId,
+    isNoBasecoatFlow,
+    selectedPaintPairId,
+  });
 
   const handleModalOpenChange = (open: boolean): void => {
     if (!open) {
