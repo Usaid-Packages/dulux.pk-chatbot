@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { AuditLogDetailDialog, AuditLogsFilters, AuditLogsTable } from '#/components/auditLogs';
 import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
@@ -35,9 +35,21 @@ export const AuditLogsPage = (): JSX.Element => {
   const totalItems = auditLogsData?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / LIST_PAGE_SIZE));
 
-  const totalCreate = auditLogsItems.filter(item => item.action === 'CREATE').length;
-  const totalUpdate = auditLogsItems.filter(item => item.action === 'UPDATE').length;
-  const totalDelete = auditLogsItems.filter(item => item.action === 'DELETE').length;
+  const actionTotals = useMemo(() => {
+    return auditLogsItems.reduce(
+      (totals, item) => {
+        if (item.action === 'CREATE') {
+          totals.create += 1;
+        } else if (item.action === 'UPDATE') {
+          totals.update += 1;
+        } else if (item.action === 'DELETE') {
+          totals.delete += 1;
+        }
+        return totals;
+      },
+      { create: 0, update: 0, delete: 0 }
+    );
+  }, [auditLogsItems]);
 
   const handlePreviousPage = (): void => {
     if (filters.page > 1) {
@@ -56,9 +68,9 @@ export const AuditLogsPage = (): JSX.Element => {
       <StatsCardGrid
         items={[
           { label: 'Total Logs', value: totalItems },
-          { label: 'Create Events', value: totalCreate },
-          { label: 'Update Events', value: totalUpdate },
-          { label: 'Delete Events', value: totalDelete },
+          { label: 'Create Events', value: actionTotals.create },
+          { label: 'Update Events', value: actionTotals.update },
+          { label: 'Delete Events', value: actionTotals.delete },
         ]}
       />
 

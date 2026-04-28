@@ -13,6 +13,7 @@ import type { ManualRegistrationProductOption } from '#/types/manualRegistration
 import type { RegistrationDetail, RegistrationRejectionField, RequestedCorrectionNote } from '#/types/registrations';
 import {
   getDefaultPaintPairs,
+  getProductOptionLabel,
   getRegistrationBasecoatFallbackByTopcoatId,
   getRegistrationTopcoatFallbackOptions,
   getRequestedCorrectionNotes,
@@ -27,8 +28,17 @@ interface UseResubmitUpdateFormParams {
   onClose: () => void;
 }
 
-interface PaintPairRow {
+export interface ResubmitUpdateSelectOption {
   id: string;
+  label: string;
+}
+
+export interface ResubmitUpdatePaintPairRowViewModel {
+  rowId: string;
+  rowIndex: number;
+  selectedTopcoatId: string;
+  selectedBasecoatId: string;
+  basecoatOptions: ResubmitUpdateSelectOption[];
 }
 
 export interface UseResubmitUpdateFormResult {
@@ -38,10 +48,8 @@ export interface UseResubmitUpdateFormResult {
   register: UseFormRegister<ResubmitUpdateFormValues>;
   errors: FieldErrors<ResubmitUpdateFormValues>;
   handleSubmit: UseFormHandleSubmit<ResubmitUpdateFormValues>;
-  fields: PaintPairRow[];
-  watchedPaintPairs: ResubmitUpdateFormValues['paintPairs'];
-  topcoatProducts: ManualRegistrationProductOption[];
-  basecoatOptionsByTopcoatId: ReadonlyMap<string, ManualRegistrationProductOption[]>;
+  paintPairRows: ResubmitUpdatePaintPairRowViewModel[];
+  topcoatOptions: ResubmitUpdateSelectOption[];
   isPaintProductsLoading: boolean;
   isPaintProductsError: boolean;
   paintProductsErrorMessage: string;
@@ -117,7 +125,9 @@ export const useResubmitUpdateForm = ({
 
   const watchedPaintPairs = watch('paintPairs') ?? [];
   const selectedTopcoatIds = useMemo<string[]>(() => {
-    return watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0);
+    return Array.from(
+      new Set(watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0))
+    );
   }, [watchedPaintPairs]);
 
   const manualProductsQuery = useGetManualRegistrationProductsQuery({
@@ -155,6 +165,54 @@ export const useResubmitUpdateForm = ({
     return optionsByTopcoatId;
   }, [registrationBasecoatFallbackByTopcoatId, topcoatProducts]);
 
+  const topcoatOptions = useMemo<ResubmitUpdateSelectOption[]>(() => {
+    return topcoatProducts.map(product => ({
+      id: product.id,
+      label: getProductOptionLabel(product),
+    }));
+  }, [topcoatProducts]);
+
+  const basecoatSelectOptionsByTopcoatId = useMemo<ReadonlyMap<string, ResubmitUpdateSelectOption[]>>(() => {
+    const optionsByTopcoatId = new Map<string, ResubmitUpdateSelectOption[]>();
+
+    basecoatOptionsByTopcoatId.forEach((options, topcoatId) => {
+      optionsByTopcoatId.set(
+        topcoatId,
+        options.map(option => ({
+          id: option.id,
+          label: getProductOptionLabel(option),
+        }))
+      );
+    });
+
+    return optionsByTopcoatId;
+  }, [basecoatOptionsByTopcoatId]);
+
+  const basecoatIdSetByTopcoatId = useMemo<ReadonlyMap<string, ReadonlySet<string>>>(() => {
+    const idSetByTopcoatId = new Map<string, ReadonlySet<string>>();
+
+    basecoatOptionsByTopcoatId.forEach((options, topcoatId) => {
+      idSetByTopcoatId.set(topcoatId, new Set(options.map(option => option.id)));
+    });
+
+    return idSetByTopcoatId;
+  }, [basecoatOptionsByTopcoatId]);
+
+  const paintPairRows = useMemo<ResubmitUpdatePaintPairRowViewModel[]>(() => {
+    return fields.map((field, index) => {
+      const selectedTopcoatId = watchedPaintPairs[index]?.topcoatId?.trim() ?? '';
+      const selectedBasecoatId = watchedPaintPairs[index]?.basecoatId?.trim() ?? '';
+
+      return {
+        rowId: field.id,
+        rowIndex: index,
+        selectedTopcoatId,
+        selectedBasecoatId,
+        basecoatOptions: selectedTopcoatId ? (basecoatSelectOptionsByTopcoatId.get(selectedTopcoatId) ?? []) : [],
+      };
+    });
+  }, [basecoatSelectOptionsByTopcoatId, fields, watchedPaintPairs]);
+
   useEffect(() => {
     const currentPhone = getValues('phoneNumber');
     if (!currentPhone) {
@@ -171,15 +229,14 @@ export const useResubmitUpdateForm = ({
         return;
       }
 
-      const basecoatOptions = basecoatOptionsByTopcoatId.get(selectedTopcoatId) ?? [];
-      const linkedBasecoatIds = new Set(basecoatOptions.map(basecoat => basecoat.id));
+      const linkedBasecoatIds = basecoatIdSetByTopcoatId.get(selectedTopcoatId) ?? new Set<string>();
 
       if (!linkedBasecoatIds.has(selectedBasecoatId)) {
         setValue(`paintPairs.${index}.basecoatId`, '', { shouldValidate: true });
         setValue(`paintPairs.${index}.basecoatQuantity`, '', { shouldValidate: true });
       }
     });
-  }, [basecoatOptionsByTopcoatId, setValue, watchedPaintPairs]);
+  }, [basecoatIdSetByTopcoatId, setValue, watchedPaintPairs]);
 
   const phoneNumberField = register('phoneNumber');
   const cityField = register('city');
@@ -254,10 +311,8 @@ export const useResubmitUpdateForm = ({
     register,
     errors,
     handleSubmit,
-    fields,
-    watchedPaintPairs,
-    topcoatProducts,
-    basecoatOptionsByTopcoatId,
+    paintPairRows,
+    topcoatOptions,
     isPaintProductsLoading: manualProductsQuery.isLoading,
     isPaintProductsError: manualProductsQuery.isError,
     paintProductsErrorMessage: manualProductsQuery.error?.message ?? 'Unable to load topcoat products.',

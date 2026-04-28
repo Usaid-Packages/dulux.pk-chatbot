@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import type { ChangeEvent, JSX, MouseEvent, UIEvent } from 'react';
 
 import {
@@ -38,9 +38,71 @@ interface ConversationListPanelProps {
   onThreadSelect: (threadId: string) => void;
 }
 
+interface ConversationRowViewModel {
+  id: string;
+  customerName: string;
+  lastMessagePreview: string;
+  unreadCount: number;
+  apiStatus: ConversationListItem['apiStatus'];
+  channel: ConversationListItem['channel'];
+  isSelected: boolean;
+  hasOpenUnseenIndicator: boolean;
+  formattedLastMessageAt: string;
+}
+
+interface ConversationListRowProps {
+  item: ConversationRowViewModel;
+  onThreadSelect: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
 const isConversationStatusFilter = (value: string): value is ConversationStatusFilter => {
   return CONVERSATION_STATUS_TABS.some(tab => tab.value === value);
 };
+
+const ConversationListRow = memo(({ item, onThreadSelect }: ConversationListRowProps): JSX.Element => {
+  return (
+    <Button
+      type='button'
+      variant='ghost'
+      className={cn(
+        'h-auto w-full flex-col items-start gap-2 rounded-xl border border-primary/15 bg-white px-3 py-3 text-left transition-all hover:bg-primary/5',
+        item.isSelected ? 'border-primary/40 bg-primary/10 shadow-[0_10px_24px_rgba(19,87,167,0.12)]' : ''
+      )}
+      data-thread-id={item.id}
+      onClick={onThreadSelect}
+    >
+      <div className='flex w-full items-start justify-between gap-2'>
+        <div className='min-w-0 flex-1'>
+          <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
+        </div>
+        <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>{item.formattedLastMessageAt}</p>
+      </div>
+
+      <p className='line-clamp-2 w-full text-xs text-text-muted'>{item.lastMessagePreview}</p>
+
+      <div className='flex w-full flex-wrap items-center gap-2'>
+        <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.apiStatus])}>
+          {CONVERSATION_STATUS_LABELS[item.apiStatus]}
+        </Badge>
+
+        <Badge className='rounded-md px-2 py-0.5'>{CONVERSATION_CHANNEL_LABELS[item.channel]}</Badge>
+
+        {item.hasOpenUnseenIndicator ? (
+          <span
+            className='ml-auto inline-flex h-2.5 w-2.5 rounded-full bg-chat-unreadDot'
+            aria-label='Unopened open complaint'
+            title='Unopened open complaint'
+          />
+        ) : item.unreadCount > 0 ? (
+          <span className='ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-chat-unreadDot px-2 py-0.5 text-[11px] font-semibold text-white'>
+            {item.unreadCount}
+          </span>
+        ) : null}
+      </div>
+    </Button>
+  );
+});
+ConversationListRow.displayName = 'ConversationListRow';
 
 /**
  * ConversationListPanel renders chat queue filters and selectable thread list.
@@ -62,7 +124,21 @@ export const ConversationListPanel = ({
   onSearchChange,
   onThreadSelect,
 }: ConversationListPanelProps): JSX.Element => {
-  const openUnseenThreadIdSet = useMemo(() => new Set(openUnseenThreadIds), [openUnseenThreadIds]);
+  const rowItems = useMemo<ConversationRowViewModel[]>(() => {
+    const openUnseenThreadIdSet = new Set(openUnseenThreadIds);
+
+    return items.map(item => ({
+      id: item.id,
+      customerName: item.customerName,
+      lastMessagePreview: item.lastMessagePreview,
+      unreadCount: item.unreadCount,
+      apiStatus: item.apiStatus,
+      channel: item.channel,
+      isSelected: item.id === selectedThreadId,
+      hasOpenUnseenIndicator: openUnseenThreadIdSet.has(item.id),
+      formattedLastMessageAt: formatPkDateTime(item.lastMessageAt),
+    }));
+  }, [items, openUnseenThreadIds, selectedThreadId]);
 
   const handleListScroll = (event: UIEvent<HTMLDivElement>): void => {
     if (!hasNextPage || isLoading || isFetchingNextPage) {
@@ -142,55 +218,9 @@ export const ConversationListPanel = ({
           ) : null}
 
           {!isLoading
-            ? items.map(item => {
-                const isSelected = item.id === selectedThreadId;
-                const hasOpenUnseenIndicator = openUnseenThreadIdSet.has(item.id);
-
-                return (
-                  <Button
-                    key={item.id}
-                    type='button'
-                    variant='ghost'
-                    className={cn(
-                      'h-auto w-full flex-col items-start gap-2 rounded-xl border border-primary/15 bg-white px-3 py-3 text-left transition-all hover:bg-primary/5',
-                      isSelected ? 'border-primary/40 bg-primary/10 shadow-[0_10px_24px_rgba(19,87,167,0.12)]' : ''
-                    )}
-                    data-thread-id={item.id}
-                    onClick={handleThreadSelectClick}
-                  >
-                    <div className='flex w-full items-start justify-between gap-2'>
-                      <div className='min-w-0 flex-1'>
-                        <p className='truncate text-sm font-semibold text-text-primary'>{item.customerName}</p>
-                      </div>
-                      <p className='shrink-0 whitespace-nowrap text-[11px] text-text-muted'>
-                        {formatPkDateTime(item.lastMessageAt)}
-                      </p>
-                    </div>
-
-                    <p className='line-clamp-2 w-full text-xs text-text-muted'>{item.lastMessagePreview}</p>
-
-                    <div className='flex w-full flex-wrap items-center gap-2'>
-                      <Badge className={cn('rounded-md px-2 py-0.5', CONVERSATION_STATUS_CLASSNAMES[item.apiStatus])}>
-                        {CONVERSATION_STATUS_LABELS[item.apiStatus]}
-                      </Badge>
-
-                      <Badge className='rounded-md px-2 py-0.5'>{CONVERSATION_CHANNEL_LABELS[item.channel]}</Badge>
-
-                      {hasOpenUnseenIndicator ? (
-                        <span
-                          className='ml-auto inline-flex h-2.5 w-2.5 rounded-full bg-chat-unreadDot'
-                          aria-label='Unopened open complaint'
-                          title='Unopened open complaint'
-                        />
-                      ) : item.unreadCount > 0 ? (
-                        <span className='ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-chat-unreadDot px-2 py-0.5 text-[11px] font-semibold text-white'>
-                          {item.unreadCount}
-                        </span>
-                      ) : null}
-                    </div>
-                  </Button>
-                );
-              })
+            ? rowItems.map(item => (
+                <ConversationListRow key={item.id} item={item} onThreadSelect={handleThreadSelectClick} />
+              ))
             : null}
 
           {isFetchingNextPage ? <Skeleton className='h-20 w-full rounded-lg' /> : null}

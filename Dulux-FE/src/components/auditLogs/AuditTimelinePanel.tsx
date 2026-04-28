@@ -31,13 +31,10 @@ export const AuditTimelinePanel = ({
 }: AuditTimelinePanelProps): JSX.Element | null => {
   const { isAdmin, timelineQuery } = useAuditTimeline(type, objectId);
 
-  const timelineItems = useMemo(() => {
-    return [...(timelineQuery.data?.results ?? [])].reverse();
-  }, [timelineQuery.data?.results]);
-
   const timelineItemViewModels = useMemo(() => {
+    const timelineItems = [...(timelineQuery.data?.results ?? [])].reverse();
     return buildAuditTimelineItemViewModels(timelineItems);
-  }, [timelineItems]);
+  }, [timelineQuery.data?.results]);
 
   if (!isAdmin) {
     return null;

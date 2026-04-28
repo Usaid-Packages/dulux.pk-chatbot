@@ -47,10 +47,8 @@ export const ResubmitUpdateModal = ({
     register,
     errors,
     handleSubmit,
-    fields,
-    watchedPaintPairs,
-    topcoatProducts,
-    basecoatOptionsByTopcoatId,
+    paintPairRows,
+    topcoatOptions,
     isPaintProductsLoading,
     isPaintProductsError,
     paintProductsErrorMessage,
@@ -97,10 +95,8 @@ export const ResubmitUpdateModal = ({
               control={control}
               register={register}
               errors={errors}
-              fields={fields}
-              watchedPaintPairs={watchedPaintPairs}
-              topcoatProducts={topcoatProducts}
-              basecoatOptionsByTopcoatId={basecoatOptionsByTopcoatId}
+              paintPairRows={paintPairRows}
+              topcoatOptions={topcoatOptions}
               isPaintProductsLoading={isPaintProductsLoading}
               isPaintProductsError={isPaintProductsError}
               paintProductsErrorMessage={paintProductsErrorMessage}
