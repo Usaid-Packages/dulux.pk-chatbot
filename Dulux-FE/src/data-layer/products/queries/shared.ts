@@ -63,7 +63,7 @@ interface PaginatedApiResponse<T> {
 }
 
 const isProductType = (value: string): value is ProductType =>
-  value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT;
+  value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT || value === PRODUCT_TYPES.SPECIALIST;
 
 export const normalizeProductImage = (response: ProductImageApiResponse): ProductImage => ({
   id: response.id ?? 0,

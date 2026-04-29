@@ -178,13 +178,15 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
   const normalizedPaintPairs = (response.paintPairs ?? response.paint_pairs ?? []).map(pair => {
     const topcoatId = pair.topcoat ?? pair.topcoatId ?? pair.topcoat_id ?? 0;
     const basecoatId = pair.basecoat ?? pair.basecoatId ?? pair.basecoat_id;
+    const topcoatProductType =
+      pair.topcoatProductType ?? pair.topcoat_product_type ?? REGISTRATION_PRODUCT_TYPES.TOPCOAT;
 
     return {
       id: pair.id ?? 0,
       topcoat: {
         id: topcoatId,
         name: pair.topcoatName ?? pair.topcoat_name ?? '',
-        productType: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+        productType: topcoatProductType,
       },
       topcoatQuantity: pair.topcoatQuantity ?? pair.topcoat_quantity ?? '',
       basecoat:

@@ -46,9 +46,10 @@ test.describe('@critical @wizard manual registration phase2', () => {
     await page.getByRole('button', { name: 'Next' }).click();
     await wizardPage.expectStep(3);
 
+    await page.getByRole('button', { name: 'Topcoat + Basecoat' }).first().click();
     await page.getByLabel('Select topcoat product').first().click();
     await page.getByRole('option').filter({ hasText: 'Dulux Protect Plus' }).first().click();
-    await page.getByRole('textbox', { name: 'Topcoat Quantity (liters) *' }).fill('8');
+    await page.getByRole('textbox', { name: 'Topcoat Quantity (liters)' }).fill('8');
     await page.getByRole('button', { name: 'Next' }).click();
     await wizardPage.expectStep(4);
 
@@ -62,5 +63,70 @@ test.describe('@critical @wizard manual registration phase2', () => {
     await expect(page.getByRole('heading', { name: 'Review', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Submit Registration' }).click();
     await expect(page).toHaveURL(/\/registrations(?:\?.*)?$/);
+  });
+
+  test('MAN-005 specialist selection disables topcoat/basecoat and submits', async ({ page }) => {
+    await page.route(/.*\/api\/v1\/products\/warranty-options\/?(?:\?.*)?$/, async route => {
+      const url = new URL(route.request().url());
+      const productType = url.searchParams.get('product_type');
+
+      if (productType === 'SPECIALIST') {
+        await route.fulfill({
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            count: 1,
+            next: null,
+            previous: null,
+            results: [
+              {
+                id: 555,
+                name: 'Dulux Specialist XYZ',
+                product_type: 'SPECIALIST',
+                warranty_years: 2,
+                is_active: true,
+              },
+            ],
+          }),
+        });
+        return;
+      }
+
+      await route.fallback();
+    });
+
+    const wizardPage = new ManualRegistrationWizardPage(page);
+
+    await wizardPage.gotoStep(1);
+    await page.getByRole('textbox', { name: 'Customer Name *' }).fill('Sara Khan');
+    await page.getByRole('textbox', { name: 'Phone Number *' }).fill('923001234567');
+    await page.getByRole('textbox', { name: 'Email *' }).fill('sara.khan@example.com');
+    await page.getByRole('textbox', { name: 'City *' }).fill('Karachi');
+    await page.getByRole('textbox', { name: 'Site Address *' }).fill('Street 11, DHA');
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await page.getByRole('textbox', { name: 'Purchase Date *' }).click();
+    const calendarDialog = page.getByRole('dialog', { name: 'Purchase date calendar' });
+    const todayButton = calendarDialog.locator('button[data-today="true"]').first();
+    if ((await todayButton.count()) > 0) {
+      await todayButton.click();
+    } else {
+      await calendarDialog.locator('button[data-day]:not([disabled])').first().click();
+    }
+    await page.getByRole('textbox', { name: 'Dealer Name *' }).fill('Color Hub');
+    await page.getByRole('textbox', { name: 'Dealer City *' }).fill('Karachi');
+    await page.getByRole('textbox', { name: 'Dealer Address *' }).fill('Main Road');
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    await page.getByRole('button', { name: 'Specialized Coat' }).first().click();
+    await page.getByLabel('Select specialist product').first().click();
+    await page.getByRole('option').filter({ hasText: 'Dulux Specialist XYZ' }).first().click();
+    await page.getByRole('textbox', { name: 'Specialist Quantity (liters)' }).fill('9');
+
+    await expect(page.getByLabel('Select topcoat product')).toHaveCount(0);
+    await expect(page.getByLabel('Select basecoat product')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Next' }).click();
+    await wizardPage.expectStep(4);
   });
 });

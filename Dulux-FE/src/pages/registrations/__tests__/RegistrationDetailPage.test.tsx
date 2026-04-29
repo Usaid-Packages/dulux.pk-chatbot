@@ -279,4 +279,39 @@ describe('RegistrationDetailPage', () => {
     expect(mockApproveRegistration.mock.calls[0][0]).toEqual({ notes: 'approved' });
     expect(typeof mockApproveRegistration.mock.calls[0][1]).toBe('function');
   });
+
+  it('renders specialized paint pair row as specialized-only and hides basecoat values', () => {
+    mockedUseRegistrationDetail.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      errorMessage: '',
+      isApprovePending: false,
+      isRejectPending: false,
+      isResubmitPending: false,
+      isResubmitUpdatePending: false,
+      registration: {
+        ...REGISTRATION_FIXTURE,
+        paintPairs: [
+          {
+            id: 'pair-specialist',
+            topcoat: { name: 'Special LIME TWIST paint', productType: 'SPECIALIST' },
+            topcoatQuantity: '5.00',
+            basecoat: null,
+            basecoatQuantity: null,
+          },
+        ],
+      },
+      approveRegistration: mockApproveRegistration,
+      rejectRegistration: mockRejectRegistration,
+      resubmitRegistration: mockResubmitRegistration,
+      submitResubmitChanges: mockSubmitResubmitChanges,
+    } as unknown as ReturnType<typeof useRegistrationDetail>);
+
+    render(<RegistrationDetailPage />);
+
+    expect(screen.getByText('Selection Type')).toBeInTheDocument();
+    expect(screen.getAllByText('Specialized').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Special LIME TWIST paint')).toBeInTheDocument();
+    expect(screen.queryByText('Basecoat Qty')).not.toBeInTheDocument();
+  });
 });

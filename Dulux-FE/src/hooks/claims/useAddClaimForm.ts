@@ -6,6 +6,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 
 import { CLAIM_NO_BASECOAT_OPTION_VALUE } from '#/constants';
+import { REGISTRATION_PRODUCT_TYPES } from '#/constants/registrations';
 import { useGetRegistrationByIdQuery, useGetRegistrationsQuery } from '#/data-layer/registrations';
 import { createClaimSchema, type CreateClaimFormValues } from '#/schemas/claim.schema';
 import type { ClaimBasecoatOptions, ClaimSelectOption } from '#/types/claims.form.types';
@@ -36,6 +37,7 @@ export interface UseAddClaimFormResult {
   isNoBasecoatFlow: boolean;
   isRegistrationDetailLoading: boolean;
   isRegistrationSelected: boolean;
+  isSpecialistTopcoatSelected: boolean;
   isRegistrationsLoading: boolean;
   isTopcoatSelectDisabled: boolean;
   longShotPhoto: File | undefined;
@@ -114,23 +116,35 @@ export const useAddClaimForm = ({ onClose, onSubmit }: UseAddClaimFormParams): U
   }, [registrationsQuery.data?.results]);
 
   const topcoatOptions = useMemo((): ClaimSelectOption[] => {
-    const topcoatMap = new Map<number, string>();
+    const topcoatMap = new Map<number, { label: string; productType?: string }>();
 
     registrationPaintPairs.forEach(pair => {
       if (!topcoatMap.has(pair.topcoat.id)) {
-        topcoatMap.set(pair.topcoat.id, pair.topcoat.name);
+        topcoatMap.set(pair.topcoat.id, {
+          label:
+            pair.topcoat.productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST
+              ? `${pair.topcoat.name} (Specialist)`
+              : pair.topcoat.name,
+          productType: pair.topcoat.productType,
+        });
       }
     });
 
-    return Array.from(topcoatMap.entries()).map(([id, label]) => ({
+    return Array.from(topcoatMap.entries()).map(([id, option]) => ({
       id: String(id),
-      label,
+      label: option.label,
+      productType: option.productType,
     }));
   }, [registrationPaintPairs]);
 
   const selectedTopcoatId = toNumericId(topcoatProductId);
   const isRegistrationSelected = registrationId.trim().length > 0;
   const hasTopcoatSelection = topcoatProductId.trim().length > 0;
+
+  const isSpecialistTopcoatSelected = useMemo((): boolean => {
+    const selectedTopcoat = topcoatOptions.find(option => option.id === topcoatProductId);
+    return selectedTopcoat?.productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST;
+  }, [topcoatOptions, topcoatProductId]);
 
   const basecoatOptions = useMemo((): ClaimBasecoatOptions => {
     if (selectedTopcoatId === null) {
@@ -276,6 +290,7 @@ export const useAddClaimForm = ({ onClose, onSubmit }: UseAddClaimFormParams): U
     isNoBasecoatFlow,
     isRegistrationDetailLoading: registrationDetailQuery.isLoading,
     isRegistrationSelected,
+    isSpecialistTopcoatSelected,
     isRegistrationsLoading: registrationsQuery.isLoading,
     isTopcoatSelectDisabled,
     longShotPhoto,

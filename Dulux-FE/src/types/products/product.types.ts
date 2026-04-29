@@ -1,9 +1,10 @@
 export const PRODUCT_TYPES = {
   TOPCOAT: 'TOPCOAT',
   BASECOAT: 'BASECOAT',
+  SPECIALIST: 'SPECIALIST',
 } as const;
 
-export const productTypes = [PRODUCT_TYPES.TOPCOAT, PRODUCT_TYPES.BASECOAT] as const;
+export const productTypes = [PRODUCT_TYPES.TOPCOAT, PRODUCT_TYPES.BASECOAT, PRODUCT_TYPES.SPECIALIST] as const;
 export const productEnvironments = ['INTERIOR', 'EXTERIOR'] as const;
 
 export type ProductType = (typeof productTypes)[number];

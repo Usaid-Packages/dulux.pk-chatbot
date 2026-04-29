@@ -58,7 +58,7 @@ export const ProductFormCoreFieldsSection = ({
               <SelectContent>
                 {productTypes.map(type => (
                   <SelectItem key={type} value={type}>
-                    {type === PRODUCT_TYPES.TOPCOAT ? 'Topcoat' : 'Basecoat'}
+                    {getProductTypeLabel(type)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -79,7 +79,9 @@ export const ProductFormCoreFieldsSection = ({
           min={0}
           className='rounded-xl border-primary/20 bg-white'
           placeholder={
-            selectedProductType === PRODUCT_TYPES.TOPCOAT ? 'Enter warranty years' : 'Optional for basecoat products'
+            selectedProductType === PRODUCT_TYPES.TOPCOAT
+              ? 'Enter warranty years'
+              : 'Optional for basecoat and specialist products'
           }
           {...register('warrantyYears')}
           aria-invalid={Boolean(errors.warrantyYears)}
@@ -115,4 +117,15 @@ export const ProductFormCoreFieldsSection = ({
       </div>
     </div>
   );
+};
+const getProductTypeLabel = (type: (typeof productTypes)[number]): string => {
+  if (type === PRODUCT_TYPES.TOPCOAT) {
+    return 'Topcoat';
+  }
+
+  if (type === PRODUCT_TYPES.SPECIALIST) {
+    return 'Specialist';
+  }
+
+  return 'Basecoat';
 };

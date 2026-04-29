@@ -135,6 +135,8 @@ export interface RegistrationDetailApiPaintPair {
   topcoat_id?: number;
   topcoatName?: string;
   topcoat_name?: string;
+  topcoatProductType?: string;
+  topcoat_product_type?: string;
   topcoatQuantity?: string;
   topcoat_quantity?: string;
   basecoat?: number | null;

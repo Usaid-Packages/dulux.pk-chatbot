@@ -12,6 +12,7 @@ interface AddClaimProductsSectionProps extends AddClaimSectionFormProps {
   isBasecoatSelectDisabled: boolean;
   isNoBasecoatFlow: boolean;
   isRegistrationSelected: boolean;
+  isSpecialistTopcoatSelected: boolean;
   isRegistrationDetailLoading: boolean;
   isTopcoatSelectDisabled: boolean;
   noBasecoatOptionValue: string;
@@ -34,6 +35,7 @@ export const AddClaimProductsSection = ({
   isNoBasecoatFlow,
   isRegistrationDetailLoading,
   isRegistrationSelected,
+  isSpecialistTopcoatSelected,
   isTopcoatSelectDisabled,
   noBasecoatOptionValue,
   onTopcoatChange,
@@ -47,7 +49,7 @@ export const AddClaimProductsSection = ({
       <div className='grid gap-4 md:grid-cols-2'>
         <div className='space-y-2'>
           <label htmlFor='claim-topcoat' className='text-sm font-medium text-text-primary'>
-            Topcoat Product <span className='text-destructive'>*</span>
+            Topcoat/Specialist Product <span className='text-destructive'>*</span>
           </label>
           <Controller
             control={control}
@@ -132,7 +134,11 @@ export const AddClaimProductsSection = ({
             <p className='text-xs text-text-muted'>{UI_TEXT.SELECT_TOPCOAT_FIRST_TO_ENABLE_BASECOAT}</p>
           ) : null}
           {isNoBasecoatFlow ? (
-            <p className='text-xs text-text-muted'>No related basecoat found for the selected topcoat.</p>
+            <p className='text-xs text-text-muted'>
+              {isSpecialistTopcoatSelected
+                ? 'Basecoat is not allowed for specialist products.'
+                : 'No related basecoat found for the selected topcoat.'}
+            </p>
           ) : null}
         </div>
       </div>

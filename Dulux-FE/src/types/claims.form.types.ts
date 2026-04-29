@@ -5,6 +5,7 @@ import type { CreateClaimFormValues } from '#/schemas/claim.schema';
 export interface ClaimSelectOption {
   id: string;
   label: string;
+  productType?: string;
 }
 
 export interface ClaimBasecoatOptions {

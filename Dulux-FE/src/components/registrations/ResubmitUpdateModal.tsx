@@ -47,6 +47,8 @@ export const ResubmitUpdateModal = ({
     register,
     errors,
     handleSubmit,
+    setValue,
+    clearErrors,
     paintPairRows,
     topcoatOptions,
     isPaintProductsLoading,
@@ -82,6 +84,8 @@ export const ResubmitUpdateModal = ({
               requestedFieldNames={requestedFieldNames}
               control={control}
               register={register}
+              setValue={setValue}
+              clearErrors={clearErrors}
               errors={errors}
               onCityChange={handleCityChange}
               onPurchaseDealerChange={handlePurchaseDealerChange}
@@ -92,8 +96,10 @@ export const ResubmitUpdateModal = ({
 
             <ResubmitUpdatePaintPairsSection
               requestedFieldNames={requestedFieldNames}
+              existingPaintPairs={registration.paintPairs}
               control={control}
               register={register}
+              setValue={setValue}
               errors={errors}
               paintPairRows={paintPairRows}
               topcoatOptions={topcoatOptions}

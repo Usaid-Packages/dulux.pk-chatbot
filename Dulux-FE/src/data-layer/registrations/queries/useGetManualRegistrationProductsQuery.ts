@@ -62,6 +62,7 @@ const toManualProductOptions = (products: ManualRegistrationProductApiItem[]): M
       id: String(product.id),
       label: product.name ?? '',
       warrantyYears: getWarrantyYears(product),
+      productType: product.productType ?? product.product_type,
     }));
 };
 
@@ -151,13 +152,24 @@ export const useGetManualRegistrationProductsQuery = (
     queryKey: queryKeys.registrations.manualProductsByTopcoats(normalizedTopcoatIdsKey),
     enabled: options?.enabled ?? true,
     queryFn: async (): Promise<ManualRegistrationProductsResult> => {
-      const topcoatApiItems = await fetchAllWarrantyOptions({
-        product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
-      });
+      const [topcoatApiItems, specialistApiItems] = await Promise.all([
+        fetchAllWarrantyOptions({
+          product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+        }),
+        fetchAllWarrantyOptions({
+          product_type: REGISTRATION_PRODUCT_TYPES.SPECIALIST,
+        }),
+      ]);
 
-      const topcoatProducts = toManualProductOptions(topcoatApiItems);
+      const topcoatProducts = toManualProductOptions([...topcoatApiItems, ...specialistApiItems]).sort(
+        (firstProduct, secondProduct) => firstProduct.label.localeCompare(secondProduct.label)
+      );
       const basecoatTopcoatIds =
-        normalizedTopcoatIds.length > 0 ? normalizedTopcoatIds : topcoatProducts.map(topcoat => topcoat.id);
+        normalizedTopcoatIds.length > 0
+          ? normalizedTopcoatIds
+          : topcoatProducts
+              .filter(topcoat => topcoat.productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT)
+              .map(topcoat => topcoat.id);
       const basecoatsByTopcoatId = new Map<string, ManualRegistrationProductOption[]>();
 
       await Promise.all(

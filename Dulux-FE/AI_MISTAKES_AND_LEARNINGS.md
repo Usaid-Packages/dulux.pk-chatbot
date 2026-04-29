@@ -77,6 +77,24 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-29 16:20 - Edit modal add-section was prefilled from existing paint pairs
+
+- Issue: Edit Registration modal reused existing registration paint pairs as default form values in the editable `Update Paint Pairs` section, which conflicted with the intended "add fresh pairs" UX.
+- Fix: Kept existing pairs only in read-only summary tables and reset editable paint-pair rows to blank defaults on modal open.
+- Rule: For resubmission/edit correction flows, never prefill "add new pair" inputs from historical pairs unless explicitly requested.
+
+### 2026-04-29 14:33 - JSX duplicate prop slipped in during specialist-field rollout
+
+- Issue: While wiring specialist basecoat-disable logic, a duplicate `disabled` prop was introduced on `<Select>`, creating avoidable lint/format churn before finalization.
+- Fix: Consolidated each control to a single `disabled` expression and re-ran Prettier + ESLint on touched files.
+- Rule: After UI condition refactors, run a quick duplicate-prop scan and lint pass immediately before broader verification.
+
+### 2026-04-29 14:52 - Large file rewrite risked malformed template-string escapes
+
+- Issue: While doing a full-file replacement for manual registration `ProductsStep`, a first write attempt risked quote/template escaping corruption.
+- Fix: Re-opened file immediately, verified content blocks, then ran Prettier + ESLint before any further changes.
+- Rule: For large TSX rewrites, always re-read file right after write and run formatter/lint before proceeding to dependent edits.
+
 ### 2026-04-24 19:05 - Live-mode E2E needs explicit fail-fast guards and dataset IDs
 
 - Issue: Live E2E runs can fail late (after expensive browser setup) when base URLs, API reachability, or mutable record IDs are missing/misconfigured.
@@ -993,3 +1011,9 @@
 - Issue: Existing tests passed but drifted from project testing standards by relying on direct hook/component mocks without MSW-based API contract tests, lacking automated accessibility assertions, and missing focused tests for route guards/router redirects.
 - Fix: Logged this as a mandatory review gate before future test changes; add MSW integration coverage for critical API flows, add `axe` a11y checks for key pages/components, and introduce tests for `PrivateRoute`/`RoleRoute` and router redirect behavior.
 - Rule: A green test run is not enough. For every critical module, keep three layers covered: API-contract behavior (MSW), accessibility baseline (axe), and access-control/routing rules.
+
+### 2026-04-29 - Large shell rewrite introduced avoidable risk in active TSX file
+
+- Issue: While refactoring `ProductsStep.tsx`, I attempted a full-file shell overwrite in one pass, which created avoidable risk of syntax drift during a high-change edit.
+- Fix: Re-validated file content section-by-section, then stabilized with targeted typed patches and follow-up checks.
+- Rule: For large UI refactors, prefer incremental `apply_patch` hunks with compile/test checks between chunks instead of one-shot full-file rewrites.

@@ -81,6 +81,7 @@ export const mergeUniqueProductOptions = (
 export const getDefaultPaintPairs = (registration: RegistrationDetail): ResubmitUpdateFormValues['paintPairs'] => {
   if (registration.paintPairs.length > 0) {
     return registration.paintPairs.map(pair => ({
+      selectionType: pair.topcoat.productType === 'SPECIALIST' ? 'SPECIALIST' : 'TOPCOAT',
       topcoatId: String(pair.topcoat.id),
       topcoatQuantity: pair.topcoatQuantity,
       basecoatId: pair.basecoat?.id ? String(pair.basecoat.id) : '',
@@ -90,6 +91,7 @@ export const getDefaultPaintPairs = (registration: RegistrationDetail): Resubmit
 
   return [
     {
+      selectionType: '',
       topcoatId: '',
       topcoatQuantity: '',
       basecoatId: '',
@@ -104,6 +106,7 @@ export const getRegistrationTopcoatFallbackOptions = (
   return registration.paintPairs.map(pair => ({
     id: String(pair.topcoat.id),
     label: pair.topcoat.name,
+    productType: pair.topcoat.productType,
   }));
 };
 

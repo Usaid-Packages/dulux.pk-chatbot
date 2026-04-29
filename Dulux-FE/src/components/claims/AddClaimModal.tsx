@@ -51,6 +51,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
     isNoBasecoatFlow,
     isRegistrationDetailLoading,
     isRegistrationSelected,
+    isSpecialistTopcoatSelected,
     isRegistrationsLoading,
     isTopcoatSelectDisabled,
     longShotPhoto,
@@ -93,6 +94,7 @@ export const AddClaimModal = ({ isOpen, isSubmitting, onClose, onSubmit }: AddCl
             isNoBasecoatFlow={isNoBasecoatFlow}
             isRegistrationDetailLoading={isRegistrationDetailLoading}
             isRegistrationSelected={isRegistrationSelected}
+            isSpecialistTopcoatSelected={isSpecialistTopcoatSelected}
             isTopcoatSelectDisabled={isTopcoatSelectDisabled}
             noBasecoatOptionValue={CLAIM_NO_BASECOAT_OPTION_VALUE}
             onTopcoatChange={handleTopcoatChange}
