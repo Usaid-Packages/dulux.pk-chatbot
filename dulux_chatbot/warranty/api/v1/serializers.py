@@ -183,7 +183,7 @@ class RejectionFieldWriteSerializer(serializers.Serializer):
 
 class RegistrationPaintPairWriteSerializer(serializers.Serializer):
     topcoat = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.filter(is_active=True, product_type=ProductType.TOPCOAT)
+        queryset=Product.objects.filter(is_active=True, product_type__in=[ProductType.TOPCOAT, ProductType.SPECIALIST])
     )
     topcoat_quantity = serializers.DecimalField(max_digits=8, decimal_places=2)
     basecoat = serializers.PrimaryKeyRelatedField(
@@ -200,11 +200,20 @@ class RegistrationPaintPairWriteSerializer(serializers.Serializer):
         basecoat = attrs.get("basecoat")
         basecoat_quantity = attrs.get("basecoat_quantity")
 
-        if topcoat.product_type != ProductType.TOPCOAT or not topcoat.is_active:
-            raise serializers.ValidationError({"topcoat": "Topcoat must be an active TOPCOAT product."})
+        if topcoat.product_type not in {ProductType.TOPCOAT, ProductType.SPECIALIST} or not topcoat.is_active:
+            raise serializers.ValidationError({"topcoat": "Topcoat must be an active TOPCOAT or SPECIALIST product."})
 
         if topcoat.warranty_years <= 0:
             raise serializers.ValidationError({"topcoat": "Topcoat warranty years must be greater than 0."})
+
+        if topcoat.product_type == ProductType.SPECIALIST:
+            if basecoat is not None:
+                raise serializers.ValidationError({"basecoat": "Basecoat is not allowed for SPECIALIST products."})
+            if basecoat_quantity is not None:
+                raise serializers.ValidationError(
+                    {"basecoat_quantity": "Basecoat quantity is not allowed for SPECIALIST products."}
+                )
+            return attrs
 
         if basecoat is not None and (basecoat.product_type != ProductType.BASECOAT or not basecoat.is_active):
             raise serializers.ValidationError({"basecoat": "Basecoat must be an active BASECOAT product."})
@@ -279,8 +288,10 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
         validated_data["registration_code"] = generate_registration_code()
         registration = super().create(validated_data)
 
+        now = timezone.now()
         RegistrationPaintPair.objects.bulk_create(
-            RegistrationPaintPair(registration=registration, **paint_pair_data) for paint_pair_data in paint_pairs
+            RegistrationPaintPair(registration=registration, topcoat_selected_at=now, **paint_pair_data)
+            for paint_pair_data in paint_pairs
         )
 
         self._sync_paint_pair_invoices(registration=registration, paint_pair_invoices=paint_pair_invoices)
@@ -496,8 +507,10 @@ class WarrantyRegistrationUpdateSerializer(RegistrationValidationMixin, serializ
                     )
                 }
             ) from exc
+        now = timezone.now()
         RegistrationPaintPair.objects.bulk_create(
-            RegistrationPaintPair(registration=instance, **paint_pair_data) for paint_pair_data in paint_pairs
+            RegistrationPaintPair(registration=instance, topcoat_selected_at=now, **paint_pair_data)
+            for paint_pair_data in paint_pairs
         )
 
     def _sync_paint_pair_invoices(self, *, instance: WarrantyRegistration, paint_pair_invoices: list[dict]) -> None:
@@ -691,6 +704,7 @@ class WarrantyClaimCreateSerializer(serializers.ModelSerializer):
         images = validated_data.pop("images")
         request = self.context["request"]
         actor = request.user
+        validated_data["topcoat_selected_at"] = timezone.now()
         claim = super().create(validated_data)
         ClaimImage.objects.bulk_create(ClaimImage(claim=claim, **image_data) for image_data in images)
         log_create(

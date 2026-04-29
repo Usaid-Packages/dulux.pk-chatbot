@@ -4,6 +4,7 @@ from django.db import models
 class ProductType(models.TextChoices):
     TOPCOAT = "TOPCOAT", "Topcoat"
     BASECOAT = "BASECOAT", "Basecoat"
+    SPECIALIST = "SPECIALIST", "Specialist"
 
 
 class Environment(models.TextChoices):

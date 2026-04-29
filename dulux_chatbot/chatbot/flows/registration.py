@@ -59,17 +59,17 @@ class RegistrationFlow(BaseFlow):
     def prompt_topcoat_select(self) -> None:
         topcoats = list(
             Product.objects.filter(
-                product_type=ProductType.TOPCOAT,
+                product_type__in=[ProductType.TOPCOAT, ProductType.SPECIALIST],
                 is_active=True,
                 warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
             ).order_by("name")
         )
         if not topcoats:
-            self._send_validation_error("No active topcoat products are available right now.")
+            self._send_validation_error("No active products are available right now.")
             return
         option_lines = self._build_choice_lines(topcoats)
         self._set_choice_options("topcoat_options", [(option, product_id) for option, product_id, _ in option_lines])
-        prompt_lines = ["Please select a topcoat product:"]
+        prompt_lines = ["Please select a topcoat/specialist product:"]
         prompt_lines.extend(f"{option}. {label}" for option, _, label in option_lines)
         self._send_step_prompt("\n".join(prompt_lines))
 
@@ -265,6 +265,8 @@ class RegistrationFlow(BaseFlow):
         if product_id is None:
             self.prompt_topcoat_select()
             return
+        product_type = Product.objects.filter(pk=product_id).values_list("product_type", flat=True).first()
+        self._save_data("current_topcoat_is_specialist", product_type == ProductType.SPECIALIST)
         self._save_data("current_topcoat_id", product_id)
         self.prompt_topcoat_quantity()
         self._advance_to("topcoat_quantity")
@@ -275,6 +277,11 @@ class RegistrationFlow(BaseFlow):
             self._send_validation_error("Please provide topcoat quantity in liters as a valid number.")
             return
         self._save_data("current_topcoat_quantity", quantity)
+        if (self.session.session_data or {}).get("current_topcoat_is_specialist"):
+            self._append_current_paint_pair()
+            self.prompt_add_more_pairs()
+            self._advance_to("add_more_pairs")
+            return
         self.prompt_basecoat_select()
         self._advance_to("basecoat_select")
 
@@ -468,6 +475,7 @@ class RegistrationFlow(BaseFlow):
             "current_topcoat_quantity",
             "current_basecoat_id",
             "current_basecoat_quantity",
+            "current_topcoat_is_specialist",
         ):
             session_data.pop(key, None)
         session_data["paint_pairs"] = paint_pairs

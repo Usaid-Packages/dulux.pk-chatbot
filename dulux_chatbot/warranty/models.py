@@ -59,6 +59,7 @@ class WarrantyRegistration(TimeStampedModel):
 class RegistrationPaintPair(TimeStampedModel):
     registration = models.ForeignKey(WarrantyRegistration, on_delete=models.CASCADE, related_name="paint_pairs")
     topcoat = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="topcoat_pairs")
+    topcoat_selected_at = models.DateTimeField(null=True, blank=True)
     topcoat_quantity = models.DecimalField(max_digits=8, decimal_places=2)
     basecoat = models.ForeignKey(
         Product,
@@ -93,6 +94,7 @@ class PaintPairInvoice(TimeStampedModel):
 class WarrantyClaim(TimeStampedModel):
     registration = models.ForeignKey(WarrantyRegistration, on_delete=models.PROTECT, related_name="claims")
     paint_pair = models.ForeignKey(RegistrationPaintPair, on_delete=models.PROTECT, related_name="claims_pair")
+    topcoat_selected_at = models.DateTimeField(null=True, blank=True)
     issue_type = models.CharField(max_length=25, choices=IssueType.choices)
     affected_area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
     claim_date = models.DateField(auto_now_add=True)

@@ -72,6 +72,8 @@ def _map_product_type(raw_value: object) -> str:
         return ProductType.BASECOAT
     if "top" in raw:
         return ProductType.TOPCOAT
+    if "special" in raw:
+        return ProductType.SPECIALIST
     # Any unknown type should be treated as topcoat (per requirement).
     return ProductType.TOPCOAT
 
@@ -186,12 +188,24 @@ class Command(BaseCommand):
     def _reset_current_state(self) -> None:
         self._current_product: Product | None = None
         self._current_product_type: str | None = None
-        self._current_environment: str | None = None
+        self._current_environments: set[str] = set()
         self._current_features_lines: list[str] = []
         self._current_coverage_lines: list[str] = []
         self._current_linked_basecoat_names: set[str] = set()
         self._current_surface_type_names: set[str] = set()
         self._dry_has_current_main_row = False
+
+    def _apply_environment_cell(self, value: str) -> None:
+        if not value:
+            return
+        env = value.strip().lower()
+        # Some sheets use "Interior/Exterior" (or similar) to mean both.
+        has_interior = "interior" in env
+        has_exterior = "exterior" in env
+        if has_interior:
+            self._current_environments.add(Environment.INTERIOR)
+        if has_exterior:
+            self._current_environments.add(Environment.EXTERIOR)
 
     def _flush_current_product(self, stats: ImportStats) -> ImportStats:
         product = getattr(self, "_current_product", None)
@@ -223,15 +237,18 @@ class Command(BaseCommand):
                 if created:
                     basecoat_links_created += 1
 
-        if self._current_surface_type_names and self._current_environment:
+        if self._current_surface_type_names and self._current_environments:
             for surface_name in self._current_surface_type_names:
-                surface, _created = SurfaceType.objects.get_or_create(
-                    name=surface_name,
-                    environment=self._current_environment,
-                )
-                _mapping, created = ProductSurfaceMapping.objects.get_or_create(product=product, surface_type=surface)
-                if created:
-                    surface_mappings_created += 1
+                for environment in self._current_environments:
+                    surface, _created = SurfaceType.objects.get_or_create(
+                        name=surface_name,
+                        environment=environment,
+                    )
+                    _mapping, created = ProductSurfaceMapping.objects.get_or_create(
+                        product=product, surface_type=surface
+                    )
+                    if created:
+                        surface_mappings_created += 1
 
         self._reset_current_state()
         return ImportStats(
@@ -346,11 +363,7 @@ class Command(BaseCommand):
                     {item.strip() for item in surface_types_cell.splitlines() if item and item.strip()}
                 )
             if environment_cell:
-                env = environment_cell.strip().lower()
-                if "interior" in env:
-                    self._current_environment = Environment.INTERIOR
-                elif "exterior" in env:
-                    self._current_environment = Environment.EXTERIOR
+                self._apply_environment_cell(environment_cell)
 
             return ImportStats(**{**stats.__dict__, "continuation_rows": stats.continuation_rows + 1})
 
@@ -406,7 +419,7 @@ class Command(BaseCommand):
         self._current_coverage_lines = []
         self._current_linked_basecoat_names = set()
         self._current_surface_type_names = set()
-        self._current_environment = None
+        self._current_environments = set()
 
         if description:
             self._current_features_lines.append(description)
@@ -423,11 +436,7 @@ class Command(BaseCommand):
                 {item.strip() for item in surface_types_cell.splitlines() if item and item.strip()}
             )
         if environment_cell:
-            env = environment_cell.strip().lower()
-            if "interior" in env:
-                self._current_environment = Environment.INTERIOR
-            elif "exterior" in env:
-                self._current_environment = Environment.EXTERIOR
+            self._apply_environment_cell(environment_cell)
 
         if created:
             return ImportStats(
