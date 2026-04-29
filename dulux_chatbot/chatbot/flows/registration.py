@@ -74,7 +74,9 @@ class RegistrationFlow(BaseFlow):
         self._send_step_prompt("\n".join(prompt_lines))
 
     def prompt_topcoat_quantity(self) -> None:
-        self._send_step_prompt("Please share topcoat quantity in liters.")
+        is_specialist = bool((self.session.session_data or {}).get("current_topcoat_is_specialist"))
+        label = "specialist" if is_specialist else "topcoat"
+        self._send_step_prompt(f"Please share {label} quantity in liters.")
 
     def prompt_basecoat_select(self) -> None:
         current_topcoat_id = (self.session.session_data or {}).get("current_topcoat_id")
@@ -274,7 +276,9 @@ class RegistrationFlow(BaseFlow):
     def handle_topcoat_quantity(self, message: dict) -> None:
         quantity = self._parse_quantity(self._get_text(message))
         if quantity is None:
-            self._send_validation_error("Please provide topcoat quantity in liters as a valid number.")
+            is_specialist = bool((self.session.session_data or {}).get("current_topcoat_is_specialist"))
+            label = "specialist" if is_specialist else "topcoat"
+            self._send_validation_error(f"Please provide {label} quantity in liters as a valid number.")
             return
         self._save_data("current_topcoat_quantity", quantity)
         if (self.session.session_data or {}).get("current_topcoat_is_specialist"):
