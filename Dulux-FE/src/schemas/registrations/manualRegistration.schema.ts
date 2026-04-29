@@ -43,12 +43,11 @@ const fileSchema = z
   );
 
 const paintPairSchema = z.object({
-  topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
-  topcoatQuantity: z
-    .string()
-    .trim()
-    .min(1, 'Topcoat quantity is required.')
-    .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
+  selectionType: z.enum(['SPECIALIST', 'TOPCOAT', '']).default(''),
+  specialistProductId: z.string().trim(),
+  specialistQuantity: z.string().trim(),
+  topcoatProductId: z.string().trim(),
+  topcoatQuantity: z.string().trim(),
   basecoatProductId: z.string().trim(),
   basecoatQuantity: z.string().trim(),
 });
@@ -98,12 +97,11 @@ const manualRegistrationBaseSchema = z.object({
     .min(5, 'Dealer address must be at least 5 characters.')
     .max(DEALER_ADDRESS_MAX_LENGTH, `Dealer address must be ${DEALER_ADDRESS_MAX_LENGTH} characters or less.`),
   notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or less.`),
-  topcoatProductId: z.string().trim().min(1, 'Topcoat product is required.'),
-  topcoatQuantity: z
-    .string()
-    .trim()
-    .min(1, 'Topcoat quantity is required.')
-    .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
+  selectionType: z.enum(['SPECIALIST', 'TOPCOAT', '']).default(''),
+  specialistProductId: z.string().trim(),
+  specialistQuantity: z.string().trim(),
+  topcoatProductId: z.string().trim(),
+  topcoatQuantity: z.string().trim(),
   basecoatProductId: z.string().trim(),
   basecoatQuantity: z.string().trim(),
   invoices: z.array(fileSchema).min(1, 'At least one invoice is required.'),
@@ -113,6 +111,9 @@ const manualRegistrationBaseSchema = z.object({
 export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine((values, context) => {
   const allPairs = [
     {
+      selectionType: values.selectionType,
+      specialistProductId: values.specialistProductId,
+      specialistQuantity: values.specialistQuantity,
       topcoatProductId: values.topcoatProductId,
       topcoatQuantity: values.topcoatQuantity,
       basecoatProductId: values.basecoatProductId,
@@ -126,7 +127,96 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
   ];
 
   allPairs.forEach(pair => {
-    if (pair.basecoatProductId && !pair.basecoatQuantity) {
+    const hasSpecialist = pair.specialistProductId.length > 0;
+    const hasTopcoat = pair.topcoatProductId.length > 0;
+    const hasSelectionType = pair.selectionType === 'SPECIALIST' || pair.selectionType === 'TOPCOAT';
+
+    if (!hasSelectionType) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'selectionType'],
+        message: 'Select paint type before choosing products.',
+      });
+      return;
+    }
+
+    if (pair.selectionType === 'SPECIALIST' && !hasSpecialist) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'specialistProductId'],
+        message: 'Select a specialist product.',
+      });
+    }
+
+    if (pair.selectionType === 'TOPCOAT' && !hasTopcoat) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'topcoatProductId'],
+        message: 'Select a topcoat product.',
+      });
+    }
+
+    if (pair.selectionType === 'SPECIALIST' && hasTopcoat) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'topcoatProductId'],
+        message: 'Topcoat is not allowed when specialist type is selected.',
+      });
+    }
+
+    if (pair.selectionType === 'TOPCOAT' && hasSpecialist) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'specialistProductId'],
+        message: 'Specialist is not allowed when topcoat type is selected.',
+      });
+    }
+
+    if (pair.selectionType === 'SPECIALIST' && !pair.specialistQuantity) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'specialistQuantity'],
+        message: 'Specialist quantity is required when specialist product is selected.',
+      });
+    }
+
+    if (
+      pair.selectionType === 'SPECIALIST' &&
+      pair.specialistQuantity &&
+      !quantityPattern.test(pair.specialistQuantity)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'specialistQuantity'],
+        message: 'Enter a valid quantity (e.g., 5 or 5.5).',
+      });
+    }
+
+    if (pair.selectionType === 'TOPCOAT' && !pair.topcoatQuantity) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'topcoatQuantity'],
+        message: 'Topcoat quantity is required when topcoat is selected.',
+      });
+    }
+
+    if (pair.selectionType === 'TOPCOAT' && pair.topcoatQuantity && !quantityPattern.test(pair.topcoatQuantity)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'topcoatQuantity'],
+        message: 'Enter a valid quantity (e.g., 5 or 5.5).',
+      });
+    }
+
+    if (pair.selectionType === 'SPECIALIST' && (pair.basecoatProductId || pair.basecoatQuantity)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [...pair.rootPath, 'basecoatProductId'],
+        message: 'Basecoat is not allowed when specialist product is selected.',
+      });
+    }
+
+    if (pair.selectionType === 'TOPCOAT' && pair.basecoatProductId && !pair.basecoatQuantity) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: [...pair.rootPath, 'basecoatQuantity'],
@@ -134,7 +224,7 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
       });
     }
 
-    if (pair.basecoatQuantity && !pair.basecoatProductId) {
+    if (pair.selectionType === 'TOPCOAT' && pair.basecoatQuantity && !pair.basecoatProductId) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: [...pair.rootPath, 'basecoatProductId'],
@@ -142,7 +232,7 @@ export const manualRegistrationSchema = manualRegistrationBaseSchema.superRefine
       });
     }
 
-    if (pair.basecoatQuantity && !quantityPattern.test(pair.basecoatQuantity)) {
+    if (pair.selectionType === 'TOPCOAT' && pair.basecoatQuantity && !quantityPattern.test(pair.basecoatQuantity)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: [...pair.rootPath, 'basecoatQuantity'],
@@ -169,6 +259,9 @@ export const manualRegistrationStep2Schema = manualRegistrationBaseSchema.pick({
 });
 
 export const manualRegistrationStep3Schema = manualRegistrationBaseSchema.pick({
+  selectionType: true,
+  specialistProductId: true,
+  specialistQuantity: true,
   topcoatProductId: true,
   topcoatQuantity: true,
   basecoatProductId: true,

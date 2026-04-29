@@ -151,7 +151,7 @@ export const QualityDetailPage = (): JSX.Element => {
                 <dd className='font-medium text-text-primary'>{claim.areaSqFt} sq ft</dd>
               </div>
               <div className='flex justify-between gap-3 border-b border-border/50 pb-1'>
-                <dt className='text-text-muted'>Topcoat</dt>
+                <dt className='text-text-muted'>Topcoat/Specialist</dt>
                 <dd className='font-medium text-text-primary'>{claim.topcoat}</dd>
               </div>
             </dl>

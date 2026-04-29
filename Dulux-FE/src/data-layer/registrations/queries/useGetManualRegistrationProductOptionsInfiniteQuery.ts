@@ -60,6 +60,7 @@ const toManualProductOptions = (products: ManualRegistrationProductApiItem[]): M
       id: String(product.id),
       label: product.name ?? '',
       warrantyYears: getWarrantyYears(product),
+      productType: product.productType ?? product.product_type,
     }));
 };
 
@@ -98,11 +99,7 @@ const getFlattenedOptions = (
 };
 
 const normalizeProductType = (productType: ProductType): ProductType => {
-  if (productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT) {
-    return REGISTRATION_PRODUCT_TYPES.TOPCOAT;
-  }
-
-  return REGISTRATION_PRODUCT_TYPES.BASECOAT;
+  return productType;
 };
 
 /**
@@ -118,7 +115,10 @@ export const useGetManualRegistrationProductOptionsInfiniteQuery = (
 ): ManualRegistrationProductOptionsInfiniteResult => {
   const parsedTopcoatId = Number.parseInt(topcoatId ?? '', 10);
   const hasValidTopcoatId = Number.isFinite(parsedTopcoatId) && parsedTopcoatId > 0;
-  const shouldEnableQuery = productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT ? true : hasValidTopcoatId;
+  const shouldEnableQuery =
+    productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT || productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST
+      ? true
+      : hasValidTopcoatId;
 
   const query = useInfiniteQuery<
     ManualRegistrationProductsApiResponse,

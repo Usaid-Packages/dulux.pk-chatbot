@@ -214,6 +214,8 @@ export const RegistrationDetailPage = (): JSX.Element => {
     label: 'Invoice',
     url: invoice.image.image,
   }));
+  const specialistPairs = registration.paintPairs.filter(pair => pair.topcoat.productType === 'SPECIALIST');
+  const topcoatPairs = registration.paintPairs.filter(pair => pair.topcoat.productType !== 'SPECIALIST');
 
   return (
     <main className='space-y-4'>
@@ -229,28 +231,57 @@ export const RegistrationDetailPage = (): JSX.Element => {
 
           <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>
             <h2 className='text-md font-semibold text-text-primary'>Products</h2>
-            <div className='mt-3 overflow-x-auto'>
-              <table className='min-w-full text-sm'>
-                <thead>
-                  <tr className='border-b border-border text-left text-text-muted'>
-                    <th className='py-2'>Topcoat</th>
-                    <th className='py-2'>Topcoat Qty</th>
-                    <th className='py-2'>Basecoat</th>
-                    <th className='py-2'>Basecoat Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registration.paintPairs.map(pair => (
-                    <tr key={pair.id} className='border-b border-border/60 last:border-b-0'>
-                      <td className='py-2'>{pair.topcoat.name}</td>
-                      <td className='py-2'>{pair.topcoatQuantity}</td>
-                      <td className='py-2'>{pair.basecoat?.name ?? 'N/A'}</td>
-                      <td className='py-2'>{pair.basecoatQuantity ?? 'N/A'}</td>
+            {specialistPairs.length > 0 ? (
+              <div className='mt-3 overflow-x-auto'>
+                <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted'>Specialized Paint</p>
+                <table className='min-w-full text-sm'>
+                  <thead>
+                    <tr className='border-b border-border text-left text-text-muted'>
+                      <th className='py-2'>Selection Type</th>
+                      <th className='py-2'>Specialized</th>
+                      <th className='py-2'>Quantity</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {specialistPairs.map(pair => (
+                      <tr key={pair.id} className='border-b border-border/60 last:border-b-0'>
+                        <td className='py-2'>Specialized</td>
+                        <td className='py-2'>{pair.topcoat.name}</td>
+                        <td className='py-2'>{pair.topcoatQuantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+
+            {topcoatPairs.length > 0 ? (
+              <div className='mt-3 overflow-x-auto'>
+                <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted'>Topcoat + Basecoat</p>
+                <table className='min-w-full text-sm'>
+                  <thead>
+                    <tr className='border-b border-border text-left text-text-muted'>
+                      <th className='py-2'>Selection Type</th>
+                      <th className='py-2'>Topcoat</th>
+                      <th className='py-2'>Quantity</th>
+                      <th className='py-2'>Basecoat</th>
+                      <th className='py-2'>Basecoat Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topcoatPairs.map(pair => (
+                      <tr key={pair.id} className='border-b border-border/60 last:border-b-0'>
+                        <td className='py-2'>Topcoat + Basecoat</td>
+                        <td className='py-2'>{pair.topcoat.name}</td>
+                        <td className='py-2'>{pair.topcoatQuantity}</td>
+                        <td className='py-2'>{pair.basecoat?.name ?? 'N/A'}</td>
+                        <td className='py-2'>{pair.basecoatQuantity ?? 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </article>
 
           <article className='wf-card wf-card-p4 border-primary/15 bg-white/95'>

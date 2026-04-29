@@ -111,6 +111,77 @@ test.describe('@critical registrations phase2', () => {
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(page.getByRole('dialog', { name: 'Invoice' })).toBeHidden();
   });
+
+  test('REG-DET-005 resubmit update paint-pair mode toggle shows related fields', async ({ page }) => {
+    await page.route(/.*\/api\/v1\/warranty\/registrations\/999\/?(?:\?.*)?$/, async route => {
+      await route.fulfill({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: 999,
+          registration_code: '999',
+          channel: 'WEBFORM',
+          state: 'RESUBMIT',
+          customer_name: 'User',
+          phone_number: '923001234567',
+          email: 'u@example.com',
+          city: 'Karachi',
+          site_address: 'Street',
+          purchase_date: '2026-04-20',
+          purchase_dealer: 'Dealer',
+          purchase_dealer_city: 'Karachi',
+          purchase_dealer_address: 'Addr',
+          postal_code: '',
+          notes: '',
+          rejection_fields: [{ id: 1, field_name: 'paint_pairs', note: '', created: '2026-04-29T00:00:00Z' }],
+          paint_pairs: [
+            {
+              id: 1,
+              topcoat: 90,
+              topcoat_name: 'Special LIME TWIST paint',
+              topcoat_product_type: 'SPECIALIST',
+              topcoat_quantity: '7.00',
+              basecoat: null,
+              basecoat_name: null,
+              basecoat_quantity: null,
+            },
+          ],
+          paint_pair_invoices: [],
+          created: '2026-04-29T00:00:00Z',
+          modified: '2026-04-29T00:00:00Z',
+        }),
+      });
+    });
+
+    await page.route(/.*\/api\/v1\/products\/warranty-options\/?(?:\?.*)?$/, async route => {
+      const url = new URL(route.request().url());
+      const type = url.searchParams.get('product_type');
+      const results =
+        type === 'SPECIALIST'
+          ? [{ id: 90, name: 'Special LIME TWIST paint', product_type: 'SPECIALIST', warranty_years: 2, is_active: true }]
+          : type === 'TOPCOAT'
+            ? [{ id: 24, name: 'Aquashield Waterproof Roofcoat', product_type: 'TOPCOAT', warranty_years: 8, is_active: true }]
+            : [{ id: 7, name: 'Dulux Exterior Crackbridging Primer', product_type: 'BASECOAT', warranty_years: 1, is_active: true }];
+
+      await route.fulfill({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ count: results.length, next: null, previous: null, results }),
+      });
+    });
+
+    const detailPage = new RegistrationDetailPage(page);
+    await detailPage.goto('999');
+    await page.getByRole('button', { name: 'Request Resubmission' }).click();
+    await expect(page.getByRole('dialog', { name: 'Submit Resubmission Changes' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Specialized Coat' }).first().click();
+    await expect(page.getByText('Specialist Product')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Topcoat + Basecoat' }).first().click();
+    await expect(page.getByText('Basecoat Product (optional)')).toBeVisible();
+  });
+
 });
 
 test.describe('@critical registrations role restrictions', () => {

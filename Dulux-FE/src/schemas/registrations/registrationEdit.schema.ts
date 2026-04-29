@@ -18,17 +18,87 @@ const invoiceFileSchema = z
 
 const registrationEditPaintPairSchema = z
   .object({
-    topcoatId: z.string().trim().min(1, 'Topcoat product is required.'),
-    topcoatQuantity: z
-      .string()
-      .trim()
-      .min(1, 'Topcoat quantity is required.')
-      .regex(quantityPattern, 'Enter a valid quantity (e.g., 5 or 5.5).'),
+    selectionType: z.enum(['SPECIALIST', 'TOPCOAT', '']).default(''),
+    topcoatId: z.string().trim(),
+    topcoatQuantity: z.string().trim(),
     basecoatId: z.string().trim(),
     basecoatQuantity: z.string().trim(),
   })
   .superRefine((value, context) => {
-    if (value.basecoatId.length > 0 && value.basecoatQuantity.length === 0) {
+    if (!value.selectionType) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['selectionType'],
+        message: 'Select paint type first.',
+      });
+      return;
+    }
+
+    if (value.selectionType === 'SPECIALIST' && value.topcoatId.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatId'],
+        message: 'Specialist product is required.',
+      });
+    }
+
+    if (value.selectionType === 'SPECIALIST' && value.topcoatQuantity.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatQuantity'],
+        message: 'Specialist quantity is required.',
+      });
+    }
+
+    if (
+      value.selectionType === 'SPECIALIST' &&
+      value.topcoatQuantity.length > 0 &&
+      !quantityPattern.test(value.topcoatQuantity)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatQuantity'],
+        message: 'Enter a valid quantity (e.g., 5 or 5.5).',
+      });
+    }
+
+    if (value.selectionType === 'SPECIALIST' && (value.basecoatId.length > 0 || value.basecoatQuantity.length > 0)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['basecoatId'],
+        message: 'Basecoat is not allowed when specialist is selected.',
+      });
+    }
+
+    if (value.selectionType === 'TOPCOAT' && value.topcoatId.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatId'],
+        message: 'Topcoat product is required.',
+      });
+    }
+
+    if (value.selectionType === 'TOPCOAT' && value.topcoatQuantity.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatQuantity'],
+        message: 'Topcoat quantity is required.',
+      });
+    }
+
+    if (
+      value.selectionType === 'TOPCOAT' &&
+      value.topcoatQuantity.length > 0 &&
+      !quantityPattern.test(value.topcoatQuantity)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topcoatQuantity'],
+        message: 'Enter a valid quantity (e.g., 5 or 5.5).',
+      });
+    }
+
+    if (value.selectionType === 'TOPCOAT' && value.basecoatId.length > 0 && value.basecoatQuantity.length === 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatQuantity'],
@@ -36,7 +106,7 @@ const registrationEditPaintPairSchema = z
       });
     }
 
-    if (value.basecoatQuantity.length > 0 && value.basecoatId.length === 0) {
+    if (value.selectionType === 'TOPCOAT' && value.basecoatQuantity.length > 0 && value.basecoatId.length === 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatId'],
@@ -44,7 +114,11 @@ const registrationEditPaintPairSchema = z
       });
     }
 
-    if (value.basecoatQuantity.length > 0 && !quantityPattern.test(value.basecoatQuantity)) {
+    if (
+      value.selectionType === 'TOPCOAT' &&
+      value.basecoatQuantity.length > 0 &&
+      !quantityPattern.test(value.basecoatQuantity)
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['basecoatQuantity'],
