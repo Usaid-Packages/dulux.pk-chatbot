@@ -130,6 +130,7 @@ class WarrantyRegistrationAPITests(TestCase):
                     "id": rejection_field.id,
                     "field_name": "email",
                     "note": "Please provide a valid email.",
+                    "allowed_product_types": [],
                     "created": response.data["rejection_fields"][0]["created"],
                 }
             ],

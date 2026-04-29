@@ -100,12 +100,15 @@ class CardCountQuerySerializer(serializers.Serializer):
 
 
 class RegistrationPaintPairSerializer(serializers.ModelSerializer):
+    topcoat_product_type = serializers.CharField(source="topcoat.product_type", read_only=True)
+
     class Meta:
         model = RegistrationPaintPair
         fields = (
             "id",
             "topcoat",
             "topcoat_name",
+            "topcoat_product_type",
             "topcoat_quantity",
             "basecoat",
             "basecoat_name",
@@ -130,9 +133,17 @@ class WarrantyRegistrationListSerializer(serializers.ModelSerializer):
 
 
 class RejectionFieldSerializer(serializers.ModelSerializer):
+    allowed_product_types = serializers.SerializerMethodField()
+
     class Meta:
         model = RejectionField
-        fields = ("id", "field_name", "note", "created")
+        fields = ("id", "field_name", "note", "allowed_product_types", "created")
+
+    def get_allowed_product_types(self, obj: RejectionField) -> list[str]:
+        # FE needs to know which product types to show when QA/CS requests topcoat update.
+        if obj.field_name not in {"topcoat", "paint_pairs"}:
+            return []
+        return [ProductType.TOPCOAT, ProductType.SPECIALIST]
 
 
 class WarrantyRegistrationDetailSerializer(serializers.ModelSerializer):
@@ -592,6 +603,7 @@ class ClaimResubmissionSerializer(serializers.ModelSerializer):
 class WarrantyClaimListSerializer(serializers.ModelSerializer):
     registration_number = serializers.CharField(source="registration.registration_code", read_only=True)
     customer_name = serializers.CharField(source="registration.customer_name", read_only=True)
+    topcoat_product_type = serializers.CharField(source="paint_pair.topcoat.product_type", read_only=True)
     latest_quality_decision = serializers.SerializerMethodField()
 
     class Meta:
@@ -601,6 +613,7 @@ class WarrantyClaimListSerializer(serializers.ModelSerializer):
             "registration_number",
             "customer_name",
             "topcoat_name",
+            "topcoat_product_type",
             "issue_type",
             "affected_area_sqft",
             "claim_date",
