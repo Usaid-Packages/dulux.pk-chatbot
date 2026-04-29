@@ -42,9 +42,7 @@ export const ProductFormImageSection = ({
   return (
     <div className='space-y-3 rounded-xl border border-primary/20 bg-white/85 p-4'>
       <div>
-        <p className='text-sm font-medium text-text-primary'>
-          Product Images <span className='text-destructive'>*</span>
-        </p>
+        <p className='text-sm font-medium text-text-primary'>Product Images</p>
         <p className='text-xs text-text-muted'>Upload one product image (JPG, PNG, WEBP. Max 5MB).</p>
       </div>
       <Input

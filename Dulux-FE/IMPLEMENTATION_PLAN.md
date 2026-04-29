@@ -8,6 +8,16 @@
 - If any plan detail conflicts with standards, `AGENTS_ENGINEERING_STANDARDS.md` is the source of truth.
 - Any code that violates standards is non-compliant and must be rejected or fixed before merge.
 
+## 0.1 Latest Feature Delta (2026-04-29)
+
+- Registration Edit modal now follows the same paint-pair UX as Manual Registration Product Step and Submit Resubmission:
+- Existing saved paint pairs are shown only in read-only summary tables.
+- `Update Paint Pairs` input area is always blank on modal open (no prefilled topcoat/specialist/basecoat values).
+- User must choose paint type first per pair: `Specialized Coat` or `Topcoat + Basecoat`.
+- When `Specialized Coat` is selected, only specialist product + quantity inputs are shown.
+- When `Topcoat + Basecoat` is selected, topcoat + quantity and related basecoat options are shown.
+- Edit payload keeps specialist pairs without basecoat fields and topcoat pairs with optional related basecoat fields.
+
 ## Step 1: Routing Strategy and Access Control
 
 ### 1.1 Routing Approach
@@ -3394,3 +3404,71 @@ Status legend: `✅ DONE` means implemented and present in repository.
 
 Latest non-E2E verification snapshot:
 - ✅ DONE: `vitest run` passed (`23` files, `83` tests).
+
+### 15.6 Specialist Product Type in Paint Pairs (New)
+
+- Added support for `SPECIALIST` in paint-pair flows using existing payload contract:
+  - `paint_pairs[].topcoat` now accepts both `TOPCOAT` and `SPECIALIST` products.
+  - `basecoat` and `basecoat_quantity` must be omitted for specialist selections.
+- Manual registration product selection now loads both `TOPCOAT` and `SPECIALIST` options from:
+  - `GET /api/v1/products/warranty-options/?product_type=TOPCOAT`
+  - `GET /api/v1/products/warranty-options/?product_type=SPECIALIST`
+- UI behavior updated in paint-pair screens (manual registration, registration edit, resubmission update):
+  - basecoat selector/quantity are disabled for specialist selections;
+  - user-facing helper text explains basecoat is not allowed for specialist products;
+  - stale basecoat values are auto-cleared when switching to specialist.
+- Payload hardening added for registration edit/resubmission:
+  - basecoat fields are serialized only when a valid basecoat id is present.
+- Product typing/constants updated to include `SPECIALIST` so API normalization and product labeling remain consistent.
+
+### 15.7 Manual Registration Paint Pair UX Update (Specialist vs Topcoat)
+
+- Manual registration paint-pair UI now has separate product selectors:
+  - `Specialist Product` + `Specialist Quantity`
+  - `Topcoat Product` + `Topcoat Quantity`
+  - `Basecoat Product` + `Basecoat Quantity`
+- Mutual-exclusivity rules implemented in step UI and schema:
+  - If Specialist is selected, Topcoat and Basecoat fields are disabled and cleared.
+  - If Topcoat is selected, Specialist fields are disabled and cleared.
+  - Basecoat selection remains available only for Topcoat flow (existing linked-basecoat behavior unchanged).
+- API payload compatibility preserved:
+  - Specialist selection is still submitted via existing backend field `paint_pairs[].topcoat` with selected specialist ID.
+  - Quantity is submitted via existing `paint_pairs[].topcoatQuantity`.
+  - Basecoat fields are omitted for specialist flow.
+- Review step summary updated to display specialist and specialist quantity explicitly for each paint pair.
+
+### 15.8 Tests Added/Updated for Specialist Paint-Pair UX
+
+- ✅ New unit/schema tests:
+  - `src/schemas/registrations/__tests__/manualRegistration.schema.test.ts`
+  - Covers:
+    - specialist-only valid flow
+    - rejection when specialist and topcoat are selected together
+- ✅ Existing manual registration route/page tests re-run and passing:
+  - `src/pages/registrations/__tests__/ManualStepPage.test.tsx`
+  - `src/pages/registrations/__tests__/ManualRegistrationSuccessPage.test.tsx`
+- ✅ Existing payload-builder test remains passing:
+  - `src/hooks/registrations/__tests__/useRegistrationDetail.payloadBuilder.test.ts`
+
+### 15.9 Manual Registration Type-First Paint Pair Revamp (Current)
+
+- Implemented type-first UX for manual registration paint pairs:
+  - Step now starts with explicit selection mode per pair: `Specialized Coat` or `Topcoat + Basecoat`.
+  - Mode-based conditional rendering:
+    - `SPECIALIST`: only specialist product/quantity fields are shown.
+    - `TOPCOAT`: topcoat/basecoat fields are shown.
+- Added strong form contract:
+  - New `selectionType` field added to main pair and all `additionalPaintPairs`.
+  - Validation now requires `selectionType` and validates only fields relevant to selected mode.
+- Edge-case handling included:
+  - Switching mode clears conflicting stale values.
+  - `No specialist coat available` remains visible when specialist list is empty.
+  - Infinite-scroll pagination behavior remains active for specialist/topcoat/basecoat options.
+- API payload behavior updated:
+  - Submission now enforces per-pair `selectionType` and serializes only relevant fields for selected mode.
+  - Specialist mode continues backend-compatible mapping through `paintPairs[].topcoat` + `topcoatQuantity`.
+- Test updates made:
+  - UI tests updated for mode-driven rendering behavior.
+  - Schema unit tests updated for required `selectionType` contract.
+  - Integration payload test updated for specialist mode submission.
+  - E2E flow updated to explicitly choose selection mode before product dropdown interaction.

@@ -11,10 +11,17 @@ export interface ManualRegistrationProductOption {
   id: string;
   label: string;
   warrantyYears?: number;
+  productType?: string;
   linkedBasecoats?: ManualRegistrationProductOption[];
 }
 
+export const manualRegistrationSelectionTypes = ['SPECIALIST', 'TOPCOAT'] as const;
+export type ManualRegistrationSelectionType = (typeof manualRegistrationSelectionTypes)[number];
+
 export interface ManualRegistrationPaintPairInput {
+  selectionType: '' | ManualRegistrationSelectionType;
+  specialistProductId: string;
+  specialistQuantity: string;
   topcoatProductId: string;
   topcoatQuantity: string;
   basecoatProductId: string;
@@ -33,6 +40,9 @@ export interface ManualRegistrationFormValues {
   purchaseDealerCity: string;
   purchaseDealerAddress: string;
   notes: string;
+  selectionType: '' | ManualRegistrationSelectionType;
+  specialistProductId: string;
+  specialistQuantity: string;
   topcoatProductId: string;
   topcoatQuantity: string;
   basecoatProductId: string;

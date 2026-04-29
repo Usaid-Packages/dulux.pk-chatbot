@@ -90,6 +90,9 @@ export const useManualRegistration = (): UseManualRegistrationResult => {
 
     if (currentStep === 3 && additionalPairs.length > 0) {
       additionalPairs.forEach((_, index) => {
+        fields.push(`additionalPaintPairs.${index}.selectionType` as keyof ManualRegistrationFormValues);
+        fields.push(`additionalPaintPairs.${index}.specialistProductId` as keyof ManualRegistrationFormValues);
+        fields.push(`additionalPaintPairs.${index}.specialistQuantity` as keyof ManualRegistrationFormValues);
         fields.push(`additionalPaintPairs.${index}.topcoatProductId` as keyof ManualRegistrationFormValues);
         fields.push(`additionalPaintPairs.${index}.topcoatQuantity` as keyof ManualRegistrationFormValues);
         fields.push(`additionalPaintPairs.${index}.basecoatProductId` as keyof ManualRegistrationFormValues);

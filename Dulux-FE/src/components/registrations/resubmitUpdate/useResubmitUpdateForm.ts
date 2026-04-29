@@ -2,17 +2,17 @@ import type { ChangeEvent, FocusEvent, MouseEvent } from 'react';
 import { useEffect, useMemo } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Control, FieldErrors, UseFormHandleSubmit, UseFormRegister } from 'react-hook-form';
+import type { Control, FieldErrors, UseFormHandleSubmit, UseFormRegister, UseFormSetValue } from 'react-hook-form';
 import { useFieldArray, useForm } from 'react-hook-form';
 
 import { REQUESTED_FIELD_ORDER } from '#/constants/registrations';
+import { REGISTRATION_PRODUCT_TYPES } from '#/constants/registrations';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { resubmitUpdateSchema, type ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail, RegistrationRejectionField, RequestedCorrectionNote } from '#/types/registrations';
 import {
-  getDefaultPaintPairs,
   getProductOptionLabel,
   getRegistrationBasecoatFallbackByTopcoatId,
   getRegistrationTopcoatFallbackOptions,
@@ -31,13 +31,16 @@ interface UseResubmitUpdateFormParams {
 export interface ResubmitUpdateSelectOption {
   id: string;
   label: string;
+  productType?: string;
 }
 
 export interface ResubmitUpdatePaintPairRowViewModel {
   rowId: string;
   rowIndex: number;
+  selectionType: '' | 'SPECIALIST' | 'TOPCOAT';
   selectedTopcoatId: string;
   selectedBasecoatId: string;
+  isSpecialistTopcoatSelected: boolean;
   basecoatOptions: ResubmitUpdateSelectOption[];
 }
 
@@ -48,6 +51,8 @@ export interface UseResubmitUpdateFormResult {
   register: UseFormRegister<ResubmitUpdateFormValues>;
   errors: FieldErrors<ResubmitUpdateFormValues>;
   handleSubmit: UseFormHandleSubmit<ResubmitUpdateFormValues>;
+  setValue: UseFormSetValue<ResubmitUpdateFormValues>;
+  clearErrors: (name?: string | string[]) => void;
   paintPairRows: ResubmitUpdatePaintPairRowViewModel[];
   topcoatOptions: ResubmitUpdateSelectOption[];
   isPaintProductsLoading: boolean;
@@ -95,7 +100,15 @@ export const useResubmitUpdateForm = ({
       purchaseDealerCity: registration.purchaseDealerCity,
       purchaseDealerAddress: registration.purchaseDealerAddress,
       postalCode: registration.postalCode,
-      paintPairs: getDefaultPaintPairs(registration),
+      paintPairs: [
+        {
+          selectionType: '',
+          topcoatId: '',
+          topcoatQuantity: '',
+          basecoatId: '',
+          basecoatQuantity: '',
+        },
+      ],
       invoiceFiles: [],
     };
   }, [registration]);
@@ -106,6 +119,7 @@ export const useResubmitUpdateForm = ({
     register,
     handleSubmit,
     reset,
+    clearErrors,
     setValue,
     watch,
     formState: { errors },
@@ -169,6 +183,7 @@ export const useResubmitUpdateForm = ({
     return topcoatProducts.map(product => ({
       id: product.id,
       label: getProductOptionLabel(product),
+      productType: product.productType,
     }));
   }, [topcoatProducts]);
 
@@ -206,8 +221,12 @@ export const useResubmitUpdateForm = ({
       return {
         rowId: field.id,
         rowIndex: index,
+        selectionType: (watchedPaintPairs[index]?.selectionType as '' | 'SPECIALIST' | 'TOPCOAT' | undefined) ?? '',
         selectedTopcoatId,
         selectedBasecoatId,
+        isSpecialistTopcoatSelected:
+          topcoatProducts.find(product => product.id === selectedTopcoatId)?.productType ===
+          REGISTRATION_PRODUCT_TYPES.SPECIALIST,
         basecoatOptions: selectedTopcoatId ? (basecoatSelectOptionsByTopcoatId.get(selectedTopcoatId) ?? []) : [],
       };
     });
@@ -281,6 +300,7 @@ export const useResubmitUpdateForm = ({
 
   const handleAddPaintPair = (): void => {
     append({
+      selectionType: '',
       topcoatId: '',
       topcoatQuantity: '',
       basecoatId: '',
@@ -311,6 +331,8 @@ export const useResubmitUpdateForm = ({
     register,
     errors,
     handleSubmit,
+    setValue,
+    clearErrors,
     paintPairRows,
     topcoatOptions,
     isPaintProductsLoading: manualProductsQuery.isLoading,

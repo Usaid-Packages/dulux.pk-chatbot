@@ -13,9 +13,27 @@ interface ProductTableProps {
 }
 
 const getTypeBadgeClassName = (type: Product['productType']): string => {
-  return type === PRODUCT_TYPES.TOPCOAT
-    ? 'bg-productType-topcoat-bg text-productType-topcoat-text'
-    : 'bg-productType-basecoat-bg text-productType-basecoat-text';
+  if (type === PRODUCT_TYPES.TOPCOAT) {
+    return 'bg-productType-topcoat-bg text-productType-topcoat-text';
+  }
+
+  if (type === PRODUCT_TYPES.SPECIALIST) {
+    return 'bg-primary/10 text-primary';
+  }
+
+  return 'bg-productType-basecoat-bg text-productType-basecoat-text';
+};
+
+const getProductTypeLabel = (type: Product['productType']): string => {
+  if (type === PRODUCT_TYPES.TOPCOAT) {
+    return 'Topcoat';
+  }
+
+  if (type === PRODUCT_TYPES.SPECIALIST) {
+    return 'Specialist';
+  }
+
+  return 'Basecoat';
 };
 
 const getSurfaceEnvironmentBadgeClassName = (environment: Product['surfaceTypes'][number]['environment']): string => {
@@ -129,7 +147,7 @@ export const ProductTable = ({ canEdit = true, products }: ProductTableProps): J
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getTypeBadgeClassName(product.productType)}`}
                   >
-                    {product.productType === PRODUCT_TYPES.TOPCOAT ? 'Topcoat' : 'Basecoat'}
+                    {getProductTypeLabel(product.productType)}
                   </span>
                 </TableCell>
                 <TableCell>{renderSurfaceTypes(product)}</TableCell>

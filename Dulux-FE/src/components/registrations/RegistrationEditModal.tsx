@@ -23,6 +23,7 @@ import {
 } from '#/components/ui';
 import { Calendar } from '#/components/ui/Calendar';
 import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
+import { REGISTRATION_PRODUCT_TYPES } from '#/constants/registrations';
 import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import { registrationEditSchema, type RegistrationEditFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
@@ -71,6 +72,10 @@ const getProductOptionLabel = (product: ManualRegistrationProductOption): string
   return product.label;
 };
 
+const isSpecialistProduct = (product: ManualRegistrationProductOption | undefined): boolean => {
+  return product?.productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST;
+};
+
 const mergeUniqueProductOptions = (
   primaryOptions: ManualRegistrationProductOption[],
   fallbackOptions: ManualRegistrationProductOption[]
@@ -89,6 +94,7 @@ const mergeUniqueProductOptions = (
 };
 
 const DEFAULT_PAINT_PAIR = {
+  selectionType: '',
   topcoatId: '',
   topcoatQuantity: '',
   basecoatId: '',
@@ -165,9 +171,12 @@ export const RegistrationEditModal = ({
     (registration?.paintPairs ?? []).map(pair => ({
       id: String(pair.topcoat.id),
       label: pair.topcoat.name,
+      productType: pair.topcoat.productType,
     }))
   );
   const selectedInvoiceFiles = watch('invoiceFiles');
+  const specialistPairs = (registration?.paintPairs ?? []).filter(pair => pair.topcoat.productType === 'SPECIALIST');
+  const topcoatPairs = (registration?.paintPairs ?? []).filter(pair => pair.topcoat.productType !== 'SPECIALIST');
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -195,16 +204,6 @@ export const RegistrationEditModal = ({
       return;
     }
 
-    const defaultPaintPairs =
-      registration.paintPairs.length > 0
-        ? registration.paintPairs.map(pair => ({
-            topcoatId: String(pair.topcoat.id),
-            topcoatQuantity: pair.topcoatQuantity,
-            basecoatId: pair.basecoat?.id ? String(pair.basecoat.id) : '',
-            basecoatQuantity: pair.basecoatQuantity ?? '',
-          }))
-        : [DEFAULT_PAINT_PAIR];
-
     reset({
       customerName: registration.customerName,
       phoneNumber: registration.phoneNumber,
@@ -215,7 +214,8 @@ export const RegistrationEditModal = ({
       purchaseDealer: registration.purchaseDealer,
       purchaseDealerCity: registration.purchaseDealerCity,
       purchaseDealerAddress: registration.purchaseDealerAddress,
-      paintPairs: defaultPaintPairs,
+      // Keep edit input section empty; existing pairs are shown in read-only tables above.
+      paintPairs: [{ ...DEFAULT_PAINT_PAIR }],
       existingInvoiceImageIds: registration.paintPairInvoices.map(invoice => invoice.image.id),
       invoiceFiles: [],
     });
@@ -311,6 +311,26 @@ export const RegistrationEditModal = ({
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true,
+    });
+  };
+
+  const handleSelectionTypeChange = (index: number, selectionType: 'SPECIALIST' | 'TOPCOAT'): void => {
+    setValue(`paintPairs.${index}.selectionType`, selectionType, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+    setValue(`paintPairs.${index}.topcoatId`, '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+    setValue(`paintPairs.${index}.topcoatQuantity`, '', {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
+    });
+    setValue(`paintPairs.${index}.basecoatId`, '', { shouldDirty: true, shouldTouch: true, shouldValidate: false });
+    setValue(`paintPairs.${index}.basecoatQuantity`, '', {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: false,
     });
   };
 
@@ -609,9 +629,64 @@ export const RegistrationEditModal = ({
             </Button>
           </div>
 
+          {specialistPairs.length > 0 ? (
+            <div className='overflow-x-auto rounded-lg border border-primary/10 bg-white p-2'>
+              <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted'>Specialized Paint</p>
+              <table className='min-w-full text-sm'>
+                <thead>
+                  <tr className='border-b border-border text-left text-text-muted'>
+                    <th className='py-2'>Selection Type</th>
+                    <th className='py-2'>Specialized</th>
+                    <th className='py-2'>Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {specialistPairs.map(pair => (
+                    <tr key={pair.id} className='border-b border-border/60 last:border-b-0'>
+                      <td className='py-2'>Specialized</td>
+                      <td className='py-2'>{pair.topcoat.name}</td>
+                      <td className='py-2'>{pair.topcoatQuantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {topcoatPairs.length > 0 ? (
+            <div className='overflow-x-auto rounded-lg border border-primary/10 bg-white p-2'>
+              <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted'>Topcoat + Basecoat</p>
+              <table className='min-w-full text-sm'>
+                <thead>
+                  <tr className='border-b border-border text-left text-text-muted'>
+                    <th className='py-2'>Selection Type</th>
+                    <th className='py-2'>Topcoat</th>
+                    <th className='py-2'>Quantity</th>
+                    <th className='py-2'>Basecoat</th>
+                    <th className='py-2'>Basecoat Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topcoatPairs.map(pair => (
+                    <tr key={pair.id} className='border-b border-border/60 last:border-b-0'>
+                      <td className='py-2'>Topcoat + Basecoat</td>
+                      <td className='py-2'>{pair.topcoat.name}</td>
+                      <td className='py-2'>{pair.topcoatQuantity}</td>
+                      <td className='py-2'>{pair.basecoat?.name ?? 'N/A'}</td>
+                      <td className='py-2'>{pair.basecoatQuantity ?? 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Update Paint Pairs</p>
+
           <div className='max-h-[24rem] space-y-3 overflow-y-auto pr-1'>
             {fields.map((field, index) => {
               const selectedTopcoatId = watchedPaintPairs[index]?.topcoatId ?? '';
+              const selectionType = watchedPaintPairs[index]?.selectionType ?? '';
               const selectedTopcoat = topcoatProducts.find(product => product.id === selectedTopcoatId);
               const registrationBasecoatFallback = (registration?.paintPairs ?? [])
                 .filter(pair => String(pair.topcoat.id) === selectedTopcoatId && pair.basecoat !== null)
@@ -624,6 +699,16 @@ export const RegistrationEditModal = ({
                 selectedTopcoat?.linkedBasecoats ?? [],
                 registrationBasecoatFallback
               );
+              const isSpecialistTopcoatSelected = isSpecialistProduct(selectedTopcoat);
+              const filteredTopcoatProducts = topcoatProducts.filter(product => {
+                if (selectionType === 'SPECIALIST') {
+                  return product.productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST;
+                }
+                if (selectionType === 'TOPCOAT') {
+                  return product.productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT;
+                }
+                return false;
+              });
               const paintPairError = errors.paintPairs?.[index];
 
               return (
@@ -645,97 +730,147 @@ export const RegistrationEditModal = ({
                     </Button>
                   </div>
 
-                  <div className='grid gap-3 md:grid-cols-2'>
-                    <div className='space-y-1'>
-                      <label className='text-xs font-semibold text-text-muted'>Topcoat</label>
-                      <Controller
-                        control={control}
-                        name={`paintPairs.${index}.topcoatId`}
-                        render={({ field: topcoatField }) => (
-                          <Select value={topcoatField.value} onValueChange={value => handleTopcoatChange(index, value)}>
-                            <SelectTrigger className='rounded-xl border-primary/20 bg-white'>
-                              <SelectValue placeholder='Select topcoat' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {topcoatProducts.map(product => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {getProductOptionLabel(product)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {paintPairError?.topcoatId ? (
-                        <p className='text-xs text-destructive'>{paintPairError.topcoatId.message}</p>
-                      ) : null}
+                  <div className='space-y-2'>
+                    <label className='text-xs font-semibold text-text-muted'>Choose Paint Type</label>
+                    <div className='flex flex-wrap gap-2'>
+                      <Button
+                        type='button'
+                        variant={selectionType === 'SPECIALIST' ? 'default' : 'outline'}
+                        onClick={() => handleSelectionTypeChange(index, 'SPECIALIST')}
+                      >
+                        Specialized Coat
+                      </Button>
+                      <Button
+                        type='button'
+                        variant={selectionType === 'TOPCOAT' ? 'default' : 'outline'}
+                        onClick={() => handleSelectionTypeChange(index, 'TOPCOAT')}
+                      >
+                        Topcoat + Basecoat
+                      </Button>
                     </div>
-
-                    <div className='space-y-1'>
-                      <label className='text-xs font-semibold text-text-muted'>Topcoat Qty</label>
-                      <Input
-                        className='rounded-xl border-primary/20 bg-white'
-                        placeholder='e.g. 10'
-                        {...register(`paintPairs.${index}.topcoatQuantity`)}
-                        aria-invalid={Boolean(paintPairError?.topcoatQuantity)}
-                      />
-                      {paintPairError?.topcoatQuantity ? (
-                        <p className='text-xs text-destructive'>{paintPairError.topcoatQuantity.message}</p>
-                      ) : null}
-                    </div>
-
-                    <div className='space-y-1'>
-                      <label className='text-xs font-semibold text-text-muted'>Basecoat (optional)</label>
-                      <Controller
-                        control={control}
-                        name={`paintPairs.${index}.basecoatId`}
-                        render={({ field: basecoatField }) => (
-                          <Select
-                            value={basecoatField.value || NO_BASECOAT_VALUE}
-                            onValueChange={value => {
-                              const normalizedValue = value === NO_BASECOAT_VALUE ? '' : value;
-                              basecoatField.onChange(normalizedValue);
-                              if (!normalizedValue) {
-                                setValue(`paintPairs.${index}.basecoatQuantity`, '', {
-                                  shouldDirty: true,
-                                  shouldTouch: true,
-                                  shouldValidate: true,
-                                });
-                              }
-                            }}
-                          >
-                            <SelectTrigger className='rounded-xl border-primary/20 bg-white'>
-                              <SelectValue placeholder='Select basecoat' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={NO_BASECOAT_VALUE}>No basecoat</SelectItem>
-                              {availableBasecoats.map(product => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {getProductOptionLabel(product)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      {paintPairError?.basecoatId ? (
-                        <p className='text-xs text-destructive'>{paintPairError.basecoatId.message}</p>
-                      ) : null}
-                    </div>
-
-                    <div className='space-y-1'>
-                      <label className='text-xs font-semibold text-text-muted'>Basecoat Qty</label>
-                      <Input
-                        className='rounded-xl border-primary/20 bg-white'
-                        placeholder='e.g. 5'
-                        {...register(`paintPairs.${index}.basecoatQuantity`)}
-                        aria-invalid={Boolean(paintPairError?.basecoatQuantity)}
-                      />
-                      {paintPairError?.basecoatQuantity ? (
-                        <p className='text-xs text-destructive'>{paintPairError.basecoatQuantity.message}</p>
-                      ) : null}
-                    </div>
+                    {paintPairError?.selectionType ? (
+                      <p className='text-xs text-destructive'>{paintPairError.selectionType.message}</p>
+                    ) : null}
                   </div>
+
+                  {selectionType ? (
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      <div className='space-y-1'>
+                        <label className='text-xs font-semibold text-text-muted'>
+                          {selectionType === 'SPECIALIST' ? 'Specialist Product' : 'Topcoat'}
+                        </label>
+                        <Controller
+                          control={control}
+                          name={`paintPairs.${index}.topcoatId`}
+                          render={({ field: topcoatField }) => (
+                            <Select
+                              value={topcoatField.value}
+                              onValueChange={value => handleTopcoatChange(index, value)}
+                            >
+                              <SelectTrigger
+                                aria-label='Select topcoat product'
+                                className='rounded-xl border-primary/20 bg-white'
+                              >
+                                <SelectValue
+                                  placeholder={
+                                    selectionType === 'SPECIALIST' ? 'Select specialist product' : 'Select topcoat'
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {filteredTopcoatProducts.map(product => (
+                                  <SelectItem key={product.id} value={product.id}>
+                                    {getProductOptionLabel(product)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {paintPairError?.topcoatId ? (
+                          <p className='text-xs text-destructive'>{paintPairError.topcoatId.message}</p>
+                        ) : null}
+                      </div>
+
+                      <div className='space-y-1'>
+                        <label className='text-xs font-semibold text-text-muted'>
+                          {selectionType === 'SPECIALIST'
+                            ? 'Specialist Quantity (liters)'
+                            : 'Topcoat Quantity (liters)'}
+                        </label>
+                        <Input
+                          className='rounded-xl border-primary/20 bg-white'
+                          placeholder='e.g. 10'
+                          {...register(`paintPairs.${index}.topcoatQuantity`)}
+                          aria-invalid={Boolean(paintPairError?.topcoatQuantity)}
+                        />
+                        {paintPairError?.topcoatQuantity ? (
+                          <p className='text-xs text-destructive'>{paintPairError.topcoatQuantity.message}</p>
+                        ) : null}
+                      </div>
+
+                      {selectionType === 'TOPCOAT' ? (
+                        <div className='space-y-1'>
+                          <label className='text-xs font-semibold text-text-muted'>Basecoat (optional)</label>
+                          <Controller
+                            control={control}
+                            name={`paintPairs.${index}.basecoatId`}
+                            render={({ field: basecoatField }) => (
+                              <Select
+                                value={basecoatField.value || NO_BASECOAT_VALUE}
+                                onValueChange={value => {
+                                  const normalizedValue = value === NO_BASECOAT_VALUE ? '' : value;
+                                  basecoatField.onChange(normalizedValue);
+                                  if (!normalizedValue) {
+                                    setValue(`paintPairs.${index}.basecoatQuantity`, '', {
+                                      shouldDirty: true,
+                                      shouldTouch: true,
+                                      shouldValidate: true,
+                                    });
+                                  }
+                                }}
+                                disabled={isSpecialistTopcoatSelected || !selectedTopcoatId}
+                              >
+                                <SelectTrigger
+                                  aria-label='Select basecoat product'
+                                  className='rounded-xl border-primary/20 bg-white'
+                                >
+                                  <SelectValue placeholder='Select basecoat' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={NO_BASECOAT_VALUE}>No basecoat</SelectItem>
+                                  {availableBasecoats.map(product => (
+                                    <SelectItem key={product.id} value={product.id}>
+                                      {getProductOptionLabel(product)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {paintPairError?.basecoatId ? (
+                            <p className='text-xs text-destructive'>{paintPairError.basecoatId.message}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {selectionType === 'TOPCOAT' ? (
+                        <div className='space-y-1'>
+                          <label className='text-xs font-semibold text-text-muted'>Basecoat Qty</label>
+                          <Input
+                            className='rounded-xl border-primary/20 bg-white'
+                            placeholder='e.g. 5'
+                            {...register(`paintPairs.${index}.basecoatQuantity`)}
+                            disabled={isSpecialistTopcoatSelected}
+                            aria-invalid={Boolean(paintPairError?.basecoatQuantity)}
+                          />
+                          {paintPairError?.basecoatQuantity ? (
+                            <p className='text-xs text-destructive'>{paintPairError.basecoatQuantity.message}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

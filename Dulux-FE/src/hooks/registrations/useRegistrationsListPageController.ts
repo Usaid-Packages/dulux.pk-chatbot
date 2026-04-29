@@ -48,37 +48,47 @@ const normalizeText = (value: string | null | undefined): string => {
 const toNormalizedPaintPairs = (
   paintPairs: RegistrationEditFormValues['paintPairs']
 ): RegistrationResubmitUpdatePaintPair[] => {
-  return paintPairs.map(paintPair => ({
-    topcoat: Number.parseInt(paintPair.topcoatId, 10),
-    topcoatQuantity: paintPair.topcoatQuantity.trim(),
-    ...(paintPair.basecoatId.trim()
-      ? {
-          basecoat: Number.parseInt(paintPair.basecoatId, 10),
-        }
-      : {}),
-    ...(paintPair.basecoatQuantity.trim()
-      ? {
-          basecoatQuantity: paintPair.basecoatQuantity.trim(),
-        }
-      : {}),
-  }));
+  return paintPairs.map(paintPair => {
+    const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
+    const normalizedBasecoatId = paintPair.basecoatId.trim();
+    const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
+
+    return {
+      topcoat: Number.parseInt(paintPair.topcoatId, 10),
+      topcoatQuantity: paintPair.topcoatQuantity.trim(),
+      ...(!isSpecialistSelection && normalizedBasecoatId
+        ? {
+            basecoat: Number.parseInt(normalizedBasecoatId, 10),
+            ...(normalizedBasecoatQuantity
+              ? {
+                  basecoatQuantity: normalizedBasecoatQuantity,
+                }
+              : {}),
+          }
+        : {}),
+    };
+  });
 };
 
 const toExistingNormalizedPaintPairs = (registration: RegistrationDetail): RegistrationResubmitUpdatePaintPair[] => {
-  return registration.paintPairs.map(paintPair => ({
-    topcoat: paintPair.topcoat.id,
-    topcoatQuantity: paintPair.topcoatQuantity.trim(),
-    ...(paintPair.basecoat?.id
-      ? {
-          basecoat: paintPair.basecoat.id,
-        }
-      : {}),
-    ...(paintPair.basecoatQuantity?.trim()
-      ? {
-          basecoatQuantity: paintPair.basecoatQuantity.trim(),
-        }
-      : {}),
-  }));
+  return registration.paintPairs.map(paintPair => {
+    const normalizedBasecoatQuantity = paintPair.basecoatQuantity?.trim() ?? '';
+
+    return {
+      topcoat: paintPair.topcoat.id,
+      topcoatQuantity: paintPair.topcoatQuantity.trim(),
+      ...(paintPair.basecoat?.id
+        ? {
+            basecoat: paintPair.basecoat.id,
+            ...(normalizedBasecoatQuantity
+              ? {
+                  basecoatQuantity: normalizedBasecoatQuantity,
+                }
+              : {}),
+          }
+        : {}),
+    };
+  });
 };
 
 const hasPaintPairChanges = (

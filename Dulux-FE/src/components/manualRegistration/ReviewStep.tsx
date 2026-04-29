@@ -1,11 +1,24 @@
 import type { JSX } from 'react';
 import { useEffect, useMemo } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
 import { ImagePreviewGallery } from '#/components/ui';
-import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
 import type { ManualRegistrationFormValues } from '#/types/manualRegistration';
+import type { ProductType } from '#/types/products';
+
+interface WarrantyOptionApiItem {
+  id?: number;
+  name?: string;
+  product_type?: ProductType;
+  warranty_years?: number;
+}
+
+interface WarrantyOptionApiPage {
+  results?: WarrantyOptionApiItem[];
+}
 
 const renderReviewRow = (label: string, value?: string): JSX.Element => {
   const normalizedValue = value?.trim() || '—';
@@ -27,30 +40,40 @@ const renderReviewRow = (label: string, value?: string): JSX.Element => {
  */
 export const ReviewStep = (): JSX.Element => {
   const { control } = useFormContext<ManualRegistrationFormValues>();
+  const queryClient = useQueryClient();
   const { fields } = useFieldArray({
     control,
     name: 'additionalPaintPairs',
   });
   const values = useWatch({ control });
-  const selectedTopcoatIds = useMemo(() => {
-    const primaryTopcoatId = values.topcoatProductId?.trim() ?? '';
-    const additionalTopcoatIds = (values.additionalPaintPairs ?? [])
-      .map(pair => pair.topcoatProductId?.trim() ?? '')
-      .filter(topcoatId => topcoatId.length > 0);
 
-    return [primaryTopcoatId, ...additionalTopcoatIds].filter(topcoatId => topcoatId.length > 0);
-  }, [values.additionalPaintPairs, values.topcoatProductId]);
-  const manualProductsQuery = useGetManualRegistrationProductsQuery({
-    basecoatTopcoatIds: selectedTopcoatIds,
-  });
+  const productLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const cachedWarrantyQueries = queryClient.getQueriesData<InfiniteData<WarrantyOptionApiPage>>({
+      queryKey: ['registrations', 'manual-products', 'warranty-options'],
+    });
 
-  const allProducts = [
-    ...(manualProductsQuery.data?.topcoatProducts ?? []),
-    ...(manualProductsQuery.data?.basecoatProducts ?? []),
-  ];
-  const topcoatProductLabel = allProducts.find(product => product.id === values.topcoatProductId)?.label ?? '—';
+    cachedWarrantyQueries.forEach(([, data]) => {
+      data?.pages.forEach(page => {
+        page.results?.forEach(product => {
+          if (typeof product.id === 'number' && typeof product.name === 'string' && product.name.trim().length > 0) {
+            map.set(String(product.id), product.name);
+          }
+        });
+      });
+    });
+
+    return map;
+  }, [queryClient]);
+
+  const topcoatProductLabel = values.topcoatProductId
+    ? (productLabelMap.get(values.topcoatProductId) ?? values.topcoatProductId)
+    : '—';
+  const specialistProductLabel = values.specialistProductId
+    ? (productLabelMap.get(values.specialistProductId) ?? values.specialistProductId)
+    : '—';
   const basecoatProductLabel = values.basecoatProductId
-    ? (allProducts.find(product => product.id === values.basecoatProductId)?.label ?? values.basecoatProductId)
+    ? (productLabelMap.get(values.basecoatProductId) ?? values.basecoatProductId)
     : '';
 
   const invoicePreviewItems = useMemo(() => {
@@ -111,6 +134,8 @@ export const ReviewStep = (): JSX.Element => {
         <h4 className='text-sm font-semibold text-text-primary'>Products & Invoices</h4>
         <div className='space-y-3'>
           <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
+            {renderReviewRow('Specialist Product', specialistProductLabel)}
+            {renderReviewRow('Specialist Quantity', values.specialistQuantity || '--')}
             {renderReviewRow('Topcoat Product', topcoatProductLabel)}
             {renderReviewRow('Topcoat Quantity', values.topcoatQuantity)}
             {renderReviewRow('Basecoat Product', basecoatProductLabel || '--')}
@@ -136,9 +161,14 @@ export const ReviewStep = (): JSX.Element => {
           </div>
 
           {(values.additionalPaintPairs ?? []).map((pair, index) => {
-            const pairTopcoatLabel = allProducts.find(product => product.id === pair.topcoatProductId)?.label ?? '—';
+            const pairTopcoatLabel = pair.topcoatProductId
+              ? (productLabelMap.get(pair.topcoatProductId) ?? pair.topcoatProductId)
+              : '—';
+            const pairSpecialistLabel = pair.specialistProductId
+              ? (productLabelMap.get(pair.specialistProductId) ?? pair.specialistProductId)
+              : '—';
             const pairBasecoatLabel = pair.basecoatProductId
-              ? (allProducts.find(product => product.id === pair.basecoatProductId)?.label ?? pair.basecoatProductId)
+              ? (productLabelMap.get(pair.basecoatProductId) ?? pair.basecoatProductId)
               : '--';
 
             return (
@@ -148,6 +178,8 @@ export const ReviewStep = (): JSX.Element => {
               >
                 <p className='text-sm font-semibold text-text-primary'>Paint Pair {index + 2}</p>
                 <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
+                  {renderReviewRow('Specialist Product', pairSpecialistLabel)}
+                  {renderReviewRow('Specialist Quantity', pair.specialistQuantity || '--')}
                   {renderReviewRow('Topcoat Product', pairTopcoatLabel)}
                   {renderReviewRow('Topcoat Quantity', pair.topcoatQuantity)}
                   {renderReviewRow('Basecoat Product', pairBasecoatLabel)}

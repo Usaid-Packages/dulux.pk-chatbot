@@ -114,13 +114,19 @@ export const buildResubmitUpdatePayload = (
         throw new Error('Topcoat product is required for every paint pair.');
       }
 
+      const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
       const basecoat = toIntegerOrNull(paintPair.basecoatId);
+      const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
 
       return {
         topcoat,
         topcoatQuantity: paintPair.topcoatQuantity.trim(),
-        ...(basecoat ? { basecoat } : {}),
-        ...(paintPair.basecoatQuantity.trim() ? { basecoatQuantity: paintPair.basecoatQuantity.trim() } : {}),
+        ...(!isSpecialistSelection && basecoat
+          ? {
+              basecoat,
+              ...(normalizedBasecoatQuantity ? { basecoatQuantity: normalizedBasecoatQuantity } : {}),
+            }
+          : {}),
       };
     });
   }

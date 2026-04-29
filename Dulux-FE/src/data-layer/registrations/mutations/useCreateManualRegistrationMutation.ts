@@ -78,6 +78,9 @@ const buildCreateRegistrationPayload = async (
   }
   const allPaintPairValues: ManualRegistrationPaintPairInput[] = [
     {
+      selectionType: values.selectionType,
+      specialistProductId: values.specialistProductId,
+      specialistQuantity: values.specialistQuantity,
       topcoatProductId: values.topcoatProductId,
       topcoatQuantity: values.topcoatQuantity,
       basecoatProductId: values.basecoatProductId,
@@ -90,9 +93,17 @@ const buildCreateRegistrationPayload = async (
   const paintPairInvoices: RegistrationCreateInvoice[] = [];
 
   for (const pairValues of allPaintPairValues) {
-    const topcoatId = Number.parseInt(pairValues.topcoatProductId, 10);
+    const isSpecialistPair = pairValues.selectionType === 'SPECIALIST';
+    const isTopcoatPair = pairValues.selectionType === 'TOPCOAT';
+
+    if (!isSpecialistPair && !isTopcoatPair) {
+      throw new Error('Select paint type for each paint pair before submitting registration.');
+    }
+
+    const selectedPrimaryProductId = isSpecialistPair ? pairValues.specialistProductId : pairValues.topcoatProductId;
+    const topcoatId = Number.parseInt(selectedPrimaryProductId, 10);
     if (!Number.isFinite(topcoatId) || topcoatId <= 0) {
-      throw new Error('A valid topcoat product is required before submitting registration.');
+      throw new Error('A valid topcoat or specialist product is required before submitting registration.');
     }
 
     const basecoatId = pairValues.basecoatProductId ? Number.parseInt(pairValues.basecoatProductId, 10) : undefined;
@@ -102,10 +113,10 @@ const buildCreateRegistrationPayload = async (
 
     const paintPair: RegistrationCreatePaintPair = {
       topcoat: topcoatId,
-      topcoatQuantity: pairValues.topcoatQuantity,
+      topcoatQuantity: isSpecialistPair ? pairValues.specialistQuantity : pairValues.topcoatQuantity,
     };
 
-    if (basecoatId !== undefined && pairValues.basecoatQuantity) {
+    if (isTopcoatPair && basecoatId !== undefined && pairValues.basecoatQuantity) {
       paintPair.basecoat = basecoatId;
       paintPair.basecoatQuantity = pairValues.basecoatQuantity;
     }
