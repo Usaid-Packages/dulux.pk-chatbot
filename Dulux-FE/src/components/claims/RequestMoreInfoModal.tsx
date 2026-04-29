@@ -14,6 +14,7 @@ import {
   Textarea,
 } from '#/components/ui';
 import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { requestMoreInfoSchema, type RequestMoreInfoFormValues } from '#/schemas/claim.schema';
 import { REQUEST_INFO_ITEMS } from './constants';
 
@@ -50,19 +51,17 @@ export const RequestMoreInfoModal = ({
     },
   });
 
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset();
-      onClose();
-    }
-  };
+  const { handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: reset,
+  });
 
   const handleFormSubmit = (values: RequestMoreInfoFormValues): void => {
     onSubmit(values);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>Request More Information</DialogTitle>
@@ -129,11 +128,7 @@ export const RequestMoreInfoModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-              disabled={isSubmitting}
-            >
+            <Button type='submit' variant='primaryGradient' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Sending...' : 'Request Info'}
             </Button>
           </DialogFooter>

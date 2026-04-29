@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES, getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimListItem } from '#/types/claims.types';
-import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
+import { getStatusLabel, getStatusVariant } from './helpers';
 
 interface ClaimsTableProps {
   claims: ClaimListItem[];
@@ -21,7 +22,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
-    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 ui-shadow-table'>
       <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
@@ -49,7 +50,7 @@ export const ClaimsTable = ({ claims }: ClaimsTableProps): JSX.Element => {
                 <span className='chip-reg'>{claim.registrationId || 'N/A'}</span>
               </TableCell>
               <TableCell>{getClaimIssueTypeLabel(claim.issueType)}</TableCell>
-              <TableCell>{formatDate(claim.submittedAt)}</TableCell>
+              <TableCell>{formatDisplayDate(claim.submittedAt)}</TableCell>
               <TableCell>
                 <Badge variant={getStatusVariant(claim.status, claim.workflowState)}>
                   {getStatusLabel(claim.status, claim.workflowState)}

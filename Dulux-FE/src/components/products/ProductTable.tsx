@@ -4,15 +4,16 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#/components/ui';
 import { ROUTES } from '#/constants';
+import { PRODUCT_TYPES } from '#/types/products';
 import type { Product } from '#/types/products';
 
 interface ProductTableProps {
-  canEdit: boolean;
+  canEdit?: boolean;
   products: Product[];
 }
 
 const getTypeBadgeClassName = (type: Product['productType']): string => {
-  return type === 'TOPCOAT'
+  return type === PRODUCT_TYPES.TOPCOAT
     ? 'bg-productType-topcoat-bg text-productType-topcoat-text'
     : 'bg-productType-basecoat-bg text-productType-basecoat-text';
 };
@@ -56,7 +57,7 @@ const renderSurfaceTypes = (product: Product): JSX.Element => {
 };
 
 const renderLinkedBasecoats = (product: Product): JSX.Element => {
-  if (product.productType !== 'TOPCOAT') {
+  if (product.productType !== PRODUCT_TYPES.TOPCOAT) {
     return <span className='text-xs text-text-muted'>N/A</span>;
   }
 
@@ -75,11 +76,17 @@ const renderLinkedBasecoats = (product: Product): JSX.Element => {
   );
 };
 
-export const ProductTable = ({ canEdit, products }: ProductTableProps): JSX.Element => {
+/**
+ * ProductTable renders catalog rows with product metadata and optional edit actions.
+ *
+ * @param props - Product rows and edit-access flag for action links.
+ * @returns Product list table content.
+ */
+export const ProductTable = ({ canEdit = true, products }: ProductTableProps): JSX.Element => {
   const location = useLocation();
 
   return (
-    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 ui-shadow-table'>
       <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>
@@ -122,7 +129,7 @@ export const ProductTable = ({ canEdit, products }: ProductTableProps): JSX.Elem
                   <span
                     className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getTypeBadgeClassName(product.productType)}`}
                   >
-                    {product.productType === 'TOPCOAT' ? 'Topcoat' : 'Basecoat'}
+                    {product.productType === PRODUCT_TYPES.TOPCOAT ? 'Topcoat' : 'Basecoat'}
                   </span>
                 </TableCell>
                 <TableCell>{renderSurfaceTypes(product)}</TableCell>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CONVERSATION_STATUS_LABELS } from '#/components/complaints/constants';
 import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '#/components/ui';
 import type { ConversationThread } from '#/types/complaints';
+import { formatPkDateTimeOptional } from '#/utils';
 
 interface ConversationInfoPanelProps {
   thread?: ConversationThread;
@@ -12,24 +13,6 @@ interface ConversationInfoPanelProps {
 
 const SUBJECT_PREVIEW_LENGTH = 120;
 const DESCRIPTION_PREVIEW_LENGTH = 220;
-
-const formatDateTime = (isoDateTime?: string): string => {
-  if (!isoDateTime) {
-    return '--';
-  }
-
-  const parsed = new Date(isoDateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    return '--';
-  }
-
-  return new Intl.DateTimeFormat('en-PK', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(parsed);
-};
 
 const getInitials = (name: string): string => {
   return name
@@ -123,7 +106,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
             </span>
             <span className='text-text-muted'>Submitted</span>
             <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
-              {formatDateTime(thread.submittedAt)}
+              {formatPkDateTimeOptional(thread.submittedAt)}
             </span>
             <span className='text-text-muted'>Subject</span>
             <ExpandableFieldValue value={thread.issueType} previewLength={SUBJECT_PREVIEW_LENGTH} />
@@ -141,7 +124,7 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
             <ExpandableFieldValue value={thread.closureNote || '--'} previewLength={DESCRIPTION_PREVIEW_LENGTH} />
             <span className='text-text-muted'>Closed At</span>
             <span className='min-w-0 break-words font-medium text-text-primary [overflow-wrap:anywhere]'>
-              {formatDateTime(thread.closedAt ?? undefined)}
+              {formatPkDateTimeOptional(thread.closedAt ?? undefined)}
             </span>
           </div>
         </section>
@@ -175,7 +158,8 @@ export const ConversationInfoPanel = ({ thread, onResolve }: ConversationInfoPan
         <section className='space-y-2'>
           <Button
             type='button'
-            className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+            variant='primaryGradientElevated'
+            className='h-10 w-full rounded-xl'
             onClick={onResolve}
             disabled={thread.apiStatus === 'RESOLVED' || thread.apiStatus === 'CLOSED'}
           >

@@ -17,7 +17,12 @@
  * - Complexity: O(1)
  */
 
-import { COMPLAINT_SUBJECT_LABELS, DEFAULT_API_ERROR_MESSAGE } from '#/constants';
+import {
+  COMPLAINT_SUBJECT_LABELS,
+  DEFAULT_API_ERROR_MESSAGE,
+  REGISTRATION_INVOICE_TYPES,
+  REGISTRATION_PRODUCT_TYPES,
+} from '#/constants';
 import type {
   AuditLogApiDetailResponse,
   AuditLogApiListResponse,
@@ -179,7 +184,7 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
       topcoat: {
         id: topcoatId,
         name: pair.topcoatName ?? pair.topcoat_name ?? '',
-        productType: 'TOPCOAT',
+        productType: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
       },
       topcoatQuantity: pair.topcoatQuantity ?? pair.topcoat_quantity ?? '',
       basecoat:
@@ -188,7 +193,7 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
           : {
               id: basecoatId,
               name: pair.basecoatName ?? pair.basecoat_name ?? '',
-              productType: 'BASECOAT',
+              productType: REGISTRATION_PRODUCT_TYPES.BASECOAT,
             },
       basecoatQuantity: pair.basecoatQuantity ?? pair.basecoat_quantity ?? null,
     };
@@ -201,7 +206,7 @@ export const normalizeRegistrationDetailResponse = (response: RegistrationDetail
         id: invoice.image?.id ?? 0,
         image: invoice.image?.image ?? '',
       },
-      invoiceType: invoice.invoiceType ?? 'TOPCOAT',
+      invoiceType: invoice.invoiceType ?? REGISTRATION_INVOICE_TYPES.TOPCOAT,
     };
   });
   const normalizedRejectionFields = (response.rejectionFields ?? response.rejection_fields ?? []).flatMap(field => {

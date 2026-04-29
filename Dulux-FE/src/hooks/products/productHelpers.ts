@@ -5,6 +5,7 @@ import type {
   SurfaceTypeFormValues,
   SurfaceTypeMutationPayload,
 } from '#/types/products';
+import { PRODUCT_TYPES } from '#/types/products';
 
 export const mapProductFormValuesToPayload = (values: ProductFormValues): ProductMutationPayload => ({
   name: values.name.trim(),
@@ -15,7 +16,7 @@ export const mapProductFormValuesToPayload = (values: ProductFormValues): Produc
   webpage_url: values.webpageUrl.trim(),
   is_active: values.isActive,
   surface_types: values.surfaceTypeIds,
-  basecoats: values.productType === 'TOPCOAT' ? values.basecoatIds : [],
+  basecoats: values.productType === PRODUCT_TYPES.TOPCOAT ? values.basecoatIds : [],
 });
 
 export const mapProductToFormValues = (product: Product): ProductFormValues => ({

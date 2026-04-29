@@ -8,7 +8,12 @@ import type { LoginFormValues } from '#/schemas/authSchemas';
 import type { LoginApiResponse, LoginResponse } from '#/types/auth.types';
 import { getApiErrorMessage } from '#/utils';
 
-export const useLogin = () => {
+interface UseLoginResult {
+  handleLogin: (values: LoginFormValues) => void;
+  isLoginPending: boolean;
+}
+
+export const useLogin = (): UseLoginResult => {
   const navigate = useNavigate();
   const { login: setAuthSession } = useAuthContext();
   const { mutate: loginMutate, isPending: isLoginPending } = useLoginMutation();

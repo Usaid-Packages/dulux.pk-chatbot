@@ -1,103 +1,34 @@
 import type { JSX } from 'react';
 
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-
 import { ProductForm } from '#/components/products';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
-import { ROUTES } from '#/constants';
-import {
-  useAttachProductImageMutation,
-  useGetProductByIdQuery,
-  useGetProductsQuery,
-  useGetSurfaceTypesQuery,
-  useRemoveProductImageMutation,
-  useUploadProductImageMutation,
-  useUpdateProductMutation,
-} from '#/data-layer/products';
-import { mapProductFormValuesToPayload, mapProductToFormValues } from '#/hooks/products';
-import type { LinkedBasecoat, ProductFormSubmission, SurfaceType } from '#/types/products';
-import { getApiErrorMessage } from '#/utils';
+import { useProductEditPageController } from '#/hooks/products';
 
-const EMPTY_SURFACE_TYPES: SurfaceType[] = [];
-const EMPTY_BASECOAT_OPTIONS: LinkedBasecoat[] = [];
-
+/**
+ * ProductEditPage renders the edit-product flow, including invalid-id, loading, and dependency error states.
+ *
+ * @returns Product edit page content.
+ */
 export const ProductEditPage = (): JSX.Element => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const params = useParams<{ id: string }>();
-  const productId = params.id ?? '';
+  const {
+    isInvalidProductId,
+    isLoading,
+    isProductError,
+    productErrorMessage,
+    isDependenciesError,
+    dependenciesErrorMessage,
+    isSubmitting,
+    isImageActionPending,
+    initialValues,
+    initialImages,
+    surfaceTypes,
+    basecoatOptions,
+    handleSubmit,
+    handleRemoveImage,
+    handleCancel,
+  } = useProductEditPageController();
 
-  const productQuery = useGetProductByIdQuery(productId);
-  const surfaceTypesQuery = useGetSurfaceTypesQuery();
-  const basecoatOptionsQuery = useGetProductsQuery({
-    product_type: 'BASECOAT',
-    ordering: 'name',
-    page_size: 100,
-  });
-  const updateProductMutation = useUpdateProductMutation();
-  const uploadProductImageMutation = useUploadProductImageMutation();
-  const attachProductImageMutation = useAttachProductImageMutation();
-  const removeProductImageMutation = useRemoveProductImageMutation();
-
-  const handleCancel = (): void => {
-    navigate(`${ROUTES.PRODUCTS}${location.search}`);
-  };
-
-  const uploadAndAttachImage = async (imageFile: File): Promise<void> => {
-    const imageId = await uploadProductImageMutation.mutateAsync(imageFile);
-    await attachProductImageMutation.mutateAsync({
-      productId,
-      payload: {
-        image_id: imageId,
-      },
-    });
-  };
-
-  const handleSubmit = ({ values, imageFile }: ProductFormSubmission): void => {
-    updateProductMutation.mutate(
-      {
-        id: productId,
-        payload: mapProductFormValuesToPayload(values),
-      },
-      {
-        onSuccess: async () => {
-          try {
-            if (imageFile) {
-              await uploadAndAttachImage(imageFile);
-            }
-            toast.success('Product updated successfully.');
-          } catch (error) {
-            toast.warn(`Product updated, but image upload failed: ${getApiErrorMessage(error)}`);
-          } finally {
-            navigate(`${ROUTES.PRODUCTS}${location.search}`);
-          }
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
-  };
-
-  const handleRemoveImage = (imageId: string): void => {
-    removeProductImageMutation.mutate(
-      {
-        productId,
-        imageId,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Product image removed.');
-        },
-        onError: error => {
-          toast.error(getApiErrorMessage(error));
-        },
-      }
-    );
-  };
-
-  if (!productId) {
+  if (isInvalidProductId) {
     return (
       <Empty>
         <EmptyContent>
@@ -110,7 +41,7 @@ export const ProductEditPage = (): JSX.Element => {
     );
   }
 
-  if (productQuery.isLoading || surfaceTypesQuery.isLoading || basecoatOptionsQuery.isLoading) {
+  if (isLoading) {
     return (
       <section className='space-y-3'>
         <Skeleton className='h-12 w-64' />
@@ -119,28 +50,26 @@ export const ProductEditPage = (): JSX.Element => {
     );
   }
 
-  if (productQuery.isError || !productQuery.data) {
+  if (isProductError) {
     return (
       <Empty>
         <EmptyContent>
           <EmptyHeader>
             <EmptyTitle>Unable to load product</EmptyTitle>
-            <EmptyDescription>{productQuery.error?.message ?? 'Product not found.'}</EmptyDescription>
+            <EmptyDescription>{productErrorMessage}</EmptyDescription>
           </EmptyHeader>
         </EmptyContent>
       </Empty>
     );
   }
 
-  if (surfaceTypesQuery.isError || basecoatOptionsQuery.isError) {
+  if (isDependenciesError) {
     return (
       <Empty>
         <EmptyContent>
           <EmptyHeader>
             <EmptyTitle>Unable to load product dependencies</EmptyTitle>
-            <EmptyDescription>
-              {surfaceTypesQuery.error?.message ?? basecoatOptionsQuery.error?.message ?? 'Please try again later.'}
-            </EmptyDescription>
+            <EmptyDescription>{dependenciesErrorMessage}</EmptyDescription>
           </EmptyHeader>
         </EmptyContent>
       </Empty>
@@ -152,16 +81,14 @@ export const ProductEditPage = (): JSX.Element => {
       title='Edit Product'
       description='Update product details and surface mappings.'
       submitLabel='Save Changes'
-      isSubmitting={
-        updateProductMutation.isPending || uploadProductImageMutation.isPending || attachProductImageMutation.isPending
-      }
-      initialValues={mapProductToFormValues(productQuery.data)}
-      initialImages={productQuery.data.images}
-      surfaceTypes={surfaceTypesQuery.data?.results ?? EMPTY_SURFACE_TYPES}
-      basecoatOptions={basecoatOptionsQuery.data?.results ?? EMPTY_BASECOAT_OPTIONS}
+      isSubmitting={isSubmitting}
+      initialValues={initialValues}
+      initialImages={initialImages}
+      surfaceTypes={surfaceTypes}
+      basecoatOptions={basecoatOptions}
       onSubmit={handleSubmit}
       onRemoveImage={handleRemoveImage}
-      isImageActionPending={removeProductImageMutation.isPending}
+      isImageActionPending={isImageActionPending}
       onCancel={handleCancel}
     />
   );

@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 import { Badge, Button } from '#/components/ui';
 import { getClaimIssueTypeLabel } from '#/constants';
 import type { ClaimDetail } from '#/types/claims.types';
-import { formatDate, getStatusLabel, getStatusVariant } from './helpers';
+import { formatDisplayDate } from '#/utils/date';
+import { getStatusLabel, getStatusVariant } from './helpers';
 
 interface ClaimDetailPanelProps {
   claim: ClaimDetail;
@@ -78,7 +79,7 @@ export const ClaimDetailPanel = ({
           </div>
           <div className='flex justify-between gap-3'>
             <dt className='text-text-muted'>Submitted</dt>
-            <dd className='font-medium text-text-primary'>{formatDate(claim.submittedAt)}</dd>
+            <dd className='font-medium text-text-primary'>{formatDisplayDate(claim.submittedAt)}</dd>
           </div>
         </dl>
 
@@ -104,7 +105,8 @@ export const ClaimDetailPanel = ({
         <div className='mt-4 space-y-2'>
           {canFinalApprove ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenApproveModal}
               disabled={isActionPending}
             >
@@ -113,7 +115,8 @@ export const ClaimDetailPanel = ({
           ) : null}
           {canSendToQuality ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenForwardModal}
               disabled={isActionPending}
             >
@@ -122,7 +125,8 @@ export const ClaimDetailPanel = ({
           ) : null}
           {canCsrResubmit ? (
             <Button
-              className='h-10 w-full rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white shadow-[0_12px_24px_rgba(24,102,198,0.25)] hover:brightness-105'
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
               onClick={onOpenCsrResubmissionModal}
               disabled={isActionPending}
             >

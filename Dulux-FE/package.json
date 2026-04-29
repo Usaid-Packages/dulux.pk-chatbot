@@ -9,6 +9,15 @@
     "build": "vite build",
     "test": "vitest",
     "test:run": "vitest run",
+    "e2e": "playwright test",
+    "e2e:smoke": "playwright test --project=chromium-smoke",
+    "e2e:smoke:live": "E2E_MODE=live playwright test --project=chromium-smoke",
+    "e2e:full": "playwright test --project=chromium-full --project=firefox-full",
+    "e2e:full:live": "E2E_MODE=live playwright test --project=chromium-full --project=firefox-full",
+    "e2e:live:critical": "E2E_MODE=live playwright test --project=chromium-live-critical",
+    "e2e:live:critical:all": "E2E_MODE=live playwright test --project=chromium-live-critical --project=firefox-live-critical",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
     "serve": "serve dist",
     "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}' --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -52,6 +61,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",

@@ -21,6 +21,7 @@ import {
   Textarea,
 } from '#/components/ui';
 import { SURFACE_TYPE_FORM_MAX_LENGTHS } from '#/constants';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { surfaceTypeFormSchema, type SurfaceTypeFormSchemaValues } from '#/schemas/products';
 import { productEnvironments, type SurfaceTypeFormValues } from '#/types/products';
 
@@ -42,6 +43,12 @@ const DEFAULT_VALUES: SurfaceTypeFormValues = {
   status: 'ACTIVE',
 };
 
+/**
+ * SurfaceTypeModal captures create/edit input for a single surface type.
+ *
+ * @param props - Modal visibility, initial values, submit state, and close/submit handlers.
+ * @returns Surface-type form dialog.
+ */
 export const SurfaceTypeModal = ({
   isOpen,
   isSubmitting,
@@ -69,19 +76,21 @@ export const SurfaceTypeModal = ({
     }
   }, [initialValues, isOpen, reset]);
 
-  const handleOpenChange = (open: boolean): void => {
-    if (!open) {
-      reset(initialValues ?? DEFAULT_VALUES);
-      onClose();
-    }
+  const handleSurfaceTypeModalReset = (): void => {
+    reset(initialValues ?? DEFAULT_VALUES);
   };
+
+  const { handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: handleSurfaceTypeModalReset,
+  });
 
   const handleFormSubmit = (values: SurfaceTypeFormSchemaValues): void => {
     onSubmit(values);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -171,11 +180,7 @@ export const SurfaceTypeModal = ({
             <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-              disabled={isSubmitting}
-            >
+            <Button type='submit' variant='primaryGradient' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : submitLabel}
             </Button>
           </DialogFooter>

@@ -20,6 +20,12 @@ interface DeleteConfirmModalProps {
   onConfirm: () => void;
 }
 
+/**
+ * DeleteConfirmModal renders a reusable destructive-action confirmation dialog.
+ *
+ * @param props - Dialog state, labels, and close/confirm callbacks.
+ * @returns Confirmation dialog content.
+ */
 export const DeleteConfirmModal = ({
   isOpen,
   isSubmitting,

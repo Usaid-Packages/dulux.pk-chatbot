@@ -178,3 +178,8 @@ API_REFERENCE.md
 
 graphify-out/
 .codex/
+
+# Playwright artifacts (frontend)
+Dulux-FE/e2e/.auth/
+Dulux-FE/playwright-report/
+Dulux-FE/test-results/

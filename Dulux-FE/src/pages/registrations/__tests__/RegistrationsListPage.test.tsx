@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { REGISTRATION_FILTER_TAB_LABELS, ROUTES } from '#/constants';
-import { useRegistrations } from '#/hooks/registrations';
+import { useRegistrationsListPageController } from '#/hooks/registrations';
 import { registrationFilterTabs } from '#/types/registrations';
 import { RegistrationsListPage } from '../RegistrationsListPage';
 
@@ -39,13 +39,14 @@ vi.mock('#/components/registrations', () => ({
       </div>
     );
   },
+  RegistrationEditModal: () => null,
 }));
 
 vi.mock('#/hooks/registrations', () => ({
-  useRegistrations: vi.fn(),
+  useRegistrationsListPageController: vi.fn(),
 }));
 
-const mockedUseRegistrations = vi.mocked(useRegistrations);
+const mockedUseRegistrationsListPageController = vi.mocked(useRegistrationsListPageController);
 
 describe('RegistrationsListPage', () => {
   beforeEach(() => {
@@ -56,7 +57,7 @@ describe('RegistrationsListPage', () => {
     mockGoToPreviousPage.mockReset();
     mockOpenDetail.mockReset();
 
-    mockedUseRegistrations.mockReturnValue({
+    mockedUseRegistrationsListPageController.mockReturnValue({
       activeTab: registrationFilterTabs[0],
       searchValue: '',
       currentPage: 1,
@@ -76,6 +77,16 @@ describe('RegistrationsListPage', () => {
       setActiveTab: mockSetActiveTab,
       goToNextPage: mockGoToNextPage,
       goToPreviousPage: mockGoToPreviousPage,
+      isEditModalOpen: false,
+      editRegistrationIsLoading: false,
+      editRegistrationIsSubmitting: false,
+      editRegistrationData: null,
+      handleOpenDetail: (id: string) => {
+        mockNavigate(`${ROUTES.REGISTRATION_DETAIL(id)}?status=pending`);
+      },
+      openEditModal: vi.fn(),
+      closeEditModal: vi.fn(),
+      handleEditSubmit: vi.fn(),
     });
   });
 
@@ -118,7 +129,7 @@ describe('RegistrationsListPage', () => {
   });
 
   it('renders API error state when list query fails', () => {
-    mockedUseRegistrations.mockReturnValue({
+    mockedUseRegistrationsListPageController.mockReturnValue({
       activeTab: registrationFilterTabs[0],
       searchValue: '',
       currentPage: 1,
@@ -138,6 +149,16 @@ describe('RegistrationsListPage', () => {
       setActiveTab: mockSetActiveTab,
       goToNextPage: mockGoToNextPage,
       goToPreviousPage: mockGoToPreviousPage,
+      isEditModalOpen: false,
+      editRegistrationIsLoading: false,
+      editRegistrationIsSubmitting: false,
+      editRegistrationData: null,
+      handleOpenDetail: (id: string) => {
+        mockNavigate(`${ROUTES.REGISTRATION_DETAIL(id)}?status=pending`);
+      },
+      openEditModal: vi.fn(),
+      closeEditModal: vi.fn(),
+      handleEditSubmit: vi.fn(),
     });
 
     render(<RegistrationsListPage />);

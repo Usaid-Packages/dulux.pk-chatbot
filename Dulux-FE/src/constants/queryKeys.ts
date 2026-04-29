@@ -1,3 +1,5 @@
+import type { ProductType } from '#/types/products';
+
 export const queryKeys = {
   auth: {
     login: 'login',
@@ -59,9 +61,9 @@ export const queryKeys = {
     manualProductsByTopcoats: (topcoatIdsKey: string): readonly ['registrations', 'manual-products', string] =>
       ['registrations', 'manual-products', topcoatIdsKey] as const,
     manualWarrantyOptions: (
-      productType: 'TOPCOAT' | 'BASECOAT',
+      productType: ProductType,
       topcoatId?: string
-    ): readonly ['registrations', 'manual-products', 'warranty-options', 'TOPCOAT' | 'BASECOAT', string] =>
+    ): readonly ['registrations', 'manual-products', 'warranty-options', ProductType, string] =>
       ['registrations', 'manual-products', 'warranty-options', productType, topcoatId ?? ''] as const,
   },
   products: {

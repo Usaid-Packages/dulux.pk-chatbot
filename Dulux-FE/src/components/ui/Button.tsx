@@ -18,6 +18,9 @@ const buttonVariants = cva(
         secondary: 'border border-border-strong bg-surface-muted text-text-label hover:bg-surface-subtle',
         ghost: 'text-text-label hover:bg-surface-muted hover:text-text-secondary',
         link: 'text-primary underline-offset-4 hover:underline',
+        primaryGradient: 'btn-primary-gradient text-white',
+        primaryGradientElevated: 'btn-primary-gradient-elevated text-white',
+        primaryGradientStrong: 'btn-primary-gradient-strong text-white',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

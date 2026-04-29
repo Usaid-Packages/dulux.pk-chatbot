@@ -1,11 +1,10 @@
-import type { JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { AuditLogDetailDialog, AuditLogsFilters, AuditLogsTable } from '#/components/auditLogs';
-import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
+import { ListStateBlock, PaginationFooter, StatsCardGrid } from '#/components/shared';
+import { LIST_PAGE_SIZE } from '#/constants';
 import { useAuditLogs } from '#/hooks/auditLogs';
 import { getApiErrorMessage } from '#/utils';
-
-const PAGE_SIZE = 10;
 
 /**
  * AuditLogsPage renders admin audit logs list, filters, and on-demand detail inspection.
@@ -34,11 +33,23 @@ export const AuditLogsPage = (): JSX.Element => {
   const auditLogsData = auditLogsQuery.data;
   const auditLogsItems = auditLogsData?.items ?? [];
   const totalItems = auditLogsData?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / LIST_PAGE_SIZE));
 
-  const totalCreate = auditLogsItems.filter(item => item.action === 'CREATE').length;
-  const totalUpdate = auditLogsItems.filter(item => item.action === 'UPDATE').length;
-  const totalDelete = auditLogsItems.filter(item => item.action === 'DELETE').length;
+  const actionTotals = useMemo(() => {
+    return auditLogsItems.reduce(
+      (totals, item) => {
+        if (item.action === 'CREATE') {
+          totals.create += 1;
+        } else if (item.action === 'UPDATE') {
+          totals.update += 1;
+        } else if (item.action === 'DELETE') {
+          totals.delete += 1;
+        }
+        return totals;
+      },
+      { create: 0, update: 0, delete: 0 }
+    );
+  }, [auditLogsItems]);
 
   const handlePreviousPage = (): void => {
     if (filters.page > 1) {
@@ -54,24 +65,14 @@ export const AuditLogsPage = (): JSX.Element => {
 
   return (
     <main className='wf-list-shell'>
-      <section className='wf-stat-grid-4'>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Total Logs</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalItems}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Create Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalCreate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Update Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalUpdate}</p>
-        </article>
-        <article className='wf-stat-card border-primary/15 bg-white'>
-          <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Delete Events</p>
-          <p className='mt-2 text-3xl font-extrabold tracking-tight text-text-primary'>{totalDelete}</p>
-        </article>
-      </section>
+      <StatsCardGrid
+        items={[
+          { label: 'Total Logs', value: totalItems },
+          { label: 'Create Events', value: actionTotals.create },
+          { label: 'Update Events', value: actionTotals.update },
+          { label: 'Delete Events', value: actionTotals.delete },
+        ]}
+      />
 
       <AuditLogsFilters
         filters={filters}
@@ -85,54 +86,27 @@ export const AuditLogsPage = (): JSX.Element => {
         onSetSearch={setSearch}
       />
 
-      {auditLogsQuery.isLoading ? (
-        <section className='space-y-2 wf-card wf-card-p4'>
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-          <Skeleton className='h-8 w-full' />
-        </section>
-      ) : null}
-
-      {auditLogsQuery.isError ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>Failed to load audit logs</EmptyTitle>
-              <EmptyDescription>{getApiErrorMessage(auditLogsQuery.error)}</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!auditLogsQuery.isLoading && !auditLogsQuery.isError && auditLogsItems.length === 0 ? (
-        <Empty>
-          <EmptyContent>
-            <EmptyHeader>
-              <EmptyTitle>No audit records found</EmptyTitle>
-              <EmptyDescription>Adjust filters to inspect matching audit entries.</EmptyDescription>
-            </EmptyHeader>
-          </EmptyContent>
-        </Empty>
-      ) : null}
-
-      {!auditLogsQuery.isLoading && !auditLogsQuery.isError && auditLogsItems.length > 0 ? (
+      <ListStateBlock
+        isLoading={auditLogsQuery.isLoading}
+        isError={auditLogsQuery.isError}
+        isEmpty={auditLogsItems.length === 0}
+        errorTitle='Failed to load audit logs'
+        errorDescription={getApiErrorMessage(auditLogsQuery.error)}
+        emptyTitle='No audit records found'
+        emptyDescription='Adjust filters to inspect matching audit entries.'
+      >
         <>
           <AuditLogsTable items={auditLogsItems} onOpenDetail={openDetail} />
-          <section className='wf-pagination-panel'>
-            <p className='text-sm text-text-muted'>
-              Page {filters.page} of {totalPages}
-            </p>
-            <div className='flex w-full gap-2 sm:w-auto'>
-              <Button type='button' variant='outline' onClick={handlePreviousPage} disabled={filters.page <= 1}>
-                Previous
-              </Button>
-              <Button type='button' variant='outline' onClick={handleNextPage} disabled={filters.page >= totalPages}>
-                Next
-              </Button>
-            </div>
-          </section>
+          <PaginationFooter
+            currentPage={filters.page}
+            totalPages={totalPages}
+            disablePrevious={filters.page <= 1}
+            disableNext={filters.page >= totalPages}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
+          />
         </>
-      ) : null}
+      </ListStateBlock>
 
       <AuditLogDetailDialog isOpen={selectedAuditLogId.length > 0} detailQuery={detailQuery} onClose={closeDetail} />
     </main>

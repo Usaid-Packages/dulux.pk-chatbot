@@ -18,8 +18,6 @@ export const ROUTES = {
   PRODUCTS: '/products',
   PRODUCT_NEW: '/products/new',
   PRODUCT_EDIT: (id: string): string => `/products/${id}/edit`,
-  IMPORT: '/import',
-  SETTINGS: '/settings',
   MANUAL_REGISTRATION_ROOT,
   MANUAL_REGISTRATION_STEP_1: `${MANUAL_REGISTRATION_ROOT}/step/1`,
   MANUAL_REGISTRATION_STEP: (stepId: number | string): string => `${MANUAL_REGISTRATION_ROOT}/step/${stepId}`,

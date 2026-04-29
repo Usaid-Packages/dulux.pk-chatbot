@@ -4,7 +4,7 @@ import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 import type { SurfaceType } from '#/types/products';
 
 interface SurfaceTypeTableProps {
-  canManage: boolean;
+  canManage?: boolean;
   surfaceTypes: SurfaceType[];
   linkedProductCountMap: Record<number, number>;
   onEdit: (surfaceType: SurfaceType) => void;
@@ -25,8 +25,14 @@ const getSurfaceTypeById = (surfaceTypes: SurfaceType[], surfaceTypeId: number):
   return surfaceTypes.find(surfaceType => surfaceType.id === surfaceTypeId);
 };
 
+/**
+ * SurfaceTypeTable displays surface types and optional management actions for edit/delete.
+ *
+ * @param props - Surface-type rows, linked-product counts, and row action handlers.
+ * @returns Surface type table card content.
+ */
 export const SurfaceTypeTable = ({
-  canManage,
+  canManage = true,
   surfaceTypes,
   linkedProductCountMap,
   onEdit,
@@ -56,7 +62,7 @@ export const SurfaceTypeTable = ({
   };
 
   return (
-    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 shadow-[0_14px_28px_rgba(19,87,167,0.09)]'>
+    <div className='wf-card wf-card-p4 border-primary/15 bg-white/90 ui-shadow-table'>
       <Table containerClassName='max-h-[62vh] overflow-y-auto overflow-x-auto border-primary/10'>
         <TableHeader>
           <TableRow>

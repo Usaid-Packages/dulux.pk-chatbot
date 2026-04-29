@@ -1,10 +1,8 @@
 import type { JSX } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
-import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import {
   Button,
@@ -14,14 +12,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
   Textarea,
 } from '#/components/ui';
-import { queryKeys } from '#/constants';
-import { getClaimCsrResubmissionRequest } from '#/data-layer/claims';
+import { useClaimCsrResubmission } from '#/hooks/claims';
 import { claimCsrResubmissionFormSchema } from '#/schemas/claim.schema';
 import type { ClaimCsrResubmissionFormValues } from '#/schemas/claim.schema';
-import type { ClaimCsrResubmissionRequestedItem } from '#/types/claims.types';
+import { CsrResubmissionEntryField } from './CsrResubmissionEntryField';
 
 interface CsrResubmissionModalProps {
   claimId: string;
@@ -30,91 +26,6 @@ interface CsrResubmissionModalProps {
   onClose: () => void;
   onSubmit: (values: ClaimCsrResubmissionFormValues) => void;
 }
-
-interface CsrResubmissionEntryFieldProps {
-  control: Control<ClaimCsrResubmissionFormValues>;
-  errors: FieldErrors<ClaimCsrResubmissionFormValues>;
-  index: number;
-  register: UseFormRegister<ClaimCsrResubmissionFormValues>;
-  requestedItem: ClaimCsrResubmissionRequestedItem;
-}
-
-const CsrResubmissionEntryField = ({
-  control,
-  errors,
-  index,
-  register,
-  requestedItem,
-}: CsrResubmissionEntryFieldProps): JSX.Element => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const responseTextError = errors.entries?.[index]?.responseText?.message;
-  const imageFileError = errors.entries?.[index]?.imageFile?.message;
-
-  return (
-    <article className='space-y-2 rounded-xl border border-primary/15 bg-white/90 p-3'>
-      <header>
-        <p className='text-sm font-semibold text-text-primary'>{requestedItem.label}</p>
-        <p className='text-xs text-text-muted'>
-          {requestedItem.inputType === 'IMAGE' ? 'Upload image evidence.' : 'Provide the required details.'}
-          {requestedItem.isMultiple ? ' Multiple uploads may be accepted by backend.' : ''}
-        </p>
-      </header>
-
-      <input type='hidden' {...register(`entries.${index}.requiredItem`)} />
-      <input type='hidden' {...register(`entries.${index}.inputType`)} />
-
-      {requestedItem.inputType === 'TEXT' ? (
-        <div className='space-y-1'>
-          <Textarea
-            rows={3}
-            className='rounded-xl border-primary/20 bg-white'
-            placeholder='Enter customer response...'
-            {...register(`entries.${index}.responseText`)}
-          />
-          {responseTextError ? <p className='text-xs text-destructive'>{responseTextError}</p> : null}
-        </div>
-      ) : (
-        <Controller
-          name={`entries.${index}.imageFile`}
-          control={control}
-          render={({ field }) => {
-            const selectedFileName = field.value?.name;
-
-            return (
-              <div className='space-y-1'>
-                <Input
-                  ref={inputRef}
-                  type='file'
-                  className='sr-only'
-                  accept='.jpg,.jpeg,.png,.webp'
-                  onBlur={field.onBlur}
-                  onChange={event => {
-                    const selectedFile = event.target.files?.[0];
-                    field.onChange(selectedFile);
-                  }}
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='w-full justify-start rounded-full border-primary/20 bg-primary/5 px-4 text-primary hover:bg-primary/10'
-                  onClick={() => inputRef.current?.click()}
-                >
-                  {selectedFileName ? 'Change image' : 'Upload image'}
-                </Button>
-                {selectedFileName ? (
-                  <span className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'>
-                    Selected: {selectedFileName}
-                  </span>
-                ) : null}
-                {imageFileError ? <p className='text-xs text-destructive'>{imageFileError}</p> : null}
-              </div>
-            );
-          }}
-        />
-      )}
-    </article>
-  );
-};
 
 /**
  * CsrResubmissionModal renders QA-requested resubmission fields for CSR-assisted submission.
@@ -129,11 +40,7 @@ export const CsrResubmissionModal = ({
   onClose,
   onSubmit,
 }: CsrResubmissionModalProps): JSX.Element => {
-  const csrResubmissionRequestQuery = useQuery({
-    queryKey: queryKeys.claims.csrResubmissionRequest(claimId),
-    queryFn: () => getClaimCsrResubmissionRequest(claimId),
-    enabled: isOpen && claimId.length > 0,
-  });
+  const csrResubmissionRequestQuery = useClaimCsrResubmission(claimId, isOpen);
 
   const {
     control,
@@ -262,7 +169,8 @@ export const CsrResubmissionModal = ({
             </Button>
             <Button
               type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
+              variant='primaryGradient'
+              className='rounded-xl'
               disabled={isSubmitting || csrResubmissionRequestQuery.isLoading || csrResubmissionRequestQuery.isError}
             >
               {isSubmitting ? 'Submitting...' : 'Submit To QA'}

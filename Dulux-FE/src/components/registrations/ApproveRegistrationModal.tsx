@@ -7,6 +7,7 @@ import { Button } from '#/components/ui';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '#/components/ui';
 import { Textarea } from '#/components/ui/Textarea';
 import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
+import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { approveSchema, type ApproveFormValues } from '#/schemas/registrations';
 import type { RegistrationDetail } from '#/types/registrations';
 import { createRegistrationApprovedTemplate } from '#/utils';
@@ -48,17 +49,17 @@ export const ApproveRegistrationModal = ({
   const notes = watch('notes') ?? '';
   const previewHtml = createRegistrationApprovedTemplate(registration, notes.trim() || 'Approval confirmed.');
 
-  const handleModalClose = (): void => {
-    reset();
-    onClose();
-  };
+  const { handleDialogClose, handleDialogOpenChange } = useDialogLifecycle({
+    onClose,
+    onReset: reset,
+  });
 
   const handleFormSubmit = (values: ApproveFormValues): void => {
     onSubmit(values);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleModalClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className='flex max-h-[80vh] flex-col overflow-hidden border-primary/20 bg-white sm:max-w-[680px]'>
         <DialogHeader>
           <DialogTitle>Approve Registration</DialogTitle>
@@ -96,14 +97,10 @@ export const ApproveRegistrationModal = ({
           </div>
 
           <DialogFooter className='mt-3 border-t border-primary/10 pt-3'>
-            <Button type='button' variant='outline' onClick={handleModalClose}>
+            <Button type='button' variant='outline' onClick={handleDialogClose}>
               Cancel
             </Button>
-            <Button
-              type='submit'
-              className='rounded-xl bg-[linear-gradient(135deg,#1966c8_0%,#2f8deb_100%)] text-white hover:brightness-105'
-              disabled={isSubmitting}
-            >
+            <Button type='submit' variant='primaryGradient' className='rounded-xl' disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Approve Registration'}
             </Button>
           </DialogFooter>

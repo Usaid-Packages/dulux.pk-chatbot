@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { Badge, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
 import { COMPLAINT_API_STATUSES } from '#/types/complaints';
 import type { ChatAttachment, ConversationThread } from '#/types/complaints';
-import { cn } from '#/utils';
+import { cn, formatPkDateTime } from '#/utils';
 import { CONVERSATION_CHANNEL_LABELS, CONVERSATION_STATUS_CLASSNAMES, CONVERSATION_STATUS_LABELS } from './constants';
 import { MessageComposer } from './MessageComposer';
 
@@ -16,20 +16,6 @@ interface ChatThreadPanelProps {
   isSending: boolean;
   onSendMessage: (message: string) => void;
 }
-
-const formatTime = (isoDateTime: string): string => {
-  const parsed = new Date(isoDateTime);
-  if (Number.isNaN(parsed.getTime())) {
-    return '--';
-  }
-
-  return new Intl.DateTimeFormat('en-PK', {
-    hour: '2-digit',
-    minute: '2-digit',
-    day: 'numeric',
-    month: 'short',
-  }).format(parsed);
-};
 
 const getTicketHeading = (thread: ConversationThread): string => {
   const normalizedTicketId = thread.ticketId.trim();
@@ -65,6 +51,12 @@ export const ChatThreadPanel = ({
   onSendMessage,
 }: ChatThreadPanelProps): JSX.Element => {
   const messageListRef = useRef<HTMLDivElement | null>(null);
+  const messageViewModels = useMemo(() => {
+    return (thread?.messages ?? []).map(message => ({
+      ...message,
+      formattedCreatedAt: formatPkDateTime(message.createdAt),
+    }));
+  }, [thread?.messages]);
 
   useEffect(() => {
     if (!messageListRef.current) {
@@ -134,7 +126,7 @@ export const ChatThreadPanel = ({
         ref={messageListRef}
         className='flex-1 space-y-3 overflow-y-auto bg-[radial-gradient(circle_at_18%_8%,rgba(31,111,210,0.08),transparent_42%),linear-gradient(180deg,#f9fcff_0%,#f2f7ff_100%)] px-4 py-4'
       >
-        {thread.messages.map(message => {
+        {messageViewModels.map(message => {
           const isCustomerMessage = message.kind === 'customer';
           const isSystemMessage = message.kind === 'system';
           const attachments = message.attachments ?? [];
@@ -201,7 +193,7 @@ export const ChatThreadPanel = ({
                 </div>
               ) : null}
               <p className={cn('mt-1 text-[11px]', isCustomerMessage ? 'text-text-hint' : 'text-chat-agentTimeColor')}>
-                {message.senderName} · {formatTime(message.createdAt)}
+                {message.senderName} · {message.formattedCreatedAt}
               </p>
             </article>
           );

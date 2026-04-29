@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys } from '#/constants';
 import { getQualityCardCounts, getQualityQueue } from '#/data-layer/quality';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import type {
   QualityCardCounts,
   QualityQueueRequestParams,
@@ -21,7 +21,9 @@ interface UseQualityQueueResult {
   qualityQueueQuery: UseQueryResult<QualityQueueResponse, Error>;
   cardCountsQuery: UseQueryResult<QualityCardCounts, Error>;
   filters: QualityQueueRequestParams;
+  searchValue: string;
   setStatusFilter: (status: QualityQueueStatusFilter) => void;
+  setSearch: (search: string) => void;
   setPage: (page: number) => void;
 }
 
@@ -31,8 +33,9 @@ interface UseQualityQueueResult {
  * @returns Query state plus queue filter setters.
  */
 export const useQualityQueue = (): UseQualityQueueResult => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setPage, setFilterParam } = useUrlFilters({ defaultPage: DEFAULT_FILTERS.page });
   const statusParam = searchParams.get('status');
+  const searchValue = searchParams.get('search') ?? '';
   const status: QualityQueueStatusFilter =
     statusParam === 'all' ||
     statusParam === 'forwarded' ||
@@ -58,27 +61,20 @@ export const useQualityQueue = (): UseQualityQueueResult => {
   });
 
   const setStatusFilter = (status: QualityQueueStatusFilter): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('status', status);
-      nextParams.set('page', '1');
-      return nextParams;
-    });
+    setFilterParam('status', status, { removeWhenEmpty: false });
   };
 
-  const setPage = (page: number): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('page', String(page));
-      return nextParams;
-    });
+  const setSearch = (search: string): void => {
+    setFilterParam('search', search);
   };
 
   return {
     qualityQueueQuery,
     cardCountsQuery,
     filters,
+    searchValue,
     setStatusFilter,
+    setSearch,
     setPage,
   };
 };

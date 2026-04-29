@@ -1,20 +1,19 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
 
-import { queryKeys } from '#/constants';
+import { CLAIM_MESSAGES, QUALITY_MESSAGES, queryKeys } from '#/constants';
 import {
   getQualityClaimById,
   useApproveQualityClaimMutation,
   useRejectQualityClaimMutation,
   useRequestMoreInfoQAMutation,
 } from '#/data-layer/quality';
+import { executeGuardedDetailMutation, executeMutationWithFeedback } from '#/hooks/common/detailActionController';
 import type {
   QualityApprovePayload,
   QualityDetail,
   QualityRejectPayload,
   QualityRequestInfoPayload,
 } from '#/types/quality.types';
-import { getApiErrorMessage } from '#/utils';
 
 interface UseQualityDetailResult {
   qualityDetailQuery: UseQueryResult<QualityDetail, Error>;
@@ -42,47 +41,32 @@ export const useQualityDetail = (id: string): UseQualityDetailResult => {
   const requestInfoMutation = useRequestMoreInfoQAMutation();
 
   const handleApprove = (payload: QualityApprovePayload): void => {
-    const claim = qualityDetailQuery.data;
-    if (!claim) {
-      toast.error('Claim detail is not available.');
-      return;
-    }
-
-    approveMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Technical approval submitted.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
+    executeGuardedDetailMutation({
+      detail: qualityDetailQuery.data,
+      missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
+      payload,
+      buildPayload: (_detail, actionPayload) => actionPayload,
+      mutate: approveMutation.mutate,
+      successMessage: QUALITY_MESSAGES.TECHNICAL_APPROVAL_SUBMITTED,
     });
   };
 
   const handleReject = (payload: QualityRejectPayload): void => {
-    const claim = qualityDetailQuery.data;
-    if (!claim) {
-      toast.error('Claim detail is not available.');
-      return;
-    }
-
-    rejectMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Technical rejection submitted.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
+    executeGuardedDetailMutation({
+      detail: qualityDetailQuery.data,
+      missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
+      payload,
+      buildPayload: (_detail, actionPayload) => actionPayload,
+      mutate: rejectMutation.mutate,
+      successMessage: QUALITY_MESSAGES.TECHNICAL_REJECTION_SUBMITTED,
     });
   };
 
   const handleRequestInfo = (payload: QualityRequestInfoPayload): void => {
-    requestInfoMutation.mutate(payload, {
-      onSuccess: () => {
-        toast.success('Information request sent.');
-      },
-      onError: error => {
-        toast.error(getApiErrorMessage(error));
-      },
+    executeMutationWithFeedback({
+      mutate: requestInfoMutation.mutate,
+      payload,
+      successMessage: QUALITY_MESSAGES.INFORMATION_REQUEST_SENT,
     });
   };
 

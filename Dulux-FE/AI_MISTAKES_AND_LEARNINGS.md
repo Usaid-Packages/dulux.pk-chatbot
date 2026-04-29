@@ -39,8 +39,8 @@
   one statement and keep grouped/alphabetized imports to prevent `import/order` crashes.
 - STRICT: Do not change `eslint.config.ts` to bypass `import/order`; always fix import shape/order in source files.
 - STRICT: For files using React hooks + React types, avoid fragile import layouts that trigger `import/order` crashes
-  (for example separate `import type ... from 'react'` plus value imports in unstable order); prefer a stable shape
-  such as `React.ReactNode` / `React.JSX.Element` type usage when needed.
+  (for example separate `import type ... from 'react'` plus value imports in unstable order); prefer a stable shape such
+  as `React.ReactNode` / `React.JSX.Element` type usage when needed.
 - Never add file-level `import/order` disable comments in source files.
 - On claim detail page open, fetch claim detail and if backend state is `SUBMITTED`, trigger a follow-up claim action
   transition to `IN_REVIEW`.
@@ -61,16 +61,48 @@
   so long content does not break layout.
 - Keep reusable domain constants in `src/constants/**` (not inside page/component files). Components should consume
   exported constants and avoid local constant duplication for shared config.
-- Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id)
-  and must not include any secondary metadata paragraph under the heading unless explicitly requested.
+- Live chat thread header must keep a single `h2` line formatted as `Ticket #<ticketId>` (fallback: conversation id) and
+  must not include any secondary metadata paragraph under the heading unless explicitly requested.
 - Do not define per-item wrapper handlers inside `.map()` render blocks for tables/lists; keep action handlers at
   component scope and pass row identity via stable props/data attributes when item-specific behavior is needed.
 - For complaint threads, always fetch `/api/v1/complaints/{id}/messages/` for message timeline rendering; never infer
   per-message image ownership from complaint detail-level `images`.
 - Use direct React hook imports (`import { useState } from 'react'`) and call hooks directly (`useState(...)`), not
   `React.useState(...)`.
+- For Playwright mocked-mode E2E, register explicit endpoint handlers first and then an `/api/v1/*` fallback so
+  unexpected network calls fail deterministically.
+- For Playwright endpoint regex matchers, allow optional trailing slash and query string (`/?(?:\\?.*)?$`) to avoid
+  accidental fallback hits on valid API requests.
+- Never commit real E2E login credentials in test fixtures; use env vars in live mode and mock identities in mocked mode.
 
 ## Mistake Log (Short)
+
+### 2026-04-24 19:05 - Live-mode E2E needs explicit fail-fast guards and dataset IDs
+
+- Issue: Live E2E runs can fail late (after expensive browser setup) when base URLs, API reachability, or mutable record IDs are missing/misconfigured.
+- Fix: Added live preflight setup checks for required env vars and API contract reachability, and required explicit Phase 4 dataset ID env vars for mutation paths.
+- Rule: For `E2E_MODE=live`, fail fast before critical specs by validating env + network contracts + deterministic data IDs.
+
+### 2026-04-24 17:10 - Realtime E2E specs need deterministic socket control
+
+- Issue: Realtime chat tests can flake when browser WebSocket behavior depends on external network timing.
+- Fix: Added controlled Playwright socket hooks (thread + queue channels) and used them in E2E to simulate inbound
+  events, disconnect, and reconnect paths deterministically.
+- Rule: For realtime E2E, avoid live socket dependency in mocked mode; inject deterministic socket controls and assert
+  UI behavior on emitted events.
+
+### 2026-04-24 11:20 - Mock endpoint regex too strict for analytics requests
+
+- Issue: Dashboard analytics requests with query params did not match `/analytics/$`-style handlers, causing fallback
+  501 responses and false-negative smoke failures.
+- Fix: Updated dashboard mock routes to accept optional trailing slash and query strings.
+- Rule: Write Playwright API route regex with optional query support for endpoints that may append filter params.
+
+### 2026-04-24 12:30 - Real credentials were placed in E2E fixture
+
+- Issue: Real login emails/passwords were hardcoded in Playwright auth fixture, creating secret exposure risk.
+- Fix: Switched to env-driven credentials for `E2E_MODE=live` and mock-only placeholder identities for `E2E_MODE=mocked`.
+- Rule: Keep real E2E credentials only in local/CI secret stores (never in git-tracked source files).
 
 ### 2026-04-21 12:45 - Request-info options not fully aligned with latest UX instruction
 
@@ -240,6 +272,26 @@
 
 ### 2026-04-03 15:40 - Maximum update depth loop from unstable fallback arrays
 
+### 2026-04-24 16:35 - Playwright route registration order caused mock fallback to hijack all API calls
+
+- Issue: The catch-all `/api/v1/*` fallback was registered after specific handlers, and in Playwright the most recently
+  registered route wins, so valid mocked endpoints returned `501`.
+- Fix: Register fallback first, then register explicit endpoint handlers so specific mocks take precedence.
+- Rule: In Playwright mocked mode, install broad fallback routes before specific API handlers.
+
+### 2026-04-24 16:40 - Multi-action workflow tests became invalid after first mutation changed state
+
+- Issue: A single test attempted approve/reject/request-info (or approve/reject/resubmit) on the same record; after the
+  first successful action, UI correctly disabled subsequent actions.
+- Fix: Use separate deterministic records/IDs per action path in the same case so each action starts from a valid state.
+- Rule: For workflow-stateful UIs, isolate each action assertion on a fresh entity state.
+
+### 2026-04-24 16:45 - Assertions used outdated copy or overly broad text selectors
+
+- Issue: Several tests failed due strict-mode collisions (`Pending`, `QA Review`) and stale text expectations.
+- Fix: Scope assertions to semantic containers and align expected copy with current rendered labels from page snapshots.
+- Rule: Prefer container-scoped semantic assertions over global `getByText` when labels repeat across tabs/cards/tables.
+
 - Issue: In `ProductsListPage`, `products` used `query.data?.results ?? []`, creating a new array each render when data
   was empty/loading. A `useEffect([products])` then called `setSelectedProductIds`, causing repeated updates and React's
   "Maximum update depth exceeded".
@@ -258,6 +310,12 @@
 ### 2026-04-03 20:05 - `import/order` crash on new quality module files
 
 - Issue: ESLint crashed with `sourceCode.getTokenOrCommentAfter is not a function` on newly added quality module files.
+
+### 2026-04-24 11:30 - Playwright refresh-token mock payload mismatch
+
+- Issue: The refresh-token mock accidentally read `email/password` instead of `refresh`, which could mask auth-retry behavior in E2E.
+- Fix: Updated the mock payload type and handler to read `refresh` explicitly.
+- Rule: Keep mocked request payload contracts aligned with real endpoint contracts, especially auth/token flows.
 - Fix: Added narrow file-level `/* eslint import/order: off */` comments to impacted quality files only; kept import
   structure clean otherwise.
 - Rule: When this known toolchain crash appears in new modules, apply the smallest scoped file-level override and
@@ -321,8 +379,8 @@
 
 - Issue: As pages were redesigned one-by-one, primary action placement and filter layout drifted between modules (for
   example `Add Claim` placement and claim filter density did not initially match registration patterns).
-- Fix: Standardized primary CTA placement in hero headers, unified hover interaction treatment for dark CTA buttons,
-  and aligned claims filter structure with registration filter style.
+- Fix: Standardized primary CTA placement in hero headers, unified hover interaction treatment for dark CTA buttons, and
+  aligned claims filter structure with registration filter style.
 - Rule: In staged redesign work, re-check new page changes against already-updated modules before finalizing to prevent
   UI drift.
 
@@ -391,10 +449,10 @@
 
 ### 2026-04-06 16:35 - Claim detail view missed required state transition
 
-- Issue: Claim detail flow only fetched `GET /api/v1/warranty/claims/{id}/` and did not trigger the required
-  `PATCH` action transition from `SUBMITTED` to `IN_REVIEW` when opening View Detail.
-- Fix: Added one-time auto transition in claim detail hook using dedicated claims mutation
-  (`action: IN_REVIEW`) guarded by normalized backend workflow state.
+- Issue: Claim detail flow only fetched `GET /api/v1/warranty/claims/{id}/` and did not trigger the required `PATCH`
+  action transition from `SUBMITTED` to `IN_REVIEW` when opening View Detail.
+- Fix: Added one-time auto transition in claim detail hook using dedicated claims mutation (`action: IN_REVIEW`) guarded
+  by normalized backend workflow state.
 - Rule: For claim review entry flow, always perform detail fetch first, then transition `SUBMITTED -> IN_REVIEW` once
   when applicable.
 
@@ -407,8 +465,8 @@
 
 ### 2026-04-06 17:20 - Workflow-state constant used as object keys though it was an array
 
-- Issue: Auto-transition guard compared against `CLAIM_WORKFLOW_STATES.SUBMITTED` even though
-  `CLAIM_WORKFLOW_STATES` is an array, causing the check value to be `undefined` and incorrectly skipping patch.
+- Issue: Auto-transition guard compared against `CLAIM_WORKFLOW_STATES.SUBMITTED` even though `CLAIM_WORKFLOW_STATES` is
+  an array, causing the check value to be `undefined` and incorrectly skipping patch.
 - Fix: Switched runtime comparisons/assignments to explicit literal states (`'SUBMITTED'`, `'IN_REVIEW'`) in claim
   detail auto-transition flow.
 - Rule: Never use array-typed enum lists as keyed objects at runtime; use explicit literals or a dedicated keyed enum
@@ -419,15 +477,15 @@
 - Issue: ESLint still crashed with `sourceCode.getTokenOrCommentAfter is not a function` on
   `src/data-layer/quality/mutations/approveClaim.ts` after import-shape cleanup.
 - Fix: Applied a narrow file-level `/* eslint import/order: off */` override on the impacted file only.
-- Rule: If this known plugin crash persists after import cleanup, use the smallest file-scoped override on the
-  affected file and continue enforcing import-order everywhere else.
+- Rule: If this known plugin crash persists after import cleanup, use the smallest file-scoped override on the affected
+  file and continue enforcing import-order everywhere else.
 
 ### 2026-04-06 15:30 - Additional quality files hit the same `import/order` plugin crash
 
 - Issue: After fixing `approveClaim.ts`, lint crashed on `rejectClaim.ts` with the same plugin error and could continue
   failing file-by-file in the same quality module.
-- Fix: Applied the same narrow file-scoped `/* eslint import/order: off */` override to the related quality mutation
-  and query files that participate in this flow.
+- Fix: Applied the same narrow file-scoped `/* eslint import/order: off */` override to the related quality mutation and
+  query files that participate in this flow.
 - Rule: For this toolchain bug, once one file in a tightly-related new module crashes, proactively harden sibling files
   in that module with minimal scoped overrides to avoid repeated lint interruptions.
 
@@ -471,7 +529,8 @@
   `'delete'`) instead of shared constants.
 - Fix: Replaced literals with `GET`, `POST`, `PATCH`, `DELETE` imports from `src/constants/generic.ts` across product
   data-layer files.
-- Rule: Never hardcode request method strings in data-layer; always use method constants from `src/constants/generic.ts`.
+- Rule: Never hardcode request method strings in data-layer; always use method constants from
+  `src/constants/generic.ts`.
 
 ### 2026-04-07 19:45 - `import/order` plugin crash on new complaints socket integration files
 
@@ -479,8 +538,8 @@
   `helperFunctions.ts`) with `sourceCode.getTokenOrCommentBefore is not a function`.
 - Fix: Added narrow scoped ESLint config override (`import/order: off`) for the exact impacted files in
   `eslint.config.ts`; no source-file disable comments were added.
-- Rule: For this repo/toolchain, if `import/order` crashes on newly touched files, apply the smallest scoped override
-  in ESLint config and keep all other lint rules active.
+- Rule: For this repo/toolchain, if `import/order` crashes on newly touched files, apply the smallest scoped override in
+  ESLint config and keep all other lint rules active.
 
 ### 2026-04-07 20:20 - Added unnecessary defensive throw in login mapper
 
@@ -498,8 +557,8 @@
 ### 2026-04-07 20:45 - Missed internal import alphabetical order in registrations mutation
 
 - Issue: `useCreateManualRegistrationMutation.ts` had internal type imports out of alphabetical order
-  (`#/types/products` before `#/types/manualRegistration`), which triggered `import/order`; in this toolchain that
-  then crashed with `sourceCode.getTokenOrCommentBefore`.
+  (`#/types/products` before `#/types/manualRegistration`), which triggered `import/order`; in this toolchain that then
+  crashed with `sourceCode.getTokenOrCommentBefore`.
 - Fix: Reordered internal imports to strict alphabetical path order and re-checked the file lint target.
 - Rule: Before finalizing any touched file, enforce internal import path alphabetization exactly to avoid triggering the
   known `import/order` crash path.
@@ -508,8 +567,8 @@
 
 - Issue: `src/utils/helperFunctions.ts` still triggered `import/order` crash path due internal alias order drift, and
   had an unused function argument left behind.
-- Fix: Reordered imports to strict path order (including `#env` placement) and removed the unused `assignedTo`
-  argument from status mapper + call sites.
+- Fix: Reordered imports to strict path order (including `#env` placement) and removed the unused `assignedTo` argument
+  from status mapper + call sites.
 - Rule: Always run targeted lint on every touched file group (including utility files) before final handoff, and clear
   all remaining non-import lint errors in the same pass.
 
@@ -526,8 +585,8 @@
 - Issue: ESLint `import/order` crashed on `src/components/layout/PageWrapper.tsx` at import parsing stage.
 - Fix: Reworked React type usage to `React.ReactNode` / `React.JSX.Element` and kept external imports in stable order
   without touching `eslint.config.ts`.
-- Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout)
-  and keep lint config unchanged.
+- Rule: When this crash appears, first normalize the file's import shape (especially React type/value import layout) and
+  keep lint config unchanged.
 
 ### 2026-04-09 13:35 - Audit detail UI broke with long snapshot/note values
 
@@ -563,6 +622,8 @@
 
 ### 2026-04-10 19:25 - Registration detail runtime break after expandable-text refactor
 
+- Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one province usage was
+  left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
 - Issue: During `renderExpandableText` to `ExpandableDetailText` refactor in registration detail, one city usage
   was left on the old function name, causing `ReferenceError: renderExpandableText is not defined` on
   `/app/registrations/:id`.
@@ -573,9 +634,10 @@
 
 ### 2026-04-10 19:58 - Reintroduced removed secondary line in live chat thread header
 
-- Issue: Live chat thread header still rendered the secondary metadata line (`claimNumber · registrationId · customerPhone`)
-  even after the user requested only the `h2` heading remain.
-- Fix: Removed the secondary paragraph from `ChatThreadPanel` header and kept only customer name heading + status/channel badges.
+- Issue: Live chat thread header still rendered the secondary metadata line
+  (`claimNumber · registrationId · customerPhone`) even after the user requested only the `h2` heading remain.
+- Fix: Removed the secondary paragraph from `ChatThreadPanel` header and kept only customer name heading +
+  status/channel badges.
 - Rule: When user explicitly asks to remove specific UI text blocks, treat those blocks as hard-removed and do not
   reintroduce them in later UI refinements unless asked.
 
@@ -699,7 +761,8 @@
 - Issue: Products module root used `space-y-4` instead of shared `wf-list-shell`, so pagination bottom-alignment rules
   were not applied consistently there.
 - Fix: Switched Products page root container to `wf-list-shell` (with `gap-4` to preserve visual spacing).
-- Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is consistent.
+- Rule: Every paginated list module must use the shared list-shell container so global pagination behavior is
+  consistent.
 
 ### 2026-04-14 - React Query mixed imports retriggered `import/order` crash
 
@@ -742,12 +805,13 @@
   fields could be filtered out before UI rendering.
 - Fix: Updated complaint message schema to accept nullable `type/sender/text/created/createdAt/attachments/images/image`
   values and kept normalizer fallbacks for display text and attachments.
-- Rule: Treat chat payload optional fields as nullable-by-default unless backend contract explicitly guarantees non-null.
+- Rule: Treat chat payload optional fields as nullable-by-default unless backend contract explicitly guarantees
+  non-null.
 
 ### 2026-04-14 - Strict attachment URL validation blocked relative media paths
 
-- Issue: Chat attachment schema required absolute URLs, but backend can return relative media paths
-  (for example `/django-media/...`), causing thread parse/render failures.
+- Issue: Chat attachment schema required absolute URLs, but backend can return relative media paths (for example
+  `/django-media/...`), causing thread parse/render failures.
 - Fix: Relaxed attachment URL schema to non-empty string and added safe relative-path fallback in URL normalization.
 - Rule: For backend media fields, accept relative URLs and normalize to absolute when possible; never reject valid
   relative paths at schema level.
@@ -789,9 +853,8 @@
 
 ### 2026-04-14 - Debounce rollout lint run hit known `import/order` plugin crash again
 
-- Issue: During search debounce updates across multiple pages/hooks, standard targeted ESLint crashed on
-  `import/order` for touched page files (`ProductsListPage.tsx`, `QualityListPage.tsx`) with the known plugin/runtime
-  incompatibility.
+- Issue: During search debounce updates across multiple pages/hooks, standard targeted ESLint crashed on `import/order`
+  for touched page files (`ProductsListPage.tsx`, `QualityListPage.tsx`) with the known plugin/runtime incompatibility.
 - Fix: Kept source/config unchanged per project policy and completed verification with command-level
   `--rule "import/order: off"` for touched files.
 - Rule: When this known crash blocks verification on touched files, avoid source/config bypasses and use temporary
@@ -817,16 +880,61 @@
 
 ### 2026-04-14 - Missed ESLint import group separation from config
 
-- Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as its own group before other external imports), which caused lint instability and blocked full-repo validation.
-- Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved remaining formatting violations.
-- Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly (grouping + blank lines + alphabetical order).
+- Issue: I did not strictly follow the `import/order` grouping defined in `eslint.config.ts` (notably `react` treated as
+  its own group before other external imports), which caused lint instability and blocked full-repo validation.
+- Fix: Updated import grouping to match config, then ran `yarn eslint "src/**/*.{ts,tsx}" --max-warnings 0` and resolved
+  remaining formatting violations.
+- Rule: Before finalizing any change, run full `src` ESLint and ensure imports follow `eslint.config.ts` exactly
+  (grouping + blank lines + alphabetical order).
 
 ### 2026-04-15 - Ran lint from wrong workspace root
 
-- Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json` and delayed validation.
+- Issue: I executed `yarn eslint` from repository root instead of `Dulux-FE`, which failed with missing `package.json`
+  and delayed validation.
 - Fix: Re-ran lint from `/Dulux-FE` and completed targeted validation successfully.
+- Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains
+  `package.json`.
+
+### 2026-04-20 - Placed a logic hook and shared form types under component folder
+
+- Issue: During `AddClaimModal` refactor, I incorrectly placed `useAddClaimForm` and shared form type contracts under
+  `src/components/claims/addClaim`, which violated project folder boundaries (`hooks` for logic, `types` for shared
+  contracts).
+- Fix: Moved `useAddClaimForm` to `src/hooks/claims/useAddClaimForm.ts`, moved shared add-claim form types to
+  `src/types/claims.form.types.ts`, and rewired all imports/exports.
+- Rule: Do not place reusable hooks or cross-component type contracts inside component folders; enforce placement by
+  responsibility (`src/hooks/**` for logic hooks, `src/types/**` for shared type contracts, `src/components/**` for
+  presentation).
 - Rule: Before running Yarn/NPM scripts, confirm command `cwd` is the frontend package root that contains `package.json`.
 
+### 2026-04-16 - Claims list test used label query for unlabeled search input
+
+- Issue: New `ClaimsListPage` test used `getByLabelText('claim-search')`, but the search control has an `id` and placeholder without an associated label, causing a failing spec.
+- Fix: Switched the assertion to query by placeholder text (`Search by registration or phone number`) to match the rendered accessibility surface.
+- Rule: In page tests, align RTL selectors with actual accessible output (label text, role/name, or placeholder) and avoid assuming `id` implies an associated label.
+
+### 2026-04-16 - New test file import shape triggered `import/order` crash path
+
+- Issue: In the newly added `QualityListPage` test, I initially placed an internal type import before external library imports, which retriggered this repo's known `eslint-plugin-import` crash path (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered imports to stable external-first grouping and reran lint; no rule disable comments were added.
+- Rule: For every newly created test file, enforce external imports first, then internal aliases, then relative imports before first lint run to avoid re-triggering the plugin crash path.
+
+### 2026-04-16 - Live chat test import order retriggered plugin crash
+
+- Issue: While adding `LiveChatPage.test.tsx`, initial import ordering (`import type` before internal value imports) retriggered the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`) on `import/order`.
+- Fix: Reordered imports to stable shape (external libs -> internal value imports -> internal type imports -> relative imports) and removed an unused `ReactNode` type import; lint then passed without rule disables.
+- Rule: For new test files in this repo, always apply crash-safe import shape before first lint run and avoid unused top-level type imports.
+
+### 2026-04-16 - Complaint-thread hook test missed automatic open->in-progress side effect
+
+- Issue: In `useComplaintThread` integration test for open-thread resolve flow, I initially assumed the first `markConversationInProgress` mutation call would include `onSuccess`; however, the hook's auto-transition effect can trigger an earlier mark call with only error handling.
+- Fix: Updated the test to locate the mutation call that actually contains an `onSuccess` callback before simulating chain progression.
+- Rule: For hooks with mount-time side effects plus user-triggered actions, assert against callback-bearing mutation calls (not fixed call indexes) to keep tests deterministic.
+### 2026-04-16 - Parallel file creation race caused transient missing-path write failure
+
+- Issue: I attempted `mkdir -p` and multi-file `cat > ...` writes in parallel, and one write executed before the target directory creation completed, causing `no such file or directory`.
+- Fix: Re-ran directory creation first, then switched to sequential file writes for deterministic test-file generation.
+- Rule: Do not parallelize directory creation with dependent file-write commands; create folders first, then write files sequentially.
 ### 2026-04-21 - Forgot command-level `import/order` override on first lint pass
 
 - Issue: I initially ran targeted ESLint without command-level `--rule "import/order: off"` even though this repo has a known plugin crash on touched files.
@@ -856,3 +964,32 @@
 - Issue: I switched paint-pair diff rendering to a two-column card layout, which broke visual consistency with the timeline's existing `before -> after` pattern.
 - Fix: Reverted paint-pair diff rendering to the standard inline `before -> after` style while retaining improved product-name formatting.
 - Rule: When refining one field's presentation inside an established audit/timeline component, preserve the module's existing diff pattern unless explicitly asked for a new layout style.
+
+### 2026-04-22 - Province cleanup and timeline UX cleanup were left partially applied
+
+- Issue: After removing `province` from registration flows, residual references remained in resubmission constants/form defaults and fixture data; timeline UI also still exposed `View full payload` raw JSON blocks.
+- Fix: Removed remaining `province` references from the affected FE files and simplified timeline rendering to keep concise field-level output only (no expandable raw payload view), while preserving full API event listing.
+- Rule: When a cross-cutting field removal or timeline UX directive is requested, run a final project-wide symbol search and verify all related constants/forms/tests/renderers are aligned before handoff.
+### 2026-04-23 - Incomplete component module mock caused registration list tests to fail
+
+- Issue: `RegistrationsListPage` tests mocked `#/components/registrations` with `RegistrationTable` only, but the page also imports `RegistrationEditModal`, causing Vitest export-missing failures.
+- Fix: Added `RegistrationEditModal` to the module mock (`() => null`) so the mock shape matches all consumed exports.
+- Rule: When mocking a module in tests, include every export used by the target component (or use a partial mock with `importOriginal` and override only required members).
+
+### 2026-04-23 - Quality schema test drifted after required-items contract update
+
+- Issue: Unit test expected `otherText` validation for `qualityRequestInfoSchema`, but the current schema no longer supports `OTHER` and validates only the allowed `QUALITY_REQUIRED_ITEMS`.
+- Fix: Updated the test to assert invalid enum rejection on `requiredItems[0]` for unknown item payloads.
+- Rule: When schema contracts change, update unit tests to match current allowed enums/fields and assert the new validation path, not legacy fields.
+
+### 2026-04-23 - Import alias order drift retriggered `import/order` crash in products test
+
+- Issue: `ProductsListPage.test.tsx` kept `#/data-layer/products` above `#/context`, violating configured internal alphabetical ordering and triggering the known `eslint-plugin-import` crash (`sourceCode.getTokenOrCommentBefore is not a function`).
+- Fix: Reordered internal imports to match `eslint.config.ts` (`#/context` before `#/data-layer/products`) and reran ESLint successfully.
+- Rule: In test files, enforce strict alphabetical order within internal alias imports before running ESLint; even small ordering drift can re-trigger the plugin crash path.
+
+### 2026-04-23 - Test standards drift: no MSW/a11y harness and missing route-guard coverage
+
+- Issue: Existing tests passed but drifted from project testing standards by relying on direct hook/component mocks without MSW-based API contract tests, lacking automated accessibility assertions, and missing focused tests for route guards/router redirects.
+- Fix: Logged this as a mandatory review gate before future test changes; add MSW integration coverage for critical API flows, add `axe` a11y checks for key pages/components, and introduce tests for `PrivateRoute`/`RoleRoute` and router redirect behavior.
+- Rule: A green test run is not enough. For every critical module, keep three layers covered: API-contract behavior (MSW), accessibility baseline (axe), and access-control/routing rules.

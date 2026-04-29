@@ -97,7 +97,7 @@ const getFlattenedOptions = (
   return Array.from(deduped.values());
 };
 
-const normalizeProductType = (productType: ProductType): 'TOPCOAT' | 'BASECOAT' => {
+const normalizeProductType = (productType: ProductType): ProductType => {
   if (productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT) {
     return REGISTRATION_PRODUCT_TYPES.TOPCOAT;
   }
@@ -124,7 +124,7 @@ export const useGetManualRegistrationProductOptionsInfiniteQuery = (
     ManualRegistrationProductsApiResponse,
     Error,
     InfiniteData<ManualRegistrationProductsApiResponse, number>,
-    readonly ['registrations', 'manual-products', 'warranty-options', 'TOPCOAT' | 'BASECOAT', string],
+    readonly ['registrations', 'manual-products', 'warranty-options', ProductType, string],
     number
   >({
     queryKey: queryKeys.registrations.manualWarrantyOptions(

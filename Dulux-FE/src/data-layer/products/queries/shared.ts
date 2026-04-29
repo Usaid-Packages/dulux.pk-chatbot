@@ -10,6 +10,7 @@ import type {
   SurfaceTypeListResponse,
   SurfaceTypeQueryParams,
 } from '#/types/products';
+import { PRODUCT_TYPES } from '#/types/products';
 
 interface ProductImageAssetApiResponse {
   id?: number;
@@ -61,7 +62,8 @@ interface PaginatedApiResponse<T> {
   results?: T[];
 }
 
-const isProductType = (value: string): value is ProductType => value === 'TOPCOAT' || value === 'BASECOAT';
+const isProductType = (value: string): value is ProductType =>
+  value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT;
 
 export const normalizeProductImage = (response: ProductImageApiResponse): ProductImage => ({
   id: response.id ?? 0,
@@ -89,7 +91,7 @@ export const normalizeLinkedBasecoat = (response: ProductApiResponse): LinkedBas
     ? response.productType
     : isProductType(response.product_type ?? '')
       ? response.product_type
-      : 'BASECOAT',
+      : PRODUCT_TYPES.BASECOAT,
   warrantyYears: response.warrantyYears ?? response.warranty_years ?? 0,
   isActive: response.isActive ?? response.is_active ?? false,
   created: response.created ?? '',
@@ -103,7 +105,7 @@ export const normalizeProduct = (response: ProductApiResponse): Product => ({
     ? response.productType
     : isProductType(response.product_type ?? '')
       ? response.product_type
-      : 'TOPCOAT',
+      : PRODUCT_TYPES.TOPCOAT,
   warrantyYears: response.warrantyYears ?? response.warranty_years ?? 0,
   features: response.features ?? '',
   coverageDetails: response.coverageDetails ?? response.coverage_details ?? '',

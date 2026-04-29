@@ -62,25 +62,20 @@ After successful login, redirect to:
  │
  ├── manual-registration          ← sub-flow of Registrations (no sidebar nav item)
  │   ├── step/:stepId
- │   └── success
+ │   └── success                  ← reserved for submission-error/fallback state; successful submit redirects to registrations list
  │
- ├── import
- │
- └── settings
 ```
 
 ### 1.4 Screen-to-Route Mapping
 
 - `A1` Login -> `/login` ⚠️ **No Login wireframe provided in Phase 1** — implement as standard email+password form; layout pending design approval
-- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view showing 6 clickable module cards with per-module stats plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
+- `B1` Dashboard -> `/app/dashboard` — implements the **Wireframe Hub** view with role-scoped clickable module cards (current admin/cs implementation: 5 cards) plus 2 lightweight analytics graphs (submission trend + queue workload split). Use mock data until dashboard analytics APIs are available.
 - `B2/B3` Registrations list/detail -> `/app/registrations`, `/app/registrations/:id`
 - `B4/B5` Claims list/detail -> `/app/claims`, `/app/claims/:id`
 - `B6` Quality module -> `/app/quality`, `/app/quality/:id`
 - `B7` Complaints chat -> `/app/complaints`, `/app/complaints/:id`
 - `B8/B9` Product catalog + add/edit -> `/app/products`, `/app/products/new`, `/app/products/:id/edit`
-- `B10` Manual registration wizard -> `/app/manual-registration/step/:stepId` (entered via "Add Manual Registration" button on Registrations list — Registrations nav item stays active; breadcrumb shows `Registrations / Manual Entry`)
-- `B11` Data import -> `/app/import` ⚠️ **No Data Import wireframe provided in Phase 1** — implement as placeholder route shell
-- `B12` Settings -> `/app/settings` ⚠️ **No Settings wireframe provided in Phase 1** — implement as placeholder route shell
+- `B10` Manual registration wizard -> `/app/manual-registration/step/:stepId` (entered via "Add Manual Registration" button on Registrations list — Registrations nav item stays active; breadcrumb shows `Registrations / Manual Entry`). On successful submit, navigate to `/app/registrations`.
 
 ### 1.5 Route Behavior Requirements
 
@@ -101,11 +96,12 @@ After successful login, redirect to:
 - registrations
 - claims
 - complaints
+- products (list/create/edit)
 
 #### Admin
 
 - all modules
-- explicitly includes products + import + settings
+- explicitly includes products
 
 #### Quality
 
@@ -223,7 +219,7 @@ export const routes = [
             ],
           },
           {
-            element: <ProtectedRoute roles={[ROLES.ADMIN]} />,
+            element: <ProtectedRoute roles={[ROLES.ADMIN, ROLES.CS]} />,
             children: [
               {
                 path: "products",
@@ -233,10 +229,8 @@ export const routes = [
                   { path: ":id/edit", element: <ProductEditPage /> }, // B9
                 ],
               },
-              { path: "import", element: <ImportPage /> }, // B11
             ],
           },
-          { path: "settings", element: <SettingsPage /> }, // B12
         ],
       },
     ],
@@ -260,14 +254,12 @@ function useAuth() {
 ### 1.11 Hardening Updates
 - `/app/manual-registration` redirects to `/app/manual-registration/step/1`.
 - `step/:stepId` must enforce step-completion guard.
-- `/app/settings` is `ADMIN` only.
 - Add in-app `/app/*` not-found handling.
 - **Dashboard** implements the Wireframe Hub view with module flow cards and exactly two lightweight analytics graphs:
   - `Weekly Submissions Trend` (Registrations vs Claims, 7-day line graph)
   - `Queue Workload Split` (Pending/In Review/Resolved stacked distribution by module)
 - Do not add `RecentActivity` feed or `LatestTicketsTable` in this phase.
 - **Login has no wireframe** — implement as standard email+password form; layout pending design approval.
-- **Data Import and Settings have no wireframes** — implement as empty placeholder route shells only (`<PlaceholderPage title="Coming Soon" />`). Do not implement CSV upload or settings management logic.
 - Manual Registration has **no sidebar nav item** — do not add it to `Sidebar.tsx` nav config.
 
 
@@ -294,7 +286,6 @@ Root:
 - `tsconfig.json`
 - `vite.config.ts`
 - `package.json`
-- `.env.example`
 - `env.mjs`
 - `src/**`
 
@@ -388,8 +379,8 @@ Use feature naming namespaces inside current folders:
 #### Dashboard
 
 - `src/components/dashboard/DashboardCard.tsx`         — clickable card per module (title, icon, screen count, module stats, description)
-- `src/components/dashboard/DashboardGrid.tsx`         — grid container for 6 module cards
-- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (6 module cards with navigation)
+- `src/components/dashboard/DashboardGrid.tsx`         — grid container for role-scoped module cards (current admin/cs: 5 cards)
+- `src/pages/DashboardPage.tsx`   ← Wireframe Hub view (role-scoped module cards with navigation)
 
 #### Registrations (B2/B3)
 
@@ -475,15 +466,6 @@ Use feature naming namespaces inside current folders:
 - `src/pages/ManualStepPage.tsx`
 - `src/pages/ManualRegistrationSuccessPage.tsx`   ← ADD: post-submit success screen (step 6)
 
-#### Import (B11)
-
-- `src/components/import/UploadZone.tsx`
-- `src/components/import/ImportSummary.tsx`
-- `src/components/import/ErrorTable.tsx`
-- `src/data/import/mutations/uploadCSV.ts`
-- `src/data/import/mutations/validateCSV.ts`
-- `src/pages/ImportPage.tsx`
-
 ### 2.5 Shared/Reusables in Current Structure
 
 - UI primitives remain in `src/components/ui/*` (expand with `Input`, `Modal`, `Table`, `Badge`).
@@ -532,8 +514,6 @@ Never:
 | `/app/complaints`          | `complaints`         |
 | `/app/products`            | `products`           |
 | `/app/manual-registration` | `manualRegistration` |
-| `/app/import`              | `import`             |
-| `/app/settings`            | `settings/shared`    |
 
 ### 2.9 Output of Step 2
 
@@ -879,24 +859,6 @@ Key logic:
 - Shared wizard state across steps.
 - Step-scoped validation and guarded navigation.
 
-#### B11 Import
-
-```tsx
-<ImportPage>
-  <PageHeader />
-  <UploadSection>
-    <UploadZone />
-    <UploadButton />
-  </UploadSection>
-  <ValidationSummary />
-  <ErrorTable />
-  <ImportActions>
-    <ValidateButton />
-    <ImportButton />
-  </ImportActions>
-</ImportPage>
-```
-
 ### 3.4 Global Composition Patterns
 
 Pattern: Page
@@ -1004,7 +966,6 @@ Comes from backend APIs:
 - claims list/detail
 - products
 - dashboard stats
-- import validation/result
 - chat initial message history
 
 #### UI/Local State
@@ -1041,7 +1002,6 @@ React Query handles most screens:
 - registrations
 - claims
 - products
-- import
 - detail pages and mutations
 
 Benefits used in this app:
@@ -1098,7 +1058,6 @@ Implementation note:
 | Claims list/detail         | React Query + mutations                   |
 | Quality                    | React Query + mutations                   |
 | Products                   | React Query + mutations                   |
-| Import                     | React Query mutation + result state       |
 | Complaints Chat            | React Query + WebSocket + local merge     |
 | Manual Registration Wizard | Zustand (in-memory shared draft) + local form state |
 
@@ -1554,7 +1513,7 @@ type QualityCardCounts = {
 };
 ```
 
-Expanded endpoints must include auth/quality/import + sub-actions:
+Expanded endpoints must include auth/quality + sub-actions:
 ```ts
 export const API_ENDPOINTS = {
   REGISTRATIONS: "/registrations",
@@ -1563,7 +1522,6 @@ export const API_ENDPOINTS = {
   COMPLAINTS: "/complaints",
   DASHBOARD: "/dashboard",
   QUALITY: "/quality",
-  IMPORT: "/import",
   AUTH: { LOGIN: "/auth/login", LOGOUT: "/auth/logout", ME: "/auth/me" },
   REGISTRATION_APPROVE: (id: string) => `/registrations/${id}/approve`,
   REGISTRATION_REJECT: (id: string) => `/registrations/${id}/reject`,
@@ -1771,23 +1729,7 @@ const { register, handleSubmit, reset } = useForm<{ message: string }>();
 </form>
 ```
 
-### 6.8 Import CSV Form
-
-Schema:
-```ts
-import { z } from "zod";
-
-export const importSchema = z.object({
-  file: z.instanceof(File),
-});
-```
-
-Form field:
-```tsx
-<input type="file" {...register("file")} />
-```
-
-### 6.9 Form Patterns (Mandatory)
+### 6.8 Form Patterns (Mandatory)
 
 Pattern 1: Smart vs Dumb
 - Form component -> UI only
@@ -1800,14 +1742,14 @@ Pattern 2: Validation
 Pattern 3: Default Values
 - use for edit and prefill scenarios
 
-### 6.10 Anti-Patterns to Avoid
+### 6.9 Anti-Patterns to Avoid
 
 - API calls inside form components
 - validation logic embedded in UI components
 - mixing transport/business logic into render-only form controls
 - multi-step wizard without `FormProvider` state sharing
 
-### 6.11 Final Form Stack
+### 6.10 Final Form Stack
 
 ```text
 React Hook Form -> form state
@@ -1816,12 +1758,12 @@ FormProvider -> multi-step state continuity
 React Query -> API submission and mutation lifecycle
 ```
 
-### 6.12 Output of Step 6
+### 6.11 Output of Step 6
 - Form architecture is locked to your rules and folder structure.
 - Schema-first validation is defined for all core form types.
 - Multi-step wizard form strategy is implementation-ready.
 
-### 6.13 Hardening Updates
+### 6.12 Hardening Updates
 File constraints:
 ```ts
 export const fileUploadSchema = z.object({
@@ -2193,7 +2135,6 @@ export const usePermissions = () => {
     canApproveRegistrations: user?.role === "admin" || user?.role === "cs",
     canSubmitQualityDecision: user?.role === "quality",
     canManageProducts: user?.role === "admin",
-    canImportData: user?.role === "admin",
   };
 };
 ```
@@ -2214,843 +2155,85 @@ Use for conditional action rendering inside pages/components (beyond route-level
 
 ---
 
-## Step 13: Tailwind CSS Setup and Design System
+## Step 13: Current Styling System (CSS + Tailwind v4)
 
-> This step defines the complete Tailwind CSS configuration, design tokens, and component theming derived directly from the approved wireframes (dulux-claims-approvals.html, dulux-live-chat.html, dulux-manual-registration.html, dulux-product-catalog-wireframes.html, dulux-quality-review.html, dulux-registration-approvals.html, dulux-wireframe-hub.html). Every color, spacing, radius, font, and semantic token is sourced from those files.
+This step replaces the old Tailwind v3 setup guidance and documents the **actual styling stack implemented in this repository**.
 
-### 13.1 Installation and Configuration
+### 13.1 What The Project Uses Today
 
-Install Tailwind CSS v3 with the project's Vite setup:
+- Tailwind CSS **v4** via Vite plugin: `@tailwindcss/vite`
+- React plugin: `@vitejs/plugin-react-swc`
+- Animation utility package: `tw-animate-css`
+- Utility composition helpers: `clsx` + `tailwind-merge` via `cn()`
 
-```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
+Current source of truth files:
 
-Required packages alongside Tailwind:
-```bash
-npm install -D @tailwindcss/forms @tailwindcss/typography
-npm install clsx tailwind-merge
-```
+- `Dulux-FE/vite.config.ts`
+- `Dulux-FE/src/index.css`
+- `Dulux-FE/src/utils/utils.ts`
+- `Dulux-FE/package.json`
 
-`clsx` + `tailwind-merge` are used together as `cn()` for conditional class composition throughout all components. Add to `src/utils/cn.ts`:
-```ts
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+### 13.2 Vite Integration (Current)
 
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
-```
-
-### 13.2 tailwind.config.ts — Full Project Config
+Tailwind is enabled through the Vite plugin in `vite.config.ts`:
 
 ```ts
-import type { Config } from "tailwindcss";
-import forms from "@tailwindcss/forms";
+import tailwindcss from '@tailwindcss/vite';
 
-const config: Config = {
-  content: [
-    "./index.html",
-    "./src/**/*.{ts,tsx}",
-  ],
-  theme: {
-    extend: {
-      // ─── Colors ─────────────────────────────────────────────
-      colors: {
-        // Primary brand blue — used for CTAs, active nav, send button, avatar
-        // Source: sidebar logo-box, nav-item.active border-left, btn-primary, avatar-circle, page-btn.active
-        primary: {
-          DEFAULT: "#4a90d9",
-          hover:   "#3a7bc8",
-          light:   "#f0f6ff",  // eff6ff / f0f6ff — used in info boxes, reg-id chip bg
-          border:  "#bfdbfe",  // info box border
-        },
-
-        // Sidebar shell
-        // Source: .sidebar background, .sidebar-logo border, .nav-item.active background
-        sidebar: {
-          bg:          "#1a1a2e",
-          activeBg:    "#22223a",
-          borderColor: "#2a2a4a",
-          navGroup:    "#666666",  // nav-group-label color
-          navText:     "#999999",  // inactive nav item text
-          badge:       {
-            bg:   "#2a4a6a",
-            text: "#6ab0ff",
-          },
-        },
-
-        // Page / layout backgrounds
-        // Source: .main background, .page-content background, .screen-frame bg
-        page: {
-          body:   "#f5f5f5",
-          canvas: "#f0f0f0",
-        },
-
-        // Surface (card / panel)
-        // Source: .stat-card, .detail-card, .form-card, .data-table, .action-card backgrounds
-        surface: {
-          DEFAULT: "#ffffff",
-          muted:   "#fafafa",
-          subtle:  "#fafbfc",
-        },
-
-        // Borders
-        // Source: .data-table thead border, .stat-card border, .detail-card border
-        border: {
-          DEFAULT: "#e0e0e0",
-          light:   "#f0f0f0",
-          muted:   "#eeeeee",
-          strong:  "#dddddd",
-        },
-
-        // Text
-        // Source: .page-title color, .stat-value color, .field-value color, .avatar-name color
-        text: {
-          primary:   "#222222",
-          secondary: "#444444",
-          muted:     "#888888",
-          hint:      "#aaaaaa",
-          faint:     "#bbbbbb",
-          label:     "#555555",
-          nav:       "#999999",
-          tableHead: "#888888",
-        },
-
-        // ─── Semantic Status Colors ─────────────────────────────
-        // Source: .status-pending, .status-approved, .status-rejected,
-        //         .status-forwarded, .status-info-req, .cs-resolved
-        status: {
-          pending: {
-            bg:   "#fef3c7",
-            text: "#b45309",
-          },
-          approved: {
-            bg:   "#e6f9e6",
-            text: "#2e7d32",
-          },
-          rejected: {
-            bg:   "#fef2f2",
-            text: "#dc2626",
-          },
-          forwarded: {
-            bg:   "#f3e8ff",
-            text: "#7c3aed",
-          },
-          infoReq: {
-            bg:   "#eff6ff",
-            text: "#2563eb",
-          },
-          resolved: {
-            bg:   "#f0f0f0",
-            text: "#888888",
-          },
-        },
-
-        // ─── Action Button Colors ────────────────────────────────
-        // Source: .btn-approve, .btn-reject, .btn-primary, .btn-outline
-        action: {
-          approve: {
-            bg:   "#16a34a",
-            text: "#ffffff",
-          },
-          reject: {
-            bg:      "#ffffff",
-            text:    "#dc2626",
-            border:  "#fca5a5",
-          },
-          rejectHover: {
-            bg: "#fef2f2",
-          },
-          deleteHover: {
-            bg:     "#fef2f2",
-            border: "#fca5a5",
-            text:   "#dc2626",
-          },
-        },
-
-        // ─── Semantic / Notification ──────────────────────────────
-        // Source: .header-notif .dot, .nav-item .badge background
-        danger: {
-          DEFAULT: "#e74c3c",
-          light:   "#fef2f2",
-        },
-
-        // ─── Claim / Issue Tags ──────────────────────────────────
-        // Source: .issue-tag
-        issue: {
-          bg:   "#fef2f2",
-          text: "#b91c1c",
-        },
-
-        // ─── Surface Type / Product Tags ────────────────────────
-        // Source: .surface-tag
-        surfaceTag: {
-          bg:   "#f0f4ff",
-          text: "#4a6fa5",
-        },
-
-        // ─── Product Type Badges ─────────────────────────────────
-        // Source: inline styles on product type cells in registration approvals
-        productType: {
-          topcoat: {
-            bg:   "#f0f4ff",
-            text: "#4a6fa5",
-          },
-          basecoat: {
-            bg:   "#f5f0ff",
-            text: "#7c5caa",
-          },
-        },
-
-        // ─── Monospace IDs (claim-id / reg-id chips) ─────────────
-        // Source: .claim-id, .reg-id
-        chipId: {
-          claim: {
-            bg:   "#fff3e0",
-            text: "#e65100",
-          },
-          reg: {
-            bg:   "#f0f6ff",
-            text: "#4a90d9",
-          },
-        },
-
-        // ─── Chat ────────────────────────────────────────────────
-        // Source: .msg-row.customer .msg-bubble, .msg-row.agent .msg-bubble
-        // .chat-panel background, .conv-item.active, .msg-system
-        chat: {
-          panelBg:         "#f8f9fa",
-          convActiveBg:    "#f0f6ff",
-          convActiveBorder:"#4a90d9",
-          customerBubble:  "#ffffff",
-          agentBubble:     "#4a90d9",
-          agentText:       "#ffffff",
-          agentTimeColor:  "rgba(255,255,255,0.6)",
-          systemBg:        "#eff6ff",
-          systemText:      "#2563eb",
-          unreadDot:       "#f59e0b",
-          unreadTime:      "#f59e0b",
-        },
-
-        // ─── Step Wizard ─────────────────────────────────────────
-        // Source: .step.active .step-circle, .step.done .step-circle
-        stepper: {
-          activeBg:     "#4a90d9",
-          activeBorder: "#4a90d9",
-          activeText:   "#ffffff",
-          doneBg:       "#16a34a",
-          doneBorder:   "#16a34a",
-          doneText:     "#ffffff",
-          doneLabel:    "#16a34a",
-          inactiveLine: "#dddddd",
-          doneLine:     "#16a34a",
-        },
-
-        // ─── Quality Team specifics ──────────────────────────────
-        // Source: .avatar-circle in quality-review (green avatar for QA role)
-        // .cs-notes background, .stat-card.highlight border-left in quality screen
-        quality: {
-          avatarBg:  "#16a34a",
-          notesBg:   "#faf5ff",
-          notesBorder: "#e9d5ff",
-          highlight:   "#7c3aed",
-        },
-
-        // ─── Info / notification boxes ───────────────────────────
-        // Source: .info-box in manual registration success state
-        info: {
-          bg:     "#eff6ff",
-          border: "#bfdbfe",
-          text:   "#1e40af",
-        },
-
-        // ─── Success state ────────────────────────────────────────
-        // Source: .success-icon background, .success-title color
-        success: {
-          iconBg:    "#dcfce7",
-          iconText:  "#16a34a",
-          regIdBg:   "#f0f6ff",
-          regIdText: "#4a90d9",
-        },
-
-        // ─── Amber / warning (unread badge, stat highlight border) ──
-        // Source: .stat-card.highlight border-left in claims/registrations
-        amber: {
-          DEFAULT:   "#f59e0b",
-          highlight: "#f59e0b",
-        },
-      },
-
-      // ─── Font Family ─────────────────────────────────────────────
-      // Source: body font-family from every wireframe HTML: Arial, Helvetica, sans-serif
-      // In production, replace with Inter or your brand font and keep Arial as fallback.
-      fontFamily: {
-        sans: ["Inter", "Arial", "Helvetica", "sans-serif"],
-        mono: ["ui-monospace", "SFMono-Regular", "Consolas", "monospace"],
-      },
-
-      // ─── Font Sizes ───────────────────────────────────────────────
-      // Source: all wireframe CSS font-size values mapped to Tailwind scale
-      // 10px nav-group-label, breadcrumb sub-texts
-      // 11px stat-label, table thead, badge text, field-label uppercase
-      // 12px form-label, filter-btn, conv-time, page-btn
-      // 13px nav-item, data-table td, btn-primary, form-input, chat bubble
-      // 14px sidebar-logo text, page-title (16px), detail-card-title
-      // 16px page-title
-      // 28px stat-value
-      fontSize: {
-        "2xs": ["10px", { lineHeight: "14px" }],
-        xs:    ["11px", { lineHeight: "16px" }],
-        sm:    ["12px", { lineHeight: "18px" }],
-        base:  ["13px", { lineHeight: "20px" }],
-        md:    ["14px", { lineHeight: "20px" }],
-        lg:    ["16px", { lineHeight: "24px" }],
-        xl:    ["18px", { lineHeight: "28px" }],
-        "2xl": ["20px", { lineHeight: "28px" }],
-        "3xl": ["28px", { lineHeight: "36px" }],
-      },
-
-      // ─── Border Radius ────────────────────────────────────────────
-      // Source: .stat-card border-radius: 8px, .data-table border-radius: 8px,
-      //         .status-badge border-radius: 12px, .sidebar-logo .logo-box: 6px
-      //         .nav-item .badge: 10px, .avatar-circle: 50%
-      borderRadius: {
-        none: "0px",
-        sm:   "4px",
-        DEFAULT: "6px",
-        md:   "6px",
-        lg:   "8px",
-        xl:   "10px",
-        "2xl":"12px",
-        full: "9999px",
-      },
-
-      // ─── Spacing / Layout ──────────────────────────────────────────
-      // Source: sidebar width 240px, header height 56px, conv-panel width 300px,
-      //         info-panel width 280px, detail sidebar width 340px,
-      //         page-content padding 24px, form-card padding 24px
-      spacing: {
-        sidebar: "240px",
-        header:  "56px",
-        convPanel: "300px",
-        infoPanel: "280px",
-        detailSide: "340px",
-      },
-
-      // ─── Box Shadow ────────────────────────────────────────────────
-      // Wireframes use no box shadows — keep flat, border-only design.
-      boxShadow: {
-        none: "none",
-      },
-    },
-  },
-  plugins: [forms],
-};
-
-export default config;
+plugins: [
+  react(),
+  tailwindcss(),
+  sentryVitePlugin(...),
+]
 ```
 
-### 13.3 Global CSS Entry Point
+### 13.3 Global CSS Entry (Current)
 
-`src/index.css` — replace content with:
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+`src/index.css` is the styling entrypoint and currently:
 
-@layer base {
-  /* Match wireframe body defaults exactly */
-  body {
-    @apply font-sans text-base text-[#333] bg-page-canvas;
-  }
+- imports Google fonts (`Manrope`, `Sora`)
+- imports Tailwind with `@import 'tailwindcss';`
+- imports `tw-animate-css`
+- defines dark-mode custom variant: `@custom-variant dark (&:is(.dark *));`
+- defines design tokens in `:root`
+- maps tokens to Tailwind theme values with `@theme inline`
+- defines shared semantic classes (for example `wf-*` utility wrappers)
 
-  /* Monospace reset for ID chips */
-  .font-mono {
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  }
-}
+### 13.4 Token Strategy (Current)
 
-@layer components {
-  /* ── Sidebar ─────────────────────────────────────── */
-  .nav-item {
-    @apply flex items-center gap-[10px] px-5 py-[10px] text-base
-           text-sidebar-navText cursor-pointer border-l-[3px]
-           border-transparent transition-all duration-150;
-  }
-  .nav-item-active {
-    @apply bg-sidebar-activeBg text-white border-l-primary;
-  }
-  .nav-group-label {
-    @apply text-[10px] font-bold tracking-[1.5px] uppercase
-           text-sidebar-navGroup px-5 pt-4 pb-1.5;
-  }
+The project uses a CSS-variable-first strategy:
 
-  /* ── Status Badges ───────────────────────────────── */
-  .badge {
-    @apply inline-block px-[10px] py-[3px] rounded-2xl text-xs font-semibold;
-  }
-  .badge-pending   { @apply bg-status-pending-bg   text-status-pending-text; }
-  .badge-approved  { @apply bg-status-approved-bg  text-status-approved-text; }
-  .badge-rejected  { @apply bg-status-rejected-bg  text-status-rejected-text; }
-  .badge-forwarded { @apply bg-status-forwarded-bg text-status-forwarded-text; }
-  .badge-info-req  { @apply bg-status-infoReq-bg   text-status-infoReq-text; }
-  .badge-resolved  { @apply bg-status-resolved-bg  text-status-resolved-text; }
+1. Add/update tokens in `:root`.
+2. Expose corresponding Tailwind color/radius aliases under `@theme inline`.
+3. Consume those via utility classes in TSX and shared semantic classes in `index.css`.
 
-  /* ── ID Chips (monospace) ────────────────────────── */
-  .chip-claim {
-    @apply font-mono text-base font-semibold
-           bg-chipId-claim-bg text-chipId-claim-text
-           px-2 py-0.5 rounded;
-  }
-  .chip-reg {
-    @apply font-mono text-sm
-           bg-chipId-reg-bg text-chipId-reg-text
-           px-1.5 py-0.5 rounded;
-  }
+This repository does **not** rely on the old Tailwind v3 `@tailwind base/components/utilities` setup described previously.
 
-  /* ── Buttons ─────────────────────────────────────── */
-  .btn {
-    @apply inline-flex items-center gap-1.5 rounded-md px-[18px] py-[9px]
-           text-base font-semibold cursor-pointer transition-colors duration-150;
-  }
-  .btn-primary {
-    @apply btn bg-primary text-white border-0 hover:bg-primary-hover;
-  }
-  .btn-outline {
-    @apply btn bg-surface text-text-label border border-border hover:bg-page-body;
-  }
-  .btn-approve {
-    @apply btn w-full justify-center bg-action-approve-bg text-white border-0
-           hover:brightness-95;
-  }
-  .btn-reject {
-    @apply btn w-full justify-center bg-action-reject-bg text-action-reject-text
-           border border-action-reject-border hover:bg-action-rejectHover-bg;
-  }
-  .btn-icon {
-    @apply w-[30px] h-[30px] border border-border rounded-[5px]
-           flex items-center justify-center cursor-pointer bg-surface
-           text-xs text-text-muted hover:border-border-strong;
-  }
+### 13.5 Utility Merge Helper
 
-  /* ── Form Controls ───────────────────────────────── */
-  .form-input {
-    @apply border border-border-strong rounded-md px-3 py-[9px]
-           text-base text-text-hint bg-surface-muted
-           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
-           w-full;
-  }
-  .form-label {
-    @apply text-sm font-semibold text-text-label;
-  }
-  .form-label-required::after {
-    content: " *";
-    @apply text-danger;
-  }
+Class composition is handled by:
 
-  /* ── Table ───────────────────────────────────────── */
-  .data-table {
-    @apply w-full border-collapse bg-surface border border-border rounded-lg overflow-hidden;
-  }
-  .data-table th {
-    @apply bg-surface-muted text-xs font-bold uppercase tracking-[0.5px]
-           text-text-tableHead px-[14px] py-3 text-left border-b border-border;
-  }
-  .data-table td {
-    @apply px-[14px] py-[13px] text-base text-text-secondary
-           border-b border-border-light align-middle;
-  }
-  .data-table tbody tr:last-child td {
-    @apply border-b-0;
-  }
-
-  /* ── Cards ───────────────────────────────────────── */
-  .card {
-    @apply bg-surface border border-border rounded-lg p-5;
-  }
-  .card-title {
-    @apply text-md font-bold text-text-primary;
-  }
-
-  /* ── Stat Card ───────────────────────────────────── */
-  .stat-card {
-    @apply bg-surface border border-border rounded-lg px-5 py-[18px];
-  }
-  .stat-card-highlight-amber {
-    @apply border-l-[3px] border-l-amber;
-  }
-  .stat-card-highlight-purple {
-    @apply border-l-[3px] border-l-quality-highlight;
-  }
-  .stat-label {
-    @apply text-xs font-semibold uppercase tracking-[0.5px] text-text-muted mb-1.5;
-  }
-  .stat-value {
-    @apply text-3xl font-bold text-text-primary;
-  }
-
-  /* ── Image Upload Zone ───────────────────────────── */
-  .upload-zone {
-    @apply border-2 border-dashed border-[#d0d0d0] rounded-lg
-           p-7 text-center bg-surface-muted;
-  }
-
-  /* ── Issue Tag ───────────────────────────────────── */
-  .issue-tag {
-    @apply inline-block px-2 py-0.5 rounded text-xs bg-issue-bg text-issue-text;
-  }
-
-  /* ── Surface Tag ─────────────────────────────────── */
-  .surface-tag {
-    @apply inline-block px-2 py-0.5 rounded text-xs
-           bg-surfaceTag-bg text-surfaceTag-text mx-0.5 my-px;
-  }
+```ts
+// src/utils/utils.ts
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }
 ```
 
-### 13.4 Layout Dimensions (from Wireframes)
+### 13.6 Implementation Rules (Current)
 
-These are exact pixel values extracted from the wireframe HTML and must be used consistently:
+- Keep `src/index.css` as the styling source of truth.
+- Prefer token-backed classes over hardcoded one-off values.
+- When adding new semantic UI colors/states, update both `:root` and `@theme inline` mappings together.
+- Keep shared semantic wrappers (`wf-*` and UI component classes) in `index.css`; keep feature JSX focused on layout/state wiring.
+- Do not reintroduce legacy Tailwind v3 install/init instructions into this plan.
 
-| Element | Value | Source |
-|---|---|---|
-| Sidebar width | `240px` | `.sidebar { width: 240px }` |
-| Top header height | `56px` | `.top-header { height: 56px }` |
-| Conversation panel width | `300px` | `.conv-panel { width: 300px }` |
-| Info/right panel width | `280px` | `.info-panel { width: 280px }` |
-| Detail sidebar width | `340px` | `.detail-layout grid: 1fr 340px` |
-| Page content padding | `24px` | `.page-content { padding: 24px }` |
-| Form card padding | `24px` | `.form-card { padding: 24px }` |
-| Avatar size | `32px` | `.avatar-circle { width/height: 32px }` |
-| Logo box size | `32px` | `.logo-box { width/height: 32px }` |
-| Stat card value font | `28px` | `.stat-value { font-size: 28px }` |
-| Evidence preview height | `180px` (claims), `200px` (quality) | `.ev-preview` |
-| Screen min-height | `780px` (most), `820px` (manual reg) | `.screen-frame` |
+### 13.7 Step 13 Output
 
-### 13.5 Tailwind Equivalents for Wireframe CSS Patterns
+- Styling documentation aligned to the actual Tailwind v4 + CSS-variable implementation.
+- Old Tailwind v3 setup/config instructions removed.
+- `index.css`-driven token system established as the canonical approach for future styling work.
 
-These are direct mappings for developers — use these instead of inline styles:
-
-```
-.sidebar background #1a1a2e     → bg-sidebar-bg
-.nav-item.active bg #22223a     → bg-sidebar-activeBg
-.nav-item.active border #4a90d9 → border-l-primary
-.logo-box bg #4a90d9            → bg-primary
-.top-header bg #fff             → bg-surface
-.page-content bg #f5f5f5        → bg-page-body
-body bg #f0f0f0                 → bg-page-canvas
-.stat-card bg #fff              → bg-surface
-.data-table thead bg #fafafa    → bg-surface-muted
-.detail-field .field-label      → text-xs font-semibold uppercase tracking-[0.3px] text-text-muted
-.detail-field .field-value      → text-base text-text-secondary font-medium
-.btn-primary bg #4a90d9         → bg-primary
-.btn-approve bg #16a34a         → bg-action-approve-bg
-.btn-reject border #fca5a5      → border-action-reject-border
-.step.active bg #4a90d9         → bg-stepper-activeBg
-.step.done bg #16a34a           → bg-stepper-doneBg
-.conv-item.active bg #f0f6ff    → bg-chat-convActiveBg
-.msg-row.agent .msg-bubble      → bg-chat-agentBubble text-white
-.msg-row.customer .msg-bubble   → bg-surface border border-border
-```
-
-### 13.6 Status Badge Tailwind Components
-
-All status badges must use the pre-defined component classes. Never use arbitrary color values inline:
-
-```tsx
-// ✅ Correct
-<span className="badge badge-pending">Pending</span>
-<span className="badge badge-approved">Approved</span>
-<span className="badge badge-rejected">Rejected</span>
-<span className="badge badge-forwarded">Sent to Quality</span>
-<span className="badge badge-info-req">Info Requested</span>
-<span className="badge badge-resolved">Resolved</span>
-
-// ❌ Wrong — never do this
-<span style={{ background: '#fef3c7', color: '#b45309' }}>Pending</span>
-```
-
-Complete status-to-badge mapping for the system:
-
-| Registration Status | Badge Class |
-|---|---|
-| Pending | `badge-pending` |
-| Approved | `badge-approved` |
-| Rejected | `badge-rejected` |
-| Resubmission Requested | `badge-pending` |
-| Resubmitted | `badge-info-req` |
-
-| Claim Status | Badge Class |
-|---|---|
-| Pending Review | `badge-pending` |
-| Sent to Quality | `badge-forwarded` |
-| More Info Needed | `badge-info-req` |
-| Approved | `badge-approved` |
-| Rejected | `badge-rejected` |
-
-| Complaint Status | Badge Class |
-|---|---|
-| Open | `badge-pending` |
-| Claimed | `badge-info-req` |
-| Resolved | `badge-resolved` |
-
-### 13.7 Typography Rules (Derived from Wireframes)
-
-```
-Page title (top header)    → text-lg font-bold text-text-primary          (16px, #222)
-Section/card title         → text-md font-bold text-text-primary           (14px, #222)
-Table header               → text-xs font-bold uppercase tracking-[0.5px] text-text-tableHead
-Table cell                 → text-base text-text-secondary                 (13px, #444)
-Field label (detail view)  → text-xs font-semibold uppercase tracking-[0.3px] text-text-muted
-Field value (detail view)  → text-base font-medium text-text-secondary
-Form label                 → text-sm font-semibold text-text-label         (12px, #555)
-Form input placeholder     → text-base text-text-hint bg-surface-muted     (13px, #aaa)
-Nav item text              → text-base text-sidebar-navText                 (13px, #999)
-Nav group label            → text-[10px] font-bold uppercase tracking-[1.5px] text-sidebar-navGroup
-Stat label                 → text-xs font-semibold uppercase tracking-[0.5px] text-text-muted
-Stat value                 → text-3xl font-bold text-text-primary
-Breadcrumb                 → text-sm text-text-muted                       (12px, #999)
-Badge text                 → text-xs font-semibold                          (11px)
-Pagination info            → text-sm text-text-muted
-Avatar initials            → text-sm font-bold text-white
-```
-
-### 13.8 AppLayout Tailwind Structure
-
-Direct Tailwind translation of the wireframe layout shell:
-
-```tsx
-// AppLayout.tsx
-<div className="flex h-screen overflow-hidden">
-  {/* Sidebar: width 240px, dark bg */}
-  <aside className="w-[240px] flex-shrink-0 bg-sidebar-bg flex flex-col overflow-y-auto">
-    {/* Logo area */}
-    <div className="px-5 py-5 pb-4 border-b border-sidebar-borderColor flex items-center gap-[10px]">
-      <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center font-bold text-white text-sm">
-        DLX
-      </div>
-      <span className="text-md font-bold text-white">Dulux Assurance</span>
-    </div>
-    {/* Nav */}
-    <nav className="flex-1 py-0">
-      <p className="nav-group-label">Overview</p>
-      <NavItem to="/app/dashboard" label="Dashboard" />
-      {/* ... */}
-    </nav>
-  </aside>
-
-  {/* Main area */}
-  <div className="flex-1 flex flex-col overflow-hidden">
-    {/* Top header: height 56px, white bg */}
-    <header className="h-[56px] flex-shrink-0 bg-surface border-b border-border flex items-center px-6 gap-4">
-      <h1 className="text-lg font-bold text-text-primary">Page Title</h1>
-      {/* global search, notif, avatar */}
-    </header>
-
-    {/* Page content: gray bg, padded */}
-    <main className="flex-1 overflow-y-auto bg-page-body p-6">
-      <Outlet />
-    </main>
-  </div>
-</div>
-```
-
-### 13.9 Chat Layout Tailwind Structure
-
-```tsx
-// ChatPage.tsx — matches wireframe conv-panel + chat-panel + info-panel layout
-<div className="flex h-full bg-surface">
-  {/* Conversation list: 300px fixed width */}
-  <div className="w-[300px] flex-shrink-0 border-r border-border flex flex-col">
-    <ConversationList />
-  </div>
-
-  {/* Chat window: fills remaining space */}
-  <div className="flex-1 flex flex-col bg-chat-panelBg">
-    <ChatHeader />
-    <MessageList />
-    <ChatInput />
-  </div>
-
-  {/* Info panel: 280px fixed width */}
-  <div className="w-[280px] flex-shrink-0 border-l border-border overflow-y-auto">
-    <ContactInfo />
-  </div>
-</div>
-```
-
-### 13.10 Detail Page Tailwind Layout (Registrations / Claims / Quality)
-
-```tsx
-// DetailLayout.tsx — matches wireframe grid: 1fr 340px
-<div className="grid grid-cols-[1fr_340px] gap-6">
-  {/* Left: main content */}
-  <div>
-    <div className="card mb-5">...</div>
-    <div className="card mb-5">...</div>
-  </div>
-
-  {/* Right: action panel, 340px */}
-  <div>
-    <div className="card mb-4">...</div>
-  </div>
-</div>
-```
-
-### 13.11 Step Wizard Tailwind (Manual Registration)
-
-```tsx
-// Stepper.tsx — matches .step, .step.active, .step.done, .step-line
-<div className="flex items-center">
-  {steps.map((step, i) => (
-    <Fragment key={step.id}>
-      <div className="flex flex-col items-center gap-1">
-        <div className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 border-border-strong text-text-muted bg-surface",
-          isActive(i) && "bg-stepper-activeBg border-stepper-activeBorder text-white",
-          isDone(i)   && "bg-stepper-doneBg   border-stepper-doneBorder   text-white",
-        )}>
-          {isDone(i) ? "✓" : step.id}
-        </div>
-        <span className={cn(
-          "text-xs font-semibold text-text-muted whitespace-nowrap",
-          isActive(i) && "text-text-primary",
-          isDone(i)   && "text-stepper-doneLabel",
-        )}>
-          {step.label}
-        </span>
-      </div>
-      {i < steps.length - 1 && (
-        <div className={cn(
-          "w-10 h-0.5 mx-1.5 flex-shrink-0 bg-stepper-inactiveLine",
-          isDone(i) && "bg-stepper-doneLine",
-        )} />
-      )}
-    </Fragment>
-  ))}
-</div>
-```
-
-### 13.12 Shared UI Component Tailwind Reference
-
-#### Button
-```tsx
-// src/components/ui/Button.tsx
-type Variant = "primary" | "outline" | "approve" | "reject" | "icon";
-
-const variantClass: Record<Variant, string> = {
-  primary: "btn-primary",
-  outline: "btn-outline",
-  approve: "btn-approve",
-  reject:  "btn-reject",
-  icon:    "btn-icon",
-};
-```
-
-#### Badge
-```tsx
-// src/components/ui/Badge.tsx
-type StatusVariant = "pending" | "approved" | "rejected" | "forwarded" | "infoReq" | "resolved";
-
-const badgeClass: Record<StatusVariant, string> = {
-  pending:   "badge badge-pending",
-  approved:  "badge badge-approved",
-  rejected:  "badge badge-rejected",
-  forwarded: "badge badge-forwarded",
-  infoReq:   "badge badge-info-req",
-  resolved:  "badge badge-resolved",
-};
-```
-
-#### Input
-```tsx
-// src/components/ui/Input.tsx
-<input className="form-input" {...props} />
-```
-
-#### Table
-```tsx
-// src/components/ui/Table.tsx
-<table className="data-table">
-  <thead>...</thead>
-  <tbody>...</tbody>
-</table>
-```
-
-#### ID Chip
-```tsx
-// src/components/ui/IdChip.tsx
-type ChipType = "claim" | "reg";
-<span className={type === "claim" ? "chip-claim" : "chip-reg"}>{id}</span>
-```
-
-### 13.13 Wireframe-to-Tailwind Mapping Reference (Complete)
-
-| Wireframe CSS Pattern | Tailwind Class |
-|---|---|
-| `background: #1a1a2e` | `bg-sidebar-bg` |
-| `background: #22223a` | `bg-sidebar-activeBg` |
-| `border-left: 3px solid #4a90d9` | `border-l-[3px] border-l-primary` |
-| `background: #4a90d9` | `bg-primary` |
-| `background: #f5f5f5` | `bg-page-body` |
-| `background: #f0f0f0` | `bg-page-canvas` |
-| `background: #fff` | `bg-surface` |
-| `background: #fafafa` | `bg-surface-muted` |
-| `border: 1px solid #e0e0e0` | `border border-border` |
-| `border-bottom: 1px solid #f0f0f0` | `border-b border-border-light` |
-| `color: #222` | `text-text-primary` |
-| `color: #444` | `text-text-secondary` |
-| `color: #888` | `text-text-muted` |
-| `color: #aaa` | `text-text-hint` |
-| `color: #555` | `text-text-label` |
-| `font-size: 10px` | `text-2xs` |
-| `font-size: 11px` | `text-xs` |
-| `font-size: 12px` | `text-sm` |
-| `font-size: 13px` | `text-base` |
-| `font-size: 14px` | `text-md` |
-| `font-size: 16px` | `text-lg` |
-| `font-size: 28px` | `text-3xl` |
-| `border-radius: 4px` | `rounded-sm` |
-| `border-radius: 6px` | `rounded-md` |
-| `border-radius: 8px` | `rounded-lg` |
-| `border-radius: 10px` | `rounded-xl` |
-| `border-radius: 12px` | `rounded-2xl` |
-| `border-radius: 50%` | `rounded-full` |
-| `padding: 24px` | `p-6` |
-| `padding: 20px` | `p-5` |
-| `gap: 16px` | `gap-4` |
-| `gap: 24px` | `gap-6` |
-| `background: #fef3c7; color: #b45309` | `badge-pending` |
-| `background: #e6f9e6; color: #2e7d32` | `badge-approved` |
-| `background: #fef2f2; color: #dc2626` | `badge-rejected` |
-| `background: #f3e8ff; color: #7c3aed` | `badge-forwarded` |
-| `background: #eff6ff; color: #2563eb` | `badge-info-req` |
-| `background: #f0f0f0; color: #888` | `badge-resolved` |
-| `background: #fff3e0; color: #e65100` (monospace) | `chip-claim` |
-| `background: #f0f6ff; color: #4a90d9` (monospace) | `chip-reg` |
-| `background: #16a34a; color: #fff` | `btn-approve` |
-| `border: 1px solid #fca5a5; color: #dc2626` | `btn-reject` |
-| `background: #4a90d9; color: #fff` | `btn-primary` |
-
-### 13.14 Anti-Patterns to Avoid (Tailwind-Specific)
-
-- Never use inline `style={{ color: '#4a90d9' }}` — use `text-primary` from the config.
-- Never use Tailwind arbitrary values like `bg-[#4a90d9]` — every hex from the wireframes is tokenized in the config.
-- Never use `text-blue-500` or other default Tailwind palette colors — use only project tokens.
-- Never duplicate badge colors per-feature — always import from `src/components/ui/Badge.tsx`.
-- Never apply status colors directly in page components — always via the `badge-*` component classes.
-- Never use `font-weight: 600` or `font-weight: 700` for body/label text — wireframes use 600 only for specific UI labels; map to Tailwind `font-semibold` and `font-bold`.
-
-### 13.15 Output of Step 13
-
-- Tailwind config is complete and sourced from all 7 wireframe HTML files.
-- All colors, radii, font sizes, spacing, and layout dimensions are tokenized — no magic numbers in component files.
-- Global CSS layer defines reusable component classes aligned to wireframe patterns.
-- Status badge system is centralized and mapping is documented for all screen types.
-- Developer reference table maps every wireframe CSS pattern to its Tailwind equivalent.
-- UI component Tailwind reference is provided for Button, Badge, Input, Table, IdChip, AppLayout, ChatLayout, DetailLayout, and Stepper.
-
----
 
 ## Step 14: Wireframe Audit — Gap Analysis and Plan Updates
 
@@ -3845,36 +3028,37 @@ DateDivider.tsx            ← date separator in chat message list
 InfoPanel.tsx              ← right chat panel layout component
 ```
 
-#### Tailwind additions for Step 13 (new tokens from wireframe):
+#### Styling token additions aligned with current Step 13:
 
-```ts
-// Add to colors in tailwind.config.ts
-source: {
-  whatsapp: { bg: "#ecfdf5", text: "#16a34a" },
-  manual:   { bg: "#f0f4ff", text: "#4a6fa5" },
-},
-priority: {
-  high:   { bg: "#fef2f2", text: "#dc2626", dot: "#ef4444" },
-  normal: { bg: "#f0f0f0", text: "#666666", dot: "#22c55e" },
-  medium: { dot: "#f59e0b" },
-},
-convStatus: {
-  unassigned: { bg: "#fef3c7", text: "#b45309" },  // = cs-unassigned
-  active:     { bg: "#e6f9e6", text: "#2e7d32" },  // = cs-active
-  resolved:   { bg: "#f0f0f0", text: "#888888" },  // = cs-resolved
-},
-modal: {
-  warning: { bg: "#fef3c7", text: "#d97706" },
-  info:    { bg: "#dbeafe", text: "#2563eb" },
-  success: { bg: "#dcfce7", text: "#16a34a" },
-  purple:  { bg: "#f3e8ff", text: "#7c3aed" },
-},
-quality: {
-  roleBannerBg:     "#faf5ff",
-  roleBannerBorder: "#e9d5ff",
-  roleBannerText:   "#7c3aed",
-  roleBannerDot:    "#7c3aed",
-},
+```css
+/* Add tokens in src/index.css :root */
+--source-whatsapp-bg: #ecfdf5;
+--source-whatsapp-text: #16a34a;
+--source-manual-bg: #f0f4ff;
+--source-manual-text: #4a6fa5;
+--convStatus-unassigned-bg: #fef3c7;
+--convStatus-unassigned-text: #b45309;
+--convStatus-active-bg: #e6f9e6;
+--convStatus-active-text: #2e7d32;
+--convStatus-resolved-bg: #f0f0f0;
+--convStatus-resolved-text: #888888;
+--modal-warning-bg: #fef3c7;
+--modal-warning-text: #d97706;
+--modal-info-bg: #dbeafe;
+--modal-info-text: #2563eb;
+--modal-success-bg: #dcfce7;
+--modal-success-text: #16a34a;
+--modal-purple-bg: #f3e8ff;
+--modal-purple-text: #7c3aed;
+--quality-roleBannerBg: #faf5ff;
+--quality-roleBannerBorder: #e9d5ff;
+--quality-roleBannerText: #7c3aed;
+--quality-roleBannerDot: #7c3aed;
+
+/* Mirror mappings under @theme inline */
+--color-source-whatsapp-bg: var(--source-whatsapp-bg);
+--color-source-whatsapp-text: var(--source-whatsapp-text);
+/* ...continue for other token pairs... */
 ```
 
 New Tailwind component classes for `src/index.css`:
@@ -3955,7 +3139,6 @@ export const usePermissions = () => {
     // Admin
     canManageProducts:          role === "admin",
     canManageSurfaceTypes:      role === "admin",
-    canImportData:              role === "admin",
     canManualRegister:          role === "admin" || role === "cs",
     // canManualRegister gates the "Add Manual Registration" button visibility
     // on the Registrations list page only — it is NOT a separate route guard.
@@ -3984,13 +3167,11 @@ Support
 
 Admin
   Product Catalog
-  Data Import
-  Settings
 ```
 
 **"Complaints" is disabled in Phase 1.** The hub wireframe explicitly marks it with `disabled` class and `—` dash. Do not implement the Complaints list page in Phase 1. Show as disabled nav item.
 
-"Quality Review" has **no sidebar badge**. The route `/app/quality` is restricted to `QUALITY` role per Step 1.6. All sidebar badges that do appear use red (`#e74c3c`) background — matching `danger.DEFAULT` in the Tailwind config. The blue badge style (`#2a4a6a`/`#6ab0ff`) seen in the wireframe hub HTML is hub-only UI and must NOT be used in the real application sidebar.
+"Quality Review" has **no sidebar badge**. The route `/app/quality` is restricted to `QUALITY` role per Step 1.6. All sidebar badges that do appear use red (`#e74c3c`) background — matching the danger token set in `src/index.css`. The blue badge style (`#2a4a6a`/`#6ab0ff`) seen in the wireframe hub HTML is hub-only UI and must NOT be used in the real application sidebar.
 
 ---
 
@@ -4009,8 +3190,8 @@ Admin
 - `WSEvent` type expanded with 3 new event types from chat wireframe.
 - 12 new Zod schemas defined for all modal forms.
 - 10 new UI component primitives identified.
-- Tailwind config extended with source, priority, convStatus, modal, and quality token groups.
-- `usePermissions` hook expanded to cover all 17 action types across all roles.
+- `src/index.css` token sets extended with source, priority, conversation status, modal, and quality groups.
+- `usePermissions` hook expanded to cover action-level controls across all active roles.
 - "Complaints" nav item confirmed disabled in Phase 1.
 
 ### 14.12 API Reference Alignment Addendum (2026-04-07)
@@ -4096,37 +3277,49 @@ For product queries/mutations:
 
 ---
 
-## Step 15: Codebase Audit Status Update (2026-04-15)
+## Step 15: Codebase Audit Status Update (2026-04-15, Refreshed)
 
-This section records an evidence-based implementation audit of the current codebase.  
+This section records an evidence-based implementation audit of the current frontend codebase.
 Audit scope included routes, pages/components, hooks/data-layer, schemas/constants, and project health checks.
 
-Audit checks executed:
-- `yarn lint` ✅
-- `yarn build` ✅
-- Test file scan (`test/spec/__tests__`) -> no test files found
+Audit checks executed for this refresh:
+- Route + module scan (`src/routes`, `src/pages`, `src/components`, `src/hooks`, `src/data-layer`)
+- Critical standards checks:
+  - `usePermissions` lookup -> not found
+  - test/spec scan -> `23` unit/integration test files in `src` and `13` Playwright spec files in `e2e/specs`
+  - PR template check -> present at repository root (`/.github/pull_request_template.md`)
 
 ### 15.1 Completion Matrix (Current State)
 
 | Step | Status | Audit Result |
 | --- | --- | --- |
-| Step 1 (Routing + Access) | ⚠️ Partial | Core routes are implemented (`dashboard`, `registrations`, `claims`, `quality`, `complaints`, `products`, `manual-registration`) in `src/routes/createBrowserRouter.tsx`. `import` and `settings` placeholder routes are not wired yet. |
-| Step 2 (Structure + Ownership) | ✅ Done | Feature-aligned structure is implemented across `src/pages`, `src/components`, `src/hooks`, `src/data-layer`, `src/schemas`, `src/constants`. |
-| Step 3 (Component Tree + Data Flow) | ✅ Done | Module pages and major trees are implemented for Dashboard, Registrations, Claims, Quality, Live Chat, Products, and Manual Registration wizard. |
-| Step 4 (State Strategy) | ✅ Done | React Query + local state + scoped WebSocket state are implemented. No Redux baseline. |
-| Step 5 (API Layer + React Query) | ✅ Done | Endpoint/query-key ownership is in constants, transport is in services, and feature data access uses query/mutation hooks in data-layer. |
-| Step 6 (Forms + Validation) | ✅ Done | `react-hook-form` + Zod schema-driven forms are implemented across auth, registrations, claims, quality, products, and chat compose flows. |
-| Step 7 (Real-time Chat) | ✅ Done | Thread socket + queue socket with retry/backoff, message append, and queue updates are implemented in complaints hooks. |
-| Step 8 (UI Component Library) | ✅ Done | Shared UI primitives exist in `src/components/ui` and are used by feature modules. |
-| Step 9 (Environment Config) | ⚠️ Partial | Env usage exists, but `.env.example` is not present in repo root and should be added to satisfy standards. |
-| Step 10 (Notifications/Toasts) | ✅ Done | Success/error mutation feedback with `react-toastify` is implemented across feature mutations. |
-| Step 11 (Component-level RBAC) | ❌ Pending | Route-level guards exist, but `usePermissions` hook (component-level RBAC API described in this plan) is not implemented. |
-| Step 12 (Standards Compliance Gates) | ⚠️ Partial | Standards docs are present and lint/build pass, but required test coverage and PR template gate are not fully met yet. |
-| Step 13 (Tailwind Design System) | ✅ Done | Tailwind tokenized styling and shared design classes are implemented in current UI and `src/index.css`. |
-| Step 14 (Wireframe Gap Updates) | ⚠️ Partial | Most wireframe-aligned updates are implemented; remaining explicit gaps are listed below. |
+| Step 1 (Routing + Access) | ✅ Done | Implemented routes: auth (`login/forgot/reset`), `dashboard`, `registrations`, `claims`, `quality`, `complaints`, `manual-registration`, `products`. |
+| Step 2 (Structure + Ownership) | ✅ Done | Feature-aligned structure is implemented across `src/pages`, `src/components`, `src/hooks`, `src/data-layer`, `src/schemas`, `src/constants`, `src/types`. |
+| Step 3 (Component Tree + Data Flow) | ✅ Done | Full page trees are implemented for Dashboard, Registrations, Claims, Quality, Live Chat, Products, and Manual Registration wizard. |
+| Step 4 (State Strategy) | ✅ Done | React Query for server state + local/UI state + scoped websocket state are implemented. |
+| Step 5 (API Layer + React Query) | ✅ Done | Endpoint/query-key ownership is in constants; transport is in services; feature hooks use data-layer query/mutation modules. |
+| Step 6 (Forms + Validation) | ✅ Done | `react-hook-form` + Zod schema forms are implemented across auth, registrations, claims, quality, products, and chat compose flows. |
+| Step 7 (Real-time Chat) | ✅ Done | Thread and queue sockets are implemented with reconnect/backoff and safe thread-switch behavior. |
+| Step 8 (UI Component Library) | ✅ Done | Shared UI primitives are implemented in `src/components/ui` and reused in feature modules. |
+| Step 9 (Environment Config) | ✅ Done | Typed env parsing/config is implemented (`env.mjs`) and used by the frontend app. |
+| Step 10 (Notifications/Toasts) | ✅ Done | `react-toastify` success/error feedback is implemented across mutation workflows. |
+| Step 11 (Component-level RBAC) | ❌ Pending | Route-level RBAC exists (`PrivateRoute`, `RoleRoute`), but no `usePermissions`/action-level RBAC helper is implemented. |
+| Step 12 (Standards Compliance Gates) | ✅ Done | Standards docs are present and enforced operationally; automated tests exist and PR template is present at repository root. |
+| Step 13 (Current Styling System) | ✅ Done | Tailwind v4 + `src/index.css` token/utilities and module styling are implemented in the current codebase. |
+| Step 14 (Wireframe Gap Updates) | ⚠️ Partial | Most workflow gaps are addressed; remaining gaps are listed below and include route placeholders + RBAC-policy alignment + manual-success routing behavior. |
 
-### 15.2 Explicit "Done" Items Marked from Recent Updates
+### 15.2 Implemented Functionality Inventory (Code-Verified)
 
+- [x] Auth: login, forgot-password, reset-password flows with token-aware redirects.
+- [x] App shell: protected layout with sidebar, header actions, and role-aware route guards.
+- [x] Dashboard: module cards plus analytics charts with query-backed data hooks.
+- [x] Registrations: list filters/search/pagination + detail actions (approve/reject/resubmit/update-resubmit) + timeline panel.
+- [x] Manual Registration: 5-step route-driven wizard (`Personal -> Purchase -> Products -> Invoices -> Review`) with step validation and submission flow; successful submit redirects to registrations list.
+- [x] Claims: list filters/stats + detail action center (approve/reject/send-to-quality/CSR resubmission) + auto `SUBMITTED -> IN_REVIEW` transition.
+- [x] Quality: queue filters/stats + detail decision actions (approve/reject/request-info) + linked registration and timeline integration.
+- [x] Complaints Live Chat: queue/list/thread workspace with realtime sockets, thread-safe reconnect handling, and resolve/close flow.
+- [x] Products: product management (`list/new/edit`) with image upload/attach/remove and surface-type management (list/create/update/delete). Product delete action is intentionally not exposed in current UI.
+- [x] Audit timeline panel integration exists across detail screens.
 - [x] Registration list `Edit` flow now waits for detail fetch completion before opening the edit modal (avoids large in-modal loading experience).
 - [x] Registration edit modal close/open lifecycle stabilized to remove transition jitter (no close-time content collapse/reset).
 - [x] Shared dialog motion updated to remove zoom-in/zoom-out scale effect that caused perceived shrink on modal close.
@@ -4152,18 +3345,52 @@ Audit checks executed:
 - [x] Warranty-options over-fetching reduced: manual-products query now supports lazy enablement and selected-topcoat scoping so registration resubmission/detail flows do not prefetch basecoats for every topcoat on page open.
 - [x] Warranty card-count summary cards now render only the requested backend subset: registrations (`total_registrations`, `submitted` as `Pending`, `approved`, `rejected`), claims (`total_claims`, `submitted` as `Pending`, `approved`, `rejected`), and quality (`total_in_queue`, `qa_review`, `qa_approved`, `qa_rejected`).
 
-### 15.3 Remaining Action Items (Not Done Yet)
+### 15.3 Remaining Required Action Items
 
-- [ ] Add `Import` and `Settings` routes as placeholder pages (`<PlaceholderPage title="Coming Soon" />`) to align with Step 1/plan scope.
+- [ ] Implement component-level RBAC helper (`usePermissions`) and apply it to action-level controls.
+- [x] Align products module RBAC policy to current behavior: CS users can access Products list/create/edit.
+- [x] Keep manual registration successful submit behavior as redirect to `/registrations`; reserve `/manual-registration/success` for error/fallback handling.
 - [ ] Implement component-level RBAC helper (`usePermissions`) and wire key action-level checks.
-- [ ] Add `.env.example` with required env keys.
-- [ ] Add automated tests for critical paths (currently no test files discovered).
 
 ### 15.4 Evidence References
 
-- Routing: `src/routes/createBrowserRouter.tsx`
-- Navigation/role-driven sidebar: `src/constants/layout/navigation.ts`, `src/components/layout/Sidebar.tsx`
-- Chat architecture: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`
-- Manual registration wizard: `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
-- Audit timeline renderer: `src/components/auditLogs/AuditTimelinePanel.tsx`
-- Warranty-options data loading: `src/data-layer/registrations/queries/useGetManualRegistrationProductsQuery.ts`, `src/components/registrations/ResubmitUpdateModal.tsx`, `src/components/manualRegistration/ReviewStep.tsx`
+- Routing and guards: `src/routes/createBrowserRouter.tsx`, `src/routes/PrivateRoute.tsx`, `src/routes/RoleRoute.tsx`
+- Navigation and role visibility: `src/constants/layout/navigation.ts`, `src/components/layout/Sidebar.tsx`
+- Auth flows: `src/pages/auth/LoginPage.tsx`, `src/pages/auth/ForgotPasswordPage.tsx`, `src/pages/auth/ResetPasswordPage.tsx`
+- Dashboard: `src/pages/DashboardPage.tsx`, `src/hooks/dashboard/useDashboard.ts`
+- Registrations + wizard: `src/pages/registrations/RegistrationsListPage.tsx`, `src/pages/registrations/RegistrationDetailPage.tsx`, `src/pages/registrations/ManualStepPage.tsx`, `src/hooks/manualRegistration/useManualRegistration.ts`
+- Claims + quality: `src/pages/claims/ClaimsListPage.tsx`, `src/pages/claims/ClaimDetailPage.tsx`, `src/hooks/claims/useClaimDetail.ts`, `src/pages/quality/QualityListPage.tsx`, `src/pages/quality/QualityDetailPage.tsx`
+- Complaints realtime: `src/pages/complaints/LiveChatPage.tsx`, `src/hooks/complaints/useComplaintSocket.ts`, `src/hooks/complaints/useComplaintsQueueSocket.ts`, `src/hooks/complaints/useComplaintThread.ts`
+- Products and surface types: `src/pages/products/ProductsListPage.tsx`, `src/pages/products/ProductCreatePage.tsx`, `src/pages/products/ProductEditPage.tsx`
+- Env and standards health: `env.mjs`, `package.json`, `/.github/pull_request_template.md`
+
+### 15.5 Testing Coverage Matrix (Code-Verified)
+
+Status legend: `✅ DONE` means implemented and present in repository.
+
+- ✅ DONE: Unit tests (utility/schema-level validation and pure logic)
+  - Examples:
+    - `src/schemas/__tests__/authQualityComplaintsSchemas.unit.test.ts`
+    - `src/hooks/dashboard/__tests__/dashboardHelpers.test.ts`
+- ✅ DONE: Hook integration tests (custom hooks with mocked data/API dependencies)
+  - Examples:
+    - `src/hooks/auth/__tests__/authHooks.integration.test.tsx`
+    - `src/hooks/complaints/__tests__/useComplaintThread.integration.test.tsx`
+    - `src/hooks/quality/__tests__/qualityHooks.integration.test.tsx`
+- ✅ DONE: UI/component tests (component rendering/interaction behavior)
+  - Examples:
+    - `src/components/dashboard/__tests__/DashboardGrid.test.tsx`
+- ✅ DONE: Page-level integration tests (route-page behavior, filters, modals, navigation, error states)
+  - Examples:
+    - `src/pages/claims/__tests__/ClaimsListPage.test.tsx`
+    - `src/pages/registrations/__tests__/RegistrationsListPage.test.tsx`
+    - `src/pages/complaints/__tests__/LiveChatPage.test.tsx`
+- ✅ DONE: End-to-end tests (Playwright smoke/full/live suites)
+  - Examples:
+    - `e2e/specs/full/auth.spec.ts`
+    - `e2e/specs/full/resilience.spec.ts`
+    - `e2e/specs/smoke/routing-rbac.smoke.spec.ts`
+    - `e2e/specs/live/live-critical.spec.ts`
+
+Latest non-E2E verification snapshot:
+- ✅ DONE: `vitest run` passed (`23` files, `83` tests).

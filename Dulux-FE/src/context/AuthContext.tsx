@@ -51,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={{ token, refreshToken, user, logout, login }}>{children}</AuthContext.Provider>;
 }
 
-export const useAuthContext = () => {
+export const useAuthContext = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuthContext must be used within an AuthProvider');
   return context;

@@ -9,8 +9,6 @@ export const APP_NAVIGATION_ITEMS: AppNavigationItem[] = [
   { label: 'Live Chat', path: ROUTES.COMPLAINTS, headerTitle: 'Live Chat' },
   { label: 'Quality Review', path: ROUTES.QUALITY, headerTitle: 'Quality Review' },
   { label: 'Product Catalog', path: ROUTES.PRODUCTS, headerTitle: 'Product Catalog' },
-  { label: 'Import Data', path: ROUTES.IMPORT, headerTitle: 'Import Data' },
-  { label: 'Settings', path: ROUTES.SETTINGS, headerTitle: 'Settings' },
 ];
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [

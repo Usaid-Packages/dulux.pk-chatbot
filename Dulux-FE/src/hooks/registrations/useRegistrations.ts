@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 
 import { queryKeys, REGISTRATION_TAB_TO_STATUS } from '#/constants';
 import { getRegistrationCardCounts, useGetRegistrationsQuery } from '#/data-layer/registrations';
+import { useUrlFilters } from '#/hooks/common/useUrlFilters';
 import { useDebouncedValue } from '#/hooks/useDebouncedValue';
 import { registrationFilterTabs } from '#/types/registrations';
 import type {
@@ -63,7 +63,7 @@ export interface UseRegistrationsResult {
  * @returns Registrations list state, actions, and query results.
  */
 export const useRegistrations = (): UseRegistrationsResult => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setPage, setFilterParam } = useUrlFilters({ defaultPage: DEFAULT_PAGE });
 
   const activeTabParam = searchParams.get('tab');
   const activeTab = isRegistrationFilterTab(activeTabParam) ? activeTabParam : DEFAULT_TAB;
@@ -102,53 +102,26 @@ export const useRegistrations = (): UseRegistrationsResult => {
   };
 
   const handleSearchChange = (value: string): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      if (value.length > 0) {
-        nextParams.set('search', value);
-      } else {
-        nextParams.delete('search');
-      }
-      nextParams.set('page', String(DEFAULT_PAGE));
-      return nextParams;
-    });
+    setFilterParam('search', value);
   };
 
   const handleStatusChange = (value: RegistrationStatus | 'ALL'): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('status', value);
-      nextParams.set('page', String(DEFAULT_PAGE));
-      return nextParams;
-    });
+    setFilterParam('status', value, { removeWhenEmpty: false });
   };
 
   const handleTabChange = (tab: RegistrationFilterTab): void => {
-    setSearchParams(previous => {
-      const nextParams = new URLSearchParams(previous);
-      nextParams.set('tab', tab);
-      nextParams.set('page', String(DEFAULT_PAGE));
-      return nextParams;
-    });
+    setFilterParam('tab', tab, { removeWhenEmpty: false });
   };
 
   const goToNextPage = (): void => {
     if (queryResult.data?.next) {
-      setSearchParams(previous => {
-        const nextParams = new URLSearchParams(previous);
-        nextParams.set('page', String(currentPage + 1));
-        return nextParams;
-      });
+      setPage(currentPage + 1);
     }
   };
 
   const goToPreviousPage = (): void => {
     if (currentPage > DEFAULT_PAGE) {
-      setSearchParams(previous => {
-        const nextParams = new URLSearchParams(previous);
-        nextParams.set('page', String(currentPage - 1));
-        return nextParams;
-      });
+      setPage(currentPage - 1);
     }
   };
 
