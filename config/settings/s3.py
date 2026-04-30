@@ -30,6 +30,10 @@ AWS_S3_CUSTOM_DOMAIN = config(
     "DIGITALOCEAN_SPACES_CUSTOM_DOMAIN",
     default=f"{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com",
 )
+
+# Signed URL lifetime for private media. Frontend should treat these URLs as short-lived and
+# request fresh URLs when needed.
+AWS_QUERYSTRING_EXPIRE = config("DIGITALOCEAN_SPACES_URL_EXPIRE_SECS", cast=int, default=3600)
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=86400",
 }

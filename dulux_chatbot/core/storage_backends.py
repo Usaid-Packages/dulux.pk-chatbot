@@ -14,6 +14,9 @@ class MediaStorage(S3Boto3Storage):
     location = settings.AWS_MEDIA_LOCATION
     default_acl = "private"
     file_overwrite = False
-    # Private media uses signed URLs (required for WhatsApp/FE access).
-    custom_domain = getattr(settings, "AWS_S3_CUSTOM_DOMAIN", None) or None
+    # Private media must use signed URLs.
+    # Important: When `custom_domain` is set, django-storages will return an unsigned CDN-style URL,
+    # which results in `AccessDenied` for private objects. Keep this unset so boto3 generates a
+    # presigned URL against the Spaces endpoint.
+    custom_domain = None
     querystring_auth = True
