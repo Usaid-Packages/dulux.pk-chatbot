@@ -63,6 +63,48 @@ const createValues = (overrides?: Partial<ResubmitUpdateFormValues>): ResubmitUp
 });
 
 describe('buildResubmitUpdatePayload', () => {
+  it('omits paintPairs payload when no new paint pair is provided', () => {
+    const payload = buildResubmitUpdatePayload(
+      createRegistrationDetail(),
+      createValues({
+        paintPairs: [],
+      })
+    );
+
+    expect(payload.paintPairs).toBeUndefined();
+  });
+
+  it('ignores fully empty paint pair rows in payload shaping', () => {
+    const payload = buildResubmitUpdatePayload(
+      createRegistrationDetail(),
+      createValues({
+        paintPairs: [
+          {
+            selectionType: '',
+            topcoatId: '',
+            topcoatQuantity: '',
+            basecoatId: '',
+            basecoatQuantity: '',
+          },
+          {
+            selectionType: 'TOPCOAT',
+            topcoatId: '123',
+            topcoatQuantity: '10.00',
+            basecoatId: '',
+            basecoatQuantity: '',
+          },
+        ],
+      })
+    );
+
+    expect(payload.paintPairs).toEqual([
+      {
+        topcoat: 123,
+        topcoatQuantity: '10.00',
+      },
+    ]);
+  });
+
   it('omits basecoat fields when no basecoat product id is selected', () => {
     const payload = buildResubmitUpdatePayload(createRegistrationDetail(), createValues());
     expect(payload.paintPairs).toEqual([

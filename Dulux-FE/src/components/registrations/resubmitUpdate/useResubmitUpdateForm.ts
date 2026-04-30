@@ -100,15 +100,7 @@ export const useResubmitUpdateForm = ({
       purchaseDealerCity: registration.purchaseDealerCity,
       purchaseDealerAddress: registration.purchaseDealerAddress,
       postalCode: registration.postalCode,
-      paintPairs: [
-        {
-          selectionType: '',
-          topcoatId: '',
-          topcoatQuantity: '',
-          basecoatId: '',
-          basecoatQuantity: '',
-        },
-      ],
+      paintPairs: [],
       invoiceFiles: [],
     };
   }, [registration]);
