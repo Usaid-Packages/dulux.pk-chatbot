@@ -100,21 +100,43 @@ test.describe('@critical claims phase2 (admin)', () => {
         return;
       }
 
-      const response = await route.fetch();
-      const claimDetail = (await response.json()) as Record<string, unknown>;
-      claimDetail.state = 'QA_APPROVED';
-
       await route.fulfill({
-        response,
-        body: JSON.stringify(claimDetail),
-        headers: {
-          ...response.headers(),
-          'content-type': 'application/json',
-        },
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: 205,
+          claim_number: 'CLM-205',
+          issue_type: 'FADING',
+          state: 'QA_APPROVED',
+          notes: 'Color tone variation after drying.',
+          claim_date: '2026-04-22T11:00:00Z',
+          created: '2026-04-22T11:00:00Z',
+          modified: '2026-04-22T11:15:00Z',
+          approved_by: 'CS Team',
+          approved_at: '2026-04-22T11:15:00Z',
+          affected_area_sqft: '120',
+          city: 'Lahore',
+          registration: {
+            id: 1205,
+            registration_code: 'REG-105',
+            customer_name: 'Kamran Malik',
+            phone_number: '03001234567',
+            purchase_date: '2026-01-03',
+            purchase_dealer: 'Paint Hub',
+            state: 'SUBMITTED',
+            city: 'Lahore',
+          },
+          paint_pair: {
+            topcoat_name: 'Dulux Protect Plus',
+          },
+          images: [],
+          latest_resubmission: null,
+        }),
       });
     });
 
     await page.goto('claims/205');
+    await expect(page.getByRole('button', { name: 'Final Approve' })).toBeVisible();
     await page.getByRole('button', { name: 'Final Approve' }).click();
     await expect(page.getByRole('dialog', { name: 'Final Approve Claim' })).toBeVisible();
     await expect(page.getByLabel('Voucher File *')).toHaveAttribute('accept', '.pdf');
