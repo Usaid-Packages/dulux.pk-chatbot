@@ -517,7 +517,7 @@ export const ResubmitUpdatePaintPairsSection = ({
             isPaintProductsError={isPaintProductsError}
             paintProductsErrorMessage={paintProductsErrorMessage}
             onRemovePaintPair={onRemovePaintPair}
-            isRemoveDisabled={paintPairRows.length === 1}
+            isRemoveDisabled={false}
           />
         ))}
       </div>

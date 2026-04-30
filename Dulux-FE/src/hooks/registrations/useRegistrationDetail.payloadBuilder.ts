@@ -41,6 +41,16 @@ export interface UpdateResubmitRegistrationMutationPayload {
   invoiceFiles: File[];
 }
 
+const isEmptyResubmitPaintPairInput = (paintPair: ResubmitUpdateFormValues['paintPairs'][number]): boolean => {
+  return (
+    paintPair.selectionType.trim().length === 0 &&
+    paintPair.topcoatId.trim().length === 0 &&
+    paintPair.topcoatQuantity.trim().length === 0 &&
+    paintPair.basecoatId.trim().length === 0 &&
+    paintPair.basecoatQuantity.trim().length === 0
+  );
+};
+
 const toIntegerOrNull = (value: string): number | null => {
   const normalizedValue = value.trim();
   if (!normalizedValue) {
@@ -108,27 +118,33 @@ export const buildResubmitUpdatePayload = (
   }
 
   if (requestedFieldNames.has('paint_pairs')) {
-    payload.paintPairs = values.paintPairs.map(paintPair => {
-      const topcoat = toIntegerOrNull(paintPair.topcoatId);
-      if (!topcoat) {
-        throw new Error('Topcoat product is required for every paint pair.');
-      }
+    const nextPaintPairs = values.paintPairs
+      .filter(paintPair => !isEmptyResubmitPaintPairInput(paintPair))
+      .map(paintPair => {
+        const topcoat = toIntegerOrNull(paintPair.topcoatId);
+        if (!topcoat) {
+          throw new Error('Topcoat product is required for every paint pair.');
+        }
 
-      const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
-      const basecoat = toIntegerOrNull(paintPair.basecoatId);
-      const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
+        const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
+        const basecoat = toIntegerOrNull(paintPair.basecoatId);
+        const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
 
-      return {
-        topcoat,
-        topcoatQuantity: paintPair.topcoatQuantity.trim(),
-        ...(!isSpecialistSelection && basecoat
-          ? {
-              basecoat,
-              ...(normalizedBasecoatQuantity ? { basecoatQuantity: normalizedBasecoatQuantity } : {}),
-            }
-          : {}),
-      };
-    });
+        return {
+          topcoat,
+          topcoatQuantity: paintPair.topcoatQuantity.trim(),
+          ...(!isSpecialistSelection && basecoat
+            ? {
+                basecoat,
+                ...(normalizedBasecoatQuantity ? { basecoatQuantity: normalizedBasecoatQuantity } : {}),
+              }
+            : {}),
+        };
+      });
+
+    if (nextPaintPairs.length > 0) {
+      payload.paintPairs = nextPaintPairs;
+    }
   }
 
   if (requestedFieldNames.has('paint_pair_invoices')) {
