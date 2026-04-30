@@ -77,6 +77,12 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 14:32 - Add Product payload used sentinel `basecoats: [0]` for non-topcoat types
+
+- Issue: Payload mapper forced `basecoats: [0]` for `BASECOAT`/`SPECIALIST`, which leaked an invalid ID into create requests.
+- Fix: Updated mapper to send `basecoats: []` for non-topcoat types and sanitize topcoat `basecoatIds` to positive integers only.
+- Rule: Never use sentinel IDs in API payloads for "no relation"; use explicit empty arrays and sanitize outgoing ID lists.
+
 ### 2026-04-30 14:18 - Runtime `ReferenceError` from fragile constant dependency in product type label helper
 
 - Issue: `PRODUCT_TYPES` reference became unstable during iterative refactors in `ProductFormCoreFieldsSection`, causing runtime `ReferenceError` in product form rendering.

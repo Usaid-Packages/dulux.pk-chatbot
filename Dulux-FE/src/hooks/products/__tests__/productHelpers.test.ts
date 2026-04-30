@@ -27,23 +27,33 @@ describe('mapProductFormValuesToPayload', () => {
     expect(payload.basecoats).toEqual([10, 11]);
   });
 
-  it('defaults basecoat products to basecoats [0]', () => {
+  it('sends empty basecoats for basecoat products', () => {
     const payload = mapProductFormValuesToPayload({
       ...BASE_FORM_VALUES,
       productType: PRODUCT_TYPES.BASECOAT,
       basecoatIds: [],
     });
 
-    expect(payload.basecoats).toEqual([0]);
+    expect(payload.basecoats).toEqual([]);
   });
 
-  it('defaults specialist products to basecoats [0]', () => {
+  it('sends empty basecoats for specialist products', () => {
     const payload = mapProductFormValuesToPayload({
       ...BASE_FORM_VALUES,
       productType: PRODUCT_TYPES.SPECIALIST,
       basecoatIds: [10],
     });
 
-    expect(payload.basecoats).toEqual([0]);
+    expect(payload.basecoats).toEqual([]);
+  });
+
+  it('filters out invalid topcoat basecoat ids like 0', () => {
+    const payload = mapProductFormValuesToPayload({
+      ...BASE_FORM_VALUES,
+      productType: PRODUCT_TYPES.TOPCOAT,
+      basecoatIds: [10, 0, 11],
+    });
+
+    expect(payload.basecoats).toEqual([10, 11]);
   });
 });
