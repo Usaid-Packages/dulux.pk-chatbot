@@ -31,7 +31,7 @@ secrets        := . /secrets/app.env &&
 	@$($*_compose) restart
 
 %.secret.reload:
-	@$($*_compose) restart django celery celery_beat flower
+	@$($*_compose) restart django celery celery_beat flower daphne
 
 %.secrets.wait:
 	@$($*_compose) up -d infisical-agent
