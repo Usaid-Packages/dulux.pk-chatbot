@@ -196,14 +196,14 @@ test.describe('@critical registrations phase2', () => {
 
     const detailPage = new RegistrationDetailPage(page);
     await detailPage.goto('999');
-    await page.getByRole('button', { name: 'Request Resubmission' }).click();
+    await page.getByRole('button', { name: 'Submit Resubmission Changes' }).click();
     await expect(page.getByRole('dialog', { name: 'Submit Resubmission Changes' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Specialized Coat' }).first().click();
-    await expect(page.getByText('Specialist Product')).toBeVisible();
+    await expect(page.getByText('Specialist Product', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Topcoat + Basecoat' }).first().click();
-    await expect(page.getByText('Basecoat Product (optional)')).toBeVisible();
+    await expect(page.getByText('Basecoat Product (optional)', { exact: true })).toBeVisible();
   });
 });
 

@@ -100,6 +100,7 @@ export const ResubmitUpdateModal = ({
               control={control}
               register={register}
               setValue={setValue}
+              clearErrors={clearErrors}
               errors={errors}
               paintPairRows={paintPairRows}
               topcoatOptions={topcoatOptions}

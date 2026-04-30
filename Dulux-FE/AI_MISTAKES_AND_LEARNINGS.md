@@ -77,6 +77,18 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 13:35 - E2E used stale action label for RESUBMIT registration detail
+
+- Issue: `REG-DET-005` attempted to click `Request Resubmission` even when mocked registration state was `RESUBMIT`, where UI correctly shows `Submit Resubmission Changes`.
+- Fix: Updated the test to use the state-appropriate button label for `RESUBMIT` detail flows.
+- Rule: In E2E for state-driven action centers, selectors must match state-dependent labels (or assert state first) to avoid false timeout failures.
+
+### 2026-04-30 14:05 - Resubmit update modal missed `clearErrors` prop wiring
+
+- Issue: `ResubmitUpdatePaintPairsSection` expected `clearErrors` but `ResubmitUpdateModal` did not pass it, causing runtime `TypeError: clearErrors is not a function` when switching paint type modes.
+- Fix: Passed `clearErrors` from `useResubmitUpdateForm` into `ResubmitUpdatePaintPairsSection`.
+- Rule: When section props include form helpers (`setValue`, `clearErrors`, etc.), verify every required helper is passed through modal/page composition to avoid runtime failures hidden from unit tests.
+
 ### 2026-04-30 10:40 - Dropdown bottom-check caused auto pagination loop in Submit modal
 
 - Issue: Submit Registration topcoat/basecoat dropdown `onScroll` could treat initial open state as "bottom reached" and repeatedly fetch pages until `next=null`.
