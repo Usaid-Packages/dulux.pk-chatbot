@@ -4,8 +4,8 @@ from decouple import config
 """
 DigitalOcean Spaces (S3-compatible) storage settings.
 
-We keep the standard `django-storages` setting names (AWS_*) so the S3 backend
-works without customization, but we also accept Spaces-style env vars.
+We keep the standard `django-storages` Django setting names (AWS_*) so the S3 backend
+works without customization, but we ONLY read DigitalOcean env vars (DIGITALOCEAN_SPACES_*).
 
 Supported env vars (preferred):
 - DIGITALOCEAN_SPACES_ACCESS_KEY
@@ -14,55 +14,21 @@ Supported env vars (preferred):
 - DIGITALOCEAN_SPACES_BUCKET_NAME
 - DIGITALOCEAN_SPACES_ENDPOINT_URL (optional; default derived from region)
 - DIGITALOCEAN_SPACES_CUSTOM_DOMAIN (optional; e.g. CDN domain or "{bucket}.{region}.digitaloceanspaces.com")
-
-Backwards compatible env vars (legacy):
-- SPACES_ACCESS_KEY / SPACES_SECRET_KEY / SPACES_REGION / SPACES_BUCKET_NAME / SPACES_ENDPOINT_URL / SPACES_CUSTOM_DOMAIN
-- AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_S3_ACCESS_KEY_ID / AWS_S3_SECRET_ACCESS_KEY
-- AWS_S3_REGION_NAME / AWS_STORAGE_BUCKET_NAME / AWS_S3_ENDPOINT_URL / AWS_S3_CUSTOM_DOMAIN
 """
 
-AWS_ACCESS_KEY_ID = config(
-    "DIGITALOCEAN_SPACES_ACCESS_KEY",
-    default=config(
-        "SPACES_ACCESS_KEY", default=config("AWS_ACCESS_KEY_ID", default=config("AWS_S3_ACCESS_KEY_ID", default=""))
-    ),
-)
-AWS_SECRET_ACCESS_KEY = config(
-    "DIGITALOCEAN_SPACES_SECRET_KEY",
-    default=config(
-        "SPACES_SECRET_KEY",
-        default=config("AWS_SECRET_ACCESS_KEY", default=config("AWS_S3_SECRET_ACCESS_KEY", default="")),
-    ),
-)
+AWS_ACCESS_KEY_ID = config("DIGITALOCEAN_SPACES_ACCESS_KEY")
+AWS_SECRET_ACCESS_KEY = config("DIGITALOCEAN_SPACES_SECRET_KEY")
 
-AWS_S3_REGION_NAME = config(
-    "DIGITALOCEAN_SPACES_REGION",
-    default=config("SPACES_REGION", default=config("AWS_S3_REGION_NAME", default="")),
-)
-AWS_STORAGE_BUCKET_NAME = config(
-    "DIGITALOCEAN_SPACES_BUCKET_NAME",
-    default=config("SPACES_BUCKET_NAME", default=config("AWS_STORAGE_BUCKET_NAME", default="")),
-)
+AWS_S3_REGION_NAME = config("DIGITALOCEAN_SPACES_REGION")
+AWS_STORAGE_BUCKET_NAME = config("DIGITALOCEAN_SPACES_BUCKET_NAME")
 
 AWS_S3_ENDPOINT_URL = config(
     "DIGITALOCEAN_SPACES_ENDPOINT_URL",
-    default=config(
-        "SPACES_ENDPOINT_URL",
-        "AWS_S3_ENDPOINT_URL",
-        default=(f"https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com" if AWS_S3_REGION_NAME else ""),
-    ),
+    default=f"https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com",
 )
 AWS_S3_CUSTOM_DOMAIN = config(
     "DIGITALOCEAN_SPACES_CUSTOM_DOMAIN",
-    default=config(
-        "SPACES_CUSTOM_DOMAIN",
-        "AWS_S3_CUSTOM_DOMAIN",
-        default=(
-            f"{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com"
-            if AWS_STORAGE_BUCKET_NAME and AWS_S3_REGION_NAME
-            else ""
-        ),
-    ),
+    default=f"{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com",
 )
 AWS_S3_OBJECT_PARAMETERS = {
     "CacheControl": "max-age=86400",
