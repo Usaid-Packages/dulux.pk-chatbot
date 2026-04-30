@@ -31,7 +31,12 @@ export const isProductTab = (value: string | null): value is ProductTab => {
 };
 
 export const isProductTypeFilter = (value: string | null): value is ProductTypeFilter => {
-  return value === PRODUCTS_LIST_FILTER_ALL || value === PRODUCT_TYPES.TOPCOAT || value === PRODUCT_TYPES.BASECOAT;
+  return (
+    value === PRODUCTS_LIST_FILTER_ALL ||
+    value === PRODUCT_TYPES.TOPCOAT ||
+    value === PRODUCT_TYPES.BASECOAT ||
+    value === PRODUCT_TYPES.SPECIALIST
+  );
 };
 
 export const isProductStatusFilter = (value: string | null): value is ProductStatusFilter => {

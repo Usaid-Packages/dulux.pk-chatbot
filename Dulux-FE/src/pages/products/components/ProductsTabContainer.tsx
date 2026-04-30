@@ -86,6 +86,7 @@ export const ProductsTabContainer = ({
             <SelectItem value={PRODUCTS_LIST_FILTER_ALL}>Type: All</SelectItem>
             <SelectItem value={PRODUCT_TYPES.TOPCOAT}>Topcoat</SelectItem>
             <SelectItem value={PRODUCT_TYPES.BASECOAT}>Basecoat</SelectItem>
+            <SelectItem value={PRODUCT_TYPES.SPECIALIST}>Specialist</SelectItem>
           </SelectContent>
         </Select>
         <Select value={productStatusFilter} onValueChange={onProductStatusFilterChange}>
