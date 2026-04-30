@@ -62,7 +62,6 @@ vi.mock('../components', () => ({
     hasNextPage: boolean;
     isError: boolean;
     isLoading: boolean;
-    linkedProductCountMap: Record<number, number>;
     onNextPage: () => void;
     onOpenCreateSurfaceTypeModal: () => void;
     onOpenDeleteSurfaceTypeModal: (surfaceType: {

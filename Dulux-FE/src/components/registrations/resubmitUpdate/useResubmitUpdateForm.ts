@@ -147,6 +147,9 @@ export const useResubmitUpdateForm = ({
   const manualProductsQuery = useGetManualRegistrationProductsQuery({
     enabled: shouldLoadPaintOptions,
     basecoatTopcoatIds: selectedTopcoatIds,
+    fetchBasecoatsWhenNoTopcoatIds: false,
+    fetchTopcoatProducts: false,
+    fetchSpecialistProducts: false,
   });
 
   const topcoatProducts = useMemo<ManualRegistrationProductOption[]>(() => {
@@ -203,16 +206,6 @@ export const useResubmitUpdateForm = ({
     return optionsByTopcoatId;
   }, [basecoatOptionsByTopcoatId]);
 
-  const basecoatIdSetByTopcoatId = useMemo<ReadonlyMap<string, ReadonlySet<string>>>(() => {
-    const idSetByTopcoatId = new Map<string, ReadonlySet<string>>();
-
-    basecoatOptionsByTopcoatId.forEach((options, topcoatId) => {
-      idSetByTopcoatId.set(topcoatId, new Set(options.map(option => option.id)));
-    });
-
-    return idSetByTopcoatId;
-  }, [basecoatOptionsByTopcoatId]);
-
   const paintPairRows = useMemo<ResubmitUpdatePaintPairRowViewModel[]>(() => {
     return fields.map((field, index) => {
       const selectedTopcoatId = watchedPaintPairs[index]?.topcoatId?.trim() ?? '';
@@ -238,24 +231,6 @@ export const useResubmitUpdateForm = ({
       setValue('phoneNumber', '92', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
     }
   }, [getValues, setValue]);
-
-  useEffect(() => {
-    watchedPaintPairs.forEach((paintPair, index) => {
-      const selectedTopcoatId = paintPair.topcoatId.trim();
-      const selectedBasecoatId = paintPair.basecoatId.trim();
-
-      if (!selectedTopcoatId || !selectedBasecoatId) {
-        return;
-      }
-
-      const linkedBasecoatIds = basecoatIdSetByTopcoatId.get(selectedTopcoatId) ?? new Set<string>();
-
-      if (!linkedBasecoatIds.has(selectedBasecoatId)) {
-        setValue(`paintPairs.${index}.basecoatId`, '', { shouldValidate: true });
-        setValue(`paintPairs.${index}.basecoatQuantity`, '', { shouldValidate: true });
-      }
-    });
-  }, [basecoatIdSetByTopcoatId, setValue, watchedPaintPairs]);
 
   const phoneNumberField = register('phoneNumber');
   const cityField = register('city');

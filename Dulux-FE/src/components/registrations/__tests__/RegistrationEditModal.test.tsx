@@ -8,12 +8,33 @@ import type { RegistrationDetail } from '#/types/registrations';
 vi.mock('#/data-layer/registrations', () => ({
   useGetManualRegistrationProductsQuery: () => ({
     data: {
-      topcoatProducts: [
-        { id: '90', label: 'Special LIME TWIST paint', productType: 'SPECIALIST' },
-        { id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' },
-      ],
+      topcoatProducts: [],
+      basecoatProductsByTopcoatId: {},
     },
   }),
+  useGetManualRegistrationProductOptionsInfiniteQuery: (productType: string) => {
+    if (productType === 'SPECIALIST') {
+      return {
+        options: [{ id: '90', label: 'Special LIME TWIST paint', productType: 'SPECIALIST' }],
+        hasNextPage: false,
+        isLoading: false,
+        isError: false,
+        isFetchingNextPage: false,
+        error: null,
+        fetchNextPage: vi.fn(),
+      };
+    }
+
+    return {
+      options: [{ id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' }],
+      hasNextPage: false,
+      isLoading: false,
+      isError: false,
+      isFetchingNextPage: false,
+      error: null,
+      fetchNextPage: vi.fn(),
+    };
+  },
 }));
 
 const buildRegistration = (): RegistrationDetail =>

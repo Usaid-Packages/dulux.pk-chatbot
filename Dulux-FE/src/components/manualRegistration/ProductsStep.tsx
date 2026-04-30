@@ -200,7 +200,7 @@ const PairFields = ({
                   <SelectTrigger aria-label='Select specialist product'>
                     <SelectValue placeholder='Select specialist product' />
                   </SelectTrigger>
-                  <SelectContent onScroll={onSpecialistScroll}>
+                  <SelectContent className='max-h-64' onScroll={onSpecialistScroll}>
                     {isSpecialistLoading ? (
                       <SelectItem value='__loading_specialists' disabled>
                         Loading specialist products...
@@ -257,7 +257,7 @@ const PairFields = ({
                   <SelectTrigger aria-label='Select topcoat product'>
                     <SelectValue placeholder={UI_TEXT.SELECT_TOPCOAT_PRODUCT_PLACEHOLDER} />
                   </SelectTrigger>
-                  <SelectContent onScroll={onTopcoatScroll}>
+                  <SelectContent className='max-h-64' onScroll={onTopcoatScroll}>
                     {topcoatProducts.map(product => (
                       <SelectItem key={product.id} value={product.id}>
                         {getProductOptionLabel(product)}
@@ -304,7 +304,7 @@ const PairFields = ({
                   <SelectTrigger aria-label='Select basecoat product'>
                     <SelectValue placeholder={UI_TEXT.SELECT_BASECOAT_PRODUCT_PLACEHOLDER} />
                   </SelectTrigger>
-                  <SelectContent onScroll={handleBasecoatScroll}>
+                  <SelectContent className='max-h-64' onScroll={handleBasecoatScroll}>
                     {!selectedTopcoat ? (
                       <SelectItem value='__topcoat_first' disabled>
                         {UI_TEXT.SELECT_A_TOPCOAT_FIRST}

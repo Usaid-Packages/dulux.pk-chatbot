@@ -192,6 +192,11 @@ export const useProductFormAdapter = ({
   };
 
   const handleFormSubmit = (values: ProductFormSchemaValues): void => {
+    if (!selectedImageFile && initialImages.length === 0) {
+      setImageValidationError('Product image is required.');
+      return;
+    }
+
     onSubmit({
       values,
       imageFile: selectedImageFile,

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ChangeEvent, FocusEvent, JSX, MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, FocusEvent, JSX, MouseEvent as ReactMouseEvent, UIEvent } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO, subDays } from 'date-fns';
@@ -24,7 +24,7 @@ import {
 import { Calendar } from '#/components/ui/Calendar';
 import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SIZE_BYTES } from '#/constants';
 import { REGISTRATION_PRODUCT_TYPES } from '#/constants/registrations';
-import { useGetManualRegistrationProductsQuery } from '#/data-layer/registrations';
+import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-layer/registrations';
 import { registrationEditSchema, type RegistrationEditFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail } from '#/types/registrations';
@@ -46,6 +46,7 @@ const DEALER_CITY_MAX_LENGTH = 80;
 const DEALER_ADDRESS_MAX_LENGTH = 180;
 const NO_BASECOAT_VALUE = '__none__';
 const EDIT_MODAL_BODY_MIN_HEIGHT_CLASS = 'min-h-[620px]';
+const SCROLL_BOTTOM_THRESHOLD_PX = 24;
 
 const parsePurchaseDate = (value: string): Date | undefined => {
   if (!value) {
@@ -91,6 +92,110 @@ const mergeUniqueProductOptions = (
   });
 
   return Array.from(optionMap.values());
+};
+
+interface BasecoatSelectFieldProps {
+  control: ReturnType<typeof useForm<RegistrationEditFormValues>>['control'];
+  index: number;
+  selectedTopcoatId: string;
+  isDisabled: boolean;
+  registrationFallbackOptions: ManualRegistrationProductOption[];
+  setValue: ReturnType<typeof useForm<RegistrationEditFormValues>>['setValue'];
+}
+
+const BasecoatSelectField = ({
+  control,
+  index,
+  selectedTopcoatId,
+  isDisabled,
+  registrationFallbackOptions,
+  setValue,
+}: BasecoatSelectFieldProps): JSX.Element => {
+  const basecoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+    REGISTRATION_PRODUCT_TYPES.BASECOAT,
+    selectedTopcoatId,
+    { enabled: selectedTopcoatId.trim().length > 0 }
+  );
+  const availableBasecoats = mergeUniqueProductOptions(basecoatQuery.options, registrationFallbackOptions);
+  const isSelectDisabled = isDisabled || !selectedTopcoatId || basecoatQuery.isLoading;
+  const handleBasecoatScroll = useCallback(
+    (event: UIEvent<HTMLDivElement>): void => {
+      const scrollTarget = event.currentTarget;
+      const reachedBottom =
+        scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+      if (!reachedBottom || !basecoatQuery.hasNextPage || basecoatQuery.isFetchingNextPage) {
+        return;
+      }
+
+      void basecoatQuery.fetchNextPage();
+    },
+    [basecoatQuery]
+  );
+
+  return (
+    <Controller
+      control={control}
+      name={`paintPairs.${index}.basecoatId`}
+      render={({ field: basecoatField }) => (
+        <Select
+          value={basecoatField.value || NO_BASECOAT_VALUE}
+          onValueChange={value => {
+            const normalizedValue = value === NO_BASECOAT_VALUE ? '' : value;
+            basecoatField.onChange(normalizedValue);
+            if (!normalizedValue) {
+              setValue(`paintPairs.${index}.basecoatQuantity`, '', {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true,
+              });
+            }
+          }}
+          disabled={isSelectDisabled}
+        >
+          <SelectTrigger aria-label='Select basecoat product' className='rounded-xl border-primary/20 bg-white'>
+            <SelectValue placeholder='Select basecoat' />
+          </SelectTrigger>
+          <SelectContent className='max-h-64' onScroll={handleBasecoatScroll}>
+            {!selectedTopcoatId ? (
+              <SelectItem value='__topcoat_first' disabled>
+                Select a topcoat first
+              </SelectItem>
+            ) : basecoatQuery.isLoading ? (
+              <SelectItem value='__loading_basecoats' disabled>
+                Loading basecoats...
+              </SelectItem>
+            ) : (
+              <>
+                <SelectItem value={NO_BASECOAT_VALUE}>No basecoat</SelectItem>
+                {availableBasecoats.length > 0 ? (
+                  availableBasecoats.map(product => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {getProductOptionLabel(product)}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value='__no_basecoats' disabled>
+                    No basecoat available for selected topcoat
+                  </SelectItem>
+                )}
+              </>
+            )}
+            {basecoatQuery.isFetchingNextPage ? (
+              <SelectItem value='__loading_more_basecoats' disabled>
+                Loading more basecoats...
+              </SelectItem>
+            ) : null}
+            {basecoatQuery.hasNextPage ? (
+              <SelectItem value='__scroll_basecoats' disabled>
+                Scroll to load more basecoats
+              </SelectItem>
+            ) : null}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  );
 };
 
 const DEFAULT_PAINT_PAIR = {
@@ -149,6 +254,8 @@ export const RegistrationEditModal = ({
   const purchaseDealerCityField = register('purchaseDealerCity');
   const purchaseDateField = register('purchaseDate');
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const [hasOpenedSpecialistDropdown, setHasOpenedSpecialistDropdown] = useState<boolean>(false);
+  const [hasOpenedTopcoatDropdown, setHasOpenedTopcoatDropdown] = useState<boolean>(false);
   const calendarWrapperRef = useRef<HTMLDivElement | null>(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -159,15 +266,22 @@ export const RegistrationEditModal = ({
     name: 'paintPairs',
   });
   const watchedPaintPairs = watch('paintPairs') ?? [];
-  const selectedTopcoatIds = useMemo(() => {
-    return watchedPaintPairs.map(paintPair => paintPair.topcoatId.trim()).filter(topcoatId => topcoatId.length > 0);
-  }, [watchedPaintPairs]);
-  const manualProductsQuery = useGetManualRegistrationProductsQuery({
-    enabled: isOpen && Boolean(registration),
-    basecoatTopcoatIds: selectedTopcoatIds,
-  });
+  const specialistQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+    REGISTRATION_PRODUCT_TYPES.SPECIALIST,
+    undefined,
+    {
+      enabled: isOpen && hasOpenedSpecialistDropdown,
+    }
+  );
+  const topcoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+    REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+    undefined,
+    {
+      enabled: isOpen && hasOpenedTopcoatDropdown,
+    }
+  );
   const topcoatProducts = mergeUniqueProductOptions(
-    manualProductsQuery.data?.topcoatProducts ?? [],
+    mergeUniqueProductOptions(topcoatQuery.options, specialistQuery.options),
     (registration?.paintPairs ?? []).map(pair => ({
       id: String(pair.topcoat.id),
       label: pair.topcoat.name,
@@ -177,6 +291,13 @@ export const RegistrationEditModal = ({
   const selectedInvoiceFiles = watch('invoiceFiles');
   const specialistPairs = (registration?.paintPairs ?? []).filter(pair => pair.topcoat.productType === 'SPECIALIST');
   const topcoatPairs = (registration?.paintPairs ?? []).filter(pair => pair.topcoat.productType !== 'SPECIALIST');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHasOpenedSpecialistDropdown(false);
+      setHasOpenedTopcoatDropdown(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isCalendarOpen) {
@@ -220,38 +341,6 @@ export const RegistrationEditModal = ({
       invoiceFiles: [],
     });
   }, [isOpen, registration, reset]);
-
-  useEffect(() => {
-    if (topcoatProducts.length === 0 || !registration) {
-      return;
-    }
-
-    watchedPaintPairs.forEach((paintPair, index) => {
-      const selectedTopcoatId = paintPair.topcoatId.trim();
-      const selectedBasecoatId = paintPair.basecoatId.trim();
-
-      if (!selectedTopcoatId || !selectedBasecoatId) {
-        return;
-      }
-
-      const matchedTopcoat = topcoatProducts.find(product => product.id === selectedTopcoatId);
-      const linkedBasecoatOptions = mergeUniqueProductOptions(
-        matchedTopcoat?.linkedBasecoats ?? [],
-        registration.paintPairs
-          .filter(pair => String(pair.topcoat.id) === selectedTopcoatId && pair.basecoat !== null)
-          .map(pair => ({
-            id: String(pair.basecoat?.id ?? ''),
-            label: pair.basecoat?.name ?? '',
-          }))
-          .filter(option => option.id.length > 0 && option.label.length > 0)
-      );
-      const linkedBasecoatIds = new Set(linkedBasecoatOptions.map(basecoat => basecoat.id));
-      if (!linkedBasecoatIds.has(selectedBasecoatId)) {
-        setValue(`paintPairs.${index}.basecoatId`, '');
-        setValue(`paintPairs.${index}.basecoatQuantity`, '');
-      }
-    });
-  }, [registration, setValue, topcoatProducts, watchedPaintPairs]);
 
   const handleModalClose = (): void => {
     setIsCalendarOpen(false);
@@ -314,6 +403,19 @@ export const RegistrationEditModal = ({
     });
   };
 
+  const handleTopcoatDropdownOpenChange = (selectionType: 'SPECIALIST' | 'TOPCOAT', open: boolean): void => {
+    if (!open) {
+      return;
+    }
+
+    if (selectionType === 'SPECIALIST') {
+      setHasOpenedSpecialistDropdown(true);
+      return;
+    }
+
+    setHasOpenedTopcoatDropdown(true);
+  };
+
   const handleSelectionTypeChange = (index: number, selectionType: 'SPECIALIST' | 'TOPCOAT'): void => {
     setValue(`paintPairs.${index}.selectionType`, selectionType, {
       shouldDirty: true,
@@ -332,6 +434,30 @@ export const RegistrationEditModal = ({
       shouldTouch: true,
       shouldValidate: false,
     });
+  };
+
+  const handleSpecialistScroll = (event: ReactMouseEvent<HTMLDivElement> | UIEvent<HTMLDivElement>): void => {
+    const scrollTarget = event.currentTarget;
+    const reachedBottom =
+      scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+    if (!reachedBottom || !specialistQuery.hasNextPage || specialistQuery.isFetchingNextPage) {
+      return;
+    }
+
+    void specialistQuery.fetchNextPage();
+  };
+
+  const handleTopcoatScroll = (event: ReactMouseEvent<HTMLDivElement> | UIEvent<HTMLDivElement>): void => {
+    const scrollTarget = event.currentTarget;
+    const reachedBottom =
+      scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+    if (!reachedBottom || !topcoatQuery.hasNextPage || topcoatQuery.isFetchingNextPage) {
+      return;
+    }
+
+    void topcoatQuery.fetchNextPage();
   };
 
   const handleAddPaintPair = (event: ReactMouseEvent<HTMLButtonElement>): void => {
@@ -695,10 +821,6 @@ export const RegistrationEditModal = ({
                   label: pair.basecoat?.name ?? '',
                 }))
                 .filter(option => option.id.length > 0 && option.label.length > 0);
-              const availableBasecoats = mergeUniqueProductOptions(
-                selectedTopcoat?.linkedBasecoats ?? [],
-                registrationBasecoatFallback
-              );
               const isSpecialistTopcoatSelected = isSpecialistProduct(selectedTopcoat);
               const filteredTopcoatProducts = topcoatProducts.filter(product => {
                 if (selectionType === 'SPECIALIST') {
@@ -709,6 +831,8 @@ export const RegistrationEditModal = ({
                 }
                 return false;
               });
+              const isTopcoatSelectionLoading =
+                selectionType === 'SPECIALIST' ? specialistQuery.isLoading : topcoatQuery.isLoading;
               const paintPairError = errors.paintPairs?.[index];
 
               return (
@@ -766,6 +890,9 @@ export const RegistrationEditModal = ({
                             <Select
                               value={topcoatField.value}
                               onValueChange={value => handleTopcoatChange(index, value)}
+                              onOpenChange={open =>
+                                handleTopcoatDropdownOpenChange(selectionType as 'SPECIALIST' | 'TOPCOAT', open)
+                              }
                             >
                               <SelectTrigger
                                 aria-label='Select topcoat product'
@@ -777,12 +904,41 @@ export const RegistrationEditModal = ({
                                   }
                                 />
                               </SelectTrigger>
-                              <SelectContent>
-                                {filteredTopcoatProducts.map(product => (
-                                  <SelectItem key={product.id} value={product.id}>
-                                    {getProductOptionLabel(product)}
+                              <SelectContent
+                                className='max-h-64'
+                                onScroll={selectionType === 'SPECIALIST' ? handleSpecialistScroll : handleTopcoatScroll}
+                              >
+                                {isTopcoatSelectionLoading && filteredTopcoatProducts.length === 0 ? (
+                                  <SelectItem value='__loading_topcoat_options' disabled>
+                                    Loading products...
                                   </SelectItem>
-                                ))}
+                                ) : (
+                                  filteredTopcoatProducts.map(product => (
+                                    <SelectItem key={product.id} value={product.id}>
+                                      {getProductOptionLabel(product)}
+                                    </SelectItem>
+                                  ))
+                                )}
+                                {selectionType === 'SPECIALIST' && specialistQuery.isFetchingNextPage ? (
+                                  <SelectItem value='__loading_specialists_next' disabled>
+                                    Loading more specialist products...
+                                  </SelectItem>
+                                ) : null}
+                                {selectionType === 'SPECIALIST' && specialistQuery.hasNextPage ? (
+                                  <SelectItem value='__scroll_specialists' disabled>
+                                    Scroll to load more specialists
+                                  </SelectItem>
+                                ) : null}
+                                {selectionType === 'TOPCOAT' && topcoatQuery.isFetchingNextPage ? (
+                                  <SelectItem value='__loading_topcoats' disabled>
+                                    Loading more topcoats...
+                                  </SelectItem>
+                                ) : null}
+                                {selectionType === 'TOPCOAT' && topcoatQuery.hasNextPage ? (
+                                  <SelectItem value='__scroll_topcoats' disabled>
+                                    Scroll to load more topcoats
+                                  </SelectItem>
+                                ) : null}
                               </SelectContent>
                             </Select>
                           )}
@@ -812,41 +968,13 @@ export const RegistrationEditModal = ({
                       {selectionType === 'TOPCOAT' ? (
                         <div className='space-y-1'>
                           <label className='text-xs font-semibold text-text-muted'>Basecoat (optional)</label>
-                          <Controller
+                          <BasecoatSelectField
                             control={control}
-                            name={`paintPairs.${index}.basecoatId`}
-                            render={({ field: basecoatField }) => (
-                              <Select
-                                value={basecoatField.value || NO_BASECOAT_VALUE}
-                                onValueChange={value => {
-                                  const normalizedValue = value === NO_BASECOAT_VALUE ? '' : value;
-                                  basecoatField.onChange(normalizedValue);
-                                  if (!normalizedValue) {
-                                    setValue(`paintPairs.${index}.basecoatQuantity`, '', {
-                                      shouldDirty: true,
-                                      shouldTouch: true,
-                                      shouldValidate: true,
-                                    });
-                                  }
-                                }}
-                                disabled={isSpecialistTopcoatSelected || !selectedTopcoatId}
-                              >
-                                <SelectTrigger
-                                  aria-label='Select basecoat product'
-                                  className='rounded-xl border-primary/20 bg-white'
-                                >
-                                  <SelectValue placeholder='Select basecoat' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={NO_BASECOAT_VALUE}>No basecoat</SelectItem>
-                                  {availableBasecoats.map(product => (
-                                    <SelectItem key={product.id} value={product.id}>
-                                      {getProductOptionLabel(product)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
+                            index={index}
+                            selectedTopcoatId={selectedTopcoatId}
+                            isDisabled={isSpecialistTopcoatSelected}
+                            registrationFallbackOptions={registrationBasecoatFallback}
+                            setValue={setValue}
                           />
                           {paintPairError?.basecoatId ? (
                             <p className='text-xs text-destructive'>{paintPairError.basecoatId.message}</p>

@@ -6,7 +6,6 @@ import type { SurfaceType } from '#/types/products';
 interface SurfaceTypeTableProps {
   canManage?: boolean;
   surfaceTypes: SurfaceType[];
-  linkedProductCountMap: Record<number, number>;
   onEdit: (surfaceType: SurfaceType) => void;
   onDelete: (surfaceType: SurfaceType) => void;
 }
@@ -34,7 +33,6 @@ const getSurfaceTypeById = (surfaceTypes: SurfaceType[], surfaceTypeId: number):
 export const SurfaceTypeTable = ({
   canManage = true,
   surfaceTypes,
-  linkedProductCountMap,
   onEdit,
   onDelete,
 }: SurfaceTypeTableProps): JSX.Element => {
@@ -68,21 +66,15 @@ export const SurfaceTypeTable = ({
           <TableRow>
             <TableHead>Surface Name</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Linked Products</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {surfaceTypes.map(surfaceType => {
-            const linkedCount = linkedProductCountMap[surfaceType.id] ?? 0;
-
             return (
               <TableRow key={surfaceType.id}>
                 <TableCell className='font-medium text-text-primary'>{surfaceType.name}</TableCell>
                 <TableCell>{SURFACE_TYPE_ENVIRONMENT_LABELS[surfaceType.environment]}</TableCell>
-                <TableCell>{linkedCount}</TableCell>
-                <TableCell>{linkedCount > 0 ? 'In Use' : 'Available'}</TableCell>
                 <TableCell className='align-middle'>
                   {canManage ? (
                     <div className='flex items-center gap-2'>

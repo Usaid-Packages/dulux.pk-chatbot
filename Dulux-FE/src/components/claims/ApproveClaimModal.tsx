@@ -14,7 +14,12 @@ import {
   Input,
   Textarea,
 } from '#/components/ui';
-import { NOTES_MAX_LENGTH, NOTES_MAX_LENGTH_HELPER_TEXT } from '#/constants';
+import {
+  CLAIM_VOUCHER_ACCEPT,
+  CLAIM_VOUCHER_FILE_TYPE_MESSAGE,
+  NOTES_MAX_LENGTH,
+  NOTES_MAX_LENGTH_HELPER_TEXT,
+} from '#/constants';
 import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
 import { approveClaimFinalSchema, type ApproveClaimFinalFormValues } from '#/schemas/claim.schema';
 import type { ClaimDetail } from '#/types/claims.types';
@@ -108,7 +113,7 @@ export const ApproveClaimModal = ({
                     ref={field.ref}
                     type='file'
                     className='rounded-xl border-primary/20 bg-white file:mr-2 file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-primary'
-                    accept='.pdf,.png,.jpg,.jpeg'
+                    accept={CLAIM_VOUCHER_ACCEPT}
                     onChange={event => {
                       const voucherFile = event.target.files?.[0];
                       if (!voucherFile) {
@@ -120,6 +125,7 @@ export const ApproveClaimModal = ({
                   />
                 )}
               />
+              <p className='text-xs text-text-muted'>{CLAIM_VOUCHER_FILE_TYPE_MESSAGE}</p>
               {voucher ? (
                 <span className='inline-flex w-fit items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-text-primary'>
                   Selected: {voucher.name}
