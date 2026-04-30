@@ -116,7 +116,9 @@ services:
       NRIA_LICENSE_KEY: $NRIA_LICENSE_KEY
 
   nginx:
-    image: nginx:1.20.1
+    build:
+      context: .
+      dockerfile: ./config/nginx/Dockerfile
     ports:
       - "80:80"
       - "443:443"
