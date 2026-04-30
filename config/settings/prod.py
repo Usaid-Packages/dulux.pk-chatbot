@@ -1,6 +1,7 @@
 from .base import *  # noqa
 from .brevo import *  # noqa
 from .sentry import *  # noqa
+from .s3 import *  # noqa
 
 
 DEBUG = False
