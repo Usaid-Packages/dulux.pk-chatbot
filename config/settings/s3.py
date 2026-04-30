@@ -39,9 +39,7 @@ AWS_S3_ADDRESSING_STYLE = "virtual"
 AWS_STATIC_LOCATION = "static"
 AWS_MEDIA_LOCATION = "media"
 
-# Django 4.2+: Use STORAGES (do not set DEFAULT_FILE_STORAGE/STATICFILES_STORAGE).
-# Those legacy settings are mutually exclusive with STORAGES.
-STORAGES = {
-    "default": {"BACKEND": "dulux_chatbot.core.storage_backends.MediaStorage"},
-    "staticfiles": {"BACKEND": "dulux_chatbot.core.storage_backends.StaticStorage"},
-}
+# Legacy Django storage settings (compatible with our Django version and `django-storages`).
+# Note: Django will raise if STORAGES is also defined, so we keep only the legacy settings here.
+STATICFILES_STORAGE = "dulux_chatbot.core.storage_backends.StaticStorage"
+DEFAULT_FILE_STORAGE = "dulux_chatbot.core.storage_backends.MediaStorage"
