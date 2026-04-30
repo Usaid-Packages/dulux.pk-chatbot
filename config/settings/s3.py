@@ -41,3 +41,10 @@ AWS_MEDIA_LOCATION = "media"
 
 STATICFILES_STORAGE = "dulux_chatbot.core.storage_backends.StaticStorage"
 DEFAULT_FILE_STORAGE = "dulux_chatbot.core.storage_backends.MediaStorage"
+
+# Django 4.2+ prefers STORAGES. Defining it explicitly avoids `KeyError: 'staticfiles'`
+# during `collectstatic` if older settings are not picked up as expected.
+STORAGES = {
+    "default": {"BACKEND": DEFAULT_FILE_STORAGE},
+    "staticfiles": {"BACKEND": STATICFILES_STORAGE},
+}
