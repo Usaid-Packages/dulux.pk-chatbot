@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import { NOTES_MAX_LENGTH } from '#/constants';
+import {
+  CLAIM_VOUCHER_ALLOWED_MIME_TYPES,
+  CLAIM_VOUCHER_FILE_REQUIRED_MESSAGE,
+  CLAIM_VOUCHER_FILE_TYPE_MESSAGE,
+  NOTES_MAX_LENGTH,
+} from '#/constants';
 import {
   CLAIM_CSR_RESUBMISSION_INPUT_TYPES,
   CLAIM_ISSUE_TYPES,
@@ -115,7 +120,11 @@ export const forwardToQualitySchema = z.object({
 
 export const approveClaimFinalSchema = z.object({
   notes: z.string().trim().max(NOTES_MAX_LENGTH, `Notes must be ${NOTES_MAX_LENGTH} characters or fewer.`).optional(),
-  voucher: z.instanceof(File, { message: 'Voucher file is required.' }),
+  voucher: z
+    .instanceof(File, { message: CLAIM_VOUCHER_FILE_REQUIRED_MESSAGE })
+    .refine(file => CLAIM_VOUCHER_ALLOWED_MIME_TYPES.includes(file.type), {
+      message: CLAIM_VOUCHER_FILE_TYPE_MESSAGE,
+    }),
 });
 
 export const rejectClaimFinalSchema = z.object({

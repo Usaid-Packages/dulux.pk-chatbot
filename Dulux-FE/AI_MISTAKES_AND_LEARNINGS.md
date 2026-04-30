@@ -77,6 +77,18 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 10:40 - Dropdown bottom-check caused auto pagination loop in Submit modal
+
+- Issue: Submit Registration topcoat/basecoat dropdown `onScroll` could treat initial open state as "bottom reached" and repeatedly fetch pages until `next=null`.
+- Fix: Added strict guards to paginate only after real user scroll (`scrollTop > 0`) and when content actually overflows (`scrollHeight > clientHeight`).
+- Rule: Infinite-scroll dropdowns must require user scroll movement before requesting next page; do not rely on bottom-threshold check alone.
+
+### 2026-04-30 10:15 - Edit Registration basecoat flow drifted from Manual Step 3 behavior
+
+- Issue: Edit Registration used a bulk basecoat-loading path instead of topcoat-driven lazy pagination, so basecoat fetch timing/UX diverged from Manual Registration Step 3.
+- Fix: Switched edit basecoat selection to topcoat-scoped infinite query, kept dropdown fixed-height scroll pagination, and disabled basecoat until selected-topcoat basecoats finish loading.
+- Rule: For paint-pair UIs, keep Edit/Resubmit behavior aligned with Manual Step 3: fetch basecoats only after topcoat selection and paginate on dropdown scroll.
+
 ### 2026-04-29 16:20 - Edit modal add-section was prefilled from existing paint pairs
 
 - Issue: Edit Registration modal reused existing registration paint pairs as default form values in the editable `Update Paint Pairs` section, which conflicted with the intended "add fresh pairs" UX.

@@ -118,6 +118,8 @@ describe('QualityListPage', () => {
   it('calls search setter when search input changes', () => {
     render(<QualityListPage />);
 
+    expect(screen.getByPlaceholderText('Search by Customer Name or Customer ID')).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('Search quality queue'), {
       target: { value: 'karachi' },
     });

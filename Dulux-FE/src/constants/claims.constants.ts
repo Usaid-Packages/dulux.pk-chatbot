@@ -9,6 +9,10 @@ export const CLAIM_ACTIONS = {
 } as const;
 
 export const CLAIM_NO_BASECOAT_OPTION_VALUE = 'NONE';
+export const CLAIM_VOUCHER_ACCEPT = '.pdf';
+export const CLAIM_VOUCHER_ALLOWED_MIME_TYPES = ['application/pdf'] as const;
+export const CLAIM_VOUCHER_FILE_REQUIRED_MESSAGE = 'Voucher PDF file is required.';
+export const CLAIM_VOUCHER_FILE_TYPE_MESSAGE = 'Only PDF vouchers are allowed.';
 
 export const CLAIM_ISSUE_TYPE_OPTIONS: ReadonlyArray<ClaimIssueTypeOption> = [
   { label: 'Peeling / Cracking', value: 'PEELING_CRACKING' },

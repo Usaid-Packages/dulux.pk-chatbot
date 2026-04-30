@@ -23,7 +23,7 @@ vi.mock('#/data-layer/registrations', () => ({
     if (productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT) {
       return {
         options: [{ id: '101', label: 'Topcoat A', warrantyYears: 5, productType: 'TOPCOAT' }],
-        hasNextPage: false,
+        hasNextPage: true,
         isLoading: false,
         isError: false,
         isFetchingNextPage: false,

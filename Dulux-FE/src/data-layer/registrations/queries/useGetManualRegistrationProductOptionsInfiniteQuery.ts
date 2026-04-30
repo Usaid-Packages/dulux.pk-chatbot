@@ -40,6 +40,10 @@ interface ManualRegistrationProductOptionsInfiniteResult {
   fetchNextPage: () => Promise<unknown>;
 }
 
+interface ManualRegistrationProductOptionsInfiniteQueryOptions {
+  enabled?: boolean;
+}
+
 const INITIAL_PAGE_PARAM = 1;
 
 const getWarrantyYears = (product: ManualRegistrationProductApiItem): number | undefined => {
@@ -111,7 +115,8 @@ const normalizeProductType = (productType: ProductType): ProductType => {
  */
 export const useGetManualRegistrationProductOptionsInfiniteQuery = (
   productType: ProductType,
-  topcoatId?: string
+  topcoatId?: string,
+  options?: ManualRegistrationProductOptionsInfiniteQueryOptions
 ): ManualRegistrationProductOptionsInfiniteResult => {
   const parsedTopcoatId = Number.parseInt(topcoatId ?? '', 10);
   const hasValidTopcoatId = Number.isFinite(parsedTopcoatId) && parsedTopcoatId > 0;
@@ -119,6 +124,7 @@ export const useGetManualRegistrationProductOptionsInfiniteQuery = (
     productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT || productType === REGISTRATION_PRODUCT_TYPES.SPECIALIST
       ? true
       : hasValidTopcoatId;
+  const shouldEnableByOptions = options?.enabled ?? true;
 
   const query = useInfiniteQuery<
     ManualRegistrationProductsApiResponse,
@@ -132,7 +138,7 @@ export const useGetManualRegistrationProductOptionsInfiniteQuery = (
       hasValidTopcoatId ? String(parsedTopcoatId) : undefined
     ),
     initialPageParam: INITIAL_PAGE_PARAM,
-    enabled: shouldEnableQuery,
+    enabled: shouldEnableQuery && shouldEnableByOptions,
     queryFn: async ({ pageParam }): Promise<ManualRegistrationProductsApiResponse> => {
       const params: ManualRegistrationWarrantyOptionsParams = {
         product_type: productType,

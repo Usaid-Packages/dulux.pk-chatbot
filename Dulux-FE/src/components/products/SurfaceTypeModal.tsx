@@ -18,7 +18,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Textarea,
 } from '#/components/ui';
 import { SURFACE_TYPE_FORM_MAX_LENGTHS } from '#/constants';
 import { useDialogLifecycle } from '#/hooks/common/useDialogLifecycle';
@@ -137,43 +136,6 @@ export const SurfaceTypeModal = ({
               )}
             />
             {errors.environment ? <p className='text-xs text-destructive'>{errors.environment.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='surface-description' className='text-sm font-medium text-text-primary'>
-              Description
-            </label>
-            <Textarea
-              id='surface-description'
-              rows={3}
-              className='rounded-xl border-primary/20 bg-white'
-              placeholder='Optional description for this surface type...'
-              {...register('description')}
-              aria-invalid={Boolean(errors.description)}
-            />
-            {errors.description ? <p className='text-xs text-destructive'>{errors.description.message}</p> : null}
-          </div>
-
-          <div className='space-y-2'>
-            <label htmlFor='surface-status' className='text-sm font-medium text-text-primary'>
-              Status
-            </label>
-            <Controller
-              control={control}
-              name='status'
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id='surface-status'>
-                    <SelectValue placeholder='Select status' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='ACTIVE'>Active</SelectItem>
-                    <SelectItem value='INACTIVE'>Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.status ? <p className='text-xs text-destructive'>{errors.status.message}</p> : null}
           </div>
 
           <DialogFooter>

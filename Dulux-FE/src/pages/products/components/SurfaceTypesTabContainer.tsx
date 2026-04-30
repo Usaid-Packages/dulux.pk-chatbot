@@ -27,7 +27,6 @@ interface SurfaceTypesTabContainerProps {
   surfacePage: number;
   surfaceTypeTotalPages: number;
   surfaceTypes: SurfaceType[];
-  linkedProductCountMap: Record<number, number>;
   isLoading: boolean;
   isError: boolean;
   errorMessage: string;
@@ -50,7 +49,6 @@ export const SurfaceTypesTabContainer = ({
   surfacePage,
   surfaceTypeTotalPages,
   surfaceTypes,
-  linkedProductCountMap,
   isLoading,
   isError,
   errorMessage,
@@ -133,7 +131,6 @@ export const SurfaceTypesTabContainer = ({
         <>
           <SurfaceTypeTable
             surfaceTypes={surfaceTypes}
-            linkedProductCountMap={linkedProductCountMap}
             onEdit={onOpenEditSurfaceTypeModal}
             onDelete={onOpenDeleteSurfaceTypeModal}
           />

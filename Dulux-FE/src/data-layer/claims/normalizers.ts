@@ -69,6 +69,9 @@ const readSubmittedAt = (claim: ApiClaimListItem | ApiClaimDetail): string =>
   );
 const readState = (claim: ApiClaimListItem | ApiClaimDetail): string =>
   asString((claim as { state?: string; status?: string }).state ?? (claim as { status?: string }).status, 'SUBMITTED');
+const isQualityOwnedNoteState = (state: string): boolean => {
+  return state === 'QA_REVIEW' || state === 'QA_APPROVED' || state === 'QA_REJECTED';
+};
 const readRegistrationSummary = (
   claim: ApiClaimListItem
 ):
@@ -198,8 +201,11 @@ export const normalizeClaimsListResponse = (
   };
 };
 
-export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
-  claimDetailSchema.parse({
+export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail => {
+  const claimState = readState(claim);
+  const hasQualityOwnedNotes = isQualityOwnedNoteState(claimState);
+
+  return claimDetailSchema.parse({
     id: String(claim.id),
     claimNumber: toClaimNumber(claim.id),
     customerName: readRegistrationCustomerName(claim),
@@ -207,8 +213,8 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     issueType: toUiClaimIssueType(readIssueType(claim)),
     photoCount: Array.isArray(claim.images) ? claim.images.length : 0,
     submittedAt: readSubmittedAt(claim),
-    workflowState: toApiClaimWorkflowState(readState(claim)),
-    status: toUiClaimStatus(readState(claim)),
+    workflowState: toApiClaimWorkflowState(claimState),
+    status: toUiClaimStatus(claimState),
     phone: readRegistrationPhone(claim),
     city: readCity(claim),
     areaSqFt: asNumber(readAffectedArea(claim)),
@@ -233,7 +239,7 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
     timeline: [
       {
         id: `state-${claim.id}-${claim.modified}`,
-        event: `State changed to ${normalizeLabel(readState(claim))}`,
+        event: `State changed to ${normalizeLabel(claimState)}`,
         actor: asString(claim.approved_by, 'System'),
         createdAt: asString(claim.modified, FALLBACK_DATE),
         note: claim.notes || undefined,
@@ -247,7 +253,9 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail =>
       dealerName: readRegistrationDealer(claim),
       status: readRegistrationState(claim),
     },
-    csNotes: claim.notes || undefined,
+    csNotes: hasQualityOwnedNotes ? undefined : claim.notes || undefined,
+    qualityNotes: hasQualityOwnedNotes ? claim.notes || undefined : undefined,
     forwardedBy: claim.approved_by ?? undefined,
     forwardedAt: claim.approved_at ?? undefined,
   });
+};

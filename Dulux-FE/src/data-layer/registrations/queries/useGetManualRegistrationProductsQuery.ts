@@ -34,11 +34,15 @@ interface ManualRegistrationWarrantyOptionsParams extends Record<string, unknown
 export interface ManualRegistrationProductsResult {
   topcoatProducts: ManualRegistrationProductOption[];
   basecoatProducts: ManualRegistrationProductOption[];
+  basecoatProductsByTopcoatId: Record<string, ManualRegistrationProductOption[]>;
 }
 
 interface UseGetManualRegistrationProductsQueryOptions {
   enabled?: boolean;
   basecoatTopcoatIds?: string[];
+  fetchBasecoatsWhenNoTopcoatIds?: boolean;
+  fetchTopcoatProducts?: boolean;
+  fetchSpecialistProducts?: boolean;
 }
 
 const MANUAL_PRODUCTS_STALE_TIME_MS = 0;
@@ -152,24 +156,34 @@ export const useGetManualRegistrationProductsQuery = (
     queryKey: queryKeys.registrations.manualProductsByTopcoats(normalizedTopcoatIdsKey),
     enabled: options?.enabled ?? true,
     queryFn: async (): Promise<ManualRegistrationProductsResult> => {
+      const shouldFetchTopcoatProducts = options?.fetchTopcoatProducts ?? true;
+      const shouldFetchSpecialistProducts = options?.fetchSpecialistProducts ?? true;
+
       const [topcoatApiItems, specialistApiItems] = await Promise.all([
-        fetchAllWarrantyOptions({
-          product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
-        }),
-        fetchAllWarrantyOptions({
-          product_type: REGISTRATION_PRODUCT_TYPES.SPECIALIST,
-        }),
+        shouldFetchTopcoatProducts
+          ? fetchAllWarrantyOptions({
+              product_type: REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+            })
+          : Promise.resolve([]),
+        shouldFetchSpecialistProducts
+          ? fetchAllWarrantyOptions({
+              product_type: REGISTRATION_PRODUCT_TYPES.SPECIALIST,
+            })
+          : Promise.resolve([]),
       ]);
 
       const topcoatProducts = toManualProductOptions([...topcoatApiItems, ...specialistApiItems]).sort(
         (firstProduct, secondProduct) => firstProduct.label.localeCompare(secondProduct.label)
       );
+      const shouldFetchBasecoatsWhenNoTopcoatIds = options?.fetchBasecoatsWhenNoTopcoatIds ?? true;
       const basecoatTopcoatIds =
         normalizedTopcoatIds.length > 0
           ? normalizedTopcoatIds
-          : topcoatProducts
-              .filter(topcoat => topcoat.productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT)
-              .map(topcoat => topcoat.id);
+          : shouldFetchBasecoatsWhenNoTopcoatIds
+            ? topcoatProducts
+                .filter(topcoat => topcoat.productType === REGISTRATION_PRODUCT_TYPES.TOPCOAT)
+                .map(topcoat => topcoat.id)
+            : [];
       const basecoatsByTopcoatId = new Map<string, ManualRegistrationProductOption[]>();
 
       await Promise.all(
@@ -200,9 +214,17 @@ export const useGetManualRegistrationProductsQuery = (
         []
       );
 
+      const basecoatProductsByTopcoatId = Array.from(basecoatsByTopcoatId.entries()).reduce<
+        Record<string, ManualRegistrationProductOption[]>
+      >((accumulator, [topcoatId, optionsByTopcoat]) => {
+        accumulator[topcoatId] = optionsByTopcoat;
+        return accumulator;
+      }, {});
+
       return {
         topcoatProducts: topcoatProductsWithBasecoats,
         basecoatProducts,
+        basecoatProductsByTopcoatId,
       };
     },
     staleTime: MANUAL_PRODUCTS_STALE_TIME_MS,

@@ -92,4 +92,31 @@ test.describe('@critical claims phase2 (admin)', () => {
     await expect(page.getByText('Claim Workflow')).toBeVisible();
     await expect(page.getByText('Latest Timeline Changes')).toBeVisible();
   });
+
+  test('CLM-DET-004 QA-approved claim voucher upload accepts PDF only', async ({ page }) => {
+    await page.route(/.*\/api\/v1\/warranty\/claims\/205\/?(?:\?.*)?$/, async route => {
+      if (route.request().method() !== 'GET') {
+        await route.fallback();
+        return;
+      }
+
+      const response = await route.fetch();
+      const claimDetail = (await response.json()) as Record<string, unknown>;
+      claimDetail.state = 'QA_APPROVED';
+
+      await route.fulfill({
+        response,
+        body: JSON.stringify(claimDetail),
+        headers: {
+          ...response.headers(),
+          'content-type': 'application/json',
+        },
+      });
+    });
+
+    await page.goto('claims/205');
+    await page.getByRole('button', { name: 'Final Approve' }).click();
+    await expect(page.getByRole('dialog', { name: 'Final Approve Claim' })).toBeVisible();
+    await expect(page.getByLabel('Voucher File *')).toHaveAttribute('accept', '.pdf');
+  });
 });

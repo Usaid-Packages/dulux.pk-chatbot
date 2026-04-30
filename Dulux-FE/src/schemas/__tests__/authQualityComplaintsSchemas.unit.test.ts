@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema } from '#/schemas/authSchemas';
+import { approveClaimFinalSchema } from '#/schemas/claim.schema';
 import { sendMessageSchema, complaintQueueSocketEventSchema } from '#/schemas/complaints.schema';
 import { qualityApproveSchema, qualityRequestInfoSchema } from '#/schemas/quality.schema';
 
@@ -45,5 +46,19 @@ describe('schema unit validations', () => {
 
   it('accepts forgot-password valid email payload', () => {
     expect(forgotPasswordSchema.safeParse({ email: 'agent@dulux.pk' }).success).toBe(true);
+  });
+
+  it('rejects non-PDF voucher file for claim final approval', () => {
+    const pngVoucher = new File(['voucher'], 'voucher.png', { type: 'image/png' });
+    const result = approveClaimFinalSchema.safeParse({ notes: 'Approved', voucher: pngVoucher });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts PDF voucher file for claim final approval', () => {
+    const pdfVoucher = new File(['voucher'], 'voucher.pdf', { type: 'application/pdf' });
+    const result = approveClaimFinalSchema.safeParse({ notes: 'Approved', voucher: pdfVoucher });
+
+    expect(result.success).toBe(true);
   });
 });

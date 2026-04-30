@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import type { JSX, MouseEvent } from 'react';
+import { memo, useCallback } from 'react';
+import type { JSX, MouseEvent, UIEvent } from 'react';
 
 import type { Control, FieldErrors, UseFormClearErrors, UseFormRegister, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
@@ -8,13 +8,17 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
 import { Input } from '#/components/ui/Input';
 import { UI_TEXT } from '#/constants';
 import {
+  REGISTRATION_PRODUCT_TYPES,
   NO_BASECOAT_AVAILABLE_TEXT,
   RESUBMIT_FIELD_LABELS,
   SELECT_TOPCOAT_FIRST_TEXT,
 } from '#/constants/registrations';
+import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-layer/registrations';
 import type { ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { RegistrationPaintPair, RegistrationRejectionField } from '#/types/registrations';
 import type { ResubmitUpdatePaintPairRowViewModel, ResubmitUpdateSelectOption } from './useResubmitUpdateForm';
+
+const SCROLL_BOTTOM_THRESHOLD_PX = 24;
 
 interface ResubmitUpdatePaintPairsSectionProps {
   requestedFieldNames: RegistrationRejectionField['fieldName'][];
@@ -47,6 +51,14 @@ interface ResubmitUpdatePaintPairRowProps {
   onRemovePaintPair: (event: MouseEvent<HTMLButtonElement>) => void;
   isRemoveDisabled: boolean;
 }
+
+const getOptionLabel = (option: { label: string; warrantyYears?: number }): string => {
+  if (typeof option.warrantyYears === 'number' && option.warrantyYears > 0) {
+    return `${option.label} (${option.warrantyYears} year warranty)`;
+  }
+
+  return option.label;
+};
 
 const ResubmitUpdatePaintPairRow = memo(
   ({
@@ -84,6 +96,68 @@ const ResubmitUpdatePaintPairRow = memo(
       }
       return false;
     });
+    const specialistQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+      REGISTRATION_PRODUCT_TYPES.SPECIALIST,
+      undefined,
+      { enabled: selectionType === 'SPECIALIST' }
+    );
+    const topcoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+      REGISTRATION_PRODUCT_TYPES.TOPCOAT,
+      undefined,
+      { enabled: selectionType === 'TOPCOAT' }
+    );
+    const selectionOptions = selectionType === 'SPECIALIST' ? specialistQuery.options : topcoatQuery.options;
+    const availableTopcoatOptions = selectionOptions.length > 0 ? selectionOptions : filteredTopcoatOptions;
+    const isTopcoatSelectionLoading =
+      selectionType === 'SPECIALIST' ? specialistQuery.isLoading : topcoatQuery.isLoading;
+    const handleTopcoatScroll = useCallback(
+      (event: UIEvent<HTMLDivElement>): void => {
+        const scrollTarget = event.currentTarget;
+        const hasScrollableOverflow = scrollTarget.scrollHeight > scrollTarget.clientHeight;
+        const hasUserScrolledDown = scrollTarget.scrollTop > 0;
+        if (!hasScrollableOverflow || !hasUserScrolledDown) {
+          return;
+        }
+
+        const reachedBottom =
+          scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+        const activeQuery = selectionType === 'SPECIALIST' ? specialistQuery : topcoatQuery;
+
+        if (!reachedBottom || !activeQuery.hasNextPage || activeQuery.isFetchingNextPage) {
+          return;
+        }
+
+        void activeQuery.fetchNextPage();
+      },
+      [selectionType, specialistQuery, topcoatQuery]
+    );
+    const basecoatQuery = useGetManualRegistrationProductOptionsInfiniteQuery(
+      REGISTRATION_PRODUCT_TYPES.BASECOAT,
+      selectedTopcoatId,
+      { enabled: selectedTopcoatId.trim().length > 0 }
+    );
+    const availableBasecoatOptions = basecoatQuery.options.length > 0 ? basecoatQuery.options : basecoatOptions;
+    const isBasecoatLoading = Boolean(selectedTopcoatId) && basecoatQuery.isLoading;
+    const handleBasecoatScroll = useCallback(
+      (event: UIEvent<HTMLDivElement>): void => {
+        const scrollTarget = event.currentTarget;
+        const hasScrollableOverflow = scrollTarget.scrollHeight > scrollTarget.clientHeight;
+        const hasUserScrolledDown = scrollTarget.scrollTop > 0;
+        if (!hasScrollableOverflow || !hasUserScrolledDown) {
+          return;
+        }
+
+        const reachedBottom =
+          scrollTarget.scrollTop + scrollTarget.clientHeight >= scrollTarget.scrollHeight - SCROLL_BOTTOM_THRESHOLD_PX;
+
+        if (!reachedBottom || !basecoatQuery.hasNextPage || basecoatQuery.isFetchingNextPage) {
+          return;
+        }
+
+        void basecoatQuery.fetchNextPage();
+      },
+      [basecoatQuery]
+    );
 
     return (
       <article key={rowId} className='space-y-3 rounded-lg border border-primary/10 p-3'>
@@ -177,11 +251,15 @@ const ResubmitUpdatePaintPairRow = memo(
                         }
                       />
                     </SelectTrigger>
-                    <SelectContent>
-                      {filteredTopcoatOptions.length > 0 ? (
-                        filteredTopcoatOptions.map(product => (
+                    <SelectContent className='max-h-64' onScroll={handleTopcoatScroll}>
+                      {isTopcoatSelectionLoading && availableTopcoatOptions.length === 0 ? (
+                        <SelectItem value={`__loading_topcoat__${rowIndex}`} disabled>
+                          Loading products...
+                        </SelectItem>
+                      ) : availableTopcoatOptions.length > 0 ? (
+                        availableTopcoatOptions.map(product => (
                           <SelectItem key={product.id} value={product.id}>
-                            {product.label}
+                            {getOptionLabel(product)}
                           </SelectItem>
                         ))
                       ) : selectionType === 'SPECIALIST' ? (
@@ -193,6 +271,26 @@ const ResubmitUpdatePaintPairRow = memo(
                           No topcoat available
                         </SelectItem>
                       )}
+                      {selectionType === 'SPECIALIST' && specialistQuery.isFetchingNextPage ? (
+                        <SelectItem value={`__loading_more_specialist__${rowIndex}`} disabled>
+                          Loading more specialist products...
+                        </SelectItem>
+                      ) : null}
+                      {selectionType === 'SPECIALIST' && specialistQuery.hasNextPage ? (
+                        <SelectItem value={`__scroll_more_specialist__${rowIndex}`} disabled>
+                          Scroll to load more specialists
+                        </SelectItem>
+                      ) : null}
+                      {selectionType === 'TOPCOAT' && topcoatQuery.isFetchingNextPage ? (
+                        <SelectItem value={`__loading_more_topcoat__${rowIndex}`} disabled>
+                          Loading more topcoats...
+                        </SelectItem>
+                      ) : null}
+                      {selectionType === 'TOPCOAT' && topcoatQuery.hasNextPage ? (
+                        <SelectItem value={`__scroll_more_topcoat__${rowIndex}`} disabled>
+                          Scroll to load more topcoats
+                        </SelectItem>
+                      ) : null}
                     </SelectContent>
                   </Select>
                 )}
@@ -242,20 +340,24 @@ const ResubmitUpdatePaintPairRow = memo(
                           paintPairField.onChange(value);
                           clearErrors([`paintPairs.${rowIndex}.basecoatId`, `paintPairs.${rowIndex}.basecoatQuantity`]);
                         }}
-                        disabled={isPaintProductsLoading || !selectedTopcoatId}
+                        disabled={isPaintProductsLoading || !selectedTopcoatId || isBasecoatLoading}
                       >
                         <SelectTrigger aria-label='Select basecoat product'>
                           <SelectValue placeholder={UI_TEXT.SELECT_BASECOAT_PRODUCT_PLACEHOLDER} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className='max-h-64' onScroll={handleBasecoatScroll}>
                           {!selectedTopcoatId ? (
                             <SelectItem value={`__select_topcoat_first__${rowIndex}`} disabled>
                               {SELECT_TOPCOAT_FIRST_TEXT}
                             </SelectItem>
-                          ) : basecoatOptions.length > 0 ? (
-                            basecoatOptions.map(product => (
+                          ) : isBasecoatLoading ? (
+                            <SelectItem value={`__loading_basecoat__${rowIndex}`} disabled>
+                              Loading basecoats...
+                            </SelectItem>
+                          ) : availableBasecoatOptions.length > 0 ? (
+                            availableBasecoatOptions.map(product => (
                               <SelectItem key={product.id} value={product.id}>
-                                {product.label}
+                                {getOptionLabel(product)}
                               </SelectItem>
                             ))
                           ) : (
@@ -263,6 +365,16 @@ const ResubmitUpdatePaintPairRow = memo(
                               {NO_BASECOAT_AVAILABLE_TEXT}
                             </SelectItem>
                           )}
+                          {basecoatQuery.isFetchingNextPage ? (
+                            <SelectItem value={`__loading_more_basecoat__${rowIndex}`} disabled>
+                              Loading more basecoats...
+                            </SelectItem>
+                          ) : null}
+                          {basecoatQuery.hasNextPage ? (
+                            <SelectItem value={`__scroll_more_basecoat__${rowIndex}`} disabled>
+                              Scroll to load more basecoats
+                            </SelectItem>
+                          ) : null}
                         </SelectContent>
                       </Select>
                     )}

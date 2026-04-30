@@ -24,7 +24,6 @@ export const ProductsListPage = (): JSX.Element => {
     surfacePage,
     surfaceTypeTotalPages,
     surfaceTypes,
-    linkedProductCountMap,
     isSurfaceTypeModalOpen,
     surfaceTypeEditTarget,
     surfaceTypeDeleteTarget,
@@ -110,7 +109,6 @@ export const ProductsListPage = (): JSX.Element => {
           surfacePage={surfacePage}
           surfaceTypeTotalPages={surfaceTypeTotalPages}
           surfaceTypes={surfaceTypes}
-          linkedProductCountMap={linkedProductCountMap}
           isLoading={isSurfaceTypesLoading}
           isError={isSurfaceTypesError}
           errorMessage={surfaceTypesErrorMessage}
