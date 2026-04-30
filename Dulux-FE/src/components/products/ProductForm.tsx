@@ -102,12 +102,7 @@ export const ProductForm = ({
       </header>
 
       <form className='space-y-5' onSubmit={handleSubmit(handleFormSubmit)}>
-        <ProductFormCoreFieldsSection
-          register={register}
-          control={control}
-          errors={errors}
-          selectedProductType={selectedProductType}
-        />
+        <ProductFormCoreFieldsSection register={register} control={control} errors={errors} />
 
         <ProductFormLongTextSection
           register={register}

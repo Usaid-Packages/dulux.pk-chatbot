@@ -71,6 +71,29 @@ describe('useProductFormAdapter image requirement', () => {
 });
 
 describe('useProductFormAdapter warranty defaults', () => {
+  it('prevents clearing the last warranty digit for specialist by restoring 0', () => {
+    const { result } = renderHook(() =>
+      useProductFormAdapter({
+        initialImages: [],
+        initialValues: {
+          ...VALID_FORM_VALUES,
+          warrantyYears: 0,
+          productType: PRODUCT_TYPES.SPECIALIST,
+        },
+        surfaceTypes: [],
+        basecoatOptions: [],
+        onSubmit: vi.fn(),
+      })
+    );
+
+    act(() => {
+      const warrantyField = result.current.register('warrantyYears');
+      warrantyField.onChange({ target: { name: 'warrantyYears', value: '' } });
+    });
+
+    expect(result.current.control._formValues.warrantyYears).toBe(0);
+  });
+
   it('defaults cleared warranty to 0 when switching to specialist', () => {
     const { result } = renderHook(() =>
       useProductFormAdapter({

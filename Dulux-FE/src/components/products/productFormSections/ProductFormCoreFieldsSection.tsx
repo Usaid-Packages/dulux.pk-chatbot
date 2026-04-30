@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { JSX, KeyboardEvent } from 'react';
 
 import { Controller } from 'react-hook-form';
 import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
@@ -6,13 +6,12 @@ import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { PRODUCT_STATUS_OPTIONS } from '#/constants';
 import type { ProductFormSchemaValues } from '#/schemas/products';
-import { PRODUCT_TYPES, productTypes } from '#/types/products';
+import { productTypes } from '#/types/products';
 
 interface ProductFormCoreFieldsSectionProps {
   register: UseFormRegister<ProductFormSchemaValues>;
   control: Control<ProductFormSchemaValues>;
   errors: FieldErrors<ProductFormSchemaValues>;
-  selectedProductType: ProductFormSchemaValues['productType'];
 }
 
 /**
@@ -25,8 +24,13 @@ export const ProductFormCoreFieldsSection = ({
   register,
   control,
   errors,
-  selectedProductType,
 }: ProductFormCoreFieldsSectionProps): JSX.Element => {
+  const handleWarrantyKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key === '-' || event.key === '+' || event.key === 'e' || event.key === 'E') {
+      event.preventDefault();
+    }
+  };
+
   return (
     <div className='grid gap-4 md:grid-cols-2'>
       <div className='space-y-2'>
@@ -70,12 +74,8 @@ export const ProductFormCoreFieldsSection = ({
 
       <div className='space-y-2'>
         <label htmlFor='product-warranty' className='text-sm font-medium text-text-primary'>
-          Warranty (Years)
-          {selectedProductType === PRODUCT_TYPES.TOPCOAT ? <span className='text-destructive'>*</span> : null}
+          Warranty (Years) <span className='text-destructive'>*</span>
         </label>
-        <p className='text-xs text-text-muted'>
-          Set <strong>0</strong> for Basecoat and Specialist if you do not want to set warranty for them.
-        </p>
         <Input
           id='product-warranty'
           type='number'
@@ -83,6 +83,7 @@ export const ProductFormCoreFieldsSection = ({
           className='rounded-xl border-primary/20 bg-white'
           placeholder='Enter warranty years'
           {...register('warrantyYears')}
+          onKeyDown={handleWarrantyKeyDown}
           aria-invalid={Boolean(errors.warrantyYears)}
         />
         {errors.warrantyYears ? <p className='text-xs text-destructive'>{errors.warrantyYears.message}</p> : null}

@@ -102,7 +102,6 @@ export const useProductFormAdapter = ({
     handleSubmit,
     watch,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<ProductFormSchemaValues>({
     resolver: zodResolver(productFormSchema),
@@ -110,6 +109,7 @@ export const useProductFormAdapter = ({
   });
 
   const selectedProductType = watch('productType');
+  const selectedWarrantyYears = watch('warrantyYears');
   const selectedSurfaceTypeIds = watch('surfaceTypeIds');
   const selectedBasecoatIds = watch('basecoatIds');
   const [interiorSurfaceSearch, setInteriorSurfaceSearch] = useState<string>('');
@@ -168,18 +168,17 @@ export const useProductFormAdapter = ({
     }
 
     const fallbackWarrantyYears = defaultBasecoatWarrantyYears ?? 0;
-    const currentWarrantyYears = getValues('warrantyYears');
     const normalizedWarrantyYears =
-      typeof currentWarrantyYears === 'number'
-        ? currentWarrantyYears
-        : Number.parseInt(String(currentWarrantyYears ?? ''), 10);
+      typeof selectedWarrantyYears === 'number'
+        ? selectedWarrantyYears
+        : Number.parseInt(String(selectedWarrantyYears ?? ''), 10);
 
     if (Number.isFinite(normalizedWarrantyYears) && normalizedWarrantyYears >= 0) {
       return;
     }
 
     setValue('warrantyYears', fallbackWarrantyYears, { shouldValidate: true });
-  }, [defaultBasecoatWarrantyYears, getValues, selectedProductType, setValue]);
+  }, [defaultBasecoatWarrantyYears, selectedProductType, selectedWarrantyYears, setValue]);
 
   const toggleSurfaceSelection = (surfaceTypeId: number, checked: boolean): void => {
     const selectedIds = new Set(selectedSurfaceTypeIds);

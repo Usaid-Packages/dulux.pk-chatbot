@@ -9,22 +9,26 @@ export const productFormSchema = z
   .object({
     name: z.string().trim().min(1, 'Product name is required.'),
     productType: productTypeSchema,
-    warrantyYears: z.preprocess(value => {
-      if (value === '' || value === null || value === undefined) {
-        return undefined;
-      }
+    warrantyYears: z
+      .preprocess(value => {
+        if (value === '' || value === null || value === undefined) {
+          return undefined;
+        }
 
-      if (typeof value === 'number' && Number.isNaN(value)) {
-        return undefined;
-      }
+        if (typeof value === 'number' && Number.isNaN(value)) {
+          return undefined;
+        }
 
-      if (typeof value === 'string') {
-        const parsedValue = Number(value);
-        return Number.isNaN(parsedValue) ? value : parsedValue;
-      }
+        if (typeof value === 'string') {
+          const parsedValue = Number(value);
+          return Number.isNaN(parsedValue) ? value : parsedValue;
+        }
 
-      return value;
-    }, z.number().int().min(0, 'Warranty years must be 0 or greater.').optional()),
+        return value;
+      }, z.number().int('Warranty years must be a whole number.').min(0, 'Warranty years must be 0 or greater.').optional())
+      .refine(value => value !== undefined, {
+        message: 'Warranty years are required.',
+      }),
     coverageDetails: z
       .string()
       .trim()
@@ -47,14 +51,6 @@ export const productFormSchema = z
     basecoatIds: z.array(z.number().int().positive()).default([]),
   })
   .superRefine((values, context) => {
-    if (values.productType === PRODUCT_TYPES.TOPCOAT && values.warrantyYears === undefined) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['warrantyYears'],
-        message: 'Warranty years are required for TOPCOAT products.',
-      });
-    }
-
     if (values.productType !== PRODUCT_TYPES.TOPCOAT && values.basecoatIds.length > 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
