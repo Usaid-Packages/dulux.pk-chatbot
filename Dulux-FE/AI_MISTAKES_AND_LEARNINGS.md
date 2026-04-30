@@ -77,6 +77,12 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 12:15 - Edit submit sent empty `paint_pairs` and overwrote existing products
+
+- Issue: Edit Registration sent `paint_pairs: []` when user changed only scalar fields and left `Update Paint Pairs` untouched, which could overwrite existing product card data.
+- Fix: Treat empty update rows as "no paint-pair update" and only include `paintPairs` in payload when at least one new pair is intentionally entered; added UI toggle-off for paint type and validation coverage tests.
+- Rule: In correction/update forms with optional "add new items" sections, never send empty arrays for destructive fields unless user explicitly performed a clear/remove-all action.
+
 ### 2026-04-30 13:35 - E2E used stale action label for RESUBMIT registration detail
 
 - Issue: `REG-DET-005` attempted to click `Request Resubmission` even when mocked registration state was `RESUBMIT`, where UI correctly shows `Submit Resubmission Changes`.

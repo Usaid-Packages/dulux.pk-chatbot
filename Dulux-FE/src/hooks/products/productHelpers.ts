@@ -16,7 +16,12 @@ export const mapProductFormValuesToPayload = (values: ProductFormValues): Produc
   webpage_url: values.webpageUrl.trim(),
   is_active: values.isActive,
   surface_types: values.surfaceTypeIds,
-  basecoats: values.productType === PRODUCT_TYPES.TOPCOAT ? values.basecoatIds : [],
+  basecoats:
+    values.productType === PRODUCT_TYPES.TOPCOAT
+      ? values.basecoatIds
+      : values.productType === PRODUCT_TYPES.BASECOAT || values.productType === PRODUCT_TYPES.SPECIALIST
+        ? [0]
+        : [],
 });
 
 export const mapProductToFormValues = (product: Product): ProductFormValues => ({
