@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -110,6 +110,7 @@ export const useProductFormAdapter = ({
 
   const selectedProductType = watch('productType');
   const selectedWarrantyYears = watch('warrantyYears');
+  const previousProductTypeRef = useRef<ProductFormSchemaValues['productType'] | null>(null);
   const selectedSurfaceTypeIds = watch('surfaceTypeIds');
   const selectedBasecoatIds = watch('basecoatIds');
   const [interiorSurfaceSearch, setInteriorSurfaceSearch] = useState<string>('');
@@ -161,6 +162,21 @@ export const useProductFormAdapter = ({
       setValue('basecoatIds', [], { shouldValidate: true });
     }
   }, [selectedBasecoatIds, selectedProductType, setValue]);
+
+  useEffect(() => {
+    const fallbackWarrantyYears = defaultBasecoatWarrantyYears ?? 0;
+    const previousProductType = previousProductTypeRef.current;
+
+    if (
+      selectedProductType !== PRODUCT_TYPES.TOPCOAT &&
+      previousProductType !== null &&
+      previousProductType !== selectedProductType
+    ) {
+      setValue('warrantyYears', fallbackWarrantyYears, { shouldValidate: true });
+    }
+
+    previousProductTypeRef.current = selectedProductType;
+  }, [defaultBasecoatWarrantyYears, selectedProductType, setValue]);
 
   useEffect(() => {
     if (selectedProductType === PRODUCT_TYPES.TOPCOAT) {

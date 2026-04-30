@@ -71,6 +71,29 @@ describe('useProductFormAdapter image requirement', () => {
 });
 
 describe('useProductFormAdapter warranty defaults', () => {
+  it('resets warranty to 0 when switching from topcoat to specialist', () => {
+    const { result } = renderHook(() =>
+      useProductFormAdapter({
+        initialImages: [],
+        initialValues: {
+          ...VALID_FORM_VALUES,
+          warrantyYears: 6,
+          productType: PRODUCT_TYPES.TOPCOAT,
+        },
+        surfaceTypes: [],
+        basecoatOptions: [],
+        onSubmit: vi.fn(),
+      })
+    );
+
+    act(() => {
+      const productTypeField = result.current.register('productType');
+      productTypeField.onChange({ target: { name: 'productType', value: PRODUCT_TYPES.SPECIALIST } });
+    });
+
+    expect(result.current.control._formValues.warrantyYears).toBe(0);
+  });
+
   it('prevents clearing the last warranty digit for specialist by restoring 0', () => {
     const { result } = renderHook(() =>
       useProductFormAdapter({
