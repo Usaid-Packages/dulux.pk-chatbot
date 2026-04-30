@@ -126,7 +126,7 @@ vi.mock('#/components/quality', () => ({
       </div>
     );
   },
-  QualityAgentNotesCard: ({ notes }: { notes: string }) => <div>CS Notes: {notes}</div>,
+  QualityAgentNotesCard: ({ notes }: { notes: string }) => <div>Note: {notes}</div>,
   QualityEvidencePhotos: () => <div>Evidence Photos</div>,
   QualityQuickInfoCard: () => <div>Quick Info</div>,
   QualityResubmissionCard: () => <div>Resubmission Card</div>,

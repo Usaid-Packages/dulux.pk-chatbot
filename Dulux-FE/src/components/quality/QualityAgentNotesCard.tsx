@@ -5,17 +5,17 @@ interface QualityAgentNotesCardProps {
 }
 
 /**
- * QualityAgentNotesCard presents CS notes before evidence review.
+ * QualityAgentNotesCard presents claim notes before evidence review.
  *
- * @param props - CS notes text.
+ * @param props - Note text.
  * @returns Notes card.
  */
 export const QualityAgentNotesCard = ({ notes }: QualityAgentNotesCardProps): JSX.Element => {
   return (
     <section className='rounded-2xl border border-primary/15 bg-white p-4'>
-      <h2 className='text-md font-semibold text-text-primary'>CS Agent Notes</h2>
+      <h2 className='text-md font-semibold text-text-primary'>Note</h2>
       <p className='mt-2 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-text-primary'>
-        {notes ?? 'No CS notes were provided when this claim was forwarded.'}
+        {notes ?? 'No note was provided when this claim was forwarded.'}
       </p>
     </section>
   );

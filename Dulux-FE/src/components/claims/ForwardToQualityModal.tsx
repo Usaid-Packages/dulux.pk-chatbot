@@ -25,7 +25,7 @@ interface ForwardToQualityModalProps {
 }
 
 /**
- * ForwardToQualityModal gathers CS notes before forwarding the claim.
+ * ForwardToQualityModal gathers notes before forwarding the claim.
  *
  * @param props - Modal state and submit callback.
  * @returns Forward modal.
@@ -62,13 +62,13 @@ export const ForwardToQualityModal = ({
       <DialogContent className='border-primary/20 bg-white'>
         <DialogHeader>
           <DialogTitle>Forward Claim To Quality</DialogTitle>
-          <DialogDescription>Add CS notes for quality review.</DialogDescription>
+          <DialogDescription>Add note for quality review.</DialogDescription>
         </DialogHeader>
 
         <form className='space-y-4' onSubmit={handleSubmit(handleFormSubmit)}>
           <div className='space-y-2'>
             <label htmlFor='forward-notes' className='text-sm font-medium text-text-primary'>
-              CS Notes
+              Note
             </label>
             <Textarea
               id='forward-notes'

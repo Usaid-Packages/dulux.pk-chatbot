@@ -14,7 +14,7 @@ export class ClaimDetailPage {
   }
 
   async submitForwardToQuality(notes: string): Promise<void> {
-    await this.page.getByLabel('CS Notes').fill(notes);
+    await this.page.getByLabel('Note').fill(notes);
     await this.page.getByRole('button', { name: 'Forward' }).click();
   }
 

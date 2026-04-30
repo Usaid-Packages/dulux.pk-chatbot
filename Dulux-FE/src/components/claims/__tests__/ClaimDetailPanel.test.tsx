@@ -33,7 +33,7 @@ const CLAIM_BASE: ClaimDetail = {
 };
 
 describe('ClaimDetailPanel note labels', () => {
-  it('renders QA Note label when qualityNotes exists', () => {
+  it('renders Note label when qualityNotes exists', () => {
     render(
       <ClaimDetailPanel
         claim={{ ...CLAIM_BASE, csNotes: undefined, qualityNotes: 'QA approved after inspection.' }}
@@ -49,7 +49,8 @@ describe('ClaimDetailPanel note labels', () => {
       />
     );
 
-    expect(screen.getByText('QA Note:')).toBeInTheDocument();
+    expect(screen.getByText('Note:')).toBeInTheDocument();
+    expect(screen.queryByText('QA Note:')).not.toBeInTheDocument();
     expect(screen.queryByText('CS Note:')).not.toBeInTheDocument();
   });
 });

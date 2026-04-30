@@ -166,7 +166,7 @@ export const QualityDetailPage = (): JSX.Element => {
           {hasCsNotes ? (
             <QualityAgentNotesCard notes={normalizedCsNotes} />
           ) : (
-            <p className='text-sm text-text-muted'>No CS notes.</p>
+            <p className='text-sm text-text-muted'>No note.</p>
           )}
           <QualityEvidencePhotos photos={claim.evidencePhotos} />
           <QualityResubmissionCard latestResubmission={claim.latestResubmission} />

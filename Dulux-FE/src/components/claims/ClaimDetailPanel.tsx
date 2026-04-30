@@ -38,9 +38,9 @@ export const ClaimDetailPanel = ({
   canFinalReject,
 }: ClaimDetailPanelProps): JSX.Element => {
   const noteItems = [
-    claim.csNotes ? { label: 'CS Note', value: claim.csNotes } : null,
-    claim.qualityNotes ? { label: 'QA Note', value: claim.qualityNotes } : null,
-  ].filter((item): item is { label: string; value: string } => item !== null);
+    claim.csNotes ? { key: 'cs', label: 'Note', value: claim.csNotes } : null,
+    claim.qualityNotes ? { key: 'quality', label: 'Note', value: claim.qualityNotes } : null,
+  ].filter((item): item is { key: 'cs' | 'quality'; label: string; value: string } => item !== null);
 
   return (
     <section className='space-y-4'>
@@ -88,7 +88,7 @@ export const ClaimDetailPanel = ({
           {noteItems.length > 0 ? (
             <div className='mt-2 space-y-2'>
               {noteItems.map(noteItem => (
-                <p key={noteItem.label} className='text-sm text-text-primary'>
+                <p key={noteItem.key} className='text-sm text-text-primary'>
                   <span className='font-semibold text-text-muted'>{noteItem.label}:</span> {noteItem.value}
                 </p>
               ))}

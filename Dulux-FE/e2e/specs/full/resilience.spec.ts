@@ -101,7 +101,7 @@ test.describe('@critical resilience phase2', () => {
 
     await page.goto('claims/202');
     await page.getByRole('button', { name: 'Send To Quality' }).click();
-    await page.getByLabel('CS Notes').fill('Forwarding note');
+    await page.getByLabel('Note').fill('Forwarding note');
     await page.getByRole('button', { name: 'Forward' }).click();
 
     await expect(page.getByText('Mutation failed.')).toBeVisible();
