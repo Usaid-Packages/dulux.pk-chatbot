@@ -77,6 +77,12 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 17:25 - Non-topcoat warranty field did not re-default after user cleared value
+
+- Issue: In Add Product, after clearing Warranty and switching product type, Specialist/Basecoat could keep Warranty empty instead of restoring the expected default value.
+- Fix: Updated product form adapter to auto-apply fallback warranty (`0`) whenever product type is non-topcoat and current warranty is empty/invalid; also removed misleading "optional" warranty placeholder text.
+- Rule: For type-dependent numeric defaults, re-apply safe defaults on controlling-field changes when the current value is empty or invalid.
+
 ### 2026-04-30 12:15 - Edit submit sent empty `paint_pairs` and overwrote existing products
 
 - Issue: Edit Registration sent `paint_pairs: []` when user changed only scalar fields and left `Update Paint Pairs` untouched, which could overwrite existing product card data.

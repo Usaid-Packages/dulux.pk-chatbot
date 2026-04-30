@@ -69,3 +69,61 @@ describe('useProductFormAdapter image requirement', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('useProductFormAdapter warranty defaults', () => {
+  it('defaults cleared warranty to 0 when switching to specialist', () => {
+    const { result } = renderHook(() =>
+      useProductFormAdapter({
+        initialImages: [],
+        initialValues: {
+          ...VALID_FORM_VALUES,
+          warrantyYears: undefined,
+          productType: PRODUCT_TYPES.TOPCOAT,
+        },
+        surfaceTypes: [],
+        basecoatOptions: [],
+        onSubmit: vi.fn(),
+      })
+    );
+
+    act(() => {
+      const warrantyField = result.current.register('warrantyYears');
+      warrantyField.onChange({ target: { name: 'warrantyYears', value: '' } });
+    });
+
+    act(() => {
+      const productTypeField = result.current.register('productType');
+      productTypeField.onChange({ target: { name: 'productType', value: PRODUCT_TYPES.SPECIALIST } });
+    });
+
+    expect(result.current.control._formValues.warrantyYears).toBe(0);
+  });
+
+  it('defaults cleared warranty to 0 when switching to basecoat', () => {
+    const { result } = renderHook(() =>
+      useProductFormAdapter({
+        initialImages: [],
+        initialValues: {
+          ...VALID_FORM_VALUES,
+          warrantyYears: undefined,
+          productType: PRODUCT_TYPES.TOPCOAT,
+        },
+        surfaceTypes: [],
+        basecoatOptions: [],
+        onSubmit: vi.fn(),
+      })
+    );
+
+    act(() => {
+      const warrantyField = result.current.register('warrantyYears');
+      warrantyField.onChange({ target: { name: 'warrantyYears', value: '' } });
+    });
+
+    act(() => {
+      const productTypeField = result.current.register('productType');
+      productTypeField.onChange({ target: { name: 'productType', value: PRODUCT_TYPES.BASECOAT } });
+    });
+
+    expect(result.current.control._formValues.warrantyYears).toBe(0);
+  });
+});

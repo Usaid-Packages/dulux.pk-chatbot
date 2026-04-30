@@ -73,16 +73,15 @@ export const ProductFormCoreFieldsSection = ({
           Warranty (Years)
           {selectedProductType === PRODUCT_TYPES.TOPCOAT ? <span className='text-destructive'>*</span> : null}
         </label>
+        <p className='text-xs text-text-muted'>
+          Set <strong>0</strong> for Basecoat and Specialist if you do not want to set warranty for them.
+        </p>
         <Input
           id='product-warranty'
           type='number'
           min={0}
           className='rounded-xl border-primary/20 bg-white'
-          placeholder={
-            selectedProductType === PRODUCT_TYPES.TOPCOAT
-              ? 'Enter warranty years'
-              : 'Optional for basecoat and specialist products'
-          }
+          placeholder='Enter warranty years'
           {...register('warrantyYears')}
           aria-invalid={Boolean(errors.warrantyYears)}
         />

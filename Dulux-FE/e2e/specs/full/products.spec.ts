@@ -38,6 +38,7 @@ test.describe('@critical products phase2', () => {
 
     await page.goto('products/new');
     await expect(page.getByRole('heading', { name: 'Add New Product' })).toBeVisible();
+    await expect(page.locator('#product-warranty')).toHaveAttribute('placeholder', 'Enter warranty years');
 
     await page.getByRole('button', { name: 'Create Product' }).click();
     await expect(page.getByText('Product name is required.')).toBeVisible();
@@ -46,6 +47,12 @@ test.describe('@critical products phase2', () => {
 
     await page.getByLabel('Product Name *').fill('Dulux E2E Product');
     await page.getByLabel(/Warranty \(Years\)/i).fill('7');
+    await page.getByLabel(/Warranty \(Years\)/i).clear();
+    await page.locator('#product-type').click();
+    await page.getByRole('option', { name: 'Specialist' }).click();
+    await page.locator('#product-type').click();
+    await page.getByRole('option', { name: 'Basecoat' }).click();
+    await expect(page.getByLabel(/Warranty \(Years\)/i)).toHaveValue('0');
     await page.getByLabel('Product URL *').fill('https://example.com/e2e-product');
     await page.getByLabel('Coverage Details *').fill('110 sq ft per liter');
     await page.getByLabel('Key Features *').fill('High durability and UV resistance.');

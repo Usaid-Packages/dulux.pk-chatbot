@@ -103,7 +103,7 @@ export const useProductFormAdapter = ({
     watch,
     setValue,
     getValues,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<ProductFormSchemaValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: initialValues ?? DEFAULT_VALUES,
@@ -163,21 +163,23 @@ export const useProductFormAdapter = ({
   }, [selectedBasecoatIds, selectedProductType, setValue]);
 
   useEffect(() => {
-    if (selectedProductType !== PRODUCT_TYPES.BASECOAT) {
+    if (selectedProductType === PRODUCT_TYPES.TOPCOAT) {
       return;
     }
 
-    if (defaultBasecoatWarrantyYears === undefined || dirtyFields.warrantyYears) {
+    const fallbackWarrantyYears = defaultBasecoatWarrantyYears ?? 0;
+    const currentWarrantyYears = getValues('warrantyYears');
+    const normalizedWarrantyYears =
+      typeof currentWarrantyYears === 'number'
+        ? currentWarrantyYears
+        : Number.parseInt(String(currentWarrantyYears ?? ''), 10);
+
+    if (Number.isFinite(normalizedWarrantyYears) && normalizedWarrantyYears >= 0) {
       return;
     }
 
-    const currentWarrantyYears = Number(getValues('warrantyYears'));
-    if (currentWarrantyYears === defaultBasecoatWarrantyYears) {
-      return;
-    }
-
-    setValue('warrantyYears', defaultBasecoatWarrantyYears, { shouldValidate: true });
-  }, [defaultBasecoatWarrantyYears, dirtyFields.warrantyYears, getValues, selectedProductType, setValue]);
+    setValue('warrantyYears', fallbackWarrantyYears, { shouldValidate: true });
+  }, [defaultBasecoatWarrantyYears, getValues, selectedProductType, setValue]);
 
   const toggleSurfaceSelection = (surfaceTypeId: number, checked: boolean): void => {
     const selectedIds = new Set(selectedSurfaceTypeIds);
