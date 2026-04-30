@@ -4,6 +4,21 @@ import { MANUAL_REGISTRATION_ALLOWED_FILE_TYPES, MANUAL_REGISTRATION_MAX_FILE_SI
 
 const phonePattern = /^923\d{9}$/;
 const quantityPattern = /^\d+(\.\d{1,2})?$/;
+const isEmptyPaintPair = (value: {
+  selectionType: 'SPECIALIST' | 'TOPCOAT' | '';
+  topcoatId: string;
+  topcoatQuantity: string;
+  basecoatId: string;
+  basecoatQuantity: string;
+}): boolean => {
+  return (
+    value.selectionType.length === 0 &&
+    value.topcoatId.length === 0 &&
+    value.topcoatQuantity.length === 0 &&
+    value.basecoatId.length === 0 &&
+    value.basecoatQuantity.length === 0
+  );
+};
 
 const invoiceFileSchema = z
   .instanceof(File, { message: 'Please upload a valid file.' })
@@ -25,6 +40,10 @@ const registrationEditPaintPairSchema = z
     basecoatQuantity: z.string().trim(),
   })
   .superRefine((value, context) => {
+    if (isEmptyPaintPair(value)) {
+      return;
+    }
+
     if (!value.selectionType) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

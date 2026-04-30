@@ -45,69 +45,41 @@ const normalizeText = (value: string | null | undefined): string => {
   return value?.trim() ?? '';
 };
 
+const isEmptyPaintPairInput = (paintPair: RegistrationEditFormValues['paintPairs'][number]): boolean => {
+  return (
+    paintPair.selectionType.trim().length === 0 &&
+    paintPair.topcoatId.trim().length === 0 &&
+    paintPair.topcoatQuantity.trim().length === 0 &&
+    paintPair.basecoatId.trim().length === 0 &&
+    paintPair.basecoatQuantity.trim().length === 0
+  );
+};
+
 const toNormalizedPaintPairs = (
   paintPairs: RegistrationEditFormValues['paintPairs']
 ): RegistrationResubmitUpdatePaintPair[] => {
-  return paintPairs.map(paintPair => {
-    const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
-    const normalizedBasecoatId = paintPair.basecoatId.trim();
-    const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
+  return paintPairs
+    .filter(paintPair => !isEmptyPaintPairInput(paintPair))
+    .map(paintPair => {
+      const isSpecialistSelection = paintPair.selectionType === 'SPECIALIST';
+      const normalizedBasecoatId = paintPair.basecoatId.trim();
+      const normalizedBasecoatQuantity = paintPair.basecoatQuantity.trim();
 
-    return {
-      topcoat: Number.parseInt(paintPair.topcoatId, 10),
-      topcoatQuantity: paintPair.topcoatQuantity.trim(),
-      ...(!isSpecialistSelection && normalizedBasecoatId
-        ? {
-            basecoat: Number.parseInt(normalizedBasecoatId, 10),
-            ...(normalizedBasecoatQuantity
-              ? {
-                  basecoatQuantity: normalizedBasecoatQuantity,
-                }
-              : {}),
-          }
-        : {}),
-    };
-  });
-};
-
-const toExistingNormalizedPaintPairs = (registration: RegistrationDetail): RegistrationResubmitUpdatePaintPair[] => {
-  return registration.paintPairs.map(paintPair => {
-    const normalizedBasecoatQuantity = paintPair.basecoatQuantity?.trim() ?? '';
-
-    return {
-      topcoat: paintPair.topcoat.id,
-      topcoatQuantity: paintPair.topcoatQuantity.trim(),
-      ...(paintPair.basecoat?.id
-        ? {
-            basecoat: paintPair.basecoat.id,
-            ...(normalizedBasecoatQuantity
-              ? {
-                  basecoatQuantity: normalizedBasecoatQuantity,
-                }
-              : {}),
-          }
-        : {}),
-    };
-  });
-};
-
-const hasPaintPairChanges = (
-  previousPaintPairs: RegistrationResubmitUpdatePaintPair[],
-  nextPaintPairs: RegistrationResubmitUpdatePaintPair[]
-): boolean => {
-  if (previousPaintPairs.length !== nextPaintPairs.length) {
-    return true;
-  }
-
-  return previousPaintPairs.some((previousPair, index) => {
-    const nextPair = nextPaintPairs[index];
-    return (
-      previousPair.topcoat !== nextPair.topcoat ||
-      normalizeText(previousPair.topcoatQuantity) !== normalizeText(nextPair.topcoatQuantity) ||
-      (previousPair.basecoat ?? null) !== (nextPair.basecoat ?? null) ||
-      normalizeText(previousPair.basecoatQuantity) !== normalizeText(nextPair.basecoatQuantity)
-    );
-  });
+      return {
+        topcoat: Number.parseInt(paintPair.topcoatId, 10),
+        topcoatQuantity: paintPair.topcoatQuantity.trim(),
+        ...(!isSpecialistSelection && normalizedBasecoatId
+          ? {
+              basecoat: Number.parseInt(normalizedBasecoatId, 10),
+              ...(normalizedBasecoatQuantity
+                ? {
+                    basecoatQuantity: normalizedBasecoatQuantity,
+                  }
+                : {}),
+            }
+          : {}),
+      };
+    });
 };
 
 const hasInvoiceSelectionChanges = (previousImageIds: number[], nextImageIds: number[]): boolean => {
@@ -220,8 +192,7 @@ export const useRegistrationsListPageController = (): UseRegistrationsListPageCo
     }
 
     const normalizedNextPaintPairs = toNormalizedPaintPairs(parsedValues.data.paintPairs);
-    const normalizedPreviousPaintPairs = toExistingNormalizedPaintPairs(registration);
-    const hasPaintPairsUpdate = hasPaintPairChanges(normalizedPreviousPaintPairs, normalizedNextPaintPairs);
+    const hasPaintPairsUpdate = normalizedNextPaintPairs.length > 0;
 
     const selectedExistingImageIds = parsedValues.data.existingInvoiceImageIds;
     const existingImageIds = registration.paintPairInvoices.map(invoice => invoice.image.id);

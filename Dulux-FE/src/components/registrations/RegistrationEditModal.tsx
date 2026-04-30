@@ -416,8 +416,13 @@ export const RegistrationEditModal = ({
     setHasOpenedTopcoatDropdown(true);
   };
 
-  const handleSelectionTypeChange = (index: number, selectionType: 'SPECIALIST' | 'TOPCOAT'): void => {
-    setValue(`paintPairs.${index}.selectionType`, selectionType, {
+  const handleSelectionTypeChange = (
+    index: number,
+    selectedType: 'SPECIALIST' | 'TOPCOAT',
+    currentType: 'SPECIALIST' | 'TOPCOAT' | ''
+  ): void => {
+    const nextSelectionType = currentType === selectedType ? '' : selectedType;
+    setValue(`paintPairs.${index}.selectionType`, nextSelectionType, {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: false,
@@ -746,13 +751,10 @@ export const RegistrationEditModal = ({
         </div>
 
         <div className='space-y-3 rounded-xl border border-primary/15 bg-surface p-3'>
-          <div className='flex items-center justify-between gap-2'>
+          <div className='flex items-center gap-2'>
             <p className='text-sm font-semibold text-text-primary'>
               Paint Pair Details <span className='text-destructive'>*</span>
             </p>
-            <Button type='button' variant='outline' size='sm' onClick={handleAddPaintPair}>
-              Add Pair
-            </Button>
           </div>
 
           {specialistPairs.length > 0 ? (
@@ -807,7 +809,15 @@ export const RegistrationEditModal = ({
             </div>
           ) : null}
 
-          <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Update Paint Pairs</p>
+          <div className='flex flex-wrap items-center gap-2'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <p className='text-xs font-semibold uppercase tracking-wide text-text-muted'>Update Paint Pairs</p>
+              <p className='text-xs text-destructive'>Saving this will overwrite the existing product card.</p>
+            </div>
+            <Button type='button' variant='outline' size='sm' onClick={handleAddPaintPair} className='ml-auto'>
+              Add Pair
+            </Button>
+          </div>
 
           <div className='max-h-[24rem] space-y-3 overflow-y-auto pr-1'>
             {fields.map((field, index) => {
@@ -860,14 +870,14 @@ export const RegistrationEditModal = ({
                       <Button
                         type='button'
                         variant={selectionType === 'SPECIALIST' ? 'default' : 'outline'}
-                        onClick={() => handleSelectionTypeChange(index, 'SPECIALIST')}
+                        onClick={() => handleSelectionTypeChange(index, 'SPECIALIST', selectionType)}
                       >
                         Specialized Coat
                       </Button>
                       <Button
                         type='button'
                         variant={selectionType === 'TOPCOAT' ? 'default' : 'outline'}
-                        onClick={() => handleSelectionTypeChange(index, 'TOPCOAT')}
+                        onClick={() => handleSelectionTypeChange(index, 'TOPCOAT', selectionType)}
                       >
                         Topcoat + Basecoat
                       </Button>
