@@ -77,6 +77,12 @@
 
 ## Mistake Log (Short)
 
+### 2026-04-30 14:18 - Runtime `ReferenceError` from fragile constant dependency in product type label helper
+
+- Issue: `PRODUCT_TYPES` reference became unstable during iterative refactors in `ProductFormCoreFieldsSection`, causing runtime `ReferenceError` in product form rendering.
+- Fix: Removed runtime dependency in the label helper by comparing against literal union values (`'TOPCOAT'`, `'SPECIALIST'`) and kept behavior intact.
+- Rule: For simple label mapping helpers driven by narrow literal unions, prefer direct literal comparisons to avoid avoidable runtime constant import regressions during UI refactors.
+
 ### 2026-04-30 17:25 - Non-topcoat warranty field did not re-default after user cleared value
 
 - Issue: In Add Product, after clearing Warranty and switching product type, Specialist/Basecoat could keep Warranty empty instead of restoring the expected default value.

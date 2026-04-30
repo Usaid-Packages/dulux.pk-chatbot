@@ -6,7 +6,7 @@ import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { PRODUCT_STATUS_OPTIONS } from '#/constants';
 import type { ProductFormSchemaValues } from '#/schemas/products';
-import { PRODUCT_TYPES, productTypes } from '#/types/products';
+import { productTypes } from '#/types/products';
 
 interface ProductFormCoreFieldsSectionProps {
   register: UseFormRegister<ProductFormSchemaValues>;
@@ -119,11 +119,11 @@ export const ProductFormCoreFieldsSection = ({
   );
 };
 const getProductTypeLabel = (type: (typeof productTypes)[number]): string => {
-  if (type === PRODUCT_TYPES.TOPCOAT) {
+  if (type === 'TOPCOAT') {
     return 'Topcoat';
   }
 
-  if (type === PRODUCT_TYPES.SPECIALIST) {
+  if (type === 'SPECIALIST') {
     return 'Specialist';
   }
 
