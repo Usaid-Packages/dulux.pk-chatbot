@@ -28,8 +28,7 @@ export const QualityListPage = (): React.JSX.Element => {
     return queueItems.filter(item => {
       return (
         item.claimNumber.toLowerCase().includes(normalizedSearch) ||
-        item.customerName.toLowerCase().includes(normalizedSearch) ||
-        item.city.toLowerCase().includes(normalizedSearch)
+        item.customerName.toLowerCase().includes(normalizedSearch)
       );
     });
   }, [debouncedSearchValue, queueItems]);
@@ -94,8 +93,8 @@ export const QualityListPage = (): React.JSX.Element => {
             type='search'
             value={searchValue}
             onChange={event => handleSearchChange(event.target.value)}
-            placeholder='Search by Customer Name or Customer ID'
-            className='h-10 w-[240px] min-w-[240px] rounded-xl border-primary/25 bg-white'
+            placeholder='Search by Customer Name or Claim ID'
+            className='h-10 w-[320px] min-w-[320px] rounded-xl border-primary/25 bg-white'
             aria-label='Search quality queue'
           />
         </div>

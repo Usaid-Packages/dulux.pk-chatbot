@@ -91,7 +91,7 @@ describe('QualityListPage', () => {
         },
       },
       filters: { status: 'all', page: 2, pageSize: 10 },
-      searchValue: 'ali',
+      searchValue: 'CLM-100',
       setStatusFilter: mockSetStatusFilter,
       setSearch: mockSetSearch,
       setPage: mockSetPage,
@@ -118,7 +118,7 @@ describe('QualityListPage', () => {
   it('calls search setter when search input changes', () => {
     render(<QualityListPage />);
 
-    expect(screen.getByPlaceholderText('Search by Customer Name or Customer ID')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by Customer Name or Claim ID')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search quality queue'), {
       target: { value: 'karachi' },
