@@ -3327,6 +3327,7 @@ Audit checks executed for this refresh:
 - [x] Manual Registration: 5-step route-driven wizard (`Personal -> Purchase -> Products -> Invoices -> Review`) with step validation and submission flow; successful submit redirects to registrations list.
 - [x] Claims: list filters/stats + detail action center (approve/reject/send-to-quality/CSR resubmission) + auto `SUBMITTED -> IN_REVIEW` transition.
 - [x] Quality: queue filters/stats + detail decision actions (approve/reject/request-info) + linked registration and timeline integration.
+- [x] Quality queue search scope is explicitly `Customer Name` + `Claim ID` (`claimNumber`) only; registration-based search is excluded.
 - [x] Complaints Live Chat: queue/list/thread workspace with realtime sockets, thread-safe reconnect handling, and resolve/close flow.
 - [x] Products: product management (`list/new/edit`) with image upload/attach/remove and surface-type management (list/create/update/delete). Product delete action is intentionally not exposed in current UI.
 - [x] Audit timeline panel integration exists across detail screens.
