@@ -53,4 +53,27 @@ describe('ClaimDetailPanel note labels', () => {
     expect(screen.queryByText('QA Note:')).not.toBeInTheDocument();
     expect(screen.queryByText('CS Note:')).not.toBeInTheDocument();
   });
+
+  it('renders notes card with scroll classes for long note content', () => {
+    render(
+      <ClaimDetailPanel
+        claim={{ ...CLAIM_BASE, csNotes: undefined, qualityNotes: 'A long imported note.' }}
+        onOpenApproveModal={() => undefined}
+        onOpenCsrResubmissionModal={() => undefined}
+        onOpenForwardModal={() => undefined}
+        onOpenRejectModal={() => undefined}
+        isActionPending={false}
+        canCsrResubmit={false}
+        canSendToQuality={false}
+        canFinalApprove={false}
+        canFinalReject={false}
+      />
+    );
+
+    const notesCard = screen.getByText('Notes').parentElement;
+    const notesContent = screen.getByText('A long imported note.').parentElement;
+
+    expect(notesCard).toHaveClass('max-h-[150px]', 'overflow-auto');
+    expect(notesContent).toHaveClass('overflow-auto');
+  });
 });
