@@ -121,11 +121,13 @@ export const CsrResubmissionModal = ({
 
             {csrResubmissionRequestQuery.data ? (
               <>
-                <article className='rounded-xl border border-primary/15 bg-primary/5 p-3'>
+                <article className='max-h-[150px] overflow-auto rounded-xl border border-primary/15 bg-primary/5 p-3'>
                   <p className='text-xs font-semibold uppercase tracking-[1.2px] text-text-muted'>Quality Notes</p>
-                  <p className='mt-1 text-sm text-text-primary'>
-                    {csrResubmissionRequestQuery.data.qualityNotes || 'No additional quality note provided.'}
-                  </p>
+                  <div className='mt-1 overflow-auto'>
+                    <p className='text-sm text-text-primary'>
+                      {csrResubmissionRequestQuery.data.qualityNotes || 'No additional quality note provided.'}
+                    </p>
+                  </div>
                   {csrResubmissionRequestQuery.data.otherText ? (
                     <p className='mt-2 text-xs text-text-muted'>
                       Other details: {csrResubmissionRequestQuery.data.otherText}
