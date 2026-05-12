@@ -83,10 +83,10 @@ export const ClaimDetailPanel = ({
           </div>
         </dl>
 
-        <div className='mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3'>
+        <div className='mt-4 max-h-[150px] overflow-auto rounded-xl border border-primary/15 bg-primary/5 p-3'>
           <p className='text-[11px] font-semibold uppercase tracking-[1.2px] text-text-muted'>Notes</p>
           {noteItems.length > 0 ? (
-            <div className='mt-2 space-y-2'>
+            <div className='mt-2 space-y-2 overflow-auto'>
               {noteItems.map(noteItem => (
                 <p key={noteItem.key} className='text-sm text-text-primary'>
                   <span className='font-semibold text-text-muted'>{noteItem.label}:</span> {noteItem.value}
@@ -94,7 +94,9 @@ export const ClaimDetailPanel = ({
               ))}
             </div>
           ) : (
-            <p className='mt-2 text-sm text-text-primary'>{claim.description}</p>
+            <div className='mt-2 overflow-auto'>
+              <p className='text-sm text-text-primary'>{claim.description}</p>
+            </div>
           )}
         </div>
       </article>

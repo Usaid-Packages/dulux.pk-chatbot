@@ -183,3 +183,6 @@ graphify-out/
 Dulux-FE/e2e/.auth/
 Dulux-FE/playwright-report/
 Dulux-FE/test-results/
+
+Dulux-FE/E2E_PLAYWRIGHT_PLAN.md
+Dulux-FE/CODE_QUALITY_AUDIT_PLAN.md

@@ -1,7 +1,7 @@
 import type { JSX, MouseEvent } from 'react';
 
 import { RegistrationEditModal, RegistrationTable } from '#/components/registrations';
-import { PaginationFooter } from '#/components/shared';
+import { ListStateBlock, PaginationFooter } from '#/components/shared';
 import { Input } from '#/components/ui';
 import { REGISTRATION_FILTER_TAB_LABELS } from '#/constants';
 import { useRegistrationsListPageController } from '#/hooks/registrations';
@@ -99,27 +99,33 @@ export const RegistrationsListPage = (): JSX.Element => {
         </div>
       </section>
 
-      {isError ? (
-        <section className='rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive'>
-          {errorMessage}
-        </section>
-      ) : (
-        <RegistrationTable
-          registrations={registrations}
-          isLoading={isLoading}
-          onOpenDetail={handleOpenDetail}
-          onOpenEdit={openEditModal}
-        />
-      )}
+      <ListStateBlock
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={registrations.length === 0}
+        errorTitle='Failed to load registrations'
+        errorDescription={errorMessage}
+        emptyTitle='No registrations found'
+        emptyDescription='Adjust filters to see more records.'
+      >
+        <>
+          <RegistrationTable
+            registrations={registrations}
+            isLoading={isLoading}
+            onOpenDetail={handleOpenDetail}
+            onOpenEdit={openEditModal}
+          />
 
-      <PaginationFooter
-        currentPage={currentPage}
-        totalPages={totalPages}
-        disablePrevious={!hasPreviousPage || isLoading}
-        disableNext={!hasNextPage || isLoading}
-        onPreviousPage={goToPreviousPage}
-        onNextPage={goToNextPage}
-      />
+          <PaginationFooter
+            currentPage={currentPage}
+            totalPages={totalPages}
+            disablePrevious={!hasPreviousPage || isLoading}
+            disableNext={!hasNextPage || isLoading}
+            onPreviousPage={goToPreviousPage}
+            onNextPage={goToNextPage}
+          />
+        </>
+      </ListStateBlock>
 
       <RegistrationEditModal
         isOpen={isEditModalOpen}

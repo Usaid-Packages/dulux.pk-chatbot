@@ -48,6 +48,16 @@ vi.mock('#/hooks/registrations', () => ({
 
 const mockedUseRegistrationsListPageController = vi.mocked(useRegistrationsListPageController);
 
+const REGISTRATION_ROW = {
+  id: 'REG-100',
+  customerName: 'Ali Raza',
+  phoneNumber: '03001234567',
+  city: 'Karachi',
+  state: 'SUBMITTED',
+  registrationCode: 'REG-100',
+  createdAt: '2026-05-01T10:00:00Z',
+};
+
 describe('RegistrationsListPage', () => {
   beforeEach(() => {
     mockNavigate.mockReset();
@@ -62,7 +72,7 @@ describe('RegistrationsListPage', () => {
       searchValue: '',
       currentPage: 1,
       totalPages: 3,
-      registrations: [],
+      registrations: [REGISTRATION_ROW],
       stats: {
         total: 10,
         pending: 4,
@@ -164,5 +174,44 @@ describe('RegistrationsListPage', () => {
     render(<RegistrationsListPage />);
 
     expect(screen.getByText('Unable to load registrations')).toBeInTheDocument();
+  });
+
+  it('hides pagination while the registrations list is loading', () => {
+    mockedUseRegistrationsListPageController.mockReturnValue({
+      activeTab: registrationFilterTabs[0],
+      searchValue: '',
+      currentPage: 2,
+      totalPages: 1,
+      registrations: [],
+      stats: {
+        total: 10,
+        pending: 4,
+        approved: 6,
+      },
+      isLoading: true,
+      isError: false,
+      errorMessage: '',
+      hasNextPage: false,
+      hasPreviousPage: true,
+      setSearchValue: mockSetSearchValue,
+      setActiveTab: mockSetActiveTab,
+      goToNextPage: mockGoToNextPage,
+      goToPreviousPage: mockGoToPreviousPage,
+      isEditModalOpen: false,
+      editRegistrationIsLoading: false,
+      editRegistrationIsSubmitting: false,
+      editRegistrationData: null,
+      handleOpenDetail: (id: string) => {
+        mockNavigate(`${ROUTES.REGISTRATION_DETAIL(id)}?status=pending`);
+      },
+      openEditModal: vi.fn(),
+      closeEditModal: vi.fn(),
+      handleEditSubmit: vi.fn(),
+    });
+
+    render(<RegistrationsListPage />);
+
+    expect(screen.queryByText('Page 2 of 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mock Registration Table')).not.toBeInTheDocument();
   });
 });
