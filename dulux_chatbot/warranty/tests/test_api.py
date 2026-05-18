@@ -236,8 +236,8 @@ class WarrantyRegistrationAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["paint_pairs"][0]["topcoat"]["id"], topcoat.id)
-        self.assertEqual(response.data["paint_pairs"][0]["basecoat"]["id"], basecoat.id)
+        self.assertEqual(response.data["paint_pairs"][0]["topcoat"], topcoat.id)
+        self.assertEqual(response.data["paint_pairs"][0]["basecoat"], basecoat.id)
 
     def test_create_registration_with_future_purchase_date_returns_400(self):
         topcoat = create_product(name="Future Topcoat")

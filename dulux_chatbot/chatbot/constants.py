@@ -1,4 +1,4 @@
-IMAGE_UPLOAD_NOTE = "Note : Please add one Invoice image at a time"
+IMAGE_UPLOAD_NOTE = "Note : Please add one image at a time"
 MAX_WHATSAPP_MEDIA_BYTES = 50 * 1024 * 1024
 MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS = 0
 STEP_MENU = "menu"
