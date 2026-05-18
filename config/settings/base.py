@@ -200,7 +200,7 @@ LOGGING = {
     },
 }
 
-REDIS_URL = config("REDIS_URL")
+REDIS_URL = config("REDIS_URL").strip()
 REDIS_PARSED_URL = urlparse(REDIS_URL)
 REDIS_HOST = REDIS_PARSED_URL.hostname
 REDIS_PORT = REDIS_PARSED_URL.port or 6379
@@ -222,7 +222,8 @@ CELERY_RESULT_SERIALIZER = "json"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"{REDIS_URL}/1",
+        # REDIS_URL already includes scheme/auth/db. Use it directly.
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -232,12 +233,13 @@ CACHES = {
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [(REDIS_HOST, REDIS_PORT)]},
+        # Use the full URL so auth + TLS (rediss://) work with managed Redis providers.
+        "CONFIG": {"hosts": [REDIS_URL]},
     }
 }
 
 CONSTANCE_BACKEND = "constance.backends.redisd.RedisBackend"
-CONSTANCE_REDIS_CONNECTION = f"{REDIS_URL}/0"
+CONSTANCE_REDIS_CONNECTION = REDIS_URL
 CONSTANCE_REDIS_PREFIX = "constance:dulux_chatbot:"
 
 SWAGGER_SETTINGS = {
