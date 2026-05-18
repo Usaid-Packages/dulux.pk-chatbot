@@ -86,9 +86,15 @@ class ProductWarrantyOptionListAPIView(generics.ListAPIView):
     def get_queryset(self):
         serializer = ProductWarrantyOptionQuerySerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
-        queryset = Product.objects.filter(is_active=True, warranty_years__gt=0).order_by("name")
         product_type = serializer.validated_data.get("product_type")
         topcoat_id = serializer.validated_data.get("topcoat_id")
+
+        # Topcoat/Specialist warranty options must have warranty years > 0.
+        # Basecoats are allowed to have warranty years = 0 (per requirement).
+        queryset = Product.objects.filter(is_active=True).order_by("name")
+        if product_type != ProductType.BASECOAT:
+            queryset = queryset.filter(warranty_years__gt=0)
+
         if product_type:
             queryset = queryset.filter(product_type=product_type)
         if topcoat_id:
