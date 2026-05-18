@@ -83,8 +83,8 @@ class RegistrationFlow(BaseFlow):
         linked_basecoats = list(
             Product.objects.filter(
                 topcoat_mappings__topcoat_id=current_topcoat_id,
+                product_type=ProductType.BASECOAT,
                 is_active=True,
-                warranty_years__gt=MIN_EXCLUSIVE_WHATSAPP_WARRANTY_OPTION_YEARS,
             ).order_by("name")
         )
         if not linked_basecoats:

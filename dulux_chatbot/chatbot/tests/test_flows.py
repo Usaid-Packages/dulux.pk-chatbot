@@ -229,7 +229,7 @@ class FlowTests(TestCase):
 
         self.assertEqual(self.session.current_step, "basecoat_select")
         self.assertIn("One Year Basecoat", self.client.text_messages[-1]["text"])
-        self.assertNotIn("Zero Year Basecoat", self.client.text_messages[-1]["text"])
+        self.assertIn("Zero Year Basecoat", self.client.text_messages[-1]["text"])
 
     def test_registration_flow_rejects_invalid_purchase_date(self):
         self.dispatch_text("1")

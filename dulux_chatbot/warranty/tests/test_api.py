@@ -202,7 +202,7 @@ class WarrantyRegistrationAPITests(TestCase):
             "Topcoat warranty years must be greater than 0.",
         )
 
-    def test_create_registration_rejects_zero_warranty_basecoat(self):
+    def test_create_registration_allows_zero_warranty_basecoat(self):
         topcoat = create_product(name="Warranty Topcoat", warranty_years=5)
         basecoat = create_product(name="Zero Warranty Basecoat", product_type="BASECOAT", warranty_years=0)
         create_product_basecoat(topcoat=topcoat, basecoat=basecoat)
@@ -235,11 +235,9 @@ class WarrantyRegistrationAPITests(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data["paint_pairs"][0]["basecoat"][0],
-            "Basecoat warranty years must be greater than 0.",
-        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["paint_pairs"][0]["topcoat"]["id"], topcoat.id)
+        self.assertEqual(response.data["paint_pairs"][0]["basecoat"]["id"], basecoat.id)
 
     def test_create_registration_with_future_purchase_date_returns_400(self):
         topcoat = create_product(name="Future Topcoat")
