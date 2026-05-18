@@ -262,7 +262,7 @@ class FlowTests(TestCase):
         self.dispatch_text("NO")
 
         self.assertEqual(self.session.current_step, "invoice_upload")
-        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
+        self.assertIn("Note : Please add one image at a time", self.client.text_messages[-1]["text"])
         self.dispatch_text("DONE")
         self.assertEqual(self.session.flow, "REGISTRATION")
         self.assertEqual(self.session.current_step, "invoice_upload")
@@ -433,7 +433,7 @@ class FlowTests(TestCase):
 
         ClaimResubmissionFlow(session=self.session, client=self.client).send_initial_prompt()
 
-        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
+        self.assertIn("Note : Please add one image at a time", self.client.text_messages[-1]["text"])
 
     @patch("dulux_chatbot.chatbot.flows.complaint.broadcast_complaint_created")
     def test_whatsapp_complaint_flow_broadcasts_created_complaint(self, broadcast_mock):
@@ -453,7 +453,7 @@ class FlowTests(TestCase):
         broadcast_mock.assert_called_once_with(complaint=complaint)
         self.assertEqual((self.session.session_data or {}).get("complaint_id"), complaint.id)
         self.assertEqual(self.session.current_step, "chat")
-        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-2]["text"])
+        self.assertIn("Note : Please add one image at a time", self.client.text_messages[-2]["text"])
 
     def test_registration_rejects_non_image_invoice_upload(self):
         create_product(name="Flow Topcoat")
@@ -718,7 +718,7 @@ class FlowTests(TestCase):
         self.dispatch_text("1")
         self.dispatch_text("100")
 
-        self.assertIn("Note : Please add one Invoice image at a time", self.client.text_messages[-1]["text"])
+        self.assertIn("Note : Please add one image at a time", self.client.text_messages[-1]["text"])
 
     def test_claim_flow_final_submit_is_idempotent_for_duplicate_completion(self):
         registration = create_registration(phone_number=self.phone_number, state=RegistrationState.APPROVED)
