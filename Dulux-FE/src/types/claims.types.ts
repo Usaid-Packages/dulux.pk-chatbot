@@ -45,6 +45,22 @@ export interface ClaimEvidencePhoto {
   url: string;
 }
 
+export interface ClaimResubmissionEntry {
+  id: string;
+  requiredItem: string;
+  responseText: string;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export interface ClaimLatestResubmission {
+  id: string;
+  source: string;
+  notes: string;
+  createdAt: string;
+  entries: ClaimResubmissionEntry[];
+}
+
 export interface LinkedRegistrationSummary {
   registrationId: string;
   registrationRecordId: string;
@@ -81,6 +97,7 @@ export interface ClaimDetail extends ClaimListItem {
   verificationPackSummary?: string;
   forwardedBy?: string;
   forwardedAt?: string;
+  latestResubmission?: ClaimLatestResubmission;
 }
 
 export interface ClaimsStats {

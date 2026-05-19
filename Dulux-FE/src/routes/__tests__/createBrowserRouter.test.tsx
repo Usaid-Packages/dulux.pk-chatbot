@@ -34,7 +34,25 @@ describe('router quality access', () => {
     } as unknown as ReturnType<typeof useAuthContext>);
   });
 
-  it('allows admin users to open the quality queue route', async () => {
+  it('redirects admin users away from the quality queue route', async () => {
+    window.history.pushState({}, '', '/app/quality');
+
+    const { RouterProvider } = await import('react-router-dom');
+    const { router } = await import('../createBrowserRouter');
+
+    render(<RouterProvider router={router} />);
+
+    await screen.findByRole('progressbar', { hidden: true }).catch(() => undefined);
+    expect(screen.queryByText('Quality queue page')).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/app/dashboard');
+  });
+
+  it('allows quality users to open the quality queue route', async () => {
+    mockedUseAuthContext.mockReturnValue({
+      token: 'token-123',
+      user: { role: 'quality' },
+    } as unknown as ReturnType<typeof useAuthContext>);
+
     window.history.pushState({}, '', '/app/quality');
 
     const { RouterProvider } = await import('react-router-dom');

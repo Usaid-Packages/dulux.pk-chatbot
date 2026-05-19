@@ -11,12 +11,18 @@ interface ClaimDetailPanelProps {
   onOpenApproveModal: () => void;
   onOpenCsrResubmissionModal: () => void;
   onOpenForwardModal: () => void;
+  onOpenQaApproveModal: () => void;
+  onOpenQaRejectModal: () => void;
+  onOpenQaRequestInfoModal: () => void;
   onOpenRejectModal: () => void;
   isActionPending: boolean;
   canCsrResubmit: boolean;
   canSendToQuality: boolean;
   canFinalApprove: boolean;
   canFinalReject: boolean;
+  canQaApprove: boolean;
+  canQaReject: boolean;
+  canQaRequestInfo: boolean;
 }
 
 /**
@@ -30,12 +36,18 @@ export const ClaimDetailPanel = ({
   onOpenApproveModal,
   onOpenCsrResubmissionModal,
   onOpenForwardModal,
+  onOpenQaApproveModal,
+  onOpenQaRejectModal,
+  onOpenQaRequestInfoModal,
   onOpenRejectModal,
   isActionPending,
   canCsrResubmit,
   canSendToQuality,
   canFinalApprove,
   canFinalReject,
+  canQaApprove,
+  canQaReject,
+  canQaRequestInfo,
 }: ClaimDetailPanelProps): JSX.Element => {
   const noteItems = [
     claim.csNotes ? { key: 'cs', label: 'Note', value: claim.csNotes } : null,
@@ -145,7 +157,43 @@ export const ClaimDetailPanel = ({
               Final Reject
             </Button>
           ) : null}
-          {!canSendToQuality && !canFinalApprove && !canFinalReject && !canCsrResubmit ? (
+          {canQaApprove ? (
+            <Button
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
+              onClick={onOpenQaApproveModal}
+              disabled={isActionPending}
+            >
+              QA Approve
+            </Button>
+          ) : null}
+          {canQaRequestInfo ? (
+            <Button
+              variant='primaryGradientElevated'
+              className='h-10 w-full rounded-xl'
+              onClick={onOpenQaRequestInfoModal}
+              disabled={isActionPending}
+            >
+              QA Request Info
+            </Button>
+          ) : null}
+          {canQaReject ? (
+            <Button
+              className='h-10 w-full rounded-xl'
+              variant='destructive'
+              onClick={onOpenQaRejectModal}
+              disabled={isActionPending}
+            >
+              QA Reject
+            </Button>
+          ) : null}
+          {!canSendToQuality &&
+          !canFinalApprove &&
+          !canFinalReject &&
+          !canCsrResubmit &&
+          !canQaApprove &&
+          !canQaRequestInfo &&
+          !canQaReject ? (
             <p className='rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs text-text-muted'>
               No actions are available for the current claim state.
             </p>

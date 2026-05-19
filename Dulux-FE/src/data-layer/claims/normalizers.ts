@@ -2,6 +2,7 @@ import { toApiClaimWorkflowState, toUiClaimIssueType, toUiClaimStatus } from '#/
 import { claimDetailSchema, claimListItemSchema } from '#/schemas/claim.schema';
 import type { ApiClaimDetail, ApiClaimListItem, ApiPaginationResponse } from '#/types/claims.api.types';
 import type { ClaimDetail, ClaimListItem, ClaimsListResponse, ClaimsStats } from '#/types/claims.types';
+import env from '#env';
 
 const DEFAULT_PAGE_SIZE = 10;
 const UNKNOWN_VALUE = 'N/A';
@@ -36,6 +37,17 @@ const toTitleCaseLabel = (value: string): string =>
     .split('_')
     .map(token => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ');
+const toAbsoluteUrl = (urlValue: string | undefined): string | undefined => {
+  if (!urlValue || urlValue.trim().length === 0) {
+    return undefined;
+  }
+
+  try {
+    return new URL(urlValue, env.VITE_BACKEND_BASE_URL).toString();
+  } catch {
+    return undefined;
+  }
+};
 const readEvidencePhotoLabel = (
   image: {
     photo_type?: unknown;
@@ -204,6 +216,7 @@ export const normalizeClaimsListResponse = (
 export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail => {
   const claimState = readState(claim);
   const hasQualityOwnedNotes = isQualityOwnedNoteState(claimState);
+  const latestResubmission = claim.latestResubmission ?? claim.latest_resubmission;
 
   return claimDetailSchema.parse({
     id: String(claim.id),
@@ -257,5 +270,20 @@ export const normalizeClaimDetail = (claim: ApiClaimDetail): ClaimDetail => {
     qualityNotes: hasQualityOwnedNotes ? claim.notes || undefined : undefined,
     forwardedBy: claim.approved_by ?? undefined,
     forwardedAt: claim.approved_at ?? undefined,
+    latestResubmission: latestResubmission
+      ? {
+          id: asIdString(latestResubmission.id),
+          source: asString(latestResubmission.source),
+          notes: latestResubmission.notes ?? '',
+          createdAt: asString(latestResubmission.created, FALLBACK_DATE),
+          entries: (latestResubmission.entries ?? []).map(entry => ({
+            id: asIdString(entry.id),
+            requiredItem: asString(entry.required_item ?? entry.requiredItem),
+            responseText: entry.response_text ?? entry.responseText ?? '',
+            imageUrl: toAbsoluteUrl(entry.image?.image),
+            createdAt: asString(entry.created, FALLBACK_DATE),
+          })),
+        }
+      : undefined,
   });
 };

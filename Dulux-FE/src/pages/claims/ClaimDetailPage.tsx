@@ -15,8 +15,15 @@ import {
   LinkedRegistrationCard,
   RejectClaimModal,
 } from '#/components/claims';
+import {
+  ApproveClaimModal as QualityApproveClaimModal,
+  QualityResubmissionCard,
+  RejectClaimQAModal,
+  RequestInfoQAModal,
+} from '#/components/quality';
 import { Button, Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle, Skeleton } from '#/components/ui';
-import { ROUTES } from '#/constants';
+import { APP_USER_ROLES, ROUTES, normalizeAppUserRole } from '#/constants';
+import { useAuthContext } from '#/context';
 import { useClaimDetail } from '#/hooks/claims';
 import type {
   ApproveClaimFinalFormValues,
@@ -24,6 +31,11 @@ import type {
   ForwardToQualityFormValues,
   RejectClaimFinalFormValues,
 } from '#/schemas/claim.schema';
+import type {
+  QualityApproveFormValues,
+  QualityRejectFormValues,
+  QualityRequestInfoFormValues,
+} from '#/schemas/quality.schema';
 
 /**
  * ClaimDetailPage renders full claim detail, evidence, workflow, and action modals.
@@ -34,6 +46,7 @@ export const ClaimDetailPage = (): JSX.Element => {
   const params = useParams<{ id: string }>();
   const claimId = params.id ?? '';
 
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,6 +55,9 @@ export const ClaimDetailPage = (): JSX.Element => {
     handleApprove,
     handleClaimCsrResubmissionSubmit,
     handleReject,
+    handleQaApprove,
+    handleQaReject,
+    handleQaRequestInfo,
     handleSendToQuality,
     isActionPending,
   } = useClaimDetail(claimId);
@@ -49,7 +65,10 @@ export const ClaimDetailPage = (): JSX.Element => {
   const [isApproveModalOpen, setApproveModalOpen] = useState(false);
   const [isCsrResubmissionModalOpen, setCsrResubmissionModalOpen] = useState(false);
   const [isForwardModalOpen, setForwardModalOpen] = useState(false);
+  const [isQaApproveModalOpen, setQaApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setRejectModalOpen] = useState(false);
+  const [isQaRejectModalOpen, setQaRejectModalOpen] = useState(false);
+  const [isQaRequestInfoModalOpen, setQaRequestInfoModalOpen] = useState(false);
 
   const handleBackClick = (): void => {
     navigate(`${ROUTES.CLAIMS}${location.search}`);
@@ -58,11 +77,17 @@ export const ClaimDetailPage = (): JSX.Element => {
   const openApproveModal = (): void => setApproveModalOpen(true);
   const openCsrResubmissionModal = (): void => setCsrResubmissionModalOpen(true);
   const openForwardModal = (): void => setForwardModalOpen(true);
+  const openQaApproveModal = (): void => setQaApproveModalOpen(true);
+  const openQaRejectModal = (): void => setQaRejectModalOpen(true);
+  const openQaRequestInfoModal = (): void => setQaRequestInfoModalOpen(true);
   const openRejectModal = (): void => setRejectModalOpen(true);
 
   const closeApproveModal = (): void => setApproveModalOpen(false);
   const closeCsrResubmissionModal = (): void => setCsrResubmissionModalOpen(false);
   const closeForwardModal = (): void => setForwardModalOpen(false);
+  const closeQaApproveModal = (): void => setQaApproveModalOpen(false);
+  const closeQaRejectModal = (): void => setQaRejectModalOpen(false);
+  const closeQaRequestInfoModal = (): void => setQaRequestInfoModalOpen(false);
   const closeRejectModal = (): void => setRejectModalOpen(false);
 
   const submitApprove = (values: ApproveClaimFinalFormValues): void => {
@@ -91,6 +116,21 @@ export const ClaimDetailPage = (): JSX.Element => {
       })),
     });
     closeCsrResubmissionModal();
+  };
+
+  const submitQaApprove = (values: QualityApproveFormValues): void => {
+    handleQaApprove({ id: claimId, ...values });
+    closeQaApproveModal();
+  };
+
+  const submitQaReject = (values: QualityRejectFormValues): void => {
+    handleQaReject({ id: claimId, ...values });
+    closeQaRejectModal();
+  };
+
+  const submitQaRequestInfo = (values: QualityRequestInfoFormValues): void => {
+    handleQaRequestInfo({ id: claimId, ...values });
+    closeQaRequestInfoModal();
   };
 
   if (claimQuery.isLoading) {
@@ -126,16 +166,22 @@ export const ClaimDetailPage = (): JSX.Element => {
   }
 
   const claim = claimQuery.data;
+  const normalizedRole = normalizeAppUserRole(user?.role);
+  const isAdmin = normalizedRole === APP_USER_ROLES.ADMIN;
   const canCsrResubmit = claim.workflowState === 'RESUBMIT';
   const canSendToQuality = claim.workflowState === 'IN_REVIEW';
   const canFinalApprove = claim.workflowState === 'QA_APPROVED';
   const canFinalReject = claim.workflowState === 'QA_REJECTED';
+  const canQaApprove = isAdmin && claim.workflowState === 'QA_REVIEW';
+  const canQaReject = isAdmin && claim.workflowState === 'QA_REVIEW';
+  const canQaRequestInfo = isAdmin && claim.workflowState === 'QA_REVIEW';
 
   return (
     <main className='space-y-4'>
       <section className='grid gap-4 lg:grid-cols-[1fr_340px]'>
         <div className='space-y-4'>
           <ClaimImages photos={claim.evidencePhotos} />
+          <QualityResubmissionCard latestResubmission={claim.latestResubmission} />
           <LinkedRegistrationCard registration={claim.linkedRegistration} />
           <AuditTimelinePanel
             type='claim'
@@ -151,12 +197,18 @@ export const ClaimDetailPage = (): JSX.Element => {
             onOpenApproveModal={openApproveModal}
             onOpenCsrResubmissionModal={openCsrResubmissionModal}
             onOpenForwardModal={openForwardModal}
+            onOpenQaApproveModal={openQaApproveModal}
+            onOpenQaRejectModal={openQaRejectModal}
+            onOpenQaRequestInfoModal={openQaRequestInfoModal}
             onOpenRejectModal={openRejectModal}
             isActionPending={isActionPending}
             canCsrResubmit={canCsrResubmit}
             canSendToQuality={canSendToQuality}
             canFinalApprove={canFinalApprove}
             canFinalReject={canFinalReject}
+            canQaApprove={canQaApprove}
+            canQaReject={canQaReject}
+            canQaRequestInfo={canQaRequestInfo}
           />
           <ClaimWorkflowCard status={claim.status} workflowState={claim.workflowState} />
         </div>
@@ -191,6 +243,27 @@ export const ClaimDetailPage = (): JSX.Element => {
         claim={claim}
         onClose={closeRejectModal}
         onSubmit={submitReject}
+      />
+
+      <QualityApproveClaimModal
+        isOpen={isQaApproveModalOpen}
+        isSubmitting={isActionPending}
+        onClose={closeQaApproveModal}
+        onSubmit={submitQaApprove}
+      />
+
+      <RejectClaimQAModal
+        isOpen={isQaRejectModalOpen}
+        isSubmitting={isActionPending}
+        onClose={closeQaRejectModal}
+        onSubmit={submitQaReject}
+      />
+
+      <RequestInfoQAModal
+        isOpen={isQaRequestInfoModalOpen}
+        isSubmitting={isActionPending}
+        onClose={closeQaRequestInfoModal}
+        onSubmit={submitQaRequestInfo}
       />
     </main>
   );

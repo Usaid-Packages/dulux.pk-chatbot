@@ -31,6 +31,22 @@ export const claimEvidencePhotoSchema = z.object({
   url: z.string().url(),
 });
 
+export const claimResubmissionEntrySchema = z.object({
+  id: z.string().min(1),
+  requiredItem: z.string().min(1),
+  responseText: z.string(),
+  imageUrl: z.string().url().optional(),
+  createdAt: z.string().min(1),
+});
+
+export const claimLatestResubmissionSchema = z.object({
+  id: z.string().min(1),
+  source: z.string().min(1),
+  notes: z.string(),
+  createdAt: z.string().min(1),
+  entries: claimResubmissionEntrySchema.array(),
+});
+
 export const linkedRegistrationSummarySchema = z.object({
   registrationId: z.string().min(1),
   registrationRecordId: z.string().min(1),
@@ -67,6 +83,7 @@ export const claimDetailSchema = claimListItemSchema.extend({
   verificationPackSummary: z.string().optional(),
   forwardedBy: z.string().optional(),
   forwardedAt: z.string().optional(),
+  latestResubmission: claimLatestResubmissionSchema.optional(),
 });
 
 export const claimsStatsSchema = z.object({

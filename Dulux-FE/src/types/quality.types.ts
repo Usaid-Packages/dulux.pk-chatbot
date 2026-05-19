@@ -1,4 +1,4 @@
-import type { ClaimDetail, ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
+import type { ClaimDetail, ClaimLatestResubmission, ClaimStatus, ClaimWorkflowState } from '#/types/claims.types';
 
 export const QUALITY_DECISION_TYPES = ['REQUEST_INFO', 'QA_APPROVED', 'QA_REJECTED'] as const;
 export const QUALITY_TECHNICAL_REASONS = [
@@ -22,21 +22,7 @@ export type QualityQueueStatusFilter = 'all' | 'forwarded' | 'infoRequested' | '
 export type QualityTechnicalReason = (typeof QUALITY_TECHNICAL_REASONS)[number];
 export type QualityRequiredItem = (typeof QUALITY_REQUIRED_ITEMS)[number];
 
-export interface QualityResubmissionEntry {
-  id: string;
-  requiredItem: string;
-  responseText: string;
-  imageUrl?: string;
-  createdAt: string;
-}
-
-export interface QualityLatestResubmission {
-  id: string;
-  source: string;
-  notes: string;
-  createdAt: string;
-  entries: QualityResubmissionEntry[];
-}
+export type QualityLatestResubmission = ClaimLatestResubmission;
 
 export interface QualityQueueItem {
   id: string;

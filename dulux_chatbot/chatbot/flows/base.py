@@ -105,7 +105,9 @@ class BaseFlow(ABC):
     def _send_step_prompt(self, text: str) -> None:
         self.client.send_text(
             self.session.phone_number,
-            f"{text}\n\n{self.BACK_COMMAND}. Go back\n{self.MAIN_MENU_COMMAND}. Main menu",
+            # WhatsApp iOS may treat `00.` as a numbered list item and normalize it to `0`.
+            # Avoid `.` directly after the numeric command.
+            f"{text}\n\n{self.BACK_COMMAND} - Go back\n{self.MAIN_MENU_COMMAND} - Main menu",
         )
 
     def _get_text(self, message: dict) -> str:
