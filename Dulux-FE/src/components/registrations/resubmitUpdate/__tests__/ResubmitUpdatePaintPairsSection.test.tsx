@@ -55,7 +55,10 @@ vi.mock('#/data-layer/registrations', () => ({
 
     if (productType === REGISTRATION_PRODUCT_TYPES.BASECOAT && topcoatId) {
       return {
-        options: [{ id: '7', label: 'Dulux Exterior Crackbridging Primer', warrantyYears: 3, productType: 'BASECOAT' }],
+        options: [
+          { id: '7', label: 'Dulux Exterior Crackbridging Primer', warrantyYears: 0, productType: 'BASECOAT' },
+          { id: '8', label: 'Inactive Basecoat', warrantyYears: 2, productType: 'BASECOAT', isActive: false },
+        ],
         hasNextPage: true,
         isLoading: false,
         isError: false,
@@ -158,7 +161,133 @@ describe('ResubmitUpdatePaintPairsSection', () => {
 
     await user.keyboard('{Escape}');
     await user.click(screen.getByLabelText('Select basecoat product'));
-    expect(screen.getAllByText('Dulux Exterior Crackbridging Primer (3 year warranty)').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Dulux Exterior Crackbridging Primer (0 year warranty)').length).toBeGreaterThan(0);
+  });
+
+  it('does not show inactive linked basecoats in resubmit flow', async () => {
+    const user = userEvent.setup();
+
+    const Wrapper = () => {
+      const form = useForm<ResubmitUpdateFormValues>({
+        defaultValues: {
+          ...defaultValues,
+          paintPairs: [
+            {
+              selectionType: 'TOPCOAT',
+              topcoatId: '24',
+              topcoatQuantity: '',
+              basecoatId: '',
+              basecoatQuantity: '',
+            },
+          ],
+        },
+      });
+      return (
+        <FormProvider {...form}>
+          <ResubmitUpdatePaintPairsSection
+            requestedFieldNames={['paint_pairs']}
+            existingPaintPairs={[]}
+            control={form.control}
+            register={form.register}
+            setValue={form.setValue}
+            clearErrors={form.clearErrors}
+            errors={form.formState.errors}
+            paintPairRows={[
+              {
+                rowId: 'row-1',
+                rowIndex: 0,
+                selectionType: 'TOPCOAT',
+                selectedTopcoatId: '24',
+                selectedBasecoatId: '',
+                isSpecialistTopcoatSelected: false,
+                basecoatOptions: [],
+              },
+            ]}
+            topcoatOptions={[{ id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' }]}
+            isPaintProductsLoading={false}
+            isPaintProductsError={false}
+            paintProductsErrorMessage=''
+            onAddPaintPair={() => undefined}
+            onRemovePaintPair={() => undefined}
+          />
+        </FormProvider>
+      );
+    };
+
+    render(<Wrapper />);
+
+    await user.click(screen.getByLabelText('Select basecoat product'));
+    expect(screen.queryByText('Inactive Basecoat (2 year warranty)')).not.toBeInTheDocument();
+  });
+
+  it('fetches next linked basecoat page on scroll', async () => {
+    const user = userEvent.setup();
+    fetchNextPageBasecoatMock.mockClear();
+
+    const Wrapper = () => {
+      const form = useForm<ResubmitUpdateFormValues>({
+        defaultValues: {
+          ...defaultValues,
+          paintPairs: [
+            {
+              selectionType: 'TOPCOAT',
+              topcoatId: '24',
+              topcoatQuantity: '',
+              basecoatId: '',
+              basecoatQuantity: '',
+            },
+          ],
+        },
+      });
+      return (
+        <FormProvider {...form}>
+          <ResubmitUpdatePaintPairsSection
+            requestedFieldNames={['paint_pairs']}
+            existingPaintPairs={[]}
+            control={form.control}
+            register={form.register}
+            setValue={form.setValue}
+            clearErrors={form.clearErrors}
+            errors={form.formState.errors}
+            paintPairRows={[
+              {
+                rowId: 'row-1',
+                rowIndex: 0,
+                selectionType: 'TOPCOAT',
+                selectedTopcoatId: '24',
+                selectedBasecoatId: '',
+                isSpecialistTopcoatSelected: false,
+                basecoatOptions: [],
+              },
+            ]}
+            topcoatOptions={[{ id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' }]}
+            isPaintProductsLoading={false}
+            isPaintProductsError={false}
+            paintProductsErrorMessage=''
+            onAddPaintPair={() => undefined}
+            onRemovePaintPair={() => undefined}
+          />
+        </FormProvider>
+      );
+    };
+
+    render(<Wrapper />);
+    await user.click(screen.getByLabelText('Select basecoat product'));
+    const option = await screen.findByText('Dulux Exterior Crackbridging Primer (0 year warranty)');
+    const scrollViewport = option.closest('[data-radix-select-viewport]');
+    if (!scrollViewport) {
+      throw new Error('Scroll viewport not found');
+    }
+
+    Object.defineProperty(scrollViewport, 'scrollHeight', { configurable: true, value: 500 });
+    Object.defineProperty(scrollViewport, 'clientHeight', { configurable: true, value: 200 });
+    Object.defineProperty(scrollViewport, 'scrollTop', { configurable: true, value: 300, writable: true });
+
+    fireEvent.scroll(scrollViewport);
+
+    await waitFor(() => {
+      expect(fetchNextPageBasecoatMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('shows specialist inputs when Specialized Coat is selected', async () => {

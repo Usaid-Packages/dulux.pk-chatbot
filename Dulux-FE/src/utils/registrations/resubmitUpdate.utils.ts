@@ -53,14 +53,6 @@ export const getRequestedCorrectionNotes = (
   return Array.from(uniqueNotes.values());
 };
 
-export const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
-  if (typeof product.warrantyYears === 'number' && product.warrantyYears > 0) {
-    return `${product.label} (${product.warrantyYears} year warranty)`;
-  }
-
-  return product.label;
-};
-
 export const mergeUniqueProductOptions = (
   primaryOptions: ManualRegistrationProductOption[],
   fallbackOptions: ManualRegistrationProductOption[]

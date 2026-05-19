@@ -1,8 +1,13 @@
-import type { JSX, UIEvent } from 'react';
-import { useCallback, useEffect } from 'react';
+import { type JSX, type UIEvent, useCallback, useEffect } from 'react';
 
-import type { FieldErrors, UseFormSetValue } from 'react-hook-form';
-import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import {
+  type FieldErrors,
+  type UseFormSetValue,
+  Controller,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { REGISTRATION_PRODUCT_TYPES, UI_TEXT } from '#/constants';
@@ -12,18 +17,11 @@ import type {
   ManualRegistrationProductOption,
   ManualRegistrationSelectionType,
 } from '#/types/manualRegistration';
+import { filterActiveProductOptions, getProductOptionLabel } from '#/utils';
 
 const SCROLL_BOTTOM_THRESHOLD_PX = 24;
 
 type PairPrefix = '' | `additionalPaintPairs.${number}.`;
-
-const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
-  if (typeof product.warrantyYears === 'number' && product.warrantyYears > 0) {
-    return `${product.label} (${product.warrantyYears} year warranty)`;
-  }
-
-  return product.label;
-};
 
 const SelectionTypeButtons = ({
   selectedType,
@@ -140,7 +138,7 @@ const PairFields = ({
     REGISTRATION_PRODUCT_TYPES.BASECOAT,
     selectedTopcoat
   );
-  const basecoatProducts = basecoatQuery.options;
+  const basecoatProducts = filterActiveProductOptions(basecoatQuery.options);
 
   const pairErrors: FieldErrors<ManualRegistrationFormValues> =
     typeof index === 'number'

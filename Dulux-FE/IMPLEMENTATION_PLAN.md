@@ -17,6 +17,9 @@
 - When `Specialized Coat` is selected, only specialist product + quantity inputs are shown.
 - When `Topcoat + Basecoat` is selected, topcoat + quantity and related basecoat options are shown.
 - Edit payload keeps specialist pairs without basecoat fields and topcoat pairs with optional related basecoat fields.
+- Linked basecoat dropdowns must keep valid selected-topcoat API results with `warranty_years: 0` across Manual Registration, Registration Edit, and Submit Resubmission flows, and display them with `0 year warranty` labels.
+- Linked basecoat dropdowns must only show active API options (`is_active: true`) for the selected topcoat while preserving infinite-scroll pagination for linked basecoat loading.
+- Product Add/Edit basecoat mapping selectors must request and display only active basecoat options (`is_active: true`), with a defensive UI-side active filter so inactive basecoats never appear even if returned unexpectedly.
 
 ## Step 1: Routing Strategy and Access Control
 
@@ -3473,3 +3476,18 @@ Latest non-E2E verification snapshot:
   - Schema unit tests updated for required `selectionType` contract.
   - Integration payload test updated for specialist mode submission.
   - E2E flow updated to explicitly choose selection mode before product dropdown interaction.
+
+### 15.10 Lint Stability Follow-up for Registration Query Tests
+
+- Stabilized touched registration query tests to follow repo-safe import ordering patterns from `eslint.config.ts`.
+- Removed fragile standalone React type-import usage in the manual-registration products query test to avoid the known `import/order` ESLint 10 plugin crash path.
+- Verification for this follow-up should include targeted ESLint on the touched file before handoff.
+
+### 15.11 Import-Order Stability Sweep for Touched Basecoat Files
+
+- Performed a follow-up sweep on all touched basecoat-related files after additional `import/order` crashes surfaced in utilities/components.
+- Normalized imports toward repo-safe patterns:
+  - combined type/value imports from the same package where appropriate;
+  - alphabetized sibling imports inside shared groups;
+  - avoided fragile split React / react-hook-form import layouts in touched files.
+- Verification for this sweep should include targeted ESLint across all touched files, not only the initially failing file.
