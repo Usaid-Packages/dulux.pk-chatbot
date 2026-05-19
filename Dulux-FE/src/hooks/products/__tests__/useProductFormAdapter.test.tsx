@@ -172,4 +172,46 @@ describe('useProductFormAdapter warranty defaults', () => {
 
     expect(result.current.control._formValues.warrantyYears).toBe(0);
   });
+
+  it('hides inactive basecoat options from the product form mappings', () => {
+    const { result } = renderHook(() =>
+      useProductFormAdapter({
+        initialImages: [],
+        initialValues: {
+          ...VALID_FORM_VALUES,
+          productType: PRODUCT_TYPES.TOPCOAT,
+        },
+        surfaceTypes: [],
+        basecoatOptions: [
+          {
+            id: 10,
+            name: 'Active Basecoat',
+            productType: PRODUCT_TYPES.BASECOAT,
+            warrantyYears: 0,
+            isActive: true,
+            created: '',
+            modified: '',
+          },
+          {
+            id: 11,
+            name: 'Inactive Basecoat',
+            productType: PRODUCT_TYPES.BASECOAT,
+            warrantyYears: 2,
+            isActive: false,
+            created: '',
+            modified: '',
+          },
+        ],
+        onSubmit: vi.fn(),
+      })
+    );
+
+    expect(result.current.basecoatDropdownOptions).toEqual([
+      {
+        id: 10,
+        label: 'Active Basecoat',
+        meta: '0 years',
+      },
+    ]);
+  });
 });

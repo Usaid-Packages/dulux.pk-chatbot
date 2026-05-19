@@ -12,4 +12,4 @@ Note: {{ registration.notes }}
 {% endif %}
 
 Please reply in this chat with the requested updates.
-{{ fallback_message }}
+If your warranty resubmission session expires. Please raise a complaint and live chat with a Customer Service Representative.

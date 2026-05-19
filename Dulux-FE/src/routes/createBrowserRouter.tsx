@@ -102,7 +102,7 @@ export const router = createBrowserRouter(
             <Route path=':id' element={withSuspense(<RegistrationDetailPage />)} />
           </Route>
         </Route>
-        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.QUALITY]} />}>
+        <Route element={<RoleRoute allowedRoles={[APP_USER_ROLES.ADMIN, APP_USER_ROLES.QUALITY]} />}>
           <Route path={ROUTES.QUALITY}>
             <Route index element={withSuspense(<QualityListPage />)} />
             <Route path=':id' element={withSuspense(<QualityDetailPage />)} />

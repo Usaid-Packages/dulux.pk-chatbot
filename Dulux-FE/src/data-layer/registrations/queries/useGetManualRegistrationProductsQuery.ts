@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
-import type { UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 
 import { apiEndpoints, GET, queryKeys, REGISTRATION_PRODUCT_TYPES } from '#/constants';
 import { performRequest } from '#/services';
@@ -52,7 +51,14 @@ const getWarrantyYears = (product: ManualRegistrationProductApiItem): number | u
   return product.warrantyYears ?? product.warranty_years;
 };
 
-const toManualProductOptions = (products: ManualRegistrationProductApiItem[]): ManualRegistrationProductOption[] => {
+const isActiveProduct = (product: ManualRegistrationProductApiItem): boolean => {
+  return product.isActive ?? product.is_active ?? false;
+};
+
+const toManualProductOptions = (
+  products: ManualRegistrationProductApiItem[],
+  options?: { requireActive?: boolean }
+): ManualRegistrationProductOption[] => {
   return products
     .filter(
       product =>
@@ -60,13 +66,15 @@ const toManualProductOptions = (products: ManualRegistrationProductApiItem[]): M
         typeof product.name === 'string' &&
         product.name.trim() !== '' &&
         typeof getWarrantyYears(product) === 'number' &&
-        (getWarrantyYears(product) ?? 0) > 0
+        (getWarrantyYears(product) ?? 0) >= 0 &&
+        (!options?.requireActive || isActiveProduct(product))
     )
     .map(product => ({
       id: String(product.id),
       label: product.name ?? '',
       warrantyYears: getWarrantyYears(product),
       productType: product.productType ?? product.product_type,
+      isActive: isActiveProduct(product),
     }));
 };
 
@@ -198,7 +206,7 @@ export const useGetManualRegistrationProductsQuery = (
             topcoat_id: parsedTopcoatId,
           });
 
-          basecoatsByTopcoatId.set(topcoatId, toManualProductOptions(basecoatApiItems));
+          basecoatsByTopcoatId.set(topcoatId, toManualProductOptions(basecoatApiItems, { requireActive: true }));
         })
       );
 

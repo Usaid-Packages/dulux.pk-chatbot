@@ -74,6 +74,10 @@
 - For Playwright endpoint regex matchers, allow optional trailing slash and query string (`/?(?:\\?.*)?$`) to avoid
   accidental fallback hits on valid API requests.
 - Never commit real E2E login credentials in test fixtures; use env vars in live mode and mock identities in mocked mode.
+- For linked basecoat selectors, do not assume warranty-based eligibility implies display eligibility; always honor
+  explicit backend activity state (`is_active`) so inactive linked basecoats do not appear in selection dropdowns.
+- Product Add/Edit basecoat mapping selectors use the products query path, not the manual-registration linked-basecoat
+  path; when fixing active/inactive visibility rules, verify both data sources and add a defensive adapter-level filter.
 
 ## Mistake Log (Short)
 
@@ -82,6 +86,12 @@
 - Issue: Payload mapper forced `basecoats: [0]` for `BASECOAT`/`SPECIALIST`, which leaked an invalid ID into create requests.
 - Fix: Updated mapper to send `basecoats: []` for non-topcoat types and sanitize topcoat `basecoatIds` to positive integers only.
 - Rule: Never use sentinel IDs in API payloads for "no relation"; use explicit empty arrays and sanitize outgoing ID lists.
+
+### 2026-05-19 14:04 - Router test used forbidden `import()` type annotation in mock setup
+
+- Issue: New route-access test used `vi.importActual<typeof import('react-router-dom')>(...)`, which violated the repo lint rule for `import()` type annotations.
+- Fix: Removed the type annotation and kept the mock setup untyped to satisfy the existing ESLint configuration.
+- Rule: In Vitest mock factories, avoid `import()` type annotations; prefer plain `vi.importActual(...)` or project-approved type imports.
 
 ### 2026-04-30 14:18 - Runtime `ReferenceError` from fragile constant dependency in product type label helper
 
@@ -1065,3 +1075,15 @@
 - Issue: While refactoring `ProductsStep.tsx`, I attempted a full-file shell overwrite in one pass, which created avoidable risk of syntax drift during a high-change edit.
 - Fix: Re-validated file content section-by-section, then stabilized with targeted typed patches and follow-up checks.
 - Rule: For large UI refactors, prefer incremental `apply_patch` hunks with compile/test checks between chunks instead of one-shot full-file rewrites.
+
+### 2026-05-19 - Registration query test reintroduced fragile React type import order
+
+- Issue: While adding linked-basecoat tests, `useGetManualRegistrationProductsQuery.test.ts` used a standalone `import type { ReactNode } from 'react'`, which retriggered the repo's known ESLint 10 `import/order` crash path.
+- Fix: Removed the standalone React type import and typed the wrapper `children` via `Parameters<typeof QueryClientProvider>[0]['children']` so the file stays compatible with the configured import-order rules.
+- Rule: In touched test files, avoid standalone React type-only imports when a stable local inferred type can be derived from the component/function being wrapped.
+
+### 2026-05-19 - Single-file import-order fix missed same-pattern issues in sibling touched files
+
+- Issue: After fixing one failing test file, I did not immediately sweep all other touched files for the same fragile `import/order` patterns, so the next lint run failed in `resubmitUpdate.utils.ts`.
+- Fix: Ran a broader touched-file import stability pass, corrected sibling alphabetical ordering, and normalized split type/value imports in touched React and react-hook-form files.
+- Rule: When this repo hits one `import/order` plugin crash on a change set, assume the whole touched set needs an import-shape audit before calling lint clean.

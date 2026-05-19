@@ -1,8 +1,14 @@
-import { memo, useCallback } from 'react';
-import type { JSX, MouseEvent, UIEvent } from 'react';
+import { type JSX, type MouseEvent, type UIEvent, memo, useCallback } from 'react';
 
-import type { Control, FieldErrors, UseFormClearErrors, UseFormRegister, UseFormSetValue } from 'react-hook-form';
-import { Controller, useWatch } from 'react-hook-form';
+import {
+  type Control,
+  type FieldErrors,
+  type UseFormClearErrors,
+  type UseFormRegister,
+  type UseFormSetValue,
+  Controller,
+  useWatch,
+} from 'react-hook-form';
 
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui';
 import { Input } from '#/components/ui/Input';
@@ -16,6 +22,7 @@ import {
 import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-layer/registrations';
 import type { ResubmitUpdateFormValues } from '#/schemas/registrations';
 import type { RegistrationPaintPair, RegistrationRejectionField } from '#/types/registrations';
+import { filterActiveProductOptions, getProductOptionLabel } from '#/utils';
 import type { ResubmitUpdatePaintPairRowViewModel, ResubmitUpdateSelectOption } from './useResubmitUpdateForm';
 
 const SCROLL_BOTTOM_THRESHOLD_PX = 24;
@@ -51,14 +58,6 @@ interface ResubmitUpdatePaintPairRowProps {
   onRemovePaintPair: (event: MouseEvent<HTMLButtonElement>) => void;
   isRemoveDisabled: boolean;
 }
-
-const getOptionLabel = (option: { label: string; warrantyYears?: number }): string => {
-  if (typeof option.warrantyYears === 'number' && option.warrantyYears > 0) {
-    return `${option.label} (${option.warrantyYears} year warranty)`;
-  }
-
-  return option.label;
-};
 
 const ResubmitUpdatePaintPairRow = memo(
   ({
@@ -136,7 +135,9 @@ const ResubmitUpdatePaintPairRow = memo(
       selectedTopcoatId,
       { enabled: selectedTopcoatId.trim().length > 0 }
     );
-    const availableBasecoatOptions = basecoatQuery.options.length > 0 ? basecoatQuery.options : basecoatOptions;
+    const availableBasecoatOptions = filterActiveProductOptions(
+      basecoatQuery.options.length > 0 ? basecoatQuery.options : basecoatOptions
+    );
     const isBasecoatLoading = Boolean(selectedTopcoatId) && basecoatQuery.isLoading;
     const handleBasecoatScroll = useCallback(
       (event: UIEvent<HTMLDivElement>): void => {
@@ -259,7 +260,7 @@ const ResubmitUpdatePaintPairRow = memo(
                       ) : availableTopcoatOptions.length > 0 ? (
                         availableTopcoatOptions.map(product => (
                           <SelectItem key={product.id} value={product.id}>
-                            {getOptionLabel(product)}
+                            {getProductOptionLabel(product)}
                           </SelectItem>
                         ))
                       ) : selectionType === 'SPECIALIST' ? (
@@ -357,7 +358,7 @@ const ResubmitUpdatePaintPairRow = memo(
                           ) : availableBasecoatOptions.length > 0 ? (
                             availableBasecoatOptions.map(product => (
                               <SelectItem key={product.id} value={product.id}>
-                                {getOptionLabel(product)}
+                                {getProductOptionLabel(product)}
                               </SelectItem>
                             ))
                           ) : (

@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ChangeEvent, FocusEvent, JSX, MouseEvent as ReactMouseEvent, UIEvent } from 'react';
+import {
+  type ChangeEvent,
+  type FocusEvent,
+  type JSX,
+  type MouseEvent as ReactMouseEvent,
+  type UIEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO, subDays } from 'date-fns';
@@ -28,6 +37,7 @@ import { useGetManualRegistrationProductOptionsInfiniteQuery } from '#/data-laye
 import { registrationEditSchema, type RegistrationEditFormValues } from '#/schemas/registrations';
 import type { ManualRegistrationProductOption } from '#/types/manualRegistration';
 import type { RegistrationDetail } from '#/types/registrations';
+import { filterActiveProductOptions, getProductOptionLabel } from '#/utils';
 
 interface RegistrationEditModalProps {
   isOpen: boolean;
@@ -63,14 +73,6 @@ const formatPurchaseDate = (value: Date | undefined): string => {
   }
 
   return format(value, DATE_FORMAT);
-};
-
-const getProductOptionLabel = (product: ManualRegistrationProductOption): string => {
-  if (typeof product.warrantyYears === 'number' && product.warrantyYears > 0) {
-    return `${product.label} (${product.warrantyYears} year warranty)`;
-  }
-
-  return product.label;
 };
 
 const isSpecialistProduct = (product: ManualRegistrationProductOption | undefined): boolean => {
@@ -116,7 +118,9 @@ const BasecoatSelectField = ({
     selectedTopcoatId,
     { enabled: selectedTopcoatId.trim().length > 0 }
   );
-  const availableBasecoats = mergeUniqueProductOptions(basecoatQuery.options, registrationFallbackOptions);
+  const availableBasecoats = filterActiveProductOptions(
+    mergeUniqueProductOptions(basecoatQuery.options, registrationFallbackOptions)
+  );
   const isSelectDisabled = isDisabled || !selectedTopcoatId || basecoatQuery.isLoading;
   const handleBasecoatScroll = useCallback(
     (event: UIEvent<HTMLDivElement>): void => {

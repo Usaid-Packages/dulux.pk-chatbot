@@ -61,6 +61,7 @@ export const useProductEditPageController = (): UseProductEditPageControllerResu
   const surfaceTypesQuery = useGetSurfaceTypesQuery();
   const basecoatOptionsQuery = useGetProductsQuery({
     product_type: PRODUCT_TYPES.BASECOAT,
+    is_active: true,
     ordering: 'name',
     page_size: 100,
   });
