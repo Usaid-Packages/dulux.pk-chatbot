@@ -26,6 +26,17 @@ test.describe('@smoke @rbac routing-rbac smoke coverage', () => {
       await appShellPage.expectPath('/dashboard');
       await appShellPage.expectHeadingVisible('Dashboard');
     });
+
+    test('admin sidebar hides Quality Review while direct quality route remains accessible', async ({ page }) => {
+      const appShellPage = new AppShellPage(page);
+
+      await page.goto('dashboard');
+      await expect(page.getByRole('link', { name: 'Quality Review' })).toHaveCount(0);
+
+      await page.goto('quality');
+      await appShellPage.expectPath('/quality');
+      await expect(page.getByRole('heading', { name: 'Quality Review' })).toBeVisible();
+    });
   });
 
   test.describe('RTE-002 root redirect for quality role', () => {

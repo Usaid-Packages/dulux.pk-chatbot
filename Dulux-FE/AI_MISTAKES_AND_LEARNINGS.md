@@ -93,6 +93,12 @@
 - Fix: Removed the type annotation and kept the mock setup untyped to satisfy the existing ESLint configuration.
 - Rule: In Vitest mock factories, avoid `import()` type annotations; prefer plain `vi.importActual(...)` or project-approved type imports.
 
+### 2026-05-19 15:35 - Sidebar visibility and route access must be verified independently
+
+- Issue: It is easy to assume a missing sidebar tab means route access is also blocked, but in this case the route guard already allowed admin access while the sidebar config still exposed the tab.
+- Fix: Added separate coverage for navigation visibility and direct route access, then changed only the sidebar role config.
+- Rule: When a request is "hide nav item but keep route access," test sidebar visibility and deep-link access independently before editing route guards.
+
 ### 2026-04-30 14:18 - Runtime `ReferenceError` from fragile constant dependency in product type label helper
 
 - Issue: `PRODUCT_TYPES` reference became unstable during iterative refactors in `ProductFormCoreFieldsSection`, causing runtime `ReferenceError` in product form rendering.
