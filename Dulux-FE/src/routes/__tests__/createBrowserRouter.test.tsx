@@ -34,7 +34,7 @@ describe('router quality access', () => {
     } as unknown as ReturnType<typeof useAuthContext>);
   });
 
-  it('redirects admin users away from the quality queue route', async () => {
+  it('allows admin users to open the quality queue route directly', async () => {
     window.history.pushState({}, '', '/app/quality');
 
     const { RouterProvider } = await import('react-router-dom');
@@ -42,9 +42,8 @@ describe('router quality access', () => {
 
     render(<RouterProvider router={router} />);
 
-    await screen.findByRole('progressbar', { hidden: true }).catch(() => undefined);
-    expect(screen.queryByText('Quality queue page')).not.toBeInTheDocument();
-    expect(window.location.pathname).toBe('/app/dashboard');
+    expect(await screen.findByText('Quality queue page')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/app/quality');
   });
 
   it('allows quality users to open the quality queue route', async () => {
