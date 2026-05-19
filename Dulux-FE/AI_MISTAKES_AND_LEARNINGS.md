@@ -87,6 +87,12 @@
 - Fix: Updated mapper to send `basecoats: []` for non-topcoat types and sanitize topcoat `basecoatIds` to positive integers only.
 - Rule: Never use sentinel IDs in API payloads for "no relation"; use explicit empty arrays and sanitize outgoing ID lists.
 
+### 2026-05-19 14:04 - Router test used forbidden `import()` type annotation in mock setup
+
+- Issue: New route-access test used `vi.importActual<typeof import('react-router-dom')>(...)`, which violated the repo lint rule for `import()` type annotations.
+- Fix: Removed the type annotation and kept the mock setup untyped to satisfy the existing ESLint configuration.
+- Rule: In Vitest mock factories, avoid `import()` type annotations; prefer plain `vi.importActual(...)` or project-approved type imports.
+
 ### 2026-04-30 14:18 - Runtime `ReferenceError` from fragile constant dependency in product type label helper
 
 - Issue: `PRODUCT_TYPES` reference became unstable during iterative refactors in `ProductFormCoreFieldsSection`, causing runtime `ReferenceError` in product form rendering.
