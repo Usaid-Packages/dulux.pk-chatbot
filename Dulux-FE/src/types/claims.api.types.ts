@@ -30,6 +30,30 @@ export interface ApiClaimImage {
   created: string;
 }
 
+export interface ApiClaimResubmissionImageFile {
+  id: number;
+  image: string;
+  created: string;
+}
+
+export interface ApiClaimResubmissionEntry {
+  id: number;
+  required_item?: string;
+  requiredItem?: string;
+  response_text?: string;
+  responseText?: string;
+  image?: ApiClaimResubmissionImageFile | null;
+  created: string;
+}
+
+export interface ApiClaimLatestResubmission {
+  id: number;
+  source: string;
+  notes: string;
+  entries: ApiClaimResubmissionEntry[];
+  created: string;
+}
+
 export interface ApiRegistrationSummary {
   id: number;
   registration_code: string;
@@ -64,6 +88,8 @@ export interface ApiClaimDetail {
   approved_by: string | null;
   approved_at: string | null;
   images: ApiClaimImage[];
+  latest_resubmission?: ApiClaimLatestResubmission | null;
+  latestResubmission?: ApiClaimLatestResubmission | null;
   created: string;
   modified: string;
 }

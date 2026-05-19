@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useAuthContext } from '#/context';
 import { useClaimDetail } from '#/hooks/claims';
 import { ClaimDetailPage } from '../ClaimDetailPage';
 
@@ -9,6 +10,9 @@ const mockHandleApprove = vi.fn();
 const mockHandleReject = vi.fn();
 const mockHandleSendToQuality = vi.fn();
 const mockHandleClaimCsrResubmissionSubmit = vi.fn();
+const mockHandleQaApprove = vi.fn();
+const mockHandleQaReject = vi.fn();
+const mockHandleQaRequestInfo = vi.fn();
 
 const mockLocation = {
   search: '?status=inReview',
@@ -27,6 +31,10 @@ const CLAIM_FIXTURE = {
     id: 'REG-33',
   },
 };
+
+vi.mock('#/context', () => ({
+  useAuthContext: vi.fn(),
+}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -51,19 +59,31 @@ vi.mock('#/components/claims', () => ({
     canCsrResubmit,
     canFinalApprove,
     canFinalReject,
+    canQaApprove,
+    canQaReject,
+    canQaRequestInfo,
     canSendToQuality,
     onOpenApproveModal,
     onOpenCsrResubmissionModal,
     onOpenForwardModal,
+    onOpenQaApproveModal,
+    onOpenQaRejectModal,
+    onOpenQaRequestInfoModal,
     onOpenRejectModal,
   }: {
     canCsrResubmit: boolean;
     canSendToQuality: boolean;
     canFinalApprove: boolean;
     canFinalReject: boolean;
+    canQaApprove: boolean;
+    canQaReject: boolean;
+    canQaRequestInfo: boolean;
     onOpenApproveModal: () => void;
     onOpenCsrResubmissionModal: () => void;
     onOpenForwardModal: () => void;
+    onOpenQaApproveModal: () => void;
+    onOpenQaRejectModal: () => void;
+    onOpenQaRequestInfoModal: () => void;
     onOpenRejectModal: () => void;
   }) => (
     <div>
@@ -71,6 +91,9 @@ vi.mock('#/components/claims', () => ({
       <p>{canSendToQuality ? 'Forward Allowed' : 'Forward Blocked'}</p>
       <p>{canFinalApprove ? 'Approve Allowed' : 'Approve Blocked'}</p>
       <p>{canFinalReject ? 'Reject Allowed' : 'Reject Blocked'}</p>
+      <p>{canQaApprove ? 'QA Approve Allowed' : 'QA Approve Blocked'}</p>
+      <p>{canQaRequestInfo ? 'QA Request Info Allowed' : 'QA Request Info Blocked'}</p>
+      <p>{canQaReject ? 'QA Reject Allowed' : 'QA Reject Blocked'}</p>
       <button type='button' onClick={onOpenApproveModal}>
         Open Approve
       </button>
@@ -82,6 +105,15 @@ vi.mock('#/components/claims', () => ({
       </button>
       <button type='button' onClick={onOpenRejectModal}>
         Open Reject
+      </button>
+      <button type='button' onClick={onOpenQaApproveModal}>
+        Open QA Approve
+      </button>
+      <button type='button' onClick={onOpenQaRequestInfoModal}>
+        Open QA Request Info
+      </button>
+      <button type='button' onClick={onOpenQaRejectModal}>
+        Open QA Reject
       </button>
     </div>
   ),
@@ -180,11 +212,76 @@ vi.mock('#/components/claims', () => ({
   },
 }));
 
+vi.mock('#/components/quality', () => ({
+  ApproveClaimModal: ({
+    isOpen,
+    onSubmit,
+  }: {
+    isOpen: boolean;
+    onSubmit: (values: { technicalNotes: string }) => void;
+  }) => {
+    if (!isOpen) {
+      return null;
+    }
+
+    return (
+      <button type='button' onClick={() => onSubmit({ technicalNotes: 'Approved by QA' })}>
+        Submit QA Approve
+      </button>
+    );
+  },
+  RejectClaimQAModal: ({
+    isOpen,
+    onSubmit,
+  }: {
+    isOpen: boolean;
+    onSubmit: (values: { technicalReason: 'OTHER'; technicalNotes: string }) => void;
+  }) => {
+    if (!isOpen) {
+      return null;
+    }
+
+    return (
+      <button type='button' onClick={() => onSubmit({ technicalReason: 'OTHER', technicalNotes: 'Rejected by QA' })}>
+        Submit QA Reject
+      </button>
+    );
+  },
+  RequestInfoQAModal: ({
+    isOpen,
+    onSubmit,
+  }: {
+    isOpen: boolean;
+    onSubmit: (values: { requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES']; notes: string }) => void;
+  }) => {
+    if (!isOpen) {
+      return null;
+    }
+
+    return (
+      <button
+        type='button'
+        onClick={() =>
+          onSubmit({
+            requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES'],
+            notes: 'Need more QA evidence',
+          })
+        }
+      >
+        Submit QA Request Info
+      </button>
+    );
+  },
+  QualityResubmissionCard: ({ latestResubmission }: { latestResubmission?: { id: string } }) =>
+    latestResubmission ? <div>Latest Resubmission Card</div> : null,
+}));
+
 vi.mock('#/hooks/claims', () => ({
   useClaimDetail: vi.fn(),
 }));
 
 const mockedUseClaimDetail = vi.mocked(useClaimDetail);
+const mockedUseAuthContext = vi.mocked(useAuthContext);
 
 describe('ClaimDetailPage', () => {
   beforeEach(() => {
@@ -193,7 +290,15 @@ describe('ClaimDetailPage', () => {
     mockHandleReject.mockReset();
     mockHandleSendToQuality.mockReset();
     mockHandleClaimCsrResubmissionSubmit.mockReset();
+    mockHandleQaApprove.mockReset();
+    mockHandleQaReject.mockReset();
+    mockHandleQaRequestInfo.mockReset();
     mockParams.id = 'CLM-33';
+
+    mockedUseAuthContext.mockReturnValue({
+      token: 'token-123',
+      user: { role: 'admin' },
+    } as unknown as ReturnType<typeof useAuthContext>);
 
     mockedUseClaimDetail.mockReturnValue({
       claimQuery: {
@@ -205,6 +310,9 @@ describe('ClaimDetailPage', () => {
       handleApprove: mockHandleApprove,
       handleClaimCsrResubmissionSubmit: mockHandleClaimCsrResubmissionSubmit,
       handleReject: mockHandleReject,
+      handleQaApprove: mockHandleQaApprove,
+      handleQaReject: mockHandleQaReject,
+      handleQaRequestInfo: mockHandleQaRequestInfo,
       handleSendToQuality: mockHandleSendToQuality,
       isActionPending: false,
     } as unknown as ReturnType<typeof useClaimDetail>);
@@ -220,7 +328,11 @@ describe('ClaimDetailPage', () => {
     expect(screen.getByText('CSR Blocked')).toBeInTheDocument();
     expect(screen.getByText('Approve Blocked')).toBeInTheDocument();
     expect(screen.getByText('Reject Blocked')).toBeInTheDocument();
+    expect(screen.getByText('QA Approve Blocked')).toBeInTheDocument();
+    expect(screen.getByText('QA Request Info Blocked')).toBeInTheDocument();
+    expect(screen.getByText('QA Reject Blocked')).toBeInTheDocument();
     expect(screen.getByText('Workflow IN_REVIEW')).toBeInTheDocument();
+    expect(screen.queryByText('Latest Resubmission Card')).not.toBeInTheDocument();
   });
 
   it('renders error state and navigates back to list', () => {
@@ -234,6 +346,9 @@ describe('ClaimDetailPage', () => {
       handleApprove: mockHandleApprove,
       handleClaimCsrResubmissionSubmit: mockHandleClaimCsrResubmissionSubmit,
       handleReject: mockHandleReject,
+      handleQaApprove: mockHandleQaApprove,
+      handleQaReject: mockHandleQaReject,
+      handleQaRequestInfo: mockHandleQaRequestInfo,
       handleSendToQuality: mockHandleSendToQuality,
       isActionPending: false,
     } as unknown as ReturnType<typeof useClaimDetail>);
@@ -271,5 +386,94 @@ describe('ClaimDetailPage', () => {
       entries: [{ requiredItem: 'invoice', responseText: 'attached', imageFile: null }],
     });
     expect(mockHandleReject).toHaveBeenCalledWith({ id: 'CLM-33', notes: 'rejected' });
+  });
+
+  it('allows admin users to submit QA review actions from claim detail during QA review', () => {
+    mockedUseClaimDetail.mockReturnValue({
+      claimQuery: {
+        data: {
+          ...CLAIM_FIXTURE,
+          workflowState: 'QA_REVIEW',
+        },
+        isLoading: false,
+        isError: false,
+        error: null,
+      },
+      handleApprove: mockHandleApprove,
+      handleClaimCsrResubmissionSubmit: mockHandleClaimCsrResubmissionSubmit,
+      handleReject: mockHandleReject,
+      handleQaApprove: mockHandleQaApprove,
+      handleQaReject: mockHandleQaReject,
+      handleQaRequestInfo: mockHandleQaRequestInfo,
+      handleSendToQuality: mockHandleSendToQuality,
+      isActionPending: false,
+    } as unknown as ReturnType<typeof useClaimDetail>);
+
+    render(<ClaimDetailPage />);
+
+    expect(screen.getByText('QA Approve Allowed')).toBeInTheDocument();
+    expect(screen.getByText('QA Request Info Allowed')).toBeInTheDocument();
+    expect(screen.getByText('QA Reject Allowed')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open QA Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit QA Approve' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open QA Request Info' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit QA Request Info' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open QA Reject' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit QA Reject' }));
+
+    expect(mockHandleQaApprove).toHaveBeenCalledWith({ id: 'CLM-33', technicalNotes: 'Approved by QA' });
+    expect(mockHandleQaRequestInfo).toHaveBeenCalledWith({
+      id: 'CLM-33',
+      requiredItems: ['ADDITIONAL_PHOTOS_DIFFERENT_ANGLES'],
+      notes: 'Need more QA evidence',
+    });
+    expect(mockHandleQaReject).toHaveBeenCalledWith({
+      id: 'CLM-33',
+      technicalReason: 'OTHER',
+      technicalNotes: 'Rejected by QA',
+    });
+  });
+
+  it('shows the latest resubmission block when claim detail includes latest resubmission data', () => {
+    mockedUseClaimDetail.mockReturnValue({
+      claimQuery: {
+        data: {
+          ...CLAIM_FIXTURE,
+          latestResubmission: {
+            id: '24',
+            source: 'COMPLAINT',
+            notes: '',
+            createdAt: '2026-05-19T09:39:25.457628Z',
+            entries: [
+              {
+                id: '51',
+                requiredItem: 'CLOSE_UP_DAMAGE_PHOTOS',
+                responseText: '',
+                imageUrl: 'https://example.com/resubmission-1.webp',
+                createdAt: '2026-05-19T09:39:25.459645Z',
+              },
+            ],
+          },
+        },
+        isLoading: false,
+        isError: false,
+        error: null,
+      },
+      handleApprove: mockHandleApprove,
+      handleClaimCsrResubmissionSubmit: mockHandleClaimCsrResubmissionSubmit,
+      handleReject: mockHandleReject,
+      handleQaApprove: mockHandleQaApprove,
+      handleQaReject: mockHandleQaReject,
+      handleQaRequestInfo: mockHandleQaRequestInfo,
+      handleSendToQuality: mockHandleSendToQuality,
+      isActionPending: false,
+    } as unknown as ReturnType<typeof useClaimDetail>);
+
+    render(<ClaimDetailPage />);
+
+    expect(screen.getByText('Latest Resubmission Card')).toBeInTheDocument();
   });
 });

@@ -43,23 +43,6 @@ export const qualityQueueResponseSchema = z.object({
 export const qualityDetailSchema = claimDetailSchema.extend({
   forwardedBy: z.string().min(1),
   forwardedAt: z.string().min(1),
-  latestResubmission: z
-    .object({
-      id: z.string().min(1),
-      source: z.string().min(1),
-      notes: z.string(),
-      createdAt: z.string().min(1),
-      entries: z.array(
-        z.object({
-          id: z.string().min(1),
-          requiredItem: z.string().min(1),
-          responseText: z.string(),
-          imageUrl: z.string().url().optional(),
-          createdAt: z.string().min(1),
-        })
-      ),
-    })
-    .optional(),
 });
 
 export const qualityApproveSchema = z.object({

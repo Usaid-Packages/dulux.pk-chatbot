@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 
-import { CLAIM_MESSAGES, queryKeys } from '#/constants';
+import { CLAIM_MESSAGES, QUALITY_MESSAGES, queryKeys } from '#/constants';
 import {
   getClaimById,
   useApproveClaimMutation,
@@ -12,6 +12,11 @@ import {
   useSendToQualityMutation,
   useSubmitClaimCsrResubmissionMutation,
 } from '#/data-layer/claims';
+import {
+  useApproveQualityClaimMutation,
+  useRejectQualityClaimMutation,
+  useRequestMoreInfoQAMutation,
+} from '#/data-layer/quality';
 import { executeGuardedDetailMutation, executeMutationWithFeedback } from '#/hooks/common/detailActionController';
 import type {
   ApproveClaimPayload,
@@ -20,6 +25,7 @@ import type {
   RejectClaimPayload,
   SendToQualityPayload,
 } from '#/types/claims.types';
+import type { QualityApprovePayload, QualityRejectPayload, QualityRequestInfoPayload } from '#/types/quality.types';
 import { createClaimApprovedTemplate, createClaimRejectedTemplate } from '#/utils';
 
 interface UseClaimDetailResult {
@@ -27,6 +33,9 @@ interface UseClaimDetailResult {
   handleApprove: (payload: ApproveClaimPayload) => void;
   handleClaimCsrResubmissionSubmit: (payload: ClaimCsrResubmissionSubmitPayload) => void;
   handleReject: (payload: RejectClaimPayload) => void;
+  handleQaApprove: (payload: QualityApprovePayload) => void;
+  handleQaReject: (payload: QualityRejectPayload) => void;
+  handleQaRequestInfo: (payload: QualityRequestInfoPayload) => void;
   handleSendToQuality: (payload: SendToQualityPayload) => void;
   isActionPending: boolean;
 }
@@ -48,6 +57,9 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
 
   const approveMutation = useApproveClaimMutation();
   const markInReviewMutation = useMarkClaimInReviewMutation();
+  const qaApproveMutation = useApproveQualityClaimMutation();
+  const qaRejectMutation = useRejectQualityClaimMutation();
+  const qaRequestInfoMutation = useRequestMoreInfoQAMutation();
   const rejectMutation = useRejectClaimMutation();
   const sendToQualityMutation = useSendToQualityMutation();
   const submitClaimCsrResubmissionMutation = useSubmitClaimCsrResubmissionMutation();
@@ -83,6 +95,9 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
   const isActionPending =
     approveMutation.isPending ||
     markInReviewMutation.isPending ||
+    qaApproveMutation.isPending ||
+    qaRejectMutation.isPending ||
+    qaRequestInfoMutation.isPending ||
     rejectMutation.isPending ||
     sendToQualityMutation.isPending ||
     submitClaimCsrResubmissionMutation.isPending;
@@ -120,6 +135,33 @@ export const useClaimDetail = (id: string): UseClaimDetailResult => {
         mutate: submitClaimCsrResubmissionMutation.mutate,
         payload,
         successMessage: CLAIM_MESSAGES.RESUBMISSION_SUBMITTED,
+      });
+    },
+    handleQaApprove: payload => {
+      executeGuardedDetailMutation({
+        detail: claimQuery.data,
+        missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
+        payload,
+        buildPayload: (_claim, actionPayload) => actionPayload,
+        mutate: qaApproveMutation.mutate,
+        successMessage: QUALITY_MESSAGES.TECHNICAL_APPROVAL_SUBMITTED,
+      });
+    },
+    handleQaReject: payload => {
+      executeGuardedDetailMutation({
+        detail: claimQuery.data,
+        missingDetailMessage: CLAIM_MESSAGES.DETAIL_UNAVAILABLE,
+        payload,
+        buildPayload: (_claim, actionPayload) => actionPayload,
+        mutate: qaRejectMutation.mutate,
+        successMessage: QUALITY_MESSAGES.TECHNICAL_REJECTION_SUBMITTED,
+      });
+    },
+    handleQaRequestInfo: payload => {
+      executeMutationWithFeedback({
+        mutate: qaRequestInfoMutation.mutate,
+        payload,
+        successMessage: QUALITY_MESSAGES.INFORMATION_REQUEST_SENT,
       });
     },
     handleSendToQuality,

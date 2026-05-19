@@ -51,4 +51,47 @@ describe('claim detail note ownership normalization', () => {
     expect(normalized.csNotes).toBe('CS requested docs.');
     expect(normalized.qualityNotes).toBeUndefined();
   });
+
+  it('maps latest resubmission entries into claim detail', () => {
+    const normalized = normalizeClaimDetail({
+      ...buildClaimDetail('QA_REVIEW', 'Awaiting QA review'),
+      latest_resubmission: {
+        id: 24,
+        source: 'COMPLAINT',
+        notes: '',
+        created: '2026-05-19T09:39:25.457628Z',
+        entries: [
+          {
+            id: 51,
+            required_item: 'CLOSE_UP_DAMAGE_PHOTOS',
+            response_text: '',
+            image: {
+              id: 1620,
+              image: '/django-media/images/2026/05/1131w-wGjvK8exIEY.webp',
+              created: '2026-05-19T09:39:24.872184Z',
+            },
+            created: '2026-05-19T09:39:25.459645Z',
+          },
+        ],
+      },
+    });
+
+    expect(normalized.latestResubmission).toBeDefined();
+    expect(normalized.latestResubmission).toMatchObject({
+      id: '24',
+      source: 'COMPLAINT',
+      createdAt: '2026-05-19T09:39:25.457628Z',
+      entries: [
+        {
+          id: '51',
+          requiredItem: 'CLOSE_UP_DAMAGE_PHOTOS',
+          responseText: '',
+          createdAt: '2026-05-19T09:39:25.459645Z',
+        },
+      ],
+    });
+    expect(normalized.latestResubmission?.entries[0]?.imageUrl).toContain(
+      '/django-media/images/2026/05/1131w-wGjvK8exIEY.webp'
+    );
+  });
 });
