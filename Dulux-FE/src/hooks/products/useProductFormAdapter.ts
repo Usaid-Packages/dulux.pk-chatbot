@@ -1,9 +1,13 @@
-import type { ChangeEvent } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import type { Control, FieldErrors, UseFormHandleSubmit, UseFormRegister } from 'react-hook-form';
+import {
+  type Control,
+  type FieldErrors,
+  type UseFormHandleSubmit,
+  type UseFormRegister,
+  useForm,
+} from 'react-hook-form';
 
 import { PRODUCT_IMAGE_ALLOWED_FILE_TYPES, PRODUCT_IMAGE_MAX_FILE_SIZE_BYTES } from '#/constants';
 import { useDebouncedValue } from '#/hooks';
@@ -16,6 +20,7 @@ import type {
   ProductImage,
   SurfaceType,
 } from '#/types/products';
+import { filterActiveProductOptions } from '#/utils';
 
 interface ProductFormDropdownOption {
   id: number;
@@ -128,6 +133,9 @@ export const useProductFormAdapter = ({
   const normalizedInteriorSearch = debouncedInteriorSurfaceSearch.trim().toLowerCase();
   const normalizedExteriorSearch = debouncedExteriorSurfaceSearch.trim().toLowerCase();
   const normalizedBasecoatSearch = debouncedLinkedBasecoatSearch.trim().toLowerCase();
+  const activeBasecoatOptions = useMemo(() => {
+    return filterActiveProductOptions(basecoatOptions);
+  }, [basecoatOptions]);
 
   const filteredInteriorSurfaceTypes = useMemo(() => {
     if (!normalizedInteriorSearch) {
@@ -151,11 +159,11 @@ export const useProductFormAdapter = ({
 
   const filteredBasecoatOptions = useMemo(() => {
     if (!normalizedBasecoatSearch) {
-      return basecoatOptions;
+      return activeBasecoatOptions;
     }
 
-    return basecoatOptions.filter(basecoat => basecoat.name.toLowerCase().includes(normalizedBasecoatSearch));
-  }, [basecoatOptions, normalizedBasecoatSearch]);
+    return activeBasecoatOptions.filter(basecoat => basecoat.name.toLowerCase().includes(normalizedBasecoatSearch));
+  }, [activeBasecoatOptions, normalizedBasecoatSearch]);
 
   useEffect(() => {
     if (selectedProductType !== PRODUCT_TYPES.TOPCOAT && selectedBasecoatIds.length > 0) {

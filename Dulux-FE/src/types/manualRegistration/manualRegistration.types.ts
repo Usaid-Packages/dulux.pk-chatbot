@@ -12,6 +12,7 @@ export interface ManualRegistrationProductOption {
   label: string;
   warrantyYears?: number;
   productType?: string;
+  isActive?: boolean;
   linkedBasecoats?: ManualRegistrationProductOption[];
 }
 

@@ -1,9 +1,27 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RegistrationEditModal } from '#/components/registrations/RegistrationEditModal';
 import type { RegistrationDetail } from '#/types/registrations';
+
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => undefined;
+}
+
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => undefined;
+}
+
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = () => undefined;
+}
+
+const fetchNextPageBasecoatMock = vi.fn();
 
 vi.mock('#/data-layer/registrations', () => ({
   useGetManualRegistrationProductsQuery: () => ({
@@ -26,13 +44,19 @@ vi.mock('#/data-layer/registrations', () => ({
     }
 
     return {
-      options: [{ id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' }],
-      hasNextPage: false,
+      options:
+        productType === 'BASECOAT'
+          ? [
+              { id: '7', label: 'Dulux Exterior Crackbridging Primer', warrantyYears: 0, productType: 'BASECOAT' },
+              { id: '8', label: 'Inactive Basecoat', warrantyYears: 2, productType: 'BASECOAT', isActive: false },
+            ]
+          : [{ id: '24', label: 'Aquashield Waterproof Roofcoat', productType: 'TOPCOAT' }],
+      hasNextPage: productType === 'BASECOAT',
       isLoading: false,
       isError: false,
       isFetchingNextPage: false,
       error: null,
-      fetchNextPage: vi.fn(),
+      fetchNextPage: productType === 'BASECOAT' ? fetchNextPageBasecoatMock : vi.fn(),
     };
   },
 }));
@@ -118,6 +142,87 @@ describe('RegistrationEditModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Topcoat + Basecoat' }));
     expect(screen.getByLabelText('Select basecoat product')).toBeDisabled();
+  });
+
+  it('shows 0 year warranty text for linked basecoat options in edit mode', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <RegistrationEditModal
+        isOpen
+        isLoading={false}
+        isSubmitting={false}
+        registration={buildRegistration()}
+        onClose={() => undefined}
+        onSubmit={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Topcoat + Basecoat' }));
+    await user.click(screen.getByLabelText('Select topcoat product'));
+    await user.click(screen.getByRole('option', { name: 'Aquashield Waterproof Roofcoat' }));
+    await user.click(screen.getByLabelText('Select basecoat product'));
+
+    expect(screen.getAllByText('Dulux Exterior Crackbridging Primer (0 year warranty)').length).toBeGreaterThan(0);
+  });
+
+  it('does not show inactive linked basecoats in edit mode', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <RegistrationEditModal
+        isOpen
+        isLoading={false}
+        isSubmitting={false}
+        registration={buildRegistration()}
+        onClose={() => undefined}
+        onSubmit={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Topcoat + Basecoat' }));
+    await user.click(screen.getByLabelText('Select topcoat product'));
+    await user.click(screen.getByRole('option', { name: 'Aquashield Waterproof Roofcoat' }));
+    await user.click(screen.getByLabelText('Select basecoat product'));
+
+    expect(screen.queryByText('Inactive Basecoat (2 year warranty)')).not.toBeInTheDocument();
+  });
+
+  it('fetches next linked basecoat page on scroll in edit mode', async () => {
+    const user = userEvent.setup();
+    fetchNextPageBasecoatMock.mockClear();
+
+    render(
+      <RegistrationEditModal
+        isOpen
+        isLoading={false}
+        isSubmitting={false}
+        registration={buildRegistration()}
+        onClose={() => undefined}
+        onSubmit={() => undefined}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Topcoat + Basecoat' }));
+    await user.click(screen.getByLabelText('Select topcoat product'));
+    await user.click(screen.getByRole('option', { name: 'Aquashield Waterproof Roofcoat' }));
+    await user.click(screen.getByLabelText('Select basecoat product'));
+
+    const option = await screen.findByRole('option', { name: 'Dulux Exterior Crackbridging Primer (0 year warranty)' });
+    const scrollViewport = option.closest('[data-radix-select-viewport]');
+    if (!scrollViewport) {
+      throw new Error('Scroll viewport not found');
+    }
+
+    Object.defineProperty(scrollViewport, 'scrollHeight', { configurable: true, value: 500 });
+    Object.defineProperty(scrollViewport, 'clientHeight', { configurable: true, value: 200 });
+    Object.defineProperty(scrollViewport, 'scrollTop', { configurable: true, value: 300, writable: true });
+
+    fireEvent.scroll(scrollViewport);
+
+    await waitFor(() => {
+      expect(fetchNextPageBasecoatMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('submits successfully when only non paint-pair fields are edited', async () => {
