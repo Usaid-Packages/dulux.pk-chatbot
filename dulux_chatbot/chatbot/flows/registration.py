@@ -49,6 +49,8 @@ class RegistrationFlow(BaseFlow):
     def prompt_dealer_address(self) -> None:
         self._send_step_prompt("Please share dealer address.")
 
+    # Postal code is intentionally skipped during normal registration and is only
+    # requested when CS asks for it during registration resubmission.
     def prompt_postal_code(self) -> None:
         if not is_registration_resubmit_session(self.session.session_data or {}):
             self.prompt_topcoat_select()

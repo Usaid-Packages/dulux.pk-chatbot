@@ -20,8 +20,8 @@ META_SIGNATURE_PREFIX = "sha256="
 def _webhook_signature_is_valid(*, raw_body: bytes, signature_header: str, app_secret: str) -> bool:
     if not signature_header.startswith(META_SIGNATURE_PREFIX):
         return False
-    expected_signature = hmac.new(
-        app_secret.encode("utf-8"),
+    expected_signature = hmac.HMAC(
+        key=app_secret.encode("utf-8"),
         msg=raw_body,
         digestmod=hashlib.sha256,
     ).hexdigest()
@@ -29,6 +29,11 @@ def _webhook_signature_is_valid(*, raw_body: bytes, signature_header: str, app_s
     return hmac.compare_digest(received_signature, expected_signature)
 
 
+# TODO(audit PERF-01 Medium): Webhook handler runs dispatch() synchronously. If DB is
+# slow or select_for_update contention is high, Meta will timeout (20s) and retry.
+# ProcessedMessage deduplication catches retries, but the response is delayed. For high
+# throughput, consider deferring dispatch to a Celery task and returning 200 immediately.
+# At current scale this is likely acceptable, but monitor webhook response latency.
 class WhatsAppWebhookView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]

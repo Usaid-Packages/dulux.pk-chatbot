@@ -1,4 +1,4 @@
-from typing import ClassVar
+from datetime import date
 
 from constance import config
 from django.db import transaction
@@ -281,6 +281,16 @@ class WarrantyRegistrationCreateSerializer(RegistrationValidationMixin, serializ
             "paint_pairs",
             "paint_pair_invoices",
         )
+
+    def validate_purchase_date(self, value):
+        if value > date.today():
+            raise serializers.ValidationError("Purchase date cannot be in the future.")
+        if (date.today() - value).days > config.REGISTRATION_PURCHASE_DAYS_LIMIT:
+            raise serializers.ValidationError("Purchase date is outside the allowed registration window.")
+        return value
+
+    def validate_phone_number(self, value: str) -> str:
+        return validate_registration_phone_number(value)
 
     def validate_paint_pairs(self, value):
         if not value:

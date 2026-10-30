@@ -82,6 +82,9 @@ class DummyClient:
         )
 
 
+# TODO(audit P1-7 Important): Happy-path only. Missing: claim < 3 or > 3 photos,
+# duplicate claim for same paint pair (BLOCKING_CLAIM_STATES guard), complaint
+# with 0 images, session expiry mid-resubmission, assertNumQueries on hot paths.
 class FlowTests(TestCase):
     def setUp(self):
         unique_suffix = str(uuid4().int)[:7]
